@@ -123,7 +123,7 @@ GLB 以普通 Git blob 保存，不使用 Git LFS；公开 fork 首次 clone 会
 apps/desktop/     Electron 主进程、preload 与 React UI
 packages/domain/  间隔、定位、价格标记、CSV 等纯业务逻辑
 packages/db/      SQLite schema 与查询
-data/petka/       PETKA 明文导出约定（本机价格 gitignore）
+data/petka/       PETKA 明文导出与 zone 价 CSV（`*/parts.csv`）
 data/seed/        间隔、定位、线束、X-ray、flat-six、CMS、X431 种子
 scripts/          启动、导入、验收、监视与状态脚本
 docs/             需求、进度、研究记录与 ADR
