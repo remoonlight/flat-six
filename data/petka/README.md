@@ -43,7 +43,7 @@ data/petka/
 
 ### engine-bay 第一批（2026-07-30）
 
-- 已写入本地 `engine-bay/parts.csv`（gitignore）并导入
+- 已写入本地 `engine-bay/parts.csv` 并导入（已入库 Git）
 - 公开目录复审纠正多条错误 OEM（bootstrap 已同步）
 
 ### brakes / chassis 第二批（2026-07-30）

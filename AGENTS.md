@@ -9,7 +9,7 @@ Windows 本地 Electron 车库：**2014 Boxster S（981）PDK**。无云、无�
 | `apps/desktop` | Electron UI + `electron/` main/preload/IPC |
 | `packages/domain` | 纯业务逻辑（CSV、间隔、货币等） |
 | `packages/db` | SQLite（`node:sqlite`）schema / 查询 |
-| `data/seed/` | 可提交种子；含 `x431/plaintext-archive/`（设码明文源）；`data/petka/*/parts.csv` 本机权威（gitignore） |
+| `data/seed/` | 可提交种子；含 `x431/plaintext-archive/`（设码明文源）；`data/petka/*/parts.csv` 价表可提交 |
 | `docs/research/can-code/` | CAN/X431 研究笔记 |
 | `.local/` | 运行时库、inbox、bulk、CMS/flat-six 缓存 — **勿提交** |
 

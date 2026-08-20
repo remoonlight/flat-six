@@ -26,9 +26,7 @@ packages/*/dist/
 data/seed/petka/plaintext-archive/*
 !data/seed/petka/plaintext-archive/README.md
 
-# PETKA 人工导出物（保留模板与目录占位）
-data/petka/**/parts.csv
-!data/petka/_template/parts.csv
+# PETKA 人工导出物：zone parts.csv 可入库；截图/PDF 仍本机
 data/petka/**/shots/
 data/petka/**/*.{png,jpg,jpeg,pdf,tif,tiff}
 

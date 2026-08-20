@@ -88,7 +88,7 @@ PETKA、CMS、mesh-map 等数据状态命令见 [`package.json`](package.json)�
 | flat-six 车身、座舱与系统件 | 已入 Git | `.local/flat-six/**/*.glb`；CC BY，详见上游与 NOTICE |
 | PETKA 图号分件及 merged 模型 | 已入 Git | `.local/petka-models/**/*.glb` |
 | CMS 991 引擎/底盘抠模 | **不入库** | 仅限本机从正版游戏导出；产品不使用 991 车身 |
-| PETKA 本机价格 CSV | 不入库 | 本机数据，需自行投喂 |
+| PETKA 本机价格 CSV | 已入 Git | `data/petka/*/parts.csv`（保养子集；导入 `npm run ingest:petka`） |
 | X-ray 姿态 JSON | seed 模板入库 | 恢复方式见 [`data/seed/xray/README.md`](data/seed/xray/README.md) |
 
 GLB 以普通 Git blob 保存，不使用 Git LFS；公开 fork 首次 clone 会因此增加约 **450 MB** 下载量。单个已提交 GLB 均低于 GitHub 100 MB 限制。
