@@ -2,7 +2,7 @@
 
 2014 Boxster S（981）PDK 的 **本机 Windows** Electron 车库：零件浏览器、维护状态、实时 OBD（只读查码+会话）、车辆设置、部件定位。产品未成型，**不做打包分发**。
 
-**上游 / 父项目**：[FLAT·SIX](https://www.flat-six.org/)（开源仓 [`dmitry-grechko/flat-six`](https://github.com/dmitry-grechko/flat-six)，MIT）。本仓是其 GitHub **fork** 上的伴生分支 [`porsche981`](https://github.com/remoonlight/flat-six/tree/porsche981)（fork：[`remoonlight/flat-six`](https://github.com/remoonlight/flat-six)）。坐标系与幽灵车壳约定对齐 flat-six X-ray；**不**分发 flat-six 的 GLB 本体（本机 `.local/`）。本分支应用代码另用 [PolyForm Noncommercial 1.0.0](LICENSE)。
+**上游 / 父项目**：[FLAT·SIX](https://www.flat-six.org/)（开源仓 [`dmitry-grechko/flat-six`](https://github.com/dmitry-grechko/flat-six)，MIT）。本仓是其 GitHub **fork** 上的伴生分支 [`porsche981`](https://github.com/remoonlight/flat-six/tree/porsche981)（fork：[`remoonlight/flat-six`](https://github.com/remoonlight/flat-six)）。坐标系与幽灵车壳约定对齐 flat-six X-ray；flat-six / PETKA 分件 GLB 经 Git LFS 随分支分发；**CMS 抠模不入库**（ADR 004）。本分支应用代码另用 [PolyForm Noncommercial 1.0.0](LICENSE)。
 
 | 文档 | 用途 |
 |------|------|
@@ -40,15 +40,17 @@ npm run dev
 
 开发库：仓库内 `.local/garage.db`（gitignore）。SQLite 经系统 Node 子进程 `electron/db-bridge.mjs`。
 
-## 开箱不可用（预期）
+## 开箱说明（三维）
 
-本仓是源码 + 种子，**不是**可开箱运行的整车数据盘：
-
-| 缺口 | 说明 |
+| 资产 | 说明 |
 |------|------|
-| 三维 GLB（约 718MB） | 在 `.local/`，**不进仓** → 部件定位 / X-ray 多为 placeholder |
-| PETKA 本机价 | `data/petka/**/parts.csv` 等本机权威，gitignore |
-| 姿态 JSON | 可从 seed 模板恢复到 `.local/`，见 [`data/seed/xray/README.md`](data/seed/xray/README.md) |
+| flat-six 车身/座舱 + 系统件 | 已进仓：`.local/flat-six/**/*.glb`（CC BY，见上游 flat-six / NOTICE） |
+| PETKA 图号分件 / merged | 已进仓：`.local/petka-models/**/*.glb` |
+| CMS 991 引擎/底盘抠模 | **不进仓**（ADR 004，仅本机正版游戏导出） |
+| PETKA 本机价 CSV | gitignore，需自行投喂 |
+| 姿态 JSON | seed 模板可恢复，见 [`data/seed/xray/README.md`](data/seed/xray/README.md) |
+
+> 公开 fork 不能用 Git LFS 上传，故 GLB 以普通 Git 对象入库（单文件均 &lt;100MB）。clone 体积约 +450MB。
 
 可选增强：`npm run accept:all`、PETKA / CMS / mesh-map 等 status 脚本（见 `package.json`）。
 

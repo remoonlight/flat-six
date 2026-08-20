@@ -10,7 +10,12 @@ out/
 *.db-journal
 .vite/
 release/
-.local/
+# 本机运行时：默认忽略；三维车身/分件 GLB 例外（CMS 抠模仍禁止入库，见 ADR 004）
+.local/*
+!.local/flat-six/
+!.local/flat-six/**
+!.local/petka-models/
+!.local/petka-models/**
 apps/desktop/dist-electron/
 apps/desktop/dist/
 packages/*/dist/
