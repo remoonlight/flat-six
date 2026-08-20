@@ -1,0 +1,1197 @@
+{
+  "version": 1,
+  "note": "可恢复快照：Copy-Item 到 .local/model-oem-links.json。车库模型块 ↔ OEM sku(s)；装配优先，mesh 可补。运行时真源仍是 .local/。",
+  "updated_at": "2026-08-19T15:56:16.976Z",
+  "links": [
+    {
+      "id": "assembly:engine",
+      "kind": "assembly",
+      "ref": "engine",
+      "assemblyId": null,
+      "skus": [
+        "oil-filter"
+      ],
+      "note": null
+    },
+    {
+      "id": "assembly:fbrakes",
+      "kind": "assembly",
+      "ref": "fbrakes",
+      "assemblyId": null,
+      "skus": [
+        "front-brake-pads"
+      ],
+      "note": null
+    },
+    {
+      "id": "assembly:rbrakes",
+      "kind": "assembly",
+      "ref": "rbrakes",
+      "assemblyId": null,
+      "skus": [
+        "front-brake-pads"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_0_R",
+      "kind": "mesh",
+      "ref": "tripo_part_0_R",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-99134115806"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-cooling:tripo_part_1_017",
+      "kind": "mesh",
+      "ref": "tripo_part_1_017",
+      "assemblyId": "pm-cooling",
+      "skus": [
+        "981-99110623701"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_1_R",
+      "kind": "mesh",
+      "ref": "tripo_part_1_R",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "control-arm-front-rr"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-cooling:tripo_part_11_R",
+      "kind": "mesh",
+      "ref": "tripo_part_11_R",
+      "assemblyId": "pm-cooling",
+      "skus": [
+        "981-99162413102"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_2_R",
+      "kind": "mesh",
+      "ref": "tripo_part_2_R",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-99134148201"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-cooling:tripo_part_3_017",
+      "kind": "mesh",
+      "ref": "tripo_part_3_017",
+      "assemblyId": "pm-cooling",
+      "skus": [
+        "981-99110663802"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-fuel:tripo_part_2_205",
+      "kind": "mesh",
+      "ref": "tripo_part_2_205",
+      "assemblyId": "pm-fuel",
+      "skus": [
+        "981-98111142201"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-fuel:tripo_part_7_205",
+      "kind": "mesh",
+      "ref": "tripo_part_7_205",
+      "assemblyId": "pm-fuel",
+      "skus": [
+        "981-98111142201"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-fuel:tripo_part_3_205",
+      "kind": "mesh",
+      "ref": "tripo_part_3_205",
+      "assemblyId": "pm-fuel",
+      "skus": [
+        "981-98111142101"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-fuel:tripo_part_8_205",
+      "kind": "mesh",
+      "ref": "tripo_part_8_205",
+      "assemblyId": "pm-fuel",
+      "skus": [
+        "981-98111142101"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-fuel:tripo_part_4_205",
+      "kind": "mesh",
+      "ref": "tripo_part_4_205",
+      "assemblyId": "pm-fuel",
+      "skus": [
+        "981-98111136162"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-fuel:tripo_part_5_205",
+      "kind": "mesh",
+      "ref": "tripo_part_5_205",
+      "assemblyId": "pm-fuel",
+      "skus": [
+        "981-98111128000"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-engine:tripo_part_20",
+      "kind": "mesh",
+      "ref": "tripo_part_20",
+      "assemblyId": "pm-engine",
+      "skus": [
+        "981-9A110092302"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-engine:tripo_part_11",
+      "kind": "mesh",
+      "ref": "tripo_part_11",
+      "assemblyId": "pm-engine",
+      "skus": [
+        "981-0PB115403A"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-engine:tripo_part_4_107",
+      "kind": "mesh",
+      "ref": "tripo_part_4_107",
+      "assemblyId": "pm-engine",
+      "skus": [
+        "981-9A111021001"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-cooling:tripo_part_0",
+      "kind": "mesh",
+      "ref": "tripo_part_0",
+      "assemblyId": "pm-cooling",
+      "skus": [
+        "981-99110613103"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_0_405",
+      "kind": "mesh",
+      "ref": "tripo_part_0_405",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-99134115706"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_0_4205",
+      "kind": "mesh",
+      "ref": "tripo_part_0_4205",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-99134370511"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_0_5011",
+      "kind": "mesh",
+      "ref": "tripo_part_0_5011",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-98133126113"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_0_5013",
+      "kind": "mesh",
+      "ref": "tripo_part_0_5013",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-98133370311"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_0_502",
+      "kind": "mesh",
+      "ref": "tripo_part_0_502",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-98133353116504"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_0_502_R",
+      "kind": "mesh",
+      "ref": "tripo_part_0_502_R",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-98133353116504"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_1",
+      "kind": "mesh",
+      "ref": "tripo_part_1",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "control-arm-front-rr"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_1_403",
+      "kind": "mesh",
+      "ref": "tripo_part_1_403",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-99134719101"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_2",
+      "kind": "mesh",
+      "ref": "tripo_part_2",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-99134148101"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_2_403",
+      "kind": "mesh",
+      "ref": "tripo_part_2_403",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-99134713101"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_2_405_R",
+      "kind": "mesh",
+      "ref": "tripo_part_2_405_R",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-99734113100"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_2_4205",
+      "kind": "mesh",
+      "ref": "tripo_part_2_4205",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-99134379207"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_4_502",
+      "kind": "mesh",
+      "ref": "tripo_part_4_502",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-98133304518"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_4_502_R",
+      "kind": "mesh",
+      "ref": "tripo_part_4_502_R",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-98133304518"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-cooling:tripo_part_12",
+      "kind": "mesh",
+      "ref": "tripo_part_12",
+      "assemblyId": "pm-cooling",
+      "skus": [
+        "981-99110613702"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-cooling:tripo_part_3",
+      "kind": "mesh",
+      "ref": "tripo_part_3",
+      "assemblyId": "pm-cooling",
+      "skus": [
+        "981-99162493903"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-cooling:tripo_part_3_R",
+      "kind": "mesh",
+      "ref": "tripo_part_3_R",
+      "assemblyId": "pm-cooling",
+      "skus": [
+        "981-99162493903"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-cooling:tripo_part_4",
+      "kind": "mesh",
+      "ref": "tripo_part_4",
+      "assemblyId": "pm-cooling",
+      "skus": [
+        "981-99110663901"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-cooling:tripo_part_6",
+      "kind": "mesh",
+      "ref": "tripo_part_6",
+      "assemblyId": "pm-cooling",
+      "skus": [
+        "981-99110633701"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-cooling:tripo_part_0_R",
+      "kind": "mesh",
+      "ref": "tripo_part_0_R",
+      "assemblyId": "pm-cooling",
+      "skus": [
+        "981-99110613203"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-cooling:tripo_part_1",
+      "kind": "mesh",
+      "ref": "tripo_part_1",
+      "assemblyId": "pm-cooling",
+      "skus": [
+        "981-99110615502"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-cooling:tripo_part_1_R",
+      "kind": "mesh",
+      "ref": "tripo_part_1_R",
+      "assemblyId": "pm-cooling",
+      "skus": [
+        "981-99110615602"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-cooling:tripo_part_11",
+      "kind": "mesh",
+      "ref": "tripo_part_11",
+      "assemblyId": "pm-cooling",
+      "skus": [
+        "981-99162413102"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-cooling:tripo_part_2",
+      "kind": "mesh",
+      "ref": "tripo_part_2",
+      "assemblyId": "pm-cooling",
+      "skus": [
+        "981-99110634100"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-cooling:tripo_part_2_R",
+      "kind": "mesh",
+      "ref": "tripo_part_2_R",
+      "assemblyId": "pm-cooling",
+      "skus": [
+        "981-99110634200"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-fuel:tripo_part_0",
+      "kind": "mesh",
+      "ref": "tripo_part_0",
+      "assemblyId": "pm-fuel",
+      "skus": [
+        "981-98111321106"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-fuel:tripo_part_0_R",
+      "kind": "mesh",
+      "ref": "tripo_part_0_R",
+      "assemblyId": "pm-fuel",
+      "skus": [
+        "981-98111321206"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-fuel:tripo_part_2",
+      "kind": "mesh",
+      "ref": "tripo_part_2",
+      "assemblyId": "pm-fuel",
+      "skus": [
+        "981-98111127102"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-engine:tripo_part_0",
+      "kind": "mesh",
+      "ref": "tripo_part_0",
+      "assemblyId": "pm-engine",
+      "skus": [
+        "981-9A111012025"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-engine:tripo_part_12",
+      "kind": "mesh",
+      "ref": "tripo_part_12",
+      "assemblyId": "pm-engine",
+      "skus": [
+        "981-9A111021201"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-engine:tripo_part_2",
+      "kind": "mesh",
+      "ref": "tripo_part_2",
+      "assemblyId": "pm-engine",
+      "skus": [
+        "981-9A111011530"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-engine:tripo_part_2_R",
+      "kind": "mesh",
+      "ref": "tripo_part_2_R",
+      "assemblyId": "pm-engine",
+      "skus": [
+        "981-9A111011530"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-engine:tripo_part_3",
+      "kind": "mesh",
+      "ref": "tripo_part_3",
+      "assemblyId": "pm-engine",
+      "skus": [
+        "981-98111013300"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-engine:tripo_part_4",
+      "kind": "mesh",
+      "ref": "tripo_part_4",
+      "assemblyId": "pm-engine",
+      "skus": [
+        "981-9A110214602"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-engine:tripo_part_5",
+      "kind": "mesh",
+      "ref": "tripo_part_5",
+      "assemblyId": "pm-engine",
+      "skus": [
+        "981-99760511501"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-engine:tripo_part_7",
+      "kind": "mesh",
+      "ref": "tripo_part_7",
+      "assemblyId": "pm-engine",
+      "skus": [
+        "981-7PP906270"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-engine:tripo_part_8",
+      "kind": "mesh",
+      "ref": "tripo_part_8",
+      "assemblyId": "pm-engine",
+      "skus": [
+        "981-9A111029301"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_0",
+      "kind": "mesh",
+      "ref": "tripo_part_0",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-99134108116"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_3_4205",
+      "kind": "mesh",
+      "ref": "tripo_part_3_4205",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-9P1411063A"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_1_4205",
+      "kind": "mesh",
+      "ref": "tripo_part_1_4205",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-9P1411318"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_1_R_4205",
+      "kind": "mesh",
+      "ref": "tripo_part_1_R_4205",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-9P1411317A"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_1_405",
+      "kind": "mesh",
+      "ref": "tripo_part_1_405",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-9P1407615"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_1_405_R",
+      "kind": "mesh",
+      "ref": "tripo_part_1_405_R",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-9P1407615"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_2_405",
+      "kind": "mesh",
+      "ref": "tripo_part_2_405",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-99734113100"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_0_403",
+      "kind": "mesh",
+      "ref": "tripo_part_0_403",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-99134700518KPL"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_3_403",
+      "kind": "mesh",
+      "ref": "tripo_part_3_403",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-99134732200"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_4_5011",
+      "kind": "mesh",
+      "ref": "tripo_part_4_5011",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-98133113106"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_4_R_5011",
+      "kind": "mesh",
+      "ref": "tripo_part_4_R_5011",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-98133113206"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_5_5011",
+      "kind": "mesh",
+      "ref": "tripo_part_5_5011",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-98133105108"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_5_R_5011",
+      "kind": "mesh",
+      "ref": "tripo_part_5_R_5011",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-98133105208"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_9",
+      "kind": "mesh",
+      "ref": "tripo_part_9",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-98133105302"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_9_R",
+      "kind": "mesh",
+      "ref": "tripo_part_9_R",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-98133105302"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_6",
+      "kind": "mesh",
+      "ref": "tripo_part_6",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-98133104303"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_6_R",
+      "kind": "mesh",
+      "ref": "tripo_part_6_R",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-98133104303"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_8_5011",
+      "kind": "mesh",
+      "ref": "tripo_part_8_5011",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-982505569"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_8_R",
+      "kind": "mesh",
+      "ref": "tripo_part_8_R",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-982505570"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_7",
+      "kind": "mesh",
+      "ref": "tripo_part_7",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-98133104503"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_7_R",
+      "kind": "mesh",
+      "ref": "tripo_part_7_R",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-98133104503"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_2_5011",
+      "kind": "mesh",
+      "ref": "tripo_part_2_5011",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-982505099C"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_3_5011",
+      "kind": "mesh",
+      "ref": "tripo_part_3_5011",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-98133109301"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_0_R_5010",
+      "kind": "mesh",
+      "ref": "tripo_part_0_R_5010",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-982505051J"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_0_5010",
+      "kind": "mesh",
+      "ref": "tripo_part_0_5010",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-982505052J"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_1_R_5010",
+      "kind": "mesh",
+      "ref": "tripo_part_1_R_5010",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-9P1407615"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_1_5010",
+      "kind": "mesh",
+      "ref": "tripo_part_1_5010",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-9P1407615"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_4_R_5010",
+      "kind": "mesh",
+      "ref": "tripo_part_4_R_5010",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-99908413502"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_4_5010",
+      "kind": "mesh",
+      "ref": "tripo_part_4_5010",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-99908413502"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_1_R_5013",
+      "kind": "mesh",
+      "ref": "tripo_part_1_R_5013",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-99734306904"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_1_5013",
+      "kind": "mesh",
+      "ref": "tripo_part_1_5013",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-99734307004"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_2_R_5013",
+      "kind": "mesh",
+      "ref": "tripo_part_2_R_5013",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-99633377701"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_2_5013",
+      "kind": "mesh",
+      "ref": "tripo_part_2_5013",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-99633377701"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_3_R_5013",
+      "kind": "mesh",
+      "ref": "tripo_part_3_R_5013",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-99633379227"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_3_5013",
+      "kind": "mesh",
+      "ref": "tripo_part_3_5013",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-99633379227"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-501-005:tripo_part_5",
+      "kind": "mesh",
+      "ref": "tripo_part_5",
+      "assemblyId": "pm-501-005",
+      "skus": [
+        "981-98133202422"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-501-005:tripo_part_0",
+      "kind": "mesh",
+      "ref": "tripo_part_0",
+      "assemblyId": "pm-501-005",
+      "skus": [
+        "981-9P1407615"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-501-005:tripo_part_10",
+      "kind": "mesh",
+      "ref": "tripo_part_10",
+      "assemblyId": "pm-501-005",
+      "skus": [
+        "981-99633229300"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-501-005:tripo_part_3",
+      "kind": "mesh",
+      "ref": "tripo_part_3",
+      "assemblyId": "pm-501-005",
+      "skus": [
+        "981-99633229300"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-501-005:tripo_part_2",
+      "kind": "mesh",
+      "ref": "tripo_part_2",
+      "assemblyId": "pm-501-005",
+      "skus": [
+        "981-99733295500"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-501-005:tripo_part_4",
+      "kind": "mesh",
+      "ref": "tripo_part_4",
+      "assemblyId": "pm-501-005",
+      "skus": [
+        "981-99733226700"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-501-005:tripo_part_6",
+      "kind": "mesh",
+      "ref": "tripo_part_6",
+      "assemblyId": "pm-501-005",
+      "skus": [
+        "981-99133203000"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_3_502",
+      "kind": "mesh",
+      "ref": "tripo_part_3_502",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-98133305901"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_1_502",
+      "kind": "mesh",
+      "ref": "tripo_part_1_502",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-98133350500"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_5_502",
+      "kind": "mesh",
+      "ref": "tripo_part_5_502",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-98133350900"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_6_502",
+      "kind": "mesh",
+      "ref": "tripo_part_6_502",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-98133350401"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_1_502_R",
+      "kind": "mesh",
+      "ref": "tripo_part_1_502_R",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-98133350500"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_3_502_R",
+      "kind": "mesh",
+      "ref": "tripo_part_3_502_R",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-98133305901"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_5_502_R",
+      "kind": "mesh",
+      "ref": "tripo_part_5_502_R",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-98133350900"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-suspension:tripo_part_6_502_R",
+      "kind": "mesh",
+      "ref": "tripo_part_6_502_R",
+      "assemblyId": "pm-suspension",
+      "skus": [
+        "981-98133350401"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-302-000:tripo_part_18",
+      "kind": "mesh",
+      "ref": "tripo_part_18",
+      "assemblyId": "pm-302-000",
+      "skus": [
+        "981-9G230001105"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:pm-intake:tripo_part_0",
+      "kind": "mesh",
+      "ref": "tripo_part_0",
+      "assemblyId": "pm-intake",
+      "skus": [
+        "981-98110604706"
+      ],
+      "note": "105-020 pos 1"
+    },
+    {
+      "id": "mesh:pm-intake:tripo_part_1",
+      "kind": "mesh",
+      "ref": "tripo_part_1",
+      "assemblyId": "pm-intake",
+      "skus": [
+        "981-98110604406"
+      ],
+      "note": "105-020 pos 2"
+    },
+    {
+      "id": "mesh:pm-intake:tripo_part_3",
+      "kind": "mesh",
+      "ref": "tripo_part_3",
+      "assemblyId": "pm-intake",
+      "skus": [
+        "981-98110627000"
+      ],
+      "note": "105-020 pos 3"
+    },
+    {
+      "id": "mesh:pm-intake:tripo_part_4",
+      "kind": "mesh",
+      "ref": "tripo_part_4",
+      "assemblyId": "pm-intake",
+      "skus": [
+        "981-99610644704"
+      ],
+      "note": "105-020 pos 4"
+    },
+    {
+      "id": "mesh:pm-intake:tripo_part_5",
+      "kind": "mesh",
+      "ref": "tripo_part_5",
+      "assemblyId": "pm-intake",
+      "skus": [
+        "981-PAF003923"
+      ],
+      "note": "105-020 pos 5"
+    },
+    {
+      "id": "mesh:pm-intake:tripo_part_6",
+      "kind": "mesh",
+      "ref": "tripo_part_6",
+      "assemblyId": "pm-intake",
+      "skus": [
+        "981-98110624703"
+      ],
+      "note": "105-020 pos 6"
+    },
+    {
+      "id": "mesh:pm-intake:tripo_part_7",
+      "kind": "mesh",
+      "ref": "tripo_part_7",
+      "assemblyId": "pm-intake",
+      "skus": [
+        "981-98110615005"
+      ],
+      "note": "105-020 pos 7"
+    },
+    {
+      "id": "mesh:pm-intake:tripo_part_8",
+      "kind": "mesh",
+      "ref": "tripo_part_8",
+      "assemblyId": "pm-intake",
+      "skus": [
+        "981-98110628801"
+      ],
+      "note": "105-020 pos 8"
+    },
+    {
+      "id": "mesh:pm-intake:tripo_part_9",
+      "kind": "mesh",
+      "ref": "tripo_part_9",
+      "assemblyId": "pm-intake",
+      "skus": [
+        "981-98110627500"
+      ],
+      "note": "105-020 pos 9"
+    },
+    {
+      "id": "mesh:pm-intake:tripo_part_11",
+      "kind": "mesh",
+      "ref": "tripo_part_11",
+      "assemblyId": "pm-intake",
+      "skus": [
+        "981-98110626703"
+      ],
+      "note": "105-020 pos 10"
+    },
+    {
+      "id": "mesh:pm-intake:tripo_part_12",
+      "kind": "mesh",
+      "ref": "tripo_part_12",
+      "assemblyId": "pm-intake",
+      "skus": [
+        "981-7P5121671A"
+      ],
+      "note": "105-020 pos 11"
+    },
+    {
+      "id": "mesh:pm-intake:tripo_part_0_R",
+      "kind": "mesh",
+      "ref": "tripo_part_0_R",
+      "assemblyId": "pm-intake",
+      "skus": [
+        "981-97060650300"
+      ],
+      "note": "105-020 pos 12"
+    }
+  ]
+}

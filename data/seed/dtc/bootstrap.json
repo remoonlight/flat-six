@@ -1,0 +1,347 @@
+{
+  "dtcs": [
+    {
+      "code": "P0300",
+      "title_zh": "检测到随机/多缸失火",
+      "likely_causes": "火花塞老化；点火线圈故障；喷油嘴堵塞；真空泄漏；燃油压力不足",
+      "checks": "读冻结帧看负荷/转速；检查火花塞间隙与颜色；互换点火线圈试验；测燃油压力；查进气软管",
+      "related_part_sku": "spark-plugs"
+    },
+    {
+      "code": "P0301",
+      "title_zh": "1 缸失火",
+      "likely_causes": "1 缸点火线圈；火花塞；喷油嘴；该缸压缩偏低",
+      "checks": "查看 1 缸火花塞；互换线圈到其它缸看码是否跟随；测缸压",
+      "related_part_sku": "coil-pack"
+    },
+    {
+      "code": "P0302",
+      "title_zh": "2 缸失火",
+      "likely_causes": "2 缸点火线圈；火花塞；喷油嘴；该缸压缩偏低",
+      "checks": "查看 2 缸火花塞；互换线圈试验；测缸压",
+      "related_part_sku": "coil-pack"
+    },
+    {
+      "code": "P0303",
+      "title_zh": "3 缸失火",
+      "likely_causes": "3 缸点火线圈；火花塞；喷油嘴；该缸压缩偏低",
+      "checks": "查看 3 缸火花塞；互换线圈试验；测缸压",
+      "related_part_sku": "coil-pack"
+    },
+    {
+      "code": "P0304",
+      "title_zh": "4 缸失火",
+      "likely_causes": "4 缸点火线圈；火花塞；喷油嘴；该缸压缩偏低",
+      "checks": "查看 4 缸火花塞；互换线圈试验；测缸压",
+      "related_part_sku": "coil-pack"
+    },
+    {
+      "code": "P0305",
+      "title_zh": "5 缸失火",
+      "likely_causes": "5 缸点火线圈；火花塞；喷油嘴；该缸压缩偏低",
+      "checks": "查看 5 缸火花塞；互换线圈试验；测缸压",
+      "related_part_sku": "coil-pack"
+    },
+    {
+      "code": "P0306",
+      "title_zh": "6 缸失火",
+      "likely_causes": "6 缸点火线圈；火花塞；喷油嘴；该缸压缩偏低",
+      "checks": "查看 6 缸火花塞；互换线圈试验；测缸压",
+      "related_part_sku": "coil-pack"
+    },
+    {
+      "code": "P0171",
+      "title_zh": "系统过稀（第 1 列）",
+      "likely_causes": "真空管泄漏；空气流量计脏；燃油压力偏低；喷油嘴堵塞；排气泄漏致 O2 误报",
+      "checks": "查未记录真空泄漏；读短期/长期燃油修正；测燃油压力；检查空气滤芯与进气管",
+      "related_part_sku": "air-filter"
+    },
+    {
+      "code": "P0174",
+      "title_zh": "系统过稀（第 2 列）",
+      "likely_causes": "同 P0171；个别车型为第 2 列独立进气/喷油问题",
+      "checks": "同 P0171；对比两列修正值；检查对应 O2 与喷油",
+      "related_part_sku": "air-filter"
+    },
+    {
+      "code": "P0420",
+      "title_zh": "催化器效率低于阈值（列 1）",
+      "likely_causes": "催化器老化；排气泄漏；前氧/后氧异常；发动机失火未修",
+      "checks": "先排除失火与燃油问题；看后氧波形；查排气接口泄漏；路试后复测",
+      "related_part_sku": null
+    },
+    {
+      "code": "P0130",
+      "title_zh": "前氧传感器电路故障（列 1 传感器 1）",
+      "likely_causes": "氧传感器老化；线束断路/短路；排气泄漏；加热电路故障",
+      "checks": "读氧传感器电压与响应；查线束与插头；排除排气泄漏后再换件",
+      "related_part_sku": null
+    },
+    {
+      "code": "P0136",
+      "title_zh": "后氧传感器电路故障（列 1 传感器 2）",
+      "likely_causes": "后氧传感器老化；线束问题；催化器后段泄漏",
+      "checks": "对比前后氧数据；查线束；确认催化器工况后再换后氧",
+      "related_part_sku": null
+    },
+    {
+      "code": "P0016",
+      "title_zh": "曲轴/凸轮轴位置相关性（列 1）",
+      "likely_causes": "正时偏差；凸轮轴调节阀故障；机油压力/粘度异常；传感器信号问题",
+      "checks": "查机油液位与品质；读凸轮轴实际/目标角；必要时查正时链条张紧",
+      "related_part_sku": "engine-oil"
+    },
+    {
+      "code": "P0340",
+      "title_zh": "凸轮轴位置传感器 A 电路",
+      "likely_causes": "凸轮轴位置传感器；线束；正时链条跳齿（严重）",
+      "checks": "查传感器插头与供电；示波器看齿形；排除正时后再换传感器",
+      "related_part_sku": null
+    },
+    {
+      "code": "P0700",
+      "title_zh": "变速箱控制系统故障（请求 MIL）",
+      "likely_causes": "PDK 内部故障；阀体/电磁阀；油温传感器；需读变速箱专用码",
+      "checks": "用 PIWIS/X431 读 PDK 详细码；查变速箱油位与温度；记录驾驶模式与症状",
+      "related_part_sku": "pdk-fluid"
+    },
+    {
+      "code": "P0730",
+      "title_zh": "齿轮比不正确",
+      "likely_causes": "离合器片磨损；阀体压力异常；速度传感器；机械打滑",
+      "checks": "读 PDK 冻结帧；查油质与液位；路试各档升降；对比厂家自适应程序",
+      "related_part_sku": "pdk-fluid"
+    },
+    {
+      "code": "P0748",
+      "title_zh": "压力控制电磁阀 A 电气",
+      "likely_causes": "电磁阀线圈；线束；阀体内部；TCU 供电",
+      "checks": "读变速箱详细码；查线束电阻；确认油温正常后查阀体",
+      "related_part_sku": "pdk-fluid"
+    },
+    {
+      "code": "P0562",
+      "title_zh": "系统电压偏低",
+      "likely_causes": "蓄电池老化；发电机充电不足；搭铁不良；寄生放电",
+      "checks": "测熄火静态电压；怠速充电电压应约 13.8–14.5V；负载测试电瓶；查发电机皮带",
+      "related_part_sku": "battery"
+    },
+    {
+      "code": "P0622",
+      "title_zh": "发电机磁场控制电路",
+      "likely_causes": "发电机调节器；LIN/励磁线束；ECU 输出；皮带打滑",
+      "checks": "查充电电压曲线；检查发电机插头；检查传动皮带张紧",
+      "related_part_sku": "battery"
+    },
+    {
+      "code": "P0128",
+      "title_zh": "冷却液温度低于节温器调节温度",
+      "likely_causes": "节温器卡在开启位；冷却液不足；水温传感器偏差；暖风需求导致长期低温",
+      "checks": "确认暖机后水温能否达 90°C 附近；查冷却液液位；对比 OBD 水温与仪表；必要时换节温器",
+      "related_part_sku": "coolant"
+    },
+    {
+      "code": "P0118",
+      "title_zh": "冷却液温度传感器电路电压过高",
+      "likely_causes": "水温传感器断路；线束对电源短路；插头腐蚀",
+      "checks": "测传感器电阻随温度变化；查线束与接地；对比冷车/热车读数",
+      "related_part_sku": "coolant"
+    },
+    {
+      "code": "P2181",
+      "title_zh": "冷却系统性能低于阈值",
+      "likely_causes": "节温器故障；水泵效率下降；散热器堵塞；冷却液老化",
+      "checks": "路试记录水温曲线；查风扇高低速；检查水泵皮带/泄漏；确认冷却液浓度",
+      "related_part_sku": "coolant"
+    },
+    {
+      "code": "P0480",
+      "title_zh": "冷却风扇 1 控制电路",
+      "likely_causes": "风扇继电器；风扇电机；线束；ECU 输出；保险丝",
+      "checks": "怠速高温时风扇是否启动；听继电器吸合；直接供电试风扇；查保险与线束",
+      "related_part_sku": null
+    },
+    {
+      "code": "P0521",
+      "title_zh": "机油压力传感器/开关范围性能",
+      "likely_causes": "机油压力传感器；机油液位偏低；机油泵磨损；线束干扰",
+      "checks": "熄火检查机油液位；热车怠速读油压（若有机械表）；查传感器插头；记录与异响关系",
+      "related_part_sku": "engine-oil"
+    },
+    {
+      "code": "P0522",
+      "title_zh": "机油压力传感器电路电压偏低",
+      "likely_causes": "传感器对地短路；线束磨损；传感器内部故障",
+      "checks": "查传感器供电/信号线；对比机油液位与仪表警告；必要时换传感器复测",
+      "related_part_sku": "engine-oil"
+    },
+    {
+      "code": "P0101",
+      "title_zh": "空气流量计电路范围/性能",
+      "likely_causes": "空气流量计脏污；进气泄漏；线束接触不良；MAF 老化",
+      "checks": "清洁 MAF 探头；查进气管卡箍；读怠速与负荷下 MAF g/s 是否合理；对比燃油修正",
+      "related_part_sku": "air-filter"
+    },
+    {
+      "code": "P0507",
+      "title_zh": "怠速转速高于预期",
+      "likely_causes": "进气泄漏；节气门积碳；怠速执行器卡滞；真空管脱落",
+      "checks": "查未记录真空泄漏；清洗节气门；读怠速转速与目标值；检查 PCV 与软管",
+      "related_part_sku": null
+    },
+    {
+      "code": "P0500",
+      "title_zh": "车速传感器电路",
+      "likely_causes": "轮速/车速传感器；线束；ABS 模块输入；轮胎尺寸变更",
+      "checks": "路试看仪表车速；读 ABS 轮速数据；查传感器与线束；确认轮胎规格",
+      "related_part_sku": null
+    },
+    {
+      "code": "P0455",
+      "title_zh": "蒸发排放系统检测到大量泄漏",
+      "likely_causes": "油箱盖未拧紧；EVAP 炭罐管路脱落；purge 阀常开；加油口密封圈",
+      "checks": "确认油箱盖拧紧；目视炭罐与软管；烟雾测漏；查加油口密封",
+      "related_part_sku": "fuel-filter"
+    },
+    {
+      "code": "P0442",
+      "title_zh": "蒸发排放系统检测到小泄漏",
+      "likely_causes": "炭罐电磁阀泄漏；软管微裂；油箱盖密封老化",
+      "checks": "查 purge/vent 阀；烟雾测漏；更换油箱盖试验；检查炭罐附近管路",
+      "related_part_sku": "fuel-filter"
+    },
+    {
+      "code": "C0035",
+      "title_zh": "ABS 左前轮速传感器电路",
+      "likely_causes": "轮速传感器；齿圈污损；线束断路；轮毂轴承间隙",
+      "checks": "读四轮轮速对比；查传感器间隙与齿圈；摆动线束看是否间歇；清 ABS 码后路试",
+      "related_part_sku": "front-pad-sensor"
+    },
+    {
+      "code": "C0040",
+      "title_zh": "ABS 右前轮速传感器电路",
+      "likely_causes": "轮速传感器；齿圈污损；线束断路；轮毂轴承间隙",
+      "checks": "同 C0035；重点检查右前传感器与线束走向",
+      "related_part_sku": "front-pad-sensor"
+    },
+    {
+      "code": "P2270",
+      "title_zh": "后氧传感器信号偏浓（列 1）",
+      "likely_causes": "后氧传感器老化；排气泄漏；催化器效率下降；前氧异常拖累",
+      "checks": "先排除失火与过稀；看后氧电压是否长期偏高；查排气接口；对比前后氧",
+      "related_part_sku": null
+    },
+    {
+      "code": "P2187",
+      "title_zh": "怠速时系统过稀（列 1）",
+      "likely_causes": "真空泄漏；MAF 偏差；喷油嘴滴漏不足；燃油压力偏低",
+      "checks": "怠速读短期/长期燃油修正；查进气泄漏；测燃油压力；对比 P0171 是否同时存在",
+      "related_part_sku": "air-filter"
+    },
+    {
+      "code": "C0041",
+      "title_zh": "ABS 右后轮速传感器电路",
+      "likely_causes": "轮速传感器；齿圈污损；线束断路；轮毂轴承间隙",
+      "checks": "读四轮轮速对比；查右后传感器间隙与齿圈；摆动线束看是否间歇；清 ABS 码后路试",
+      "related_part_sku": "rear-pad-sensor"
+    },
+    {
+      "code": "C0045",
+      "title_zh": "ABS 左后轮速传感器电路",
+      "likely_causes": "轮速传感器；齿圈污损；线束断路；轮毂轴承间隙",
+      "checks": "同 C0041；重点检查左后传感器与线束走向",
+      "related_part_sku": "rear-pad-sensor"
+    },
+    {
+      "code": "P0571",
+      "title_zh": "制动灯开关 A 电路",
+      "likely_causes": "制动踏板开关卡滞；线束断路；开关触点烧蚀；制动液泄漏致开关污染",
+      "checks": "踩制动看尾灯/仪表制动灯；测开关通断；查踏板机构与线束；必要时换开关",
+      "related_part_sku": "brake-fluid"
+    },
+    {
+      "code": "P0530",
+      "title_zh": "空调制冷剂压力传感器电路",
+      "likely_causes": "压力传感器故障；制冷剂不足/过多；线束接触不良；冷凝器风扇不工作",
+      "checks": "读高压侧压力（若有表）；查传感器插头；确认风扇高低速；必要时回收加注后复测",
+      "related_part_sku": "cabin-filter"
+    },
+    {
+      "code": "P0532",
+      "title_zh": "空调制冷剂压力传感器电压偏低",
+      "likely_causes": "制冷剂严重不足；传感器对地短路；线束磨损；系统泄漏",
+      "checks": "查制冷剂存量与泄漏点；测传感器电阻；查线束；排除泄漏后加注",
+      "related_part_sku": "cabin-filter"
+    },
+    {
+      "code": "P0441",
+      "title_zh": "蒸发排放净化流量不正确",
+      "likely_causes": "purge 阀卡滞常开/常闭；炭罐堵塞；真空管路错误；油箱盖密封不良",
+      "checks": "听 purge 阀怠速吸合声；烟雾测漏；查炭罐与软管走向；换油箱盖试验",
+      "related_part_sku": "fuel-filter"
+    },
+    {
+      "code": "P0506",
+      "title_zh": "怠速转速低于预期",
+      "likely_causes": "节气门积碳；进气泄漏（反向）；怠速执行器故障；ECU 自适应值异常",
+      "checks": "读怠速目标与实际转速；清洗节气门；查进气泄漏；断电瓶 10 分钟重置自适应",
+      "related_part_sku": null
+    },
+    {
+      "code": "P0113",
+      "title_zh": "进气温度传感器电路电压过高",
+      "likely_causes": "IAT 传感器断路；线束对电源短路；插头腐蚀；传感器内部故障",
+      "checks": "测 IAT 电阻随温度变化；查线束与接地；对比 OBD 与环境温度；必要时换传感器",
+      "related_part_sku": "air-filter"
+    },
+    {
+      "code": "P0117",
+      "title_zh": "冷却液温度传感器电路电压偏低",
+      "likely_causes": "水温传感器对地短路；线束磨损；插头进水；传感器内部故障",
+      "checks": "测传感器电阻随温度变化；查线束与接地；对比冷车/热车读数；排除 P0118 对偶码",
+      "related_part_sku": "coolant"
+    },
+    {
+      "code": "P0460",
+      "title_zh": "燃油液位传感器电路",
+      "likely_causes": "油位传感器浮子卡滞；油箱内线束磨损；传感器总成老化；加油后仍不准",
+      "checks": "对比仪表与 OBD 油位；查油箱盖与加油口；必要时读 PIWIS 油位百分比；检查浮子臂",
+      "related_part_sku": "fuel-filter"
+    },
+    {
+      "code": "P2138",
+      "title_zh": "节气门/踏板位置传感器相关性",
+      "likely_causes": "节气门体积碳；踏板位置传感器双路不一致；线束干扰；节气门电机故障",
+      "checks": "读踏板与节气门实际/目标开度；清洗节气门；查踏板传感器插头；路试加速是否顿挫",
+      "related_part_sku": null
+    },
+    {
+      "code": "B12C0",
+      "title_zh": "敞篷/软顶控制模块通信",
+      "likely_causes": "软顶液压泵继电器；限位开关；模块供电/搭铁；线束插头腐蚀（敞篷车型）",
+      "checks": "查软顶操作是否完整；读敞篷专用码；查液压液位与泵继电器；检查尾箱模块插头",
+      "related_part_sku": null
+    },
+    {
+      "code": "B1342",
+      "title_zh": "门控单元通信/内部故障",
+      "likely_causes": "门控模块供电；CAN 线束；门锁电机；车窗升降器开关",
+      "checks": "试各门锁/窗/镜；查对应门线束与模块插头；读车身舒适详细码；排除单门线束断",
+      "related_part_sku": null
+    },
+    {
+      "code": "B10A0",
+      "title_zh": "车身电源分配/电压供应异常",
+      "likely_causes": "蓄电池老化；发电机充电不足；保险丝盒接触；寄生放电；搭铁腐蚀",
+      "checks": "测静态/怠速电压；负载测试电瓶；查主要保险与搭铁点；记录熄火后电压下降曲线",
+      "related_part_sku": "battery"
+    },
+    {
+      "code": "P0606",
+      "title_zh": "ECU/PCM 处理器内部故障",
+      "likely_causes": "ECU 内部故障；供电波动；线束干扰；软件/标定异常（少见）",
+      "checks": "先排除电压与搭铁问题；查是否伴随多系统通信码；记录症状后尝试断电瓶重置；必要时读 PIWIS 标定",
+      "related_part_sku": null
+    }
+  ]
+}

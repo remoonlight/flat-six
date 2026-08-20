@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "note": "105-020 PETKA 图位 → pm-intake mesh；OEM 为用户指定 981 EPC 子件",
+  "assemblyId": "pm-intake",
+  "links": [
+    { "pos": 1, "mesh": "tripo_part_0", "oem": "98110604706" },
+    { "pos": 2, "mesh": "tripo_part_1", "oem": "98110604406" },
+    { "pos": 3, "mesh": "tripo_part_3", "oem": "98110627000" },
+    { "pos": 4, "mesh": "tripo_part_4", "oem": "99610644704" },
+    { "pos": 5, "mesh": "tripo_part_5", "oem": "PAF003923" },
+    { "pos": 6, "mesh": "tripo_part_6", "oem": "98110624703" },
+    { "pos": 7, "mesh": "tripo_part_7", "oem": "98110615005" },
+    { "pos": 8, "mesh": "tripo_part_8", "oem": "98110628801" },
+    { "pos": 9, "mesh": "tripo_part_9", "oem": "98110627500" },
+    { "pos": 10, "mesh": "tripo_part_11", "oem": "98110626703" },
+    { "pos": 11, "mesh": "tripo_part_12", "oem": "7P5121671B", "oemAlt": ["7P5121671A"] },
+    { "pos": 12, "mesh": "tripo_part_0_R", "oem": "97060650300" }
+  ],
+  "consumables": [
+    { "pos": 20, "oem": "00004330515" },
+    { "pos": 20, "oem": "00004330516" },
+    { "pos": 20, "oem": "00004330564" }
+  ],
+  "skip": [
+    { "pos": 13, "oem": "99923059540", "reason": "无独立 mesh" },
+    { "pos": 14, "oem": "N91242801", "reason": "无 981 sku" },
+    { "pos": 15, "oem": "99907607102", "reason": "无 981 sku" }
+  ]
+}

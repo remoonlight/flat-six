@@ -1,0 +1,7 @@
+Pos	Part No.	Description	Qty	Price GBP
+001	9A1.107.224.00	Oil filter insert	1	28.61
+002	000.043.206.69	Engine oil 0W-40 1L	1	14.50
+003	981.110.130.00	Air cleaner cartridge	1	54.61
+004	9A1.602.104.07	Ignition coil	1	119.61
+HEADER junk line without oem
+005	999.170.151.90	Spark plug FGR 5NQE	1	30.06

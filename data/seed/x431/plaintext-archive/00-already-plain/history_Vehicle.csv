@@ -1,0 +1,903 @@
+﻿VID,SN,VehicleUID,Make,Model,SubModel,Engine,Year,LicenseNumber,Mileage,Color,VIN,DiagSoftVersion,VehicleSoftVersion,VehicleInformation,StaffIDString,TimeStamp,Remark,OwnerID,Path,VehiclePath,TimeStampYearMonth,CharSet,Language,QuickTest,SystemScan,UploadFlag
+1,X431SERIAL00,BMW,BMW,,,,,,,,,V7.03.023,V51.50,,,2025-04-05 02:13:49PM,,,,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/BMW/V51.50/,2025-04,GB2312,1,,,
+2,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,113578,,WP0ZZZ98ZES000001,V7.03.023,V24.46,"Car:9x1
+BV:Steering_Control_Unit
+Mode:EPS_A2_2
+
+DSN:_EPS_#000004#nein",,2025-04-13 04:29:57PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > ���⹦��
+�Զ����� > Cayman/Boxster��981�� > ���߹���
+�Զ����� > Cayman/Boxster��981�� > ���߹��� > ���߱���
+�Զ����� > Cayman/Boxster��981�� > ���߹��� > ���߱��� > ����
+�Զ����� > Cayman/Boxster��981�� > ���߹��� > ���߱��� > �綯����ת��ϵͳ
+�Զ����� > Cayman/Boxster��981�� > ���߹��� > ���߱��� > PSM����ʱ���ȶ�����ϵͳ��
+�Զ����� > Cayman/Boxster��981�� > ���߹��� > ���߱��� > �����Ǳ���ʱ��
+�Զ����� > Cayman/Boxster��981�� > ���߹��� > ���߱��� > ˮƽ�߶ȿ���
+�Զ����� > Cayman/Boxster��981�� > ת���̵����豸
+�Զ����� > Cayman/Boxster��981�� > ˮƽ�߶ȿ���
+�Զ����� > Cayman/Boxster��981�� > �綯����ת��ϵͳ",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.46/,2025-04,GB2312,1,,,
+3,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,113578,,WP0ZZZ98ZES000001,V7.03.023,V24.46,"Car:9x1
+BV:Steering_Control_Unit
+Mode:EPS_A2_2
+
+DSN:_EPS_#000004#nein",,2025-04-13 04:43:46PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > PSM����ʱ���ȶ�����ϵͳ��
+�Զ����� > Cayman/Boxster��981�� > ת���̵����豸
+�Զ����� > Cayman/Boxster��981�� > �綯����ת��ϵͳ",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.46/,2025-04,GB2312,1,,,
+4,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,,,WP0ZZZ98ZES000001,V7.03.023,V24.46,"Car:9x1
+BV:BV_InforContrUnit1UDS
+Mode:EV_MUHig6C3Gen2AW7_001
+
+DSN:EV_MUHig6C3Gen2AW7#001",,2025-04-13 04:47:13PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > PCM/CDR��ͨ�Ź���/CD����������
+�Զ����� > Cayman/Boxster��981�� > ���������װ��
+�Զ����� > Cayman/Boxster��981�� > ��������ϵͳ ��ERA Glonass��
+�Զ����� > Cayman/Boxster��981�� > ������
+�Զ����� > Cayman/Boxster��981�� > PSM����ʱ���ȶ�����ϵͳ��",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.46/,2025-04,GB2312,1,,,
+5,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,114398,,WP0ZZZ98ZES000001,V7.03.023,V24.46,"Car:9x1
+BV:BV_InforContrUnit1UDS
+Mode:EV_MUHig6C3Gen2AW7_001
+
+DSN:EV_MUHig6C3Gen2AW7#001",,2025-04-15 11:48:44PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > �ⲿ�Ŵ���
+�Զ����� > Cayman/Boxster��981�� > ������
+�Զ����� > Cayman/Boxster��981�� > �Ǳ����
+�Զ����� > Cayman/Boxster��981�� > DME������ʽ�����������豸��
+�Զ����� > Cayman/Boxster��981�� > PCM/CDR��ͨ�Ź���/CD����������",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.46/,2025-04,GB2312,1,,,
+6,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,114398,,WP0ZZZ98ZES000001,V7.03.023,V24.46,"Car:9x1
+BV:Steering_Control_Unit
+Mode:EPS_A2_2
+
+DSN:_EPS_#000004#nein",,2025-04-16 09:52:02AM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > �綯����ת��ϵͳ",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.46/,2025-04,GB2312,1,,,
+7,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,114463,,WP0ZZZ98ZES000001,V7.03.023,V24.46,"Car:9x1
+BV:Kombiinstrument_MM
+Mode:Kombiinstrument_A3_5
+
+DSN:000034#Kombiinstrument_A3.5#nein#ja",,2025-04-23 11:06:05AM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > ת���̵����豸
+�Զ����� > Cayman/Boxster��981�� > �綯����ת��ϵͳ
+�Զ����� > Cayman/Boxster��981�� > �Ǳ����
+�Զ����� > Cayman/Boxster��981�� > �����Ǳ���ʱ��",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.46/,2025-04,GB2312,1,,,
+8,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,16777215,,WP0ZZZ98ZES000001,V7.03.023,V24.46,,,2025-04-23 04:25:25PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > ���⹦��",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.46/,2025-04,GB2312,1,,,
+9,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,16777215,,WP0ZZZ98ZES000001,V7.03.023,V24.46,"Car:9x1
+BV:DME_BDE_Continental
+Mode:SDI9_1_981_3_4L_EU5
+
+DSN:P200",,2025-04-23 09:27:10PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > DME������ʽ�����������豸��",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.46/,2025-04,GB2312,1,,,
+10,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,114589,,WP0ZZZ98ZES000001,V7.03.023,V24.46,"Car:9x1
+BV:CAN_CAN_Gateway
+Mode:CAN_CAN_Gateway_A7_1
+
+DSN:A7.1  #CAN/CAN Gateway#nein#ja",,2025-04-23 11:25:39PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > DME������ʽ�����������豸��
+�Զ����� > Cayman/Boxster��981�� > ����
+�Զ����� > Cayman/Boxster��981�� > ���⹦��
+�Զ����� > Cayman/Boxster��981�� > ��������
+�Զ����� > Cayman/Boxster��981�� > ���߹���",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.46/,2025-04,GB2312,1,,,
+11,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,114815,,WP0ZZZ98ZES000001,V7.03.023,V24.46,"Car:9x1
+BV:PASM_PADM
+Mode:PASM_PADM_9x1_a2_1
+
+DSN:000003#PASM+PADM#nein#ja",,2025-05-09 04:06:40PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > ��˵����豸
+�Զ����� > Cayman/Boxster��981�� > PSM����ʱ���ȶ�����ϵͳ��
+�Զ����� > Cayman/Boxster��981�� > ˮƽ�߶ȿ���",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.46/,2025-05,GB2312,1,,,
+12,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,115101,,WP0ZZZ98ZES000001,V7.03.023,V24.46,"Car:9x1
+BV:PASM_PADM
+Mode:PASM_PADM_9x1_a2_1
+
+DSN:000003#PASM+PADM#nein#ja",,2025-05-26 04:34:00PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > PSM����ʱ���ȶ�����ϵͳ��
+�Զ����� > Cayman/Boxster��981�� > ˮƽ�߶ȿ���
+�Զ����� > Cayman/Boxster��981�� > ����
+�Զ����� > Cayman/Boxster��981�� > DME������ʽ�����������豸��
+�Զ����� > Cayman/Boxster��981�� > ��˵����豸
+�Զ����� > Cayman/Boxster��981�� > ǰ�˵����豸",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.46/,2025-05,GB2312,1,,,
+13,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,115408,,WP0ZZZ98ZES000001,V7.03.023,V24.46,"Car:9x1
+BV:EPB
+Mode:Parkbremse_a7
+
+DSN:000006#nein#ja",,2025-06-02 06:25:00PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > ���������װ��
+�Զ����� > Cayman/Boxster��981�� > DME������ʽ�����������豸��
+�Զ����� > Cayman/Boxster��981�� > �綯����ת��ϵͳ
+�Զ����� > Cayman/Boxster��981�� > PSM����ʱ���ȶ�����ϵͳ��
+�Զ����� > Cayman/Boxster��981�� > ǰ�˵����豸
+�Զ����� > Cayman/Boxster��981�� > ��������ͷ
+�Զ����� > Cayman/Boxster��981�� > פ���ƶ���",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.46/,2025-06,GB2312,1,,,
+14,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,115448,,WP0ZZZ98ZES000001,V7.03.023,V24.46,"Car:9x1
+BV:Rueckfahrkamera_II
+Mode:RFK_Compact_A2_1
+
+DSN:EV_RearvCompaCamer#002",,2025-06-07 09:49:41PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > DME������ʽ�����������豸��
+�Զ����� > Cayman/Boxster��981�� > פ���ƶ���
+�Զ����� > Cayman/Boxster��981�� > PCM/CDR��ͨ�Ź���/CD����������
+�Զ����� > Cayman/Boxster��981�� > ��������ͷ
+�Զ����� > Cayman/Boxster��981�� > ADAS У׼
+�Զ����� > Cayman/Boxster��981�� > ADAS У׼ > ��������ͷ",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.46/,2025-06,GB2312,1,,,
+15,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,115448,,WP0ZZZ98ZES000001,V7.03.023,V24.46,"Car:9x1
+BV:BV_InforContrUnit1UDS
+Mode:EV_MUHig6C3Gen2AW7_001
+
+DSN:EV_MUHig6C3Gen2AW7#001",,2025-06-12 06:01:32PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > PCM/CDR��ͨ�Ź���/CD����������",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.46/,2025-06,GB2312,1,,,
+16,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,115448,,WP0ZZZ98ZES000001,V7.03.023,V24.46,"Car:9x1
+BV:BV_InforContrUnit1UDS
+Mode:EV_MUHig6C3Gen2AW7_001
+
+DSN:EV_MUHig6C3Gen2AW7#001",,2025-06-12 07:11:18PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > �ⲿ�Ŵ���
+�Զ����� > Cayman/Boxster��981�� > PCM/CDR��ͨ�Ź���/CD����������",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.46/,2025-06,GB2312,1,,,
+17,X431SERIAL00,PORSCHE,PORSCHE,,,,,,,,,V7.03.023,V24.46,,,2025-06-12 09:38:04PM,,,,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.46/,2025-06,GB2312,1,,,
+18,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,16777215,,WP0ZZZ98ZES000001,V7.03.023,V24.46,"Car:9x1
+BV:BV_InforContrUnit1UDS
+Mode:EV_MUHig6C3Gen2AW7_001
+
+DSN:EV_MUHig6C3Gen2AW7#001",,2025-06-12 09:40:50PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > PCM/CDR��ͨ�Ź���/CD����������",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.46/,2025-06,GB2312,1,,,
+19,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,115448,,WP0ZZZ98ZES000001,V7.03.023,V24.46,"Car:9x1
+BV:DME_BDE_Continental
+Mode:SDI9_1_981_3_4L_EU5
+
+DSN:P200",,2025-06-13 10:08:50AM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > PSM����ʱ���ȶ�����ϵͳ��
+�Զ����� > Cayman/Boxster��981�� > ���ӵ�г��
+�Զ����� > Cayman/Boxster��981�� > ����
+�Զ����� > Cayman/Boxster��981�� > ǰ����ͷ
+�Զ����� > Cayman/Boxster��981�� > DME������ʽ�����������豸��
+�Զ����� > Cayman/Boxster��981�� > ��ȫ����
+�Զ����� > Cayman/Boxster��981�� > ���������װ��
+�Զ����� > Cayman/Boxster��981�� > ת���̵����豸
+�Զ����� > Cayman/Boxster��981�� > PCM/CDR��ͨ�Ź���/CD����������
+�Զ����� > Cayman/Boxster��981�� > ǰ�˵����豸
+�Զ����� > Cayman/Boxster��981�� > ��˵����豸",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.46/,2025-06,GB2312,1,,,
+20,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,115459,,WP0ZZZ98ZES000001,V7.03.023,V24.46,"Car:9x1
+BV:Rueckfahrkamera_II
+Mode:RFK_Compact_A2_1
+
+DSN:EV_RearvCompaCamer#002",,2025-06-13 11:56:59AM,,,�Զ����� > Cayman/Boxster��981��,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.46/,2025-06,GB2312,1,,,
+21,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,115467,,WP0ZZZ98ZES000001,V7.03.023,V24.46,"Car:9x1
+BV:Rueckfahrkamera_II
+Mode:RFK_Compact_A2_1
+
+DSN:EV_RearvCompaCamer#002",,2025-06-13 12:27:40PM,,,�Զ����� > Cayman/Boxster��981��,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.46/,2025-06,GB2312,1,,,
+22,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,115471,,WP0ZZZ98ZES000001,V7.03.023,V24.46,"Car:9x1
+BV:Rueckfahrkamera_II
+Mode:RFK_Compact_A2_1
+
+DSN:EV_RearvCompaCamer#002",,2025-06-13 04:12:47PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > DME������ʽ�����������豸��",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.46/,2025-06,GB2312,1,,,
+23,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,115471,,WP0ZZZ98ZES000001,V7.03.023,V24.46,"Car:9x1
+BV:PASM_PADM
+Mode:PASM_PADM_9x1_a2_1
+
+DSN:000003#PASM+PADM#nein#ja",,2025-06-14 12:23:58AM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > פ���ƶ���
+�Զ����� > Cayman/Boxster��981�� > PCM/CDR��ͨ�Ź���/CD����������
+�Զ����� > Cayman/Boxster��981�� > �ⲿ�Ŵ���
+�Զ����� > Cayman/Boxster��981�� > DME������ʽ�����������豸��
+�Զ����� > Cayman/Boxster��981�� > ���⹦��
+�Զ����� > Cayman/Boxster��981�� > ���⹦�� > ˮƽ�߶ȿ���/PASM",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.46/,2025-06,GB2312,1,,,
+24,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,115603,,WP0ZZZ98ZES000001,V7.03.023,V24.46,"Car:9x1
+BV:Verdeck_Synchronisation
+Mode:Verdeck_Synchronisations_SG_A1_0
+
+DSN:VERDECK SYNC-SG#001",,2025-06-16 12:39:25PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > PCM/CDR��ͨ�Ź���/CD����������",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.46/,2025-06,GB2312,1,,,
+25,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,115623,,WP0ZZZ98ZES000001,V7.03.023,V24.46,"Car:9x1
+BV:BV_SoundSysteUDS
+Mode:EV_AMPMst16C4Gen2BOSE_001
+
+DSN:EV_AMPMst16C4Gen2BOSE#001",,2025-06-16 02:15:01PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > ˮƽ�߶ȿ���
+�Զ����� > Cayman/Boxster��981�� > ѡ����
+�Զ����� > Cayman/Boxster��981�� > �ⲿ�Ŵ���",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.46/,2025-06,GB2312,1,,,
+26,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,16777215,,WP0ZZZ98ZES000001,V7.03.023,V24.46,"Car:9x1
+BV:BV_ContrUnitLaneChangAssis2UDS
+Mode:EV_RearRadarS2BoschPO67x_001
+
+DSN:EV_RearRadarS2BoschPO67x#001",,2025-06-17 12:15:54PM,,,�Զ����� > Cayman/Boxster��981��,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.46/,2025-06,GB2312,1,,,
+27,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,39373,,WP0ZZZ98ZES000002,V7.03.023,V24.46,"Car:9x1
+BV:PSM
+Mode:PSM_a2
+
+DSN:002000",,2025-06-18 08:39:14PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > DME������ʽ�����������豸��
+�Զ����� > Cayman/Boxster��981�� > �綯����ת��ϵͳ
+�Զ����� > Cayman/Boxster��981�� > PSM����ʱ���ȶ�����ϵͳ��",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.46/,2025-06,GB2312,1,,,
+28,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,16777215,,WP0ZZZ98ZES000001,V7.03.023,V24.46,"Car:9x1
+BV:Kombiinstrument_MM
+Mode:Kombiinstrument_A3_5
+
+DSN:000034#Kombiinstrument_A3.5#nein#ja",,2025-06-24 12:27:43PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > PCM/CDR��ͨ�Ź���/CD����������
+�Զ����� > Cayman/Boxster��981�� > �Ǳ����",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.46/,2025-06,GB2312,1,,,
+29,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,115718,,WP0ZZZ98ZES000001,V7.03.023,V24.46,"Car:9x1
+BV:BV_ContrUnitLaneChangAssis2UDS
+Mode:EV_RearRadarS2BoschPO67x_001
+
+DSN:EV_RearRadarS2BoschPO67x#001",,2025-06-25 04:08:59PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > �Ǳ����
+�Զ����� > Cayman/Boxster��981�� > �ⲿ�Ŵ���",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.46/,2025-06,GB2312,1,,,
+30,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,115719,,WP0ZZZ98ZES000001,V7.03.023,V24.50,"Car:9x1
+BV:Rueckfahrkamera_II
+Mode:RFK_Compact_A2_1
+
+DSN:EV_RearvCompaCamer#002",,2025-06-26 09:54:31AM,,,�Զ����� > Cayman/Boxster��981��,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.50/,2025-06,GB2312,1,,,
+31,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,115741,,WP0ZZZ98ZES000001,V7.03.023,V24.50,"Car:9x1
+BV:BV_ContrUnitLaneChangAssis2UDS
+Mode:EV_RearRadarS2BoschPO67x_001
+
+DSN:EV_RearRadarS2BoschPO67x#001",,2025-06-26 01:53:12PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > IC(�Ǳ�)
+�Զ����� > Cayman/Boxster��981�� > PASM(ˮƽ�߶ȿ���)",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.50/,2025-06,GB2312,1,,,
+32,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,39707,,WP0ZZZ98ZES000002,V7.03.023,V24.50,"Car:9x1
+BV:Steering_Control_Unit
+Mode:EPS_A2_2
+
+DSN:_EPS_#000004#nein",,2025-06-27 10:41:10PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > ECM/DME(����������ģ��)
+�Զ����� > Cayman/Boxster��981�� > TCM/PDK(�Զ����������ģ��)
+�Զ����� > Cayman/Boxster��981�� > IC(�Ǳ�)
+�Զ����� > Cayman/Boxster��981�� > ESP/PSM(����ȶ�ϵͳ)
+�Զ����� > Cayman/Boxster��981�� > ת���̵����豸
+�Զ����� > Cayman/Boxster��981�� > EPS(�綯����ת��ϵͳ)",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.50/,2025-06,GB2312,1,,,
+33,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,116518,,WP0ZZZ98ZES000001,V7.03.023,V24.50,"Car:9x1
+BV:Rueckfahrkamera_II
+Mode:RFK_Compact_A2_1
+
+DSN:EV_RearvCompaCamer#002",,2025-07-12 05:58:14PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > ESP/PSM(����ȶ�ϵͳ)",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.50/,2025-07,GB2312,1,,,
+34,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2015,,91531,,WP0ZZZ98ZES000003,V7.03.023,V24.50,"Car:9x1
+BV:PASM_PADM
+Mode:PASM_9x1_a2_1
+
+DSN:000003#PASM#nein#ja",,2025-07-15 02:08:22PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > ECM/DME(����������ģ��)
+�Զ����� > Cayman/Boxster��981�� > TCM/PDK(�Զ����������ģ��)
+�Զ����� > Cayman/Boxster��981�� > ת���̵����豸
+�Զ����� > Cayman/Boxster��981�� > EPS(�綯����ת��ϵͳ)
+�Զ����� > Cayman/Boxster��981�� > ESP/PSM(����ȶ�ϵͳ)
+�Զ����� > Cayman/Boxster��981�� > PASM(ˮƽ�߶ȿ���)",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.50/,2025-07,GB2312,1,,,
+35,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,116739,,WP0ZZZ98ZES000001,V7.03.023,V24.50,"Car:9x1
+BV:BV_ContrUnitLaneChangAssis2UDS
+Mode:EV_RearRadarS2BoschPO67x_001
+
+DSN:EV_RearRadarS2BoschPO67x#001",,2025-07-16 06:17:11PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > ECM/DME(����������ģ��)
+�Զ����� > Cayman/Boxster��981�� > TCM/PDK(�Զ����������ģ��)",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.50/,2025-07,GB2312,1,,,
+36,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,117036,,WP0ZZZ98ZES000001,V7.03.023,V24.50,"Car:9x1
+BV:DME_BDE_Continental
+Mode:SDI9_1_981_3_4L_EU5
+
+DSN:P200",,2025-07-24 10:11:40AM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > ECM/DME(����������ģ��)
+�Զ����� > Cayman/Boxster��981�� > ����
+�Զ����� > Cayman/Boxster��981�� > TCM/PDK(�Զ����������ģ��)
+�Զ����� > Cayman/Boxster��981�� > CCS/ACC(Ѳ������ϵͳ)
+�Զ����� > Cayman/Boxster��981�� > ESP/PSM(����ȶ�ϵͳ)
+�Զ����� > Cayman/Boxster��981�� > ����",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.50/,2025-07,GB2312,1,,,
+37,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,117094,,WP0ZZZ98ZES000001,V7.03.023,V24.50,"Car:9x1
+BV:Rueckfahrkamera_II
+Mode:RFK_Compact_A2_1
+
+DSN:EV_RearvCompaCamer#002",,2025-07-24 04:06:16PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > ECM/DME(����������ģ��)",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.50/,2025-07,GB2312,1,,,
+38,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,117112,,WP0ZZZ98ZES000001,V7.03.023,V24.52,"Car:9x1
+BV:Sitzsteuergeraet
+Mode:Sitz_A2_1_9x1
+
+DSN:100016#1920#nein",,2025-07-30 10:53:04AM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > CCS/ACC(Ѳ������ϵͳ)",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2025-07,GB2312,1,,,
+39,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,117115,,WP0ZZZ98ZES000001,V7.03.023,V24.52,"Car:9x1
+BV:Rueckfahrkamera_II
+Mode:RFK_Compact_A2_1
+
+DSN:EV_RearvCompaCamer#002",,2025-07-30 01:53:42PM,,,�Զ����� > Cayman/Boxster��981��,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2025-07,GB2312,1,,,
+40,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,117168,,WP0ZZZ98ZES000001,V7.03.023,V24.52,"Car:9x1
+BV:Rueckfahrkamera_II
+Mode:RFK_Compact_A2_1
+
+DSN:EV_RearvCompaCamer#002",,2025-08-05 08:46:49AM,,,�Զ����� > Cayman/Boxster��981��,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2025-08,GB2312,1,,,
+41,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,117411,,WP0ZZZ98ZES000001,V7.03.023,V24.52,"Car:9x1
+BV:PSM
+Mode:PSM_a2
+
+DSN:002000",,2025-08-12 05:30:13PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > TCM/PDK(�Զ����������ģ��)
+�Զ����� > Cayman/Boxster��981�� > ECM/DME(����������ģ��)
+�Զ����� > Cayman/Boxster��981�� > ����
+�Զ����� > Cayman/Boxster��981�� > IC(�Ǳ�)
+�Զ����� > Cayman/Boxster��981�� > ѡ����
+�Զ����� > Cayman/Boxster��981�� > ESP/PSM(����ȶ�ϵͳ)",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2025-08,GB2312,1,,,
+42,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,,,WP0ZZZ98ZES000001,V7.03.023,V24.52,,,2025-08-12 05:44:34PM,,,,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2025-08,GB2312,1,,,
+43,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,117592,,WP0ZZZ98ZES000001,V7.03.023,V24.52,"Car:9x1
+BV:Rueckfahrkamera_II
+Mode:RFK_Compact_A2_1
+
+DSN:EV_RearvCompaCamer#002",,2025-08-17 11:41:12AM,,,�Զ����� > Cayman/Boxster��981��,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2025-08,GB2312,1,,,
+44,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,117592,,WP0ZZZ98ZES000001,V7.03.023,V24.52,"Car:9x1
+BV:Rueckfahrkamera_II
+Mode:RFK_Compact_A2_1
+
+DSN:EV_RearvCompaCamer#002",,2025-08-17 12:11:50PM,,,�Զ����� > Cayman/Boxster��981��,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2025-08,GB2312,1,,,
+45,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2015,,16777215,,WP0ZZZ98ZES000004,V7.03.023,V24.52,"Car:9x1
+BV:Steering_Control_Unit
+Mode:EPS_A2_3
+
+DSN:_EPS_#000005#nein",,2025-08-21 09:34:42PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > ECM/DME(����������ģ��)
+�Զ����� > Cayman/Boxster��981�� > ת���̵����豸
+�Զ����� > Cayman/Boxster��981�� > EPS(�綯����ת��ϵͳ)",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2025-08,GB2312,1,,,
+46,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2015,,16777215,,WP0ZZZ98ZES000004,V7.03.023,V24.52,"Car:9x1
+BV:Steering_Control_Unit
+Mode:EPS_A2_3
+
+DSN:_EPS_#000005#nein",,2025-08-21 09:47:23PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > EPS(�綯����ת��ϵͳ)",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2025-08,GB2312,1,,,
+47,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,117904,,WP0ZZZ98ZES000001,V7.03.023,V24.52,"Car:9x1
+BV:Rueckfahrkamera_II
+Mode:RFK_Compact_A2_1
+
+DSN:EV_RearvCompaCamer#002",,2025-08-23 06:59:53AM,,,�Զ����� > Cayman/Boxster��981��,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2025-08,GB2312,1,,,
+48,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,117913,,WP0ZZZ98ZES000001,V7.03.023,V24.52,"Car:9x1
+BV:BV_ContrUnitLaneChangAssis2UDS
+Mode:EV_RearRadarS2BoschPO67x_001
+
+DSN:EV_RearRadarS2BoschPO67x#001",,2025-08-23 07:24:10AM,,,�Զ����� > Cayman/Boxster��981��,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2025-08,GB2312,1,,,
+49,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,117968,,WP0ZZZ98ZES000001,V7.03.023,V24.52,"Car:9x1
+BV:Rueckfahrkamera_II
+Mode:RFK_Compact_A2_1
+
+DSN:EV_RearvCompaCamer#002",,2025-08-24 09:01:49PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > PCM/CDR��ͨ�Ź���/CD����������
+�Զ����� > Cayman/Boxster��981�� > �ⲿ�Ŵ���",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2025-08,GB2312,1,,,
+50,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,117969,,WP0ZZZ98ZES000001,V7.03.023,V24.52,"Car:9x1
+BV:Rueckfahrkamera_II
+Mode:RFK_Compact_A2_1
+
+DSN:EV_RearvCompaCamer#002",,2025-08-24 09:24:11PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > PCM/CDR��ͨ�Ź���/CD����������",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2025-08,GB2312,1,,,
+51,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,118135,,WP0ZZZ98ZES000001,V7.03.023,V24.52,"Car:9x1
+BV:PSM
+Mode:PSM_a2
+
+DSN:002000",,2025-09-04 11:14:08AM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > ESP/PSM(����ȶ�ϵͳ)
+�Զ����� > Cayman/Boxster��981�� > EPB(����פ��)
+�Զ����� > Cayman/Boxster��981�� > TCM/PDK(�Զ����������ģ��)
+�Զ����� > Cayman/Boxster��981�� > ECM/DME(����������ģ��)",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2025-09,GB2312,1,,,
+52,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,118147,,WP0ZZZ98ZES000001,V7.03.023,V24.52,"Car:9x1
+BV:Getriebesteuerung_PDK
+Mode:PDK_A2_ohne_Quersperre
+
+DSN:0x41 10",,2025-09-08 10:55:13PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > TCM/PDK(�Զ����������ģ��)",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2025-09,GB2312,1,,,
+53,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,118155,,WP0ZZZ98ZES000001,V7.03.023,V24.52,"Car:9x1
+BV:BV_InforContrUnit1UDS
+Mode:EV_MUHig6C3Gen2AW7_001
+
+DSN:EV_MUHig6C3Gen2AW7#001",,2025-09-08 11:14:11PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > ECM/DME(����������ģ��)
+�Զ����� > Cayman/Boxster��981�� > TCM/PDK(�Զ����������ģ��)
+�Զ����� > Cayman/Boxster��981�� > PCM/CDR��ͨ�Ź���/CD����������",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2025-09,GB2312,1,,,
+54,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,118163,,WP0ZZZ98ZES000001,V7.03.023,V24.52,"Car:9x1
+BV:Getriebesteuerung_PDK
+Mode:PDK_A2_ohne_Quersperre
+
+DSN:0x41 10",,2025-09-10 01:05:33PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > PCM/CDR��ͨ�Ź���/CD����������
+�Զ����� > Cayman/Boxster��981�� > ����
+�Զ����� > Cayman/Boxster��981�� > TCM/PDK(�Զ����������ģ��)",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2025-09,GB2312,1,,,
+55,X431SERIAL00,VW,VW,,,,,,104657,,WVGZZZ00ZED000005,V7.03.023,V29.05,,,2025-09-14 02:34:51PM,,,ȫϵͳ�б�,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/VW/V29.05/,2025-09,GB2312,1,,,
+56,X431SERIAL00,VW,VW,,,,,,104657,,WVGZZZ00ZED000005,V7.03.023,V29.05,,,2025-09-14 02:40:32PM,,,"19 ����������Ͻӿ�
+   
+17 ����Ǳ�
+16 ת��������װ��
+34 ˮƽ�߶ȵ���ϵͳ
+44 ����ת��",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/VW/V29.05/,2025-09,GB2312,1,,,
+57,X431SERIAL00,VW,VW,,,,,,104657,,WVGZZZ00ZED000005,V7.03.023,V29.05,,,2025-09-14 02:46:26PM,,,"46 ���ʱ��ϵͳ����ģ��
+   
+5F ����ͨѶ��Ϣ�豸1
+���⹦��
+���⹦��>ˢ����/��װ����
+���⹦��>ƥ������ӦѲ������
+LT3(Crafter 2006-2017)
+�����͹���",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/VW/V29.05/,2025-09,GB2312,1,,,
+58,X431SERIAL00,VW,VW,,,,,,104657,,WVGZZZ00ZED000005,V7.03.023,V29.05,,,2025-09-15 01:57:12PM,,,"6C ���������ϵͳ
+   ",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/VW/V29.05/,2025-09,GB2312,1,,,
+59,X431SERIAL00,VW,VW,,,,,,104717,,WVGZZZ00ZED000005,V7.03.023,V29.05,,,2025-09-16 02:58:41PM,,,19 ����������Ͻӿ�,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/VW/V29.05/,2025-09,GB2312,1,,,
+60,X431SERIAL00,VW,VW,,,,,,104716,,WVGZZZ00ZED000005,V7.03.023,V29.05,,,2025-09-20 06:35:48PM,,,"6C ���������ϵͳ
+   ",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/VW/V29.05/,2025-09,GB2312,1,,,
+61,X431SERIAL00,PORSCHE,PORSCHE,δ֪,,,0,,,,2�,V7.03.023,V24.52,,,2025-09-20 06:40:41PM,,,,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2025-09,GB2312,1,,,
+62,X431SERIAL00,VW,VW,,,,,,104716,,WVGZZZ00ZED000005,V7.03.023,V29.05,,,2025-09-20 06:41:07PM,,,6C ���������ϵͳ,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/VW/V29.05/,2025-09,GB2312,1,,,
+63,X431SERIAL00,VW,VW,,,,,,104716,,WVGZZZ00ZED000005,V7.03.023,V29.05,,,2025-09-23 12:00:00PM,,,"47 ����ϵͳ
+   
+ȫϵͳ�б�
+���⹦��
+���⹦��>ˢ����/��װ����
+�����͹���
+5F ����ͨѶ��Ϣ�豸1
+LT3(Crafter 2006-2017)",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/VW/V29.05/,2025-09,GB2312,1,,,
+64,X431SERIAL00,VW,VW,,,,,,104716,,WVGZZZ00ZED000005,V7.03.023,V29.05,,,2025-09-23 01:37:02PM,,,"5F ����ͨѶ��Ϣ�豸1
+   
+ȫϵͳ�б�",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/VW/V29.05/,2025-09,GB2312,1,,,
+65,X431SERIAL00,VW,VW,,,,,,104716,,WVGZZZ00ZED000005,V7.03.023,V29.05,,,2025-09-23 02:24:14PM,,,"ȫϵͳ�б�
+   
+5F ����ͨѶ��Ϣ�豸1
+56 ������
+47 ����ϵͳ",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/VW/V29.05/,2025-09,GB2312,1,,,
+66,X431SERIAL00,VW,VW,,,,,,104716,,WVGZZZ00ZED000005,V7.03.023,V29.05,,,2025-09-23 02:42:53PM,,,"56 ������
+   ",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/VW/V29.05/,2025-09,GB2312,1,,,
+67,X431SERIAL00,VW,VW,,,,,,104716,,WVGZZZ00ZED000005,V7.03.023,V29.10,,,2025-09-26 10:58:59AM,,,"ȫϵͳ�б�
+   
+17 ����Ǳ�",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/VW/V29.10/,2025-09,GB2312,1,,,
+68,X431SERIAL00,VW,VW,,,,,,104716,,WVGZZZ00ZED000005,V7.03.023,V29.10,,,2025-09-26 06:50:07PM,,,,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/VW/V29.10/,2025-09,GB2312,1,,,
+69,X431SERIAL00,VW,VW,,,,,,104716,,WVGZZZ00ZED000005,V7.03.023,V29.10,,,2025-09-28 09:59:07AM,,,"19 ����������Ͻӿ�
+   
+ȫϵͳ�б�",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/VW/V29.10/,2025-09,GB2312,1,,,
+70,X431SERIAL00,VW,VW,,,,,,104716,,WVGZZZ00ZED000005,V7.03.023,V29.10,,,2025-09-28 12:35:37PM,,,"47 ����ϵͳ
+   ",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/VW/V29.10/,2025-09,GB2312,1,,,
+71,X431SERIAL00,VW,VW,,,,,,104716,,WVGZZZ00ZED000005,V7.03.023,V29.10,,,2025-09-29 07:48:26PM,,,"6C ���������ϵͳ
+   ",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/VW/V29.10/,2025-09,GB2312,1,,,
+72,X431SERIAL00,VW,VW,,,,,,104716,,WVGZZZ00ZED000005,V7.03.023,V29.10,,,2025-09-30 04:05:03PM,,,"5F ����ͨѶ��Ϣ�豸1
+   
+47 ����ϵͳ
+56 ������",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/VW/V29.10/,2025-09,GB2312,1,,,
+73,X431SERIAL00,VW,VW,,,,,,104716,,WVGZZZ00ZED000005,V7.03.023,V29.10,,,2025-09-30 08:33:18PM,,,,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/VW/V29.10/,2025-09,GB2312,1,,,
+74,X431SERIAL00,VW,VW,,,,,,104755,,WVGZZZ00ZED000005,V7.03.023,V29.10,,,2025-10-02 03:36:01PM,,,"19 ����������Ͻӿ�
+   
+ȫϵͳ�б�",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/VW/V29.10/,2025-10,GB2312,1,,,
+75,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2016,,49809,,WP0ZZZ98ZES000006,V7.03.023,V24.52,"Car:9x1
+BV:Getriebesteuerung_PDK
+Mode:PDK_A3_ohne_Quersperre
+
+DSN:0x42 10",,2025-10-07 02:14:48PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > TCM/PDK(�Զ����������ģ��)",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2025-10,GB2312,1,,,
+76,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,118656,,WP0ZZZ98ZES000001,V7.03.023,V24.52,"Car:9x1
+BV:Rueckfahrkamera_II
+Mode:RFK_Compact_A2_1
+
+DSN:EV_RearvCompaCamer#002",,2025-10-11 04:45:05PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > TCM/PDK(�Զ����������ģ��)",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2025-10,GB2312,1,,,
+77,X431SERIAL00,PORSCHE,PORSCHE,Boxster��982��,,,2022,,58624,,WP0ZZZ98ZES000007,V7.03.023,V24.52,"Car:9x1
+BV:BV_ActuaForStrucBorneSoundUDS
+Mode:Actuator_For_Exterior_Noise_UDS
+
+DSN:EV_ActuaForExterNoiseUDS#003",,2025-10-12 12:57:41AM,,,�Զ����� > Boxster��982��,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2025-10,GB2312,1,,,
+78,X431SERIAL00,PORSCHE,PORSCHE,Boxster��982��,,,2022,,58628,,WP0ZZZ98ZES000007,V7.03.023,V24.52,"Car:9x1
+BV:Kombiinstrument_MM
+Mode:Kombiinstrument_A3_6
+
+DSN:000035#Kombiinstrument_A3.6#nein#ja",,2025-10-12 01:13:23AM,,,"�Զ����� > Boxster��982��
+�Զ����� > Boxster��982�� > IC(�Ǳ�)",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2025-10,GB2312,1,,,
+79,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,118817,,WP0ZZZ98ZES000001,V7.03.023,V24.52,"Car:9x1
+BV:Getriebesteuerung_PDK
+Mode:PDK_A2_ohne_Quersperre
+
+DSN:0x41 10",,2025-10-17 01:53:17PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > TCM/PDK(�Զ����������ģ��)",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2025-10,GB2312,1,,,
+80,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,118818,,WP0ZZZ98ZES000001,V7.03.023,V24.52,"Car:9x1
+BV:Getriebesteuerung_PDK
+Mode:PDK_A2_ohne_Quersperre
+
+DSN:0x41 10",,2025-10-17 02:13:49PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > TCM/PDK(�Զ����������ģ��)",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2025-10,GB2312,1,,,
+81,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,118821,,WP0ZZZ98ZES000001,V7.03.023,V24.52,"Car:9x1
+BV:Getriebesteuerung_PDK
+Mode:PDK_A2_ohne_Quersperre
+
+DSN:0x41 10",,2025-10-17 05:48:43PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > TCM/PDK(�Զ����������ģ��)",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2025-10,GB2312,1,,,
+82,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,118821,,WP0ZZZ98ZES000001,V7.03.023,V24.52,"Car:9x1
+BV:Getriebesteuerung_PDK
+Mode:PDK_A2_ohne_Quersperre
+
+DSN:0x41 10",,2025-10-17 11:58:58PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > TCM/PDK(�Զ����������ģ��)",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2025-10,GB2312,1,,,
+83,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,118821,,WP0ZZZ98ZES000001,V7.03.023,V24.52,"Car:9x1
+BV:Getriebesteuerung_PDK
+Mode:PDK_A2_ohne_Quersperre
+
+DSN:0x41 10",,2025-10-18 12:24:17AM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > TCM/PDK(�Զ����������ģ��)",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2025-10,GB2312,1,,,
+84,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,16777215,,WP0ZZZ98ZES000001,V7.03.023,V24.52,"Car:9x1
+BV:Getriebesteuerung_PDK
+Mode:PDK_A2_ohne_Quersperre
+
+DSN:0x41 10",,2025-10-18 09:44:07AM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > TCM/PDK(�Զ����������ģ��)",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2025-10,GB2312,1,,,
+85,X431SERIAL00,VW,VW,,,,,,104819,,WVGZZZ00ZED000005,V7.03.023,V29.10,,,2025-10-20 01:38:43PM,,,"19 ����������Ͻӿ�
+   ",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/VW/V29.10/,2025-10,GB2312,1,,,
+86,X431SERIAL00,VW,VW,,,,2014,,,,WVGZZZ00ZED000005,V7.03.023,V29.10,,,2025-10-20 01:45:37PM,,,"19 ����������Ͻӿ�
+   
+47 ����ϵͳ",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/VW/V29.10/,2025-10,GB2312,1,,,
+87,X431SERIAL00,VW,VW,,,,,,104819,,WVGZZZ00ZED000005,V7.03.023,V29.10,,,2025-10-20 01:52:28PM,,,"3C ��������ϵͳ
+   ",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/VW/V29.10/,2025-10,GB2312,1,,,
+88,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,118822,,WP0ZZZ98ZES000001,V7.03.023,V24.52,"Car:9x1
+BV:Getriebesteuerung_PDK
+Mode:PDK_A2_ohne_Quersperre
+
+DSN:0x41 10",,2025-10-27 09:16:52PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > TCM/PDK(�Զ����������ģ��)",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2025-10,GB2312,1,,,
+89,X431SERIAL00,VW,VW,,,,,,104827,,WVGZZZ00ZED000005,V7.03.023,V29.10,,,2025-10-28 09:54:35AM,,,"5F ����ͨѶ��Ϣ�豸1
+   
+56 ������
+47 ����ϵͳ",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/VW/V29.10/,2025-10,GB2312,1,,,
+90,X431SERIAL00,LAMBORGHINI,LAMBORGHINI,,,,,,104827,,WVGZZZ00ZED000005,V7.03.023,V29.10,,,2025-10-28 10:32:15AM,,,"56 ������
+   ",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/VW/V29.10/,2025-10,GB2312,1,,,
+91,X431SERIAL00,VW,VW,,,,,,104827,,WVGZZZ00ZED000005,V7.03.023,V29.10,,,2025-10-28 10:33:45AM,,,"19 ����������Ͻӿ�
+   
+56 ������
+47 ����ϵͳ",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/VW/V29.10/,2025-10,GB2312,1,,,
+92,X431SERIAL00,VW,VW,,,,,,104827,,WVGZZZ00ZED000005,V7.03.023,V29.10,,,2025-10-28 10:39:01AM,,,"19 ����������Ͻӿ�
+   
+56 ������",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/VW/V29.10/,2025-10,GB2312,1,,,
+93,X431SERIAL00,VW,VW,,,,,,104827,,WVGZZZ00ZED000005,V7.03.023,V29.10,,,2025-10-28 11:01:04AM,,,,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/VW/V29.10/,2025-10,GB2312,1,,,
+94,X431SERIAL00,VW,VW,,,,,,104881,,WVGZZZ00ZED000005,V7.03.023,V29.10,,,2025-10-28 02:58:52PM,,,"5F ����ͨѶ��Ϣ�豸1
+   
+19 ����������Ͻӿ�
+56 ������",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/VW/V29.10/,2025-10,GB2312,1,,,
+95,X431SERIAL00,VW,VW,,,,,,104889,,WVGZZZ00ZED000005,V7.03.023,V29.10,,,2025-10-30 04:35:42PM,,,17 ����Ǳ�,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/VW/V29.10/,2025-10,GB2312,1,,,
+96,X431SERIAL00,VW,VW,,,,,,104889,,WVGZZZ00ZED000005,V7.03.023,V29.10,,,2025-10-31 06:14:27PM,,,,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/VW/V29.10/,2025-10,GB2312,1,,,
+97,X431SERIAL00,VW,VW,,,,,,104927,,WVGZZZ00ZED000005,V7.03.023,V29.10,,,2025-11-01 04:13:55PM,,,"01 ���������ϵͳ
+   
+�������⹦��
+�������⹦��>������ҵ",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/VW/V29.10/,2025-11,GB2312,1,,,
+98,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,118845,,WP0ZZZ98ZES000001,V7.03.023,V24.52,"Car:9x1
+BV:BV_ContrUnitLaneChangAssis2UDS
+Mode:EV_RearRadarS2BoschPO67x_001
+
+DSN:EV_RearRadarS2BoschPO67x#001",,2025-11-09 02:22:54PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > �˿Ͳ����δ洢��
+�Զ����� > Cayman/Boxster��981�� > �������⹦��
+�Զ����� > Cayman/Boxster��981�� > �������⹦�� > ��ظ���",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2025-11,GB2312,1,,,
+99,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,118871,,WP0ZZZ98ZES000001,V7.03.023,V24.52,"Car:9x1
+BV:Kombiinstrument_MM
+Mode:Kombiinstrument_A3_5
+
+DSN:000034#Kombiinstrument_A3.5#nein#ja",,2025-11-10 03:21:57PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > IC(�Ǳ�)",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2025-11,GB2312,1,,,
+100,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,118882,,WP0ZZZ98ZES000001,V7.03.023,V24.52,"Car:9x1
+BV:Rueckfahrkamera_II
+Mode:RFK_Compact_A2_1
+
+DSN:EV_RearvCompaCamer#002",,2025-11-10 03:46:53PM,,,�Զ����� > Cayman/Boxster��981��,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2025-11,GB2312,1,,,
+101,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,118884,,WP0ZZZ98ZES000001,V7.03.023,V24.52,"Car:9x1
+BV:CAN_CAN_Gateway
+Mode:CAN_CAN_Gateway_A7_1
+
+DSN:A7.1  #CAN/CAN Gateway#nein#ja",,2025-11-10 04:17:18PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > TCM/PDK(�Զ����������ģ��)
+�Զ����� > Cayman/Boxster��981�� > �������⹦��
+�Զ����� > Cayman/Boxster��981�� > �������⹦�� > ��ظ���
+�Զ����� > Cayman/Boxster��981�� > ����",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2025-11,GB2312,1,,,
+102,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,118950,,WP0ZZZ98ZES000001,V7.03.023,V24.52,"Car:9x1
+BV:Rueckfahrkamera_II
+Mode:RFK_Compact_A2_1
+
+DSN:EV_RearvCompaCamer#002",,2025-11-14 06:07:33PM,,,�Զ����� > Cayman/Boxster��981��,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2025-11,GB2312,1,,,
+103,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,119092,,WP0ZZZ98ZES000001,V7.03.023,V24.52,"Car:9x1
+BV:Kombiinstrument_MM
+Mode:Kombiinstrument_A3_5
+
+DSN:000034#Kombiinstrument_A3.5#nein#ja",,2025-11-16 02:11:56PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > IC(�Ǳ�)",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2025-11,GB2312,1,,,
+104,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,119870,,WP0ZZZ98ZES000001,V7.03.023,V24.52,"Car:9x1
+BV:BV_InforContrUnit1UDS
+Mode:EV_MUHig6C3Gen2AW7_001
+
+DSN:EV_MUHig6C3Gen2AW7#001",,2025-11-18 02:28:44PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > ��������ͷ
+�Զ����� > Cayman/Boxster��981�� > PCM/CDR��ͨ�Ź���/CD����������",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2025-11,GB2312,1,,,
+105,X431SERIAL00,VW,VW,,,,,,105343,,WVGZZZ00ZED000005,V7.03.023,V29.10,,,2025-11-27 05:57:47PM,,,,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/VW/V29.10/,2025-11,GB2312,1,,,
+106,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,120003,,WP0ZZZ98ZES000001,V7.03.023,V24.52,"Car:9x1
+BV:Rueckfahrkamera_II
+Mode:RFK_Compact_A2_1
+
+DSN:EV_RearvCompaCamer#002",,2025-11-28 10:03:35PM,,,�Զ����� > Cayman/Boxster��981��,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2025-11,GB2312,1,,,
+107,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,45040,,WP0ZZZ98ZES000002,V7.03.023,V24.52,"Car:9x1
+BV:SWSG
+Mode:SWSG_Slave_mit_AFS_ab_VR15
+
+DSN:000015#nein#ja",,2025-11-29 09:06:55PM,,,�Զ����� > Cayman/Boxster��981��,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2025-11,GB2312,1,,,
+108,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,120703,,WP0ZZZ98ZES000001,V7.03.023,V24.52,"Car:9x1
+BV:DME_BDE_Continental
+Mode:SDI9_1_981_3_4L_EU5
+
+DSN:P200",,2025-12-20 03:14:40PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > ECM/DME(����������ģ��)",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2025-12,GB2312,1,,,
+109,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,120714,,WP0ZZZ98ZES000001,V7.03.023,V24.52,"Car:9x1
+BV:DME_BDE_Continental
+Mode:SDI9_1_981_3_4L_EU5
+
+DSN:P200",,2025-12-21 03:55:05PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > ECM/DME(����������ģ��)",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2025-12,GB2312,1,,,
+110,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,16777215,,WP0ZZZ98ZES000001,V7.03.023,V24.52,"Car:9x1
+BV:DME_BDE_Continental
+Mode:SDI9_1_981_3_4L_EU5
+
+DSN:P200",,2026-01-02 09:07:34PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > ECM/DME(����������ģ��)",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2026-01,GB2312,1,,,
+111,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,46669,,WP0ZZZ98ZES000002,V7.03.023,V24.52,"Car:9x1
+BV:DME_BDE_Continental
+Mode:SDI9_1_981_2_7L_EU5
+
+DSN:O200",,2026-01-02 09:18:28PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > IC(�Ǳ�)
+�Զ����� > Cayman/Boxster��981�� > AC(�յ�ϵͳ)
+�Զ����� > Cayman/Boxster��981�� > ECM/DME(����������ģ��)",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2026-01,GB2312,1,,,
+112,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,120779,,WP0ZZZ98ZES000001,V7.03.023,V24.52,"Car:9x1
+BV:DME_BDE_Continental
+Mode:SDI9_1_981_3_4L_EU5
+
+DSN:P200",,2026-01-04 06:03:55PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > ECM/DME(����������ģ��)
+�Զ����� > Cayman/Boxster��981�� > TCM/PDK(�Զ����������ģ��)",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2026-01,GB2312,1,,,
+113,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,120789,,WP0ZZZ98ZES000001,V7.03.023,V24.52,"Car:9x1
+BV:Rueckfahrkamera_II
+Mode:RFK_Compact_A2_1
+
+DSN:EV_RearvCompaCamer#002",,2026-01-07 06:12:19PM,,,�Զ����� > Cayman/Boxster��981��,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2026-01,GB2312,1,,,
+114,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,120852,,WP0ZZZ98ZES000001,V7.03.023,V24.52,"Car:9x1
+BV:Getriebesteuerung_PDK
+Mode:PDK_A3_ohne_Quersperre
+
+DSN:0x42 10",,2026-01-16 08:54:12PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > ECM/DME(����������ģ��)
+�Զ����� > Cayman/Boxster��981�� > TCM/PDK(�Զ����������ģ��)",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2026-01,GB2312,1,,,
+115,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,120942,,WP0ZZZ98ZES000001,V7.03.023,V24.52,"Car:9x1
+BV:BV_ContrUnitLaneChangAssis2UDS
+Mode:EV_RearRadarS1BoschPO67x_001
+
+DSN:EV_RearRadarS1BoschPO67x#001",,2026-01-17 05:43:24PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > �������⹦��
+�Զ����� > Cayman/Boxster��981�� > �������⹦�� > �����ƹ���
+�Զ����� > Cayman/Boxster��981�� > ����/����
+�Զ����� > Cayman/Boxster��981�� > ECM/DME(����������ģ��)",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2026-01,GB2312,1,,,
+116,X431SERIAL00,PORSCHE,PORSCHE,,,,,,,,,V7.03.023,V24.52,,,2026-01-17 06:23:50PM,,,,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2026-01,GB2312,1,,,
+117,X431SERIAL00,PORSCHE,PORSCHE,,,,,,,,,V7.03.023,V24.52,,,2026-01-17 06:26:00PM,,,,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2026-01,GB2312,1,,,
+118,X431SERIAL00,PORSCHE,PORSCHE,,,,,,,,,V7.03.023,V24.52,,,2026-01-17 06:28:09PM,,,,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2026-01,GB2312,1,,,
+119,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,,,WP0ZZZ98ZES000001,V7.03.023,V24.52,,,2026-01-17 06:30:45PM,,,�Զ����� > Cayman/Boxster��981��,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2026-01,GB2312,1,,,
+120,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,,,WP0ZZZ98ZES000001,V7.03.023,V24.52,,,2026-01-17 06:34:17PM,,,,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2026-01,GB2312,1,,,
+121,X431SERIAL00,PORSCHE,PORSCHE,,,,,,,,,V7.03.023,V24.52,,,2026-01-18 08:19:00PM,,,,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2026-01,GB2312,1,,,
+122,X431SERIAL00,PORSCHE,PORSCHE,,,,,,,,,V7.03.023,V24.52,,,2026-01-18 08:28:40PM,,,,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2026-01,GB2312,1,,,
+123,X431SERIAL00,PORSCHE,PORSCHE,,,,,,,,,V7.03.023,V24.52,,,2026-01-18 08:29:58PM,,,,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2026-01,GB2312,1,,,
+124,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,120946,,WP0ZZZ98ZES000001,V7.03.023,V24.52,"Car:9x1
+BV:Rueckfahrkamera_II
+Mode:RFK_Compact_A2_1
+
+DSN:EV_RearvCompaCamer#002",,2026-01-18 08:33:03PM,,,�Զ����� > Cayman/Boxster��981��,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2026-01,GB2312,1,,,
+125,X431SERIAL00,VW,VW,,,,,,107165,,WVGZZZ00ZED000005,V7.03.023,V29.10,,,2026-01-27 06:07:35PM,,,,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/VW/V29.10/,2026-01,GB2312,1,,,
+126,X431SERIAL00,PORSCHE,PORSCHE,,,,,,,,,V7.03.023,V24.52,,,2026-02-14 10:15:58PM,,,,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2026-02,GB2312,1,,,
+127,X431SERIAL00,PORSCHE,PORSCHE,,,,,,,,,V7.03.023,V24.52,,,2026-02-14 10:18:00PM,,,,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2026-02,GB2312,1,,,
+128,X431SERIAL00,PORSCHE,PORSCHE,,,,,,,,,V7.03.023,V24.52,,,2026-02-14 10:19:51PM,,,,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2026-02,GB2312,1,,,
+129,X431SERIAL00,PORSCHE,PORSCHE,Boxster,Boxster��981��,,,,,,,V7.03.023,V24.52,,,2026-02-14 10:21:05PM,,,,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.52/,2026-02,GB2312,1,,,
+130,X431SERIAL00,PORSCHE,PORSCHE,,,,,,,,,V7.03.023,V24.55,,,2026-02-14 10:28:16PM,,,,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.55/,2026-02,GB2312,1,,,
+131,X431SERIAL00,PORSCHE,PORSCHE,,,,,,,,,V7.03.023,V24.55,,,2026-02-14 10:33:47PM,,,,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.55/,2026-02,GB2312,1,,,
+132,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,Boxster��981��,,2014,,16777215,,WP0ZZZ98ZES000001,V7.03.023,V24.55,,,2026-02-14 10:35:53PM,,,�ֶ�ѡ�� > Boxster > Boxster��981�� > TCM/PDK(�Զ����������ģ��),/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.55/,2026-02,GB2312,1,,,
+133,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,Boxster��981��,,2015,,16777215,,WP0ZZZ98ZES000008,V7.03.023,V24.55,"Car:9x1
+BV:Frontkamera
+Mode:Frontkamera_0005
+
+DSN:nein#0005#Frontkamera#001",,2026-02-14 10:38:20PM,,,"�ֶ�ѡ�� > Boxster > Boxster��981�� > TCM/PDK(�Զ����������ģ��)
+�ֶ�ѡ�� > Boxster > Boxster��981�� > ECM/DME(����������ģ��)",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.55/,2026-02,GB2312,1,,,
+134,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,121448,,WP0ZZZ98ZES000001,V7.03.023,V24.55,"Car:9x1
+BV:BV_ContrUnitLaneChangAssis2UDS
+Mode:EV_RearRadarS2BoschPO67x_001
+
+DSN:EV_RearRadarS2BoschPO67x#001",,2026-02-19 08:02:47PM,,,�Զ����� > Cayman/Boxster��981��,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.55/,2026-02,GB2312,1,,,
+135,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,16777215,,WP0ZZZ98ZES000001,V7.03.023,V24.55,"Car:9x1
+BV:DME_BDE_Continental
+Mode:SDI9_1_981_3_4L_EU5
+
+DSN:P200",,2026-02-20 11:21:14AM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > �������⹦��
+�Զ����� > Cayman/Boxster��981�� > ECM/DME(����������ģ��)",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.55/,2026-02,GB2312,1,,,
+136,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2015,,16777215,,WP0ZZZ98ZES000009,V7.03.023,V24.55,"Car:9x1
+BV:Getriebesteuerung_PDK
+Mode:PDK_A3_ohne_Quersperre
+
+DSN:0x42 10",,2026-02-20 03:48:09PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > ECM/DME(����������ģ��)
+�Զ����� > Cayman/Boxster��981�� > TCM/PDK(�Զ����������ģ��)",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.55/,2026-02,GB2312,1,,,
+137,X431SERIAL00,PORSCHE,PORSCHE,911��991��,,,2016,,62611,,WP0ZZZ98ZES000010,V7.03.023,V24.55,"Car:9x1
+BV:Allrad
+Mode:Allrad_Gen1_a2
+
+DSN:Allrad_Gen1#002",,2026-02-20 04:23:45PM,,,"�Զ����� > 911��991��
+�Զ����� > 911��991�� > ECM/DME(����������ģ��)
+�Զ����� > 911��991�� > TCM/PDK(�Զ����������ģ��)
+�Զ����� > 911��991�� > EPS(�綯����ת��ϵͳ)",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.55/,2026-02,GB2312,1,,,
+138,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,122049,,WP0ZZZ98ZES000001,V7.03.023,V24.55,"Car:9x1
+BV:Rueckfahrkamera_II
+Mode:RFK_Compact_A2_1
+
+DSN:EV_RearvCompaCamer#002",,2026-02-20 09:39:54PM,,,�Զ����� > Cayman/Boxster��981��,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.55/,2026-02,GB2312,1,,,
+139,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,122069,,WP0ZZZ98ZES000001,V7.03.023,V24.55,"Car:9x1
+BV:BV_SoundSysteUDS
+Mode:EV_AMPMst16C4Gen2BOSE_001
+
+DSN:EV_AMPMst16C4Gen2BOSE#001",,2026-02-21 08:28:14PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > PCM/CDR��ͨ�Ź���/CD����������
+�Զ����� > Cayman/Boxster��981�� > ����
+�Զ����� > Cayman/Boxster��981�� > �ⲿ�Ŵ���",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.55/,2026-02,GB2312,1,,,
+140,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,,,WP0ZZZ98ZES000001,V7.03.023,V24.55,,,2026-02-21 08:45:15PM,,,,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.55/,2026-02,GB2312,1,,,
+141,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,122069,,WP0ZZZ98ZES000001,V7.03.023,V24.55,"Car:9x1
+BV:Rueckfahrkamera_II
+Mode:RFK_Compact_A2_1
+
+DSN:EV_RearvCompaCamer#002",,2026-02-21 08:46:36PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > �ⲿ�Ŵ���
+�Զ����� > Cayman/Boxster��981�� > ADAS У׼
+�Զ����� > Cayman/Boxster��981�� > ADAS У׼ > ��������ͷ",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.55/,2026-02,GB2312,1,,,
+142,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,122169,,WP0ZZZ98ZES000001,V7.03.023,V24.55,"Car:9x1
+BV:Rueckfahrkamera_II
+Mode:RFK_Compact_A2_1
+
+DSN:EV_RearvCompaCamer#002",,2026-03-07 06:15:34PM,,,�Զ����� > Cayman/Boxster��981��,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.55/,2026-03,GB2312,1,,,
+143,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,122169,,WP0ZZZ98ZES000001,V7.03.023,V24.55,"Car:9x1
+BV:BV_ContrUnitLaneChangAssis2UDS
+Mode:EV_RearRadarS1BoschPO67x_001
+
+DSN:EV_RearRadarS1BoschPO67x#001",,2026-03-08 07:51:48PM,,,�Զ����� > Cayman/Boxster��981��,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.55/,2026-03,GB2312,1,,,
+144,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,122177,,WP0ZZZ98ZES000001,V7.03.023,V24.55,"Car:9x1
+BV:Rueckfahrkamera_II
+Mode:RFK_Compact_A2_1
+
+DSN:EV_RearvCompaCamer#002",,2026-03-08 09:38:41PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > PCM/CDR��ͨ�Ź���/CD����������
+�Զ����� > Cayman/Boxster��981�� > ��������ͷ",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.55/,2026-03,GB2312,1,,,
+145,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,122185,,WP0ZZZ98ZES000001,V7.03.023,V24.55,"Car:9x1
+BV:Rueckfahrkamera_II
+Mode:RFK_Compact_A2_1
+
+DSN:EV_RearvCompaCamer#002",,2026-03-08 11:19:19PM,,,�Զ����� > Cayman/Boxster��981��,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.55/,2026-03,GB2312,1,,,
+146,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,122185,,WP0ZZZ98ZES000001,V7.03.023,V24.55,"Car:9x1
+BV:Rueckfahrkamera_II
+Mode:RFK_Compact_A2_1
+
+DSN:EV_RearvCompaCamer#002",,2026-03-10 07:06:18PM,,,�Զ����� > Cayman/Boxster��981��,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.55/,2026-03,GB2312,1,,,
+147,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,122196,,WP0ZZZ98ZES000001,V7.03.023,V24.55,"Car:9x1
+BV:BCM_vorne
+Mode:BCM_vorne_9x1_Basis_GT4
+
+DSN:050018",,2026-03-11 09:27:35PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > ǰ�˵����豸",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.55/,2026-03,GB2312,1,,,
+148,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,122199,,WP0ZZZ98ZES000001,V7.03.023,V24.55,"Car:9x1
+BV:Rueckfahrkamera_II
+Mode:RFK_Compact_A2_1
+
+DSN:EV_RearvCompaCamer#002",,2026-03-12 08:01:03PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > �ⲿ�Ŵ���",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.55/,2026-03,GB2312,1,,,
+149,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,122199,,WP0ZZZ98ZES000001,V7.03.023,V24.55,"Car:9x1
+BV:ACC3
+Mode:ACC3_A5
+
+DSN:ACC_3#000020#nein#ja",,2026-03-12 09:16:47PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > �ⲿ�Ŵ���",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.55/,2026-03,GB2312,1,,,
+150,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,122204,,WP0ZZZ98ZES000001,V7.03.023,V24.55,"Car:9x1
+BV:BV_InforContrUnit1UDS
+Mode:EV_MUHig6C3Gen2AW7_001
+
+DSN:EV_MUHig6C3Gen2AW7#001",,2026-03-13 07:21:57PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > ͣ������
+�Զ����� > Cayman/Boxster��981�� > ��������ͷ
+�Զ����� > Cayman/Boxster��981�� > �������⹦��
+�Զ����� > Cayman/Boxster��981�� > ��˵����豸
+�Զ����� > Cayman/Boxster��981�� > ǰ�˵����豸
+�Զ����� > Cayman/Boxster��981�� > PCM/CDR��ͨ�Ź���/CD����������
+�Զ����� > Cayman/Boxster��981�� > ����/����
+�Զ����� > Cayman/Boxster��981�� > ����/���� > ����/ˢ����
+�Զ����� > Cayman/Boxster��981�� > ����/���� > ����/ˢ���� > ��������ͷ",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.55/,2026-03,GB2312,1,,,
+151,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,122205,,WP0ZZZ98ZES000001,V7.03.023,V24.55,"Car:9x1
+BV:BV_ContrUnitLaneChangAssis2UDS
+Mode:EV_RearRadarS1BoschPO67x_001
+
+DSN:EV_RearRadarS1BoschPO67x#001",,2026-03-14 08:21:50AM,,,�Զ����� > Cayman/Boxster��981��,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.55/,2026-03,GB2312,1,,,
+152,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,16777215,,WP0ZZZ98ZES000001,V7.03.023,V24.55,"Car:9x1
+BV:BV_SoundSysteUDS
+Mode:EV_AMPMst16C4Gen2BOSE_001
+
+DSN:EV_AMPMst16C4Gen2BOSE#001",,2026-03-15 11:39:05AM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > PCM/CDR��ͨ�Ź���/CD����������
+�Զ����� > Cayman/Boxster��981�� > �ⲿ�Ŵ���",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.55/,2026-03,GB2312,1,,,
+153,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,122251,,WP0ZZZ98ZES000001,V7.03.023,V24.55,"Car:9x1
+BV:CAN_CAN_Gateway
+Mode:CAN_CAN_Gateway_A7_1
+
+DSN:A7.1  #CAN/CAN Gateway#nein#ja",,2026-03-15 07:54:30PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > ����",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.55/,2026-03,GB2312,1,,,
+154,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,122269,,WP0ZZZ98ZES000001,V7.03.023,V24.55,"Car:9x1
+BV:Verdeck_Synchronisation
+Mode:Verdeck_Synchronisations_SG_A1_0
+
+DSN:VERDECK SYNC-SG#001",,2026-03-20 07:37:53PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > ���۵�����",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.55/,2026-03,GB2312,1,,,
+155,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,122304,,WP0ZZZ98ZES000001,V7.03.023,V24.55,"Car:9x1
+BV:PSM
+Mode:PSM_a2
+
+DSN:002000",,2026-03-21 01:11:24PM,,,�Զ����� > Cayman/Boxster��981��,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.55/,2026-03,GB2312,1,,,
+156,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,122304,,WP0ZZZ98ZES000001,V7.03.023,V24.55,"Car:9x1
+BV:BV_ContrUnitLaneChangAssis2UDS
+Mode:EV_RearRadarS2BoschPO67x_001
+
+DSN:EV_RearRadarS2BoschPO67x#001",,2026-03-21 02:46:35PM,,,�Զ����� > Cayman/Boxster��981��,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.55/,2026-03,GB2312,1,,,
+157,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,122336,,WP0ZZZ98ZES000001,V7.03.023,V24.55,"Car:9x1
+BV:BCM_vorne
+Mode:BCM_vorne_9x1_Basis_GT4
+
+DSN:050018",,2026-03-22 01:33:13PM,,,�Զ����� > Cayman/Boxster��981��,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.55/,2026-03,GB2312,1,,,
+158,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,123873,,WP0ZZZ98ZES000001,V7.03.023,V24.55,"Car:9x1
+BV:BCM_vorne
+Mode:BCM_vorne_9x1_Basis_GT4
+
+DSN:050018",,2026-05-22 09:07:59PM,,,�Զ����� > Cayman/Boxster��981��,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.55/,2026-05,GB2312,1,,,
+159,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,123965,,WP0ZZZ98ZES000001,V7.03.023,V24.55,"Car:9x1
+BV:BCM_vorne
+Mode:BCM_vorne_9x1_Basis_GT4
+
+DSN:050018",,2026-05-29 09:19:37PM,,,�Զ����� > Cayman/Boxster��981��,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.55/,2026-05,GB2312,1,,,
+160,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2013,,43894,,WP0ZZZ98ZES000011,V7.03.023,V24.55,"Car:9x1
+BV:DME_BDE_Continental
+Mode:SDI9_1_981_2_7L_EU5
+
+DSN:O200",,2026-05-31 02:02:59PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > ECM/DME(����������ģ��)",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.55/,2026-05,GB2312,1,,,
+161,X431SERIAL00,VW,VW,,,,,,,,LSVZZZ00ZES000012,V7.03.023,V29.10,,,2026-06-01 01:39:21AM,,,"01 ���������ϵͳ
+   
+51 ������װ��
+C6 �ߵ�ѹ���س��װ��",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/VW/V29.10/,2026-06,GB2312,1,,,
+162,X431SERIAL00,VW,VW,,,,,,,,LSVZZZ00ZES000012,V7.03.023,V29.10,,,2026-06-05 03:37:44PM,,,"13 �������
+   
+01 ���������ϵͳ
+03 �ƶ�����װ��
+08 �յ�/ů�����װ��
+09 �����������װ��
+15 ��ȫ����
+16 ת��������װ��
+19 ����������Ͻӿ�
+23 �ƶ�������
+3C ��������ϵͳ
+42 ��ʻԱ���ŵ���װ��
+44 ����ת��
+51 ������װ��
+76 ��������ϵͳ
+6C ���������ϵͳ",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/VW/V29.10/,2026-06,GB2312,1,,,
+163,X431SERIAL00,VW,VW,,,,,,,,LSVZZZ00ZES000012,V7.03.023,V29.10,,,2026-06-05 04:26:54PM,,,"15 ��ȫ����
+   
+44 ����ת��
+3C ��������ϵͳ
+6C ���������ϵͳ
+76 ��������ϵͳ
+A5 ���ڼ�ʻ����ϵͳ��ǰ������ͷ",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/VW/V29.10/,2026-06,GB2312,1,,,
+164,X431SERIAL00,VW,VW,,,,,,,,LSVZZZ00ZES000012,V7.03.023,V29.10,,,2026-06-05 09:54:31PM,,,,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/VW/V29.10/,2026-06,GB2312,1,,,
+165,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,125041,,WP0ZZZ98ZES000001,V7.03.023,V24.55,"Car:9x1
+BV:SWSG
+Mode:SWSG_Master_mit_AFS_ab_VR15
+
+DSN:100015#nein#ja",,2026-06-12 10:59:41PM,,,�Զ����� > Cayman/Boxster��981��,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.55/,2026-06,GB2312,1,,,
+166,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,125041,,WP0ZZZ98ZES000001,V7.03.023,V24.55,"Car:9x1
+BV:DME_BDE_Continental
+Mode:SDI9_1_981_3_4L_EU5
+
+DSN:P200",,2026-06-25 08:54:29PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > ECM/DME(����������ģ��)
+�Զ����� > Cayman/Boxster��981�� > �������⹦��
+�Զ����� > Cayman/Boxster��981�� > �������⹦�� > ������ѧϰ",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.55/,2026-06,GB2312,1,,,
+167,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,125041,,WP0ZZZ98ZES000001,V7.03.023,V24.55,"Car:9x1
+BV:DME_BDE_Continental
+Mode:SDI9_1_981_3_4L_EU5
+
+DSN:P200",,2026-06-25 09:41:56PM,,,"�Զ����� > Cayman/Boxster��981��
+�Զ����� > Cayman/Boxster��981�� > ECM/DME(����������ģ��)",/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.55/,2026-06,GB2312,1,,,
+168,X431SERIAL00,PORSCHE,PORSCHE,Cayman/Boxster��981��,,,2014,,125118,,WP0ZZZ98ZES000001,V7.03.023,V24.55,"Car:9x1
+BV:SWSG
+Mode:SWSG_Master_mit_AFS_ab_VR15
+
+DSN:100015#nein#ja",,2026-07-10 09:03:25PM,,,�Զ����� > Cayman/Boxster��981��,/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.55/,2026-07,GB2312,1,,,

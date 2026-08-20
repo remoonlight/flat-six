@@ -1,0 +1,11 @@
+{
+  "display_currency": "CNY",
+  "as_of": "2026-07-31",
+  "note": "手工汇率；不自动爬价。入库金额仍为源币种（多为 GBP），App 展示折算 CNY。改此文件后重启 App。",
+  "rates_to_cny": {
+    "CNY": 1,
+    "GBP": 9.2,
+    "EUR": 7.9,
+    "USD": 7.2
+  }
+}

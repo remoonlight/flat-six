@@ -1,0 +1,98 @@
+{
+  "version": 1,
+  "status": "draft",
+  "assetId": "cabin981",
+  "cabinId": "cabin-981-boxster",
+  "note_zh": "P-Loc-2 草稿：已接 Locator zone=interior（默认 cabin981；2D 热点对齐本 plan）。免费模仅材质子块级热点，非座椅/方向盘级 OEM。手拼可在该区进行；apply:interior-stitch 灌 proposedLinks → .local/cms-mesh-map.json。不挡 P-Loc-1。",
+  "granularity_zh": "可分点 = SM_Interior / SoftTop 的材质子 mesh（Details_INT / Light / Details_MAT / Car_Paint_Base / SoftTop）。父节点名仅作树参考，不进默认映射。",
+  "hotspots": [
+    {
+      "id": "int-details-int",
+      "label_zh": "内饰细节(Details_INT)",
+      "kind": "material-submesh"
+    },
+    {
+      "id": "int-cabin-light",
+      "label_zh": "舱内灯/发光件(Light)",
+      "kind": "material-submesh"
+    },
+    {
+      "id": "int-details-mat",
+      "label_zh": "内饰细节(Details_MAT)",
+      "kind": "material-submesh"
+    },
+    {
+      "id": "int-body-paint",
+      "label_zh": "座舱文件内车漆块(Car_Paint)",
+      "kind": "material-submesh"
+    },
+    {
+      "id": "int-softtop",
+      "label_zh": "软顶(SoftTop)",
+      "kind": "material-submesh"
+    },
+    {
+      "id": "int-cabin-filter",
+      "label_zh": "空调滤芯",
+      "kind": "parts-anchor",
+      "note_zh": "无独立 mesh；仅 2D/零件卡锚点，不进 proposedLinks"
+    }
+  ],
+  "proposedLinks": [
+    {
+      "meshName": "SM_Interior_0000.003_MAT_Details_INT.012_0",
+      "hotspotId": "int-details-int",
+      "label_zh": "内饰细节(Details_INT)"
+    },
+    {
+      "meshName": "SM_Interior_0000.003_MAT_Light.030_0",
+      "hotspotId": "int-cabin-light",
+      "label_zh": "舱内灯/发光件(Light)"
+    },
+    {
+      "meshName": "SM_Interior_0000.003_MAT_Details_MAT.130_0",
+      "hotspotId": "int-details-mat",
+      "label_zh": "内饰细节(Details_MAT)"
+    },
+    {
+      "meshName": "SM_Interior_0000.003_MAT_718_Car_Paint_Base_00.076_0",
+      "hotspotId": "int-body-paint",
+      "label_zh": "座舱文件内车漆块(Car_Paint)"
+    },
+    {
+      "meshName": "SM_SoftTop_0000.001_MAT_SoftTop_0",
+      "hotspotId": "int-softtop",
+      "label_zh": "软顶(SoftTop)"
+    }
+  ],
+  "parentGroupHints": [
+    "SM_Interior_0000.003",
+    "SM_SoftTop_0000.001"
+  ],
+  "controlHints": [
+    {
+      "cabinId": "cabin-982-boxster",
+      "assetId": "cabin982",
+      "role": "control_982",
+      "meshes": [
+        "Boxster_S:Interior_Geo_lodA",
+        "Boxster_S:Interior_Geo_lodA_interior_0",
+        "Boxster_S:InteriorTillingColourZone_Geo_lodA",
+        "Boxster_S:InteriorTillingColourZone_Geo_lodA_standardSurface1_0",
+        "Boxster_S:SeatBelt_Geo_lodA",
+        "Boxster_S:SeatBelt_Geo_lodA_coloured_0"
+      ],
+      "note_zh": "982 对照；不进默认 proposedLinks / zone 映射"
+    },
+    {
+      "cabinId": "cabin-982-cayman",
+      "assetId": "cayman982",
+      "role": "control_wheel_only",
+      "meshes": [
+        "car_porsche_718:steering_wheel_details_LOD2_UV1_Untitled_114_Default",
+        "car_porsche_718:steering_wheel_details_LOD2_UV1_Untitled_114_Default_car_porsche_718:Default1_0"
+      ],
+      "note_zh": "方向盘细节对照；不作整舱手拼"
+    }
+  ]
+}

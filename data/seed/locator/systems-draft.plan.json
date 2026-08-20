@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "status": "draft",
+  "note_zh": "P-Loc-2 草稿导航：electronics / fluids 仅系统树占位，不挡 P-Loc-1。无独立 mesh、不写 proposedLinks。零件卡仍以现有 parts.locator_hotspot（P-Loc-1）为准。bridgeJumps 供 Locator「打开零件锚点」跳到 P-Loc-1，不改 parts.locator_hotspot。",
+  "zones": [
+    {
+      "id": "electronics",
+      "label_zh": "电子机构",
+      "assetId": "body",
+      "hotspots": [
+        { "id": "elec-low-voltage", "label_zh": "弱电" },
+        { "id": "elec-gateway-comfort", "label_zh": "网关·舒适性 CAN" },
+        { "id": "elec-gateway-drive", "label_zh": "网关·驱动 CAN" },
+        { "id": "elec-gateway-crash", "label_zh": "网关·碰撞 CAN" },
+        { "id": "elec-fuse-box", "label_zh": "保险盒" }
+      ],
+      "bridgeNote": "battery 零件锚点仍为 front-trunk（前备箱区）；本区热点仅导航占位，不绑 parts"
+    },
+    {
+      "id": "fluids",
+      "label_zh": "循环系统",
+      "assetId": "engine",
+      "hotspots": [
+        { "id": "fluid-coolant", "label_zh": "水（冷却液）" },
+        { "id": "fluid-fuel", "label_zh": "汽油" },
+        { "id": "fluid-oil", "label_zh": "机油" }
+      ],
+      "bridgeNote": "零件卡仍以 P-Loc-1 为准：coolant/engine-oil → engine-bay；fuel-filter → underbody。本区热点仅系统树导航占位"
+    }
+  ],
+  "engineNav": {
+    "zoneId": "engine-bay",
+    "note_zh": "零件仍挂 engine-bay；分块仅导航；mesh 手对进 mesh-map（.local/cms-mesh-map.json）",
+    "hotspots": [
+      { "id": "eng-intake", "label_zh": "进气" },
+      { "id": "eng-block", "label_zh": "本体" },
+      { "id": "eng-exhaust", "label_zh": "排气" }
+    ]
+  },
+  "bridgeJumps": [
+    {
+      "fromHotspotId": "fluid-coolant",
+      "toZoneId": "engine-bay",
+      "toHotspotId": "engine-bay",
+      "sku": "coolant"
+    },
+    {
+      "fromHotspotId": "fluid-oil",
+      "toZoneId": "engine-bay",
+      "toHotspotId": "engine-bay",
+      "sku": "engine-oil"
+    },
+    {
+      "fromHotspotId": "fluid-fuel",
+      "toZoneId": "chassis",
+      "toHotspotId": "underbody",
+      "sku": "fuel-filter"
+    }
+  ]
+}

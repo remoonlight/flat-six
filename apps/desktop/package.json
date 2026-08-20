@@ -1,0 +1,26 @@
+{
+  "name": "@porsche981/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "main": "electron/main.mjs",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "build": "vite build",
+    "start": "electron ."
+  },
+  "dependencies": {
+    "@porsche981/db": "*",
+    "@porsche981/domain": "*",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "three": "^0.185.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "@vitejs/plugin-react": "^4.3.4",
+    "electron": "^34.3.0",
+    "typescript": "^5.8.2",
+    "vite": "^6.2.0"
+  }
+}

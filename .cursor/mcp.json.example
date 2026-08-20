@@ -1,0 +1,29 @@
+{
+  "mcpServers": {
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp@latest"]
+    },
+    "github": {
+      "url": "https://api.githubcopilot.com/mcp/",
+      "headers": {
+        "Authorization": "Bearer ${env:GITHUB_PAT}"
+      }
+    },
+    "ssh-mcp-petka": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "ssh-mcp",
+        "--",
+        "--host=PETKA_HOST",
+        "--port=22",
+        "--user=PETKA_USER",
+        "--timeout=120000",
+        "--maxChars=none",
+        "--disableSudo",
+        "--key=SSH_PRIVATE_KEY_PATH"
+      ]
+    }
+  }
+}

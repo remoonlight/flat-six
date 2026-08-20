@@ -1,0 +1,50 @@
+{
+  "version": 5,
+  "note": "981 brochure paint + PET interior trim codes. Sync with packages/domain/src/vehicle-paint.ts.",
+  "paints": {
+    "Black": { "hex": "#1A1A1C", "code": "041", "oem_code": "L041", "zh": "黑色", "group": "solid" },
+    "White": { "hex": "#F5F5F2", "code": "C9A", "zh": "白色", "group": "solid" },
+    "Guards Red": { "hex": "#A01818", "code": "84A", "oem_code": "L84A", "zh": "卫士红", "group": "solid" },
+    "Racing Yellow": { "hex": "#F0D010", "code": "1S1", "oem_code": "L1S1", "zh": "赛车黄", "group": "solid" },
+    "Jet Black Metallic": { "hex": "#0E0E10", "code": "C9X", "oem_code": "LC9X", "zh": "墨岩黑", "group": "metallic" },
+    "Agate Grey Metallic": { "hex": "#5A5E64", "code": "M7S", "oem_code": "LM7S", "zh": "玛瑙灰", "group": "metallic" },
+    "Anthracite Brown Metallic": { "hex": "#3A2A22", "code": "G0", "oem_code": "LM8S", "zh": "烟棕色", "group": "metallic" },
+    "Mahogany Metallic": { "hex": "#4A2820", "code": "M8Y", "oem_code": "LM8Y", "zh": "桃花心木", "group": "metallic" },
+    "Dark Blue Metallic": { "hex": "#1A2848", "code": "M5X", "oem_code": "LM5X", "zh": "深蓝", "group": "metallic" },
+    "Sapphire Blue Metallic": { "hex": "#1E4A7A", "code": "M5J", "oem_code": "LM5J", "zh": "宝石蓝", "group": "metallic" },
+    "Rhodium Silver Metallic": { "hex": "#C8CCD2", "code": "M7U", "oem_code": "LM7U", "zh": "铑银", "group": "metallic" },
+    "Carrara White Metallic": { "hex": "#E8E8E4", "code": "S9R", "oem_code": "LS9R", "zh": "Carrera白", "group": "metallic" },
+    "Carmine Red": { "hex": "#8A1018", "code": "M3C", "oem_code": "LM3C", "zh": "胭脂红", "group": "special" },
+    "Lime Gold Metallic": { "hex": "#8A8A4A", "code": "5P1", "oem_code": "L5P1", "zh": "青柠金", "group": "special" },
+    "GT Silver Metallic": { "hex": "#A8ACB0", "code": "M7Z", "oem_code": "LM7Z", "zh": "GT银", "group": "special" }
+  },
+  "softTops": {
+    "A27": { "hex": "#1A1A1C", "en": "Black", "zh": "黑色" },
+    "G25": { "hex": "#1E3A5A", "en": "blue", "zh": "蓝色" },
+    "L25": { "hex": "#6A1820", "en": "red", "zh": "红色" },
+    "R25": { "hex": "#5A4030", "en": "brown", "zh": "棕色", "order": "6V" }
+  },
+  "interiors": {
+    "DK4": { "hex": "#1A1A1C", "en": "Black", "zh": "黑色", "group": "leatherette" },
+    "DJ6": { "hex": "#8A8E94", "en": "Platinum Grey", "zh": "铂金灰", "group": "leatherette" },
+    "DM5": { "hex": "#C8B8A0", "en": "Luxor beige", "zh": "卢克索米色", "group": "leatherette" },
+    "OV5": { "hex": "#1E3A5A", "en": "yachting blue", "zh": "游艇蓝", "group": "leatherette" },
+    "GMJ": { "hex": "#5A5E64", "en": "Agate Gray/Pebble Grey", "zh": "玛瑙灰/卵石灰", "group": "leatherette_two_tone" },
+    "GNJ": { "hex": "#5A5E64", "en": "Agate Gray/Amber", "zh": "玛瑙灰/琥珀色", "group": "leatherette_two_tone" },
+    "GPJ": { "hex": "#8A8A4A", "en": "Agate Gray/Lime Gold", "zh": "玛瑙灰/柠檬金", "group": "leatherette_two_tone" },
+    "A11": { "hex": "#1A1A1C", "en": "Black", "zh": "黑色", "group": "leather" },
+    "9B0": { "hex": "#8A8E94", "en": "Platinum Grey", "zh": "铂金灰", "group": "leather" },
+    "7J0": { "hex": "#C8B8A0", "en": "Luxor beige", "zh": "卢克索米色", "group": "leather" },
+    "6A0": { "hex": "#1E3A5A", "en": "yachting blue", "zh": "游艇蓝", "group": "leather" },
+    "OA1": { "hex": "#5A5E64", "en": "Agate Gray", "zh": "玛瑙灰", "group": "leather" },
+    "6J0": { "hex": "#3A2820", "en": "Espresso", "zh": "深咖啡色", "group": "leather" },
+    "N12": { "hex": "#8A1820", "en": "Carrera Red", "zh": "Carrera红", "group": "leather" },
+    "DSP": { "hex": "#141416", "en": "Alcantara Black", "zh": "Alcantara 黑色", "group": "leather" },
+    "GMG": { "hex": "#5A5E64", "en": "Agate Gray/Pebble Grey", "zh": "玛瑙灰/卵石灰", "group": "leather_two_tone" },
+    "GNG": { "hex": "#5A5E64", "en": "Agate Gray/Amber", "zh": "玛瑙灰/琥珀色", "order": "PX", "group": "leather_two_tone" },
+    "GPG": { "hex": "#8A8A4A", "en": "Agate Gray/Lime Gold", "zh": "玛瑙灰/柠檬金", "group": "leather_two_tone" },
+    "DTO": { "hex": "#1A1A1C", "en": "Black/Luxor beige", "zh": "黑色/卢克索米色", "group": "leather_two_tone" },
+    "DJS": { "hex": "#141416", "en": "Alcantara Black/Rhodium Silver", "zh": "Alcantara 黑色/铑银色", "group": "leather_two_tone" },
+    "DSN": { "hex": "#141416", "en": "Alcantara Black/Carmine Red", "zh": "Alcantara 黑色/胭脂红", "group": "leather_two_tone" }
+  }
+}

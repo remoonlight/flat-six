@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "note": "CMS2021 Porsche DLC → 991.2 引擎+底盘抠模。导出只进 .local/cms-rip/（gitignore）。App 只用 engine+chassis；991 车身不进产品（用 flat-six 981）。",
+  "steam": {
+    "appId": "1190000",
+    "dlcAppId": "1773801",
+    "installDirName": "Car Mechanic Simulator 2021"
+  },
+  "target": {
+    "vehicleLabel": "2016 Porsche 911 Carrera S (991.2)",
+    "engineLabel": "B6 Twin-Turbo MA1.03",
+    "engineInternalId": "engine_b61_porsche",
+    "notInScope": [
+      "engine_b62_porsche",
+      "engine_b62_2_porsche",
+      "Carrera GT V10 980/01",
+      "981 MA1.23 NA",
+      "porsche991_body（App 不用；车身走 flat-six）"
+    ]
+  },
+  "assetStudioFilters": [
+    "engine_b61_porsche",
+    "b61_porsche",
+    "MA1.03",
+    "ma1.03"
+  ],
+  "paths": {
+    "rawExportRel": ".local/cms-rip/raw",
+    "engineGlbRel": ".local/cms-rip/engine_b61_porsche/engine.glb",
+    "chassisGlbRel": ".local/cms-rip/porsche991_chassis/chassis.glb",
+    "bodyGlbRel": ".local/cms-rip/porsche991_body/body.glb",
+    "bodyForApp": false,
+    "partsDirRel": ".local/cms-rip/engine_b61_porsche/parts"
+  },
+  "appMountHint": {
+    "zoneId": "engine-bay",
+    "localGlbEnvOrConfig": ".local/cms-rip/engine_b61_porsche/engine.glb",
+    "fallback": "PETKA overview / placeholder pending-3d",
+    "ui": "Locator: X-ray/single + 2D; mesh↔hotspot → .local/cms-mesh-map.json",
+    "body": "flat-six/boxster-real.glb（非 CMS 991 body）"
+  },
+  "caveatZh": "991.2 双涡轮后置 ≠ 981 中置 NA；仅示意 mesh。App 不用 991 车身。"
+}

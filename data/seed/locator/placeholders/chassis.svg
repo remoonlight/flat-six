@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" role="img" aria-label="��`M��">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#bdb7ae"/>
+      <stop offset="100%" stop-color="#8a837a"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#bg)"/>
+  <ellipse cx="400" cy="230" rx="260" ry="120" fill="#6e6860" opacity="0.5" stroke="#3a3530" stroke-width="3"/>
+  <rect x="220" y="200" width="360" height="50" rx="10" fill="#5a544c" stroke="#2a2622" stroke-width="2"/>
+  <rect x="170" y="150" width="90" height="24" rx="6" fill="#4e4942"/>
+  <rect x="540" y="150" width="90" height="24" rx="6" fill="#4e4942"/>
+  <rect x="170" y="280" width="90" height="24" rx="6" fill="#4e4942"/>
+  <rect x="540" y="280" width="90" height="24" rx="6" fill="#4e4942"/>
+  <text x="400" y="50" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="28" fill="#2a2622" font-weight="600">��</text>
+  <text x="400" y="78" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="14" fill="#4a4540">� 3D � � PETKA ��</text>
+  <text x="400" y="420" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" fill="#3d3935">>n*�data/petka/chassis/shots/overview.png</text>
+</svg>

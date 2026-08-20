@@ -1,0 +1,1990 @@
+{
+  "source": "https://qcar.x431.com/proxy_qcar/serial/modelPage.action",
+  "package": "PORSCHE",
+  "note": "Fetched via device WebView session cookies; body decoded as UTF-8 from raw bytes",
+  "models_fetched": {
+    "Boxster(981)": {
+      "count": 3224,
+      "rows": 3224
+    },
+    "Cayman": {
+      "count": 570,
+      "rows": 570
+    },
+    "Boxster(982)": {
+      "count": 3224,
+      "rows": 3224
+    }
+  },
+  "Boxster(981)": {
+    "count": 3224,
+    "years": [
+      "2024",
+      "2023",
+      "2022",
+      "2021",
+      "2020",
+      "2019",
+      "2018",
+      "2017",
+      "2016",
+      "2015",
+      "2014",
+      "2013",
+      "2012"
+    ],
+    "systems": [
+      "Tiptronic 变速器控制",
+      "乘客侧座椅位置记忆",
+      "乘客侧车门",
+      "保时捷主动悬挂管理系统",
+      "保时捷稳定管理系统",
+      "保时捷通讯管理系统",
+      "倒车摄像机",
+      "前端电子设备",
+      "前部摄像机",
+      "动力转向",
+      "发动机",
+      "右前照灯",
+      "后端电子设备",
+      "外部放大器",
+      "安全气囊",
+      "左侧前照灯",
+      "活顶",
+      "电视调谐器",
+      "空调",
+      "紧急呼叫系统 (ERA Glonass)",
+      "组合仪表",
+      "网关",
+      "自适应巡航控制 (ACC)",
+      "调音器",
+      "车道变换辅助系统，右侧(主设备)",
+      "车道变换辅助系统，左侧(从动设备)",
+      "转向盘电子设备",
+      "轮胎压力监控 (TPM)",
+      "选择杆",
+      "附加仪表-时钟",
+      "驻车制动器",
+      "驻车辅助系统",
+      "驾驶员侧座椅记忆",
+      "驾驶员侧车门"
+    ],
+    "functions": [
+      "冻结帧",
+      "动作测试",
+      "故障码",
+      "数据流",
+      "版本信息",
+      "特殊功能",
+      "编程",
+      "设码"
+    ],
+    "subFunctions": [
+      "MOST 系统测试",
+      "PASM/PADM 调试",
+      "刮水角度自适应",
+      "前照灯调试",
+      "功能启动",
+      "启动钥匙保持电磁阀",
+      "对制动器排气",
+      "机油加注",
+      "标定",
+      "校准",
+      "校正座椅电机",
+      "检查驻车制动器的基本设置",
+      "电池更换",
+      "确认更新",
+      "禁用生产模式",
+      "移至安装位置",
+      "系统测试：单元支座",
+      "节气门匹配",
+      "设置总里程",
+      "释放驻车制动器",
+      "重置保养间隔",
+      "锁紧驻车制动器",
+      "驱动链接测试：减震器阀"
+    ],
+    "special_interest_unique": [
+      {
+        "system": "Tiptronic 变速器控制",
+        "function": "编程",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "Tiptronic 变速器控制",
+        "function": "设码",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "乘客侧座椅位置记忆",
+        "function": "设码",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "乘客侧车门",
+        "function": "设码",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "保时捷主动悬挂管理系统",
+        "function": "特殊功能",
+        "subFunction": "PASM/PADM 调试",
+        "year_sample": "2024"
+      },
+      {
+        "system": "保时捷主动悬挂管理系统",
+        "function": "设码",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "保时捷稳定管理系统",
+        "function": "编程",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "保时捷稳定管理系统",
+        "function": "设码",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "保时捷通讯管理系统",
+        "function": "特殊功能",
+        "subFunction": "MOST 系统测试",
+        "year_sample": "2024"
+      },
+      {
+        "system": "保时捷通讯管理系统",
+        "function": "设码",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "倒车摄像机",
+        "function": "设码",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "前端电子设备",
+        "function": "特殊功能",
+        "subFunction": "刮水角度自适应",
+        "year_sample": "2024"
+      },
+      {
+        "system": "前端电子设备",
+        "function": "编程",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "前端电子设备",
+        "function": "设码",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "前部摄像机",
+        "function": "设码",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "动力转向",
+        "function": "编程",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "动力转向",
+        "function": "设码",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "发动机",
+        "function": "特殊功能",
+        "subFunction": "节气门匹配",
+        "year_sample": "2024"
+      },
+      {
+        "system": "发动机",
+        "function": "编程",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "发动机",
+        "function": "设码",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "右前照灯",
+        "function": "编程",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "右前照灯",
+        "function": "设码",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "后端电子设备",
+        "function": "编程",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "后端电子设备",
+        "function": "设码",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "外部放大器",
+        "function": "冻结帧",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "外部放大器",
+        "function": "动作测试",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "外部放大器",
+        "function": "故障码",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "外部放大器",
+        "function": "数据流",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "外部放大器",
+        "function": "版本信息",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "外部放大器",
+        "function": "编程",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "外部放大器",
+        "function": "设码",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "安全气囊",
+        "function": "编程",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "安全气囊",
+        "function": "设码",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "左侧前照灯",
+        "function": "编程",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "左侧前照灯",
+        "function": "设码",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "活顶",
+        "function": "编程",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "活顶",
+        "function": "设码",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "电视调谐器",
+        "function": "设码",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "空调",
+        "function": "编程",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "空调",
+        "function": "设码",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "紧急呼叫系统 (ERA Glonass)",
+        "function": "设码",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "组合仪表",
+        "function": "编程",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "组合仪表",
+        "function": "设码",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "网关",
+        "function": "编程",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "网关",
+        "function": "设码",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "自适应巡航控制 (ACC)",
+        "function": "冻结帧",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "自适应巡航控制 (ACC)",
+        "function": "动作测试",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "自适应巡航控制 (ACC)",
+        "function": "故障码",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "自适应巡航控制 (ACC)",
+        "function": "数据流",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "自适应巡航控制 (ACC)",
+        "function": "版本信息",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "自适应巡航控制 (ACC)",
+        "function": "设码",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "调音器",
+        "function": "设码",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "车道变换辅助系统，右侧(主设备)",
+        "function": "设码",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "车道变换辅助系统，左侧(从动设备)",
+        "function": "设码",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "转向盘电子设备",
+        "function": "编程",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "转向盘电子设备",
+        "function": "设码",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "轮胎压力监控 (TPM)",
+        "function": "编程",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "轮胎压力监控 (TPM)",
+        "function": "设码",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "选择杆",
+        "function": "设码",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "附加仪表-时钟",
+        "function": "设码",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "驻车制动器",
+        "function": "编程",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "驻车制动器",
+        "function": "设码",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "驻车辅助系统",
+        "function": "设码",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "驾驶员侧座椅记忆",
+        "function": "设码",
+        "subFunction": null,
+        "year_sample": "2024"
+      },
+      {
+        "system": "驾驶员侧车门",
+        "function": "设码",
+        "subFunction": null,
+        "year_sample": "2024"
+      }
+    ],
+    "system_function_pairs": [
+      {
+        "system": "Tiptronic 变速器控制",
+        "function": "冻结帧",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "Tiptronic 变速器控制",
+        "function": "动作测试",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "Tiptronic 变速器控制",
+        "function": "故障码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "Tiptronic 变速器控制",
+        "function": "数据流",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "Tiptronic 变速器控制",
+        "function": "版本信息",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "Tiptronic 变速器控制",
+        "function": "特殊功能",
+        "subFunction": "机油加注",
+        "n": 13
+      },
+      {
+        "system": "Tiptronic 变速器控制",
+        "function": "编程",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "Tiptronic 变速器控制",
+        "function": "设码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "乘客侧座椅位置记忆",
+        "function": "冻结帧",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "乘客侧座椅位置记忆",
+        "function": "动作测试",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "乘客侧座椅位置记忆",
+        "function": "故障码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "乘客侧座椅位置记忆",
+        "function": "数据流",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "乘客侧座椅位置记忆",
+        "function": "版本信息",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "乘客侧座椅位置记忆",
+        "function": "特殊功能",
+        "subFunction": "校正座椅电机",
+        "n": 13
+      },
+      {
+        "system": "乘客侧座椅位置记忆",
+        "function": "设码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "乘客侧车门",
+        "function": "冻结帧",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "乘客侧车门",
+        "function": "动作测试",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "乘客侧车门",
+        "function": "故障码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "乘客侧车门",
+        "function": "数据流",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "乘客侧车门",
+        "function": "版本信息",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "乘客侧车门",
+        "function": "设码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "保时捷主动悬挂管理系统",
+        "function": "冻结帧",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "保时捷主动悬挂管理系统",
+        "function": "动作测试",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "保时捷主动悬挂管理系统",
+        "function": "故障码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "保时捷主动悬挂管理系统",
+        "function": "数据流",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "保时捷主动悬挂管理系统",
+        "function": "版本信息",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "保时捷主动悬挂管理系统",
+        "function": "特殊功能",
+        "subFunction": "PASM/PADM 调试",
+        "n": 13
+      },
+      {
+        "system": "保时捷主动悬挂管理系统",
+        "function": "特殊功能",
+        "subFunction": "校准",
+        "n": 13
+      },
+      {
+        "system": "保时捷主动悬挂管理系统",
+        "function": "特殊功能",
+        "subFunction": "系统测试：单元支座",
+        "n": 13
+      },
+      {
+        "system": "保时捷主动悬挂管理系统",
+        "function": "特殊功能",
+        "subFunction": "驱动链接测试：减震器阀",
+        "n": 13
+      },
+      {
+        "system": "保时捷主动悬挂管理系统",
+        "function": "设码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "保时捷稳定管理系统",
+        "function": "冻结帧",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "保时捷稳定管理系统",
+        "function": "动作测试",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "保时捷稳定管理系统",
+        "function": "故障码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "保时捷稳定管理系统",
+        "function": "数据流",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "保时捷稳定管理系统",
+        "function": "版本信息",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "保时捷稳定管理系统",
+        "function": "特殊功能",
+        "subFunction": "对制动器排气",
+        "n": 13
+      },
+      {
+        "system": "保时捷稳定管理系统",
+        "function": "编程",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "保时捷稳定管理系统",
+        "function": "设码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "保时捷通讯管理系统",
+        "function": "冻结帧",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "保时捷通讯管理系统",
+        "function": "动作测试",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "保时捷通讯管理系统",
+        "function": "故障码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "保时捷通讯管理系统",
+        "function": "数据流",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "保时捷通讯管理系统",
+        "function": "版本信息",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "保时捷通讯管理系统",
+        "function": "特殊功能",
+        "subFunction": "MOST 系统测试",
+        "n": 13
+      },
+      {
+        "system": "保时捷通讯管理系统",
+        "function": "特殊功能",
+        "subFunction": "确认更新",
+        "n": 13
+      },
+      {
+        "system": "保时捷通讯管理系统",
+        "function": "特殊功能",
+        "subFunction": "禁用生产模式",
+        "n": 13
+      },
+      {
+        "system": "保时捷通讯管理系统",
+        "function": "设码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "倒车摄像机",
+        "function": "冻结帧",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "倒车摄像机",
+        "function": "动作测试",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "倒车摄像机",
+        "function": "故障码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "倒车摄像机",
+        "function": "数据流",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "倒车摄像机",
+        "function": "版本信息",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "倒车摄像机",
+        "function": "设码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "前端电子设备",
+        "function": "冻结帧",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "前端电子设备",
+        "function": "动作测试",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "前端电子设备",
+        "function": "故障码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "前端电子设备",
+        "function": "数据流",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "前端电子设备",
+        "function": "版本信息",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "前端电子设备",
+        "function": "特殊功能",
+        "subFunction": "刮水角度自适应",
+        "n": 13
+      },
+      {
+        "system": "前端电子设备",
+        "function": "特殊功能",
+        "subFunction": "前照灯调试",
+        "n": 13
+      },
+      {
+        "system": "前端电子设备",
+        "function": "特殊功能",
+        "subFunction": "启动钥匙保持电磁阀",
+        "n": 13
+      },
+      {
+        "system": "前端电子设备",
+        "function": "编程",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "前端电子设备",
+        "function": "设码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "前部摄像机",
+        "function": "冻结帧",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "前部摄像机",
+        "function": "动作测试",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "前部摄像机",
+        "function": "故障码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "前部摄像机",
+        "function": "数据流",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "前部摄像机",
+        "function": "版本信息",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "前部摄像机",
+        "function": "设码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "动力转向",
+        "function": "冻结帧",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "动力转向",
+        "function": "动作测试",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "动力转向",
+        "function": "故障码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "动力转向",
+        "function": "数据流",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "动力转向",
+        "function": "版本信息",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "动力转向",
+        "function": "编程",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "动力转向",
+        "function": "设码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "发动机",
+        "function": "冻结帧",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "发动机",
+        "function": "动作测试",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "发动机",
+        "function": "故障码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "发动机",
+        "function": "数据流",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "发动机",
+        "function": "版本信息",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "发动机",
+        "function": "特殊功能",
+        "subFunction": "节气门匹配",
+        "n": 13
+      },
+      {
+        "system": "发动机",
+        "function": "编程",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "发动机",
+        "function": "设码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "右前照灯",
+        "function": "冻结帧",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "右前照灯",
+        "function": "动作测试",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "右前照灯",
+        "function": "故障码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "右前照灯",
+        "function": "数据流",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "右前照灯",
+        "function": "版本信息",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "右前照灯",
+        "function": "编程",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "右前照灯",
+        "function": "设码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "后端电子设备",
+        "function": "冻结帧",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "后端电子设备",
+        "function": "动作测试",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "后端电子设备",
+        "function": "故障码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "后端电子设备",
+        "function": "数据流",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "后端电子设备",
+        "function": "版本信息",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "后端电子设备",
+        "function": "编程",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "后端电子设备",
+        "function": "设码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "外部放大器",
+        "function": "冻结帧",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "外部放大器",
+        "function": "动作测试",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "外部放大器",
+        "function": "故障码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "外部放大器",
+        "function": "数据流",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "外部放大器",
+        "function": "版本信息",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "外部放大器",
+        "function": "编程",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "外部放大器",
+        "function": "设码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "安全气囊",
+        "function": "冻结帧",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "安全气囊",
+        "function": "动作测试",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "安全气囊",
+        "function": "故障码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "安全气囊",
+        "function": "数据流",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "安全气囊",
+        "function": "版本信息",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "安全气囊",
+        "function": "编程",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "安全气囊",
+        "function": "设码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "左侧前照灯",
+        "function": "冻结帧",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "左侧前照灯",
+        "function": "动作测试",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "左侧前照灯",
+        "function": "故障码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "左侧前照灯",
+        "function": "数据流",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "左侧前照灯",
+        "function": "版本信息",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "左侧前照灯",
+        "function": "编程",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "左侧前照灯",
+        "function": "设码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "活顶",
+        "function": "冻结帧",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "活顶",
+        "function": "动作测试",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "活顶",
+        "function": "故障码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "活顶",
+        "function": "数据流",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "活顶",
+        "function": "版本信息",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "活顶",
+        "function": "编程",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "活顶",
+        "function": "设码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "电视调谐器",
+        "function": "冻结帧",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "电视调谐器",
+        "function": "动作测试",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "电视调谐器",
+        "function": "故障码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "电视调谐器",
+        "function": "数据流",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "电视调谐器",
+        "function": "版本信息",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "电视调谐器",
+        "function": "设码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "空调",
+        "function": "冻结帧",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "空调",
+        "function": "动作测试",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "空调",
+        "function": "故障码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "空调",
+        "function": "数据流",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "空调",
+        "function": "版本信息",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "空调",
+        "function": "编程",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "空调",
+        "function": "设码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "紧急呼叫系统 (ERA Glonass)",
+        "function": "冻结帧",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "紧急呼叫系统 (ERA Glonass)",
+        "function": "动作测试",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "紧急呼叫系统 (ERA Glonass)",
+        "function": "故障码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "紧急呼叫系统 (ERA Glonass)",
+        "function": "数据流",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "紧急呼叫系统 (ERA Glonass)",
+        "function": "版本信息",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "紧急呼叫系统 (ERA Glonass)",
+        "function": "设码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "组合仪表",
+        "function": "冻结帧",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "组合仪表",
+        "function": "动作测试",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "组合仪表",
+        "function": "故障码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "组合仪表",
+        "function": "数据流",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "组合仪表",
+        "function": "版本信息",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "组合仪表",
+        "function": "特殊功能",
+        "subFunction": "设置总里程",
+        "n": 13
+      },
+      {
+        "system": "组合仪表",
+        "function": "特殊功能",
+        "subFunction": "重置保养间隔",
+        "n": 13
+      },
+      {
+        "system": "组合仪表",
+        "function": "编程",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "组合仪表",
+        "function": "设码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "网关",
+        "function": "冻结帧",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "网关",
+        "function": "动作测试",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "网关",
+        "function": "故障码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "网关",
+        "function": "数据流",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "网关",
+        "function": "版本信息",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "网关",
+        "function": "特殊功能",
+        "subFunction": "电池更换",
+        "n": 13
+      },
+      {
+        "system": "网关",
+        "function": "编程",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "网关",
+        "function": "设码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "自适应巡航控制 (ACC)",
+        "function": "冻结帧",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "自适应巡航控制 (ACC)",
+        "function": "动作测试",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "自适应巡航控制 (ACC)",
+        "function": "故障码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "自适应巡航控制 (ACC)",
+        "function": "数据流",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "自适应巡航控制 (ACC)",
+        "function": "版本信息",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "自适应巡航控制 (ACC)",
+        "function": "设码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "调音器",
+        "function": "冻结帧",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "调音器",
+        "function": "动作测试",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "调音器",
+        "function": "故障码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "调音器",
+        "function": "数据流",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "调音器",
+        "function": "版本信息",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "调音器",
+        "function": "设码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "车道变换辅助系统，右侧(主设备)",
+        "function": "冻结帧",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "车道变换辅助系统，右侧(主设备)",
+        "function": "动作测试",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "车道变换辅助系统，右侧(主设备)",
+        "function": "故障码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "车道变换辅助系统，右侧(主设备)",
+        "function": "数据流",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "车道变换辅助系统，右侧(主设备)",
+        "function": "版本信息",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "车道变换辅助系统，右侧(主设备)",
+        "function": "特殊功能",
+        "subFunction": "校准",
+        "n": 13
+      },
+      {
+        "system": "车道变换辅助系统，右侧(主设备)",
+        "function": "设码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "车道变换辅助系统，左侧(从动设备)",
+        "function": "冻结帧",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "车道变换辅助系统，左侧(从动设备)",
+        "function": "动作测试",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "车道变换辅助系统，左侧(从动设备)",
+        "function": "故障码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "车道变换辅助系统，左侧(从动设备)",
+        "function": "数据流",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "车道变换辅助系统，左侧(从动设备)",
+        "function": "版本信息",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "车道变换辅助系统，左侧(从动设备)",
+        "function": "特殊功能",
+        "subFunction": "校准",
+        "n": 13
+      },
+      {
+        "system": "车道变换辅助系统，左侧(从动设备)",
+        "function": "设码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "转向盘电子设备",
+        "function": "冻结帧",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "转向盘电子设备",
+        "function": "动作测试",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "转向盘电子设备",
+        "function": "故障码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "转向盘电子设备",
+        "function": "数据流",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "转向盘电子设备",
+        "function": "版本信息",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "转向盘电子设备",
+        "function": "特殊功能",
+        "subFunction": "功能启动",
+        "n": 13
+      },
+      {
+        "system": "转向盘电子设备",
+        "function": "特殊功能",
+        "subFunction": "标定",
+        "n": 13
+      },
+      {
+        "system": "转向盘电子设备",
+        "function": "编程",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "转向盘电子设备",
+        "function": "设码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "轮胎压力监控 (TPM)",
+        "function": "冻结帧",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "轮胎压力监控 (TPM)",
+        "function": "动作测试",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "轮胎压力监控 (TPM)",
+        "function": "故障码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "轮胎压力监控 (TPM)",
+        "function": "数据流",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "轮胎压力监控 (TPM)",
+        "function": "版本信息",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "轮胎压力监控 (TPM)",
+        "function": "编程",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "轮胎压力监控 (TPM)",
+        "function": "设码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "选择杆",
+        "function": "冻结帧",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "选择杆",
+        "function": "动作测试",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "选择杆",
+        "function": "故障码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "选择杆",
+        "function": "数据流",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "选择杆",
+        "function": "版本信息",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "选择杆",
+        "function": "设码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "附加仪表-时钟",
+        "function": "冻结帧",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "附加仪表-时钟",
+        "function": "动作测试",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "附加仪表-时钟",
+        "function": "故障码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "附加仪表-时钟",
+        "function": "数据流",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "附加仪表-时钟",
+        "function": "版本信息",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "附加仪表-时钟",
+        "function": "设码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "驻车制动器",
+        "function": "冻结帧",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "驻车制动器",
+        "function": "动作测试",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "驻车制动器",
+        "function": "故障码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "驻车制动器",
+        "function": "数据流",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "驻车制动器",
+        "function": "版本信息",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "驻车制动器",
+        "function": "特殊功能",
+        "subFunction": "校准",
+        "n": 13
+      },
+      {
+        "system": "驻车制动器",
+        "function": "特殊功能",
+        "subFunction": "检查驻车制动器的基本设置",
+        "n": 13
+      },
+      {
+        "system": "驻车制动器",
+        "function": "特殊功能",
+        "subFunction": "移至安装位置",
+        "n": 13
+      },
+      {
+        "system": "驻车制动器",
+        "function": "特殊功能",
+        "subFunction": "释放驻车制动器",
+        "n": 13
+      },
+      {
+        "system": "驻车制动器",
+        "function": "特殊功能",
+        "subFunction": "锁紧驻车制动器",
+        "n": 13
+      },
+      {
+        "system": "驻车制动器",
+        "function": "编程",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "驻车制动器",
+        "function": "设码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "驻车辅助系统",
+        "function": "冻结帧",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "驻车辅助系统",
+        "function": "动作测试",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "驻车辅助系统",
+        "function": "故障码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "驻车辅助系统",
+        "function": "数据流",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "驻车辅助系统",
+        "function": "版本信息",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "驻车辅助系统",
+        "function": "设码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "驾驶员侧座椅记忆",
+        "function": "冻结帧",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "驾驶员侧座椅记忆",
+        "function": "动作测试",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "驾驶员侧座椅记忆",
+        "function": "故障码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "驾驶员侧座椅记忆",
+        "function": "数据流",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "驾驶员侧座椅记忆",
+        "function": "版本信息",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "驾驶员侧座椅记忆",
+        "function": "特殊功能",
+        "subFunction": "校正座椅电机",
+        "n": 13
+      },
+      {
+        "system": "驾驶员侧座椅记忆",
+        "function": "设码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "驾驶员侧车门",
+        "function": "冻结帧",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "驾驶员侧车门",
+        "function": "动作测试",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "驾驶员侧车门",
+        "function": "故障码",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "驾驶员侧车门",
+        "function": "数据流",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "驾驶员侧车门",
+        "function": "版本信息",
+        "subFunction": null,
+        "n": 13
+      },
+      {
+        "system": "驾驶员侧车门",
+        "function": "设码",
+        "subFunction": null,
+        "n": 13
+      }
+    ]
+  }
+}

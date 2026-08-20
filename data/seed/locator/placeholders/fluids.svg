@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" role="img" aria-label="ª¯ûß`M">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#b8c4c0"/>
+      <stop offset="100%" stop-color="#8c9a94"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#bg)"/>
+  <ellipse cx="280" cy="220" rx="70" ry="90" fill="#5a7a8a" opacity="0.5" stroke="#2f454f" stroke-width="2"/>
+  <ellipse cx="400" cy="220" rx="70" ry="90" fill="#7a6a4a" opacity="0.5" stroke="#4a3f2f" stroke-width="2"/>
+  <ellipse cx="520" cy="220" rx="70" ry="90" fill="#4a5a4a" opacity="0.5" stroke="#2f3f2f" stroke-width="2"/>
+  <path d="M210 300 Q400 360 590 300" fill="none" stroke="#2f3539" stroke-width="3" stroke-dasharray="8 6"/>
+  <text x="400" y="50" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="28" fill="#22262a" font-weight="600">ª¯ûß</text>
+  <text x="400" y="78" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="14" fill="#40464a">P-Loc-2 draft · pending overview</text>
+</svg>

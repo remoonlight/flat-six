@@ -1,0 +1,34 @@
+{
+  "faults": [
+    {
+      "symptom": "冷车怠速不稳 / 偶发抖动",
+      "likely_causes": "点火线圈老化；火花塞到期；真空管轻微泄漏",
+      "checks": "读故障码；检查点火线圈电阻/互换试验；检查进气软管卡箍",
+      "related_part_sku": "coil-pack"
+    },
+    {
+      "symptom": "制动踏板变软或行程变长",
+      "likely_causes": "制动液含水；制动卡钳导销卡滞；软管鼓包",
+      "checks": "测制动液沸点/含水量；目视软管；路试后检查卡钳温度差异",
+      "related_part_sku": "brake-fluid"
+    },
+    {
+      "symptom": "前备箱霉味 / 空调异味",
+      "likely_causes": "空调滤芯脏；蒸发箱积水发霉",
+      "checks": "更换空调滤芯；开启最大风量排湿；检查排水管",
+      "related_part_sku": "cabin-filter"
+    },
+    {
+      "symptom": "仪表提示电瓶 / 启动无力",
+      "likely_causes": "蓄电池老化；发电机充电不足；搭铁不良",
+      "checks": "测静态电压与充电电压；负载测试；更换后用 X431 做电池登记",
+      "related_part_sku": "battery"
+    },
+    {
+      "symptom": "PDK 换挡顿挫（若配备）",
+      "likely_causes": "变速箱油老化；离合器自适应未完成；相关故障码",
+      "checks": "读 PDK 故障；确认油品与液位程序；必要时做自适应",
+      "related_part_sku": "pdk-fluid"
+    }
+  ]
+}

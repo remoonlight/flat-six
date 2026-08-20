@@ -1,0 +1,35 @@
+# 本机 MCP（含内网主机/用户/密钥路径）；公开仓只用 .cursor/mcp.json.example
+.cursor/mcp.json
+
+node_modules/
+dist/
+out/
+*.log
+.DS_Store
+*.db
+*.db-journal
+.vite/
+release/
+.local/
+apps/desktop/dist-electron/
+apps/desktop/dist/
+packages/*/dist/
+.turbo/
+*.tsbuildinfo
+
+# PETKA EPC 明文导出（本机权威；体积大、勿提交目录正文）
+data/seed/petka/plaintext-archive/*
+!data/seed/petka/plaintext-archive/README.md
+
+# PETKA 人工导出物（保留模板与目录占位）
+data/petka/**/parts.csv
+!data/petka/_template/parts.csv
+data/petka/**/shots/
+data/petka/**/*.{png,jpg,jpeg,pdf,tif,tiff}
+
+# local wiring PDF (large)
+data/981.pdf
+
+# PETKA 图号 GLB 投喂（归档到 .local/petka-models/）
+data/model/*.glb
+

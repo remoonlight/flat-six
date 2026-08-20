@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "note": "可恢复快照：Copy-Item 到 .local/cms-mesh-map.json。CMS mesh name → locator hotspot。运行时真源仍是 .local/。",
+  "caveatZh": "991.2 示意 ≠ 981 OEM 真相",
+  "updated_at": "2026-08-01T07:05:54.554Z",
+  "links": [
+    {
+      "zoneId": "interior",
+      "meshName": "SM_Interior_0000.003_MAT_Details_INT.012_0",
+      "hotspotId": "int-details-int",
+      "assetId": "cabin981",
+      "sku": null,
+      "note": "内饰细节(Details_INT)"
+    },
+    {
+      "zoneId": "interior",
+      "meshName": "SM_Interior_0000.003_MAT_Light.030_0",
+      "hotspotId": "int-cabin-light",
+      "assetId": "cabin981",
+      "sku": null,
+      "note": "舱内灯/发光件(Light)"
+    },
+    {
+      "zoneId": "interior",
+      "meshName": "SM_Interior_0000.003_MAT_Details_MAT.130_0",
+      "hotspotId": "int-details-mat",
+      "assetId": "cabin981",
+      "sku": null,
+      "note": "内饰细节(Details_MAT)"
+    },
+    {
+      "zoneId": "interior",
+      "meshName": "SM_Interior_0000.003_MAT_718_Car_Paint_Base_00.076_0",
+      "hotspotId": "int-body-paint",
+      "assetId": "cabin981",
+      "sku": null,
+      "note": "座舱文件内车漆块(Car_Paint)"
+    },
+    {
+      "zoneId": "interior",
+      "meshName": "SM_SoftTop_0000.001_MAT_SoftTop_0",
+      "hotspotId": "int-softtop",
+      "assetId": "cabin981",
+      "sku": null,
+      "note": "软顶(SoftTop)"
+    }
+  ]
+}

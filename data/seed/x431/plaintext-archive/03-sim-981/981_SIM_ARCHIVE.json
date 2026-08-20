@@ -1,0 +1,1255 @@
+{
+  "note": "无法软模拟981总线：DEMO无Porsche；VCI未连接。以下为历史真实诊断还原（GBK解码）。",
+  "porsche_sessions": 130,
+  "sessions_981": 116,
+  "unique_systems": [
+    "AC(空调系统)",
+    "CCS/ACC(巡航控制系统)",
+    "DME（数字式发动机电子设备）",
+    "ECM/DME(发动机控制模块)",
+    "EPB(电子驻车)",
+    "EPS(电动助力转向系统)",
+    "ESP/PSM(电控稳定系统)",
+    "IC(仪表)",
+    "PASM(水平高度控制)",
+    "PCM/CDR（通信管理/CD、收音机）",
+    "PSM（保时捷稳定管理系统）",
+    "SRS(安全气囊)",
+    "TCM/PDK(自动变速箱控制模块)",
+    "TCS/PTM(牵引力控制系统)",
+    "TPMS/TPM(胎压监控系统)",
+    "中央前照灯",
+    "乘客侧座椅存储器",
+    "乘客车门",
+    "仪表组合",
+    "倒车摄像头",
+    "停车辅助",
+    "前摄像头",
+    "前端电子设备",
+    "变速箱控制装置",
+    "可折叠顶篷",
+    "右大灯",
+    "后端电子设备",
+    "外部放大器",
+    "安全气囊",
+    "左大灯",
+    "水平高度控制",
+    "电动助力转向系统",
+    "空调",
+    "网关",
+    "胎压监控系统（TPM）",
+    "自适应巡航控制（ACC）",
+    "调音器",
+    "车道变换辅助系统，右侧（主设备）",
+    "车道变换辅助系统，左侧（从动设备）",
+    "转向盘电子设备",
+    "辅助仪表：时钟",
+    "选档杆",
+    "驻车制动器",
+    "驾驶员侧座椅存储器",
+    "驾驶员车门"
+  ],
+  "richest_overall": {
+    "vid": 13,
+    "systems": [
+      "DME（数字式发动机电子设备）",
+      "PCM/CDR（通信管理/CD、收音机）",
+      "PSM（保时捷稳定管理系统）",
+      "乘客侧座椅存储器",
+      "乘客车门",
+      "仪表组合",
+      "倒车摄像头",
+      "停车辅助",
+      "前端电子设备",
+      "变速箱控制装置",
+      "可折叠顶篷",
+      "右大灯",
+      "后端电子设备",
+      "外部放大器",
+      "安全气囊",
+      "左大灯",
+      "水平高度控制",
+      "电动助力转向系统",
+      "空调",
+      "网关",
+      "胎压监控系统（TPM）",
+      "自适应巡航控制（ACC）",
+      "车道变换辅助系统，右侧（主设备）",
+      "车道变换辅助系统，左侧（从动设备）",
+      "转向盘电子设备",
+      "辅助仪表：时钟",
+      "选档杆",
+      "驻车制动器",
+      "驾驶员侧座椅存储器",
+      "驾驶员车门"
+    ]
+  },
+  "richest_981": {
+    "vehicle": {
+      "VID": 13,
+      "SN": "X431SERIAL00",
+      "VehicleUID": "PORSCHE",
+      "Make": "PORSCHE",
+      "Model": "Cayman/Boxster（981）",
+      "SubModel": null,
+      "Engine": null,
+      "Year": "2014",
+      "LicenseNumber": "",
+      "Mileage": "115408",
+      "Color": null,
+      "VIN": "WP0ZZZ98ZES000001",
+      "DiagSoftVersion": "V7.03.023",
+      "VehicleSoftVersion": "V24.46",
+      "VehicleInformation": "Car:9x1\r\nBV:EPB\r\nMode:Parkbremse_a7\r\n\r\nDSN:000006#nein#ja",
+      "StaffIDString": null,
+      "TimeStamp": "2025-06-02 06:25:00PM",
+      "Remark": null,
+      "OwnerID": null,
+      "Path": "自动搜索 > Cayman/Boxster（981）\r\n自动搜索 > Cayman/Boxster（981） > 变速箱控制装置\r\n自动搜索 > Cayman/Boxster（981） > DME（数字式发动机电子设备）\r\n自动搜索 > Cayman/Boxster（981） > 电动助力转向系统\r\n自动搜索 > Cayman/Boxster（981） > PSM（保时捷稳定管理系统）\r\n自动搜索 > Cayman/Boxster（981） > 前端电子设备\r\n自动搜索 > Cayman/Boxster（981） > 倒车摄像头\r\n自动搜索 > Cayman/Boxster（981） > 驻车制动器",
+      "VehiclePath": "/cnlaunch/X431Pro3S/X431SERIAL00/DIAGNOSTIC/VEHICLES/PORSCHE/V24.46/",
+      "TimeStampYearMonth": "2025-06",
+      "CharSet": "GB2312",
+      "Language": 1,
+      "QuickTest": null,
+      "SystemScan": null,
+      "UploadFlag": null
+    },
+    "systems": [
+      "DME（数字式发动机电子设备）",
+      "PCM/CDR（通信管理/CD、收音机）",
+      "PSM（保时捷稳定管理系统）",
+      "乘客侧座椅存储器",
+      "乘客车门",
+      "仪表组合",
+      "倒车摄像头",
+      "停车辅助",
+      "前端电子设备",
+      "变速箱控制装置",
+      "可折叠顶篷",
+      "右大灯",
+      "后端电子设备",
+      "外部放大器",
+      "安全气囊",
+      "左大灯",
+      "水平高度控制",
+      "电动助力转向系统",
+      "空调",
+      "网关",
+      "胎压监控系统（TPM）",
+      "自适应巡航控制（ACC）",
+      "车道变换辅助系统，右侧（主设备）",
+      "车道变换辅助系统，左侧（从动设备）",
+      "转向盘电子设备",
+      "辅助仪表：时钟",
+      "选档杆",
+      "驻车制动器",
+      "驾驶员侧座椅存储器",
+      "驾驶员车门"
+    ]
+  },
+  "dtc_count": 1459,
+  "dtc_sample": [
+    {
+      "DTC": "B1062F0",
+      "Description": "右前扬声器 - 低音音箱，线路间短路 （000209）",
+      "Status": "信号不可靠",
+      "TimeStamp": "2025-04-15 11:53:33PM",
+      "VID": 5
+    },
+    {
+      "DTC": "B106A13",
+      "Description": "已保留 （000214）",
+      "Status": " ",
+      "TimeStamp": "2025-04-15 11:53:33PM",
+      "VID": 5
+    },
+    {
+      "DTC": "B106B13",
+      "Description": "已保留 （000219）",
+      "Status": " ",
+      "TimeStamp": "2025-04-15 11:53:34PM",
+      "VID": 5
+    },
+    {
+      "DTC": "B200045",
+      "Description": "放大器 - 功能限制，编程 （000608）",
+      "Status": " ",
+      "TimeStamp": "2025-04-15 11:53:34PM",
+      "VID": 5
+    },
+    {
+      "DTC": "00A221",
+      "Description": "警告： 行驶时车门/前盖打开",
+      "Status": "未启用",
+      "TimeStamp": "2025-04-16 12:02:49AM",
+      "VID": 5
+    },
+    {
+      "DTC": "00A223",
+      "Description": "接受警告。距离。",
+      "Status": "未启用",
+      "TimeStamp": "2025-04-16 12:02:49AM",
+      "VID": 5
+    },
+    {
+      "DTC": "B201A00",
+      "Description": "PCM - 未确认软件更新 （000613）",
+      "Status": " ",
+      "TimeStamp": "2025-04-16 12:09:16AM",
+      "VID": 5
+    },
+    {
+      "DTC": "B126D13",
+      "Description": "AM/FM - 天线放大器，断路 （000005）",
+      "Status": " ",
+      "TimeStamp": "2025-04-16 12:09:16AM",
+      "VID": 5
+    },
+    {
+      "DTC": "B126E13",
+      "Description": "FM - 天线放大器 2，断路 （000006）",
+      "Status": " ",
+      "TimeStamp": "2025-04-16 12:09:16AM",
+      "VID": 5
+    },
+    {
+      "DTC": "B105413",
+      "Description": "GPS - 天线，断路 （000A05）",
+      "Status": " ",
+      "TimeStamp": "2025-04-16 12:09:17AM",
+      "VID": 5
+    },
+    {
+      "DTC": "U111100",
+      "Description": "由于缺少消息导致的功能限制",
+      "Status": "信号错误",
+      "TimeStamp": "2025-04-16 12:09:17AM",
+      "VID": 5
+    },
+    {
+      "DTC": "000603",
+      "Description": "负载中断 （eEm）",
+      "Status": "未启用",
+      "TimeStamp": "2025-06-02 06:27:32PM",
+      "VID": 13
+    },
+    {
+      "DTC": "C13002",
+      "Description": "与发电机通信",
+      "Status": "未启用",
+      "TimeStamp": "2025-06-02 06:27:32PM",
+      "VID": 13
+    },
+    {
+      "DTC": "U0447",
+      "Description": "检查网关控制单元故障记忆内容",
+      "Status": "信号异常",
+      "TimeStamp": "2025-06-02 06:27:33PM",
+      "VID": 13
+    },
+    {
+      "DTC": "U0412",
+      "Description": "检查网关控制单元故障记忆内容",
+      "Status": "超出极限值",
+      "TimeStamp": "2025-06-02 06:27:34PM",
+      "VID": 13
+    },
+    {
+      "DTC": "00A223",
+      "Description": "接受警告。距离。",
+      "Status": "未启用",
+      "TimeStamp": "2025-06-02 06:27:37PM",
+      "VID": 13
+    },
+    {
+      "DTC": "B201A00",
+      "Description": "PCM - 未确认软件更新 （000613）",
+      "Status": " ",
+      "TimeStamp": "2025-06-02 06:27:43PM",
+      "VID": 13
+    },
+    {
+      "DTC": "B126D13",
+      "Description": "AM/FM - 天线放大器，断路 （000005）",
+      "Status": " ",
+      "TimeStamp": "2025-06-02 06:27:43PM",
+      "VID": 13
+    },
+    {
+      "DTC": "B126E13",
+      "Description": "FM - 天线放大器 2，断路 （000006）",
+      "Status": " ",
+      "TimeStamp": "2025-06-02 06:27:43PM",
+      "VID": 13
+    },
+    {
+      "DTC": "B105413",
+      "Description": "GPS - 天线，断路 （000A05）",
+      "Status": " ",
+      "TimeStamp": "2025-06-02 06:27:43PM",
+      "VID": 13
+    },
+    {
+      "DTC": "B106A13",
+      "Description": "已保留 （000214）",
+      "Status": " ",
+      "TimeStamp": "2025-06-02 06:27:48PM",
+      "VID": 13
+    },
+    {
+      "DTC": "B106B13",
+      "Description": "已保留 （000219）",
+      "Status": " ",
+      "TimeStamp": "2025-06-02 06:27:48PM",
+      "VID": 13
+    },
+    {
+      "DTC": "B200045",
+      "Description": "放大器 - 功能限制，编程 （000608）",
+      "Status": " ",
+      "TimeStamp": "2025-06-02 06:27:49PM",
+      "VID": 13
+    },
+    {
+      "DTC": "000041",
+      "Description": "端子 15，信号不可靠",
+      "Status": "启用",
+      "TimeStamp": "2025-06-02 06:27:53PM",
+      "VID": 13
+    },
+    {
+      "DTC": "C1208A",
+      "Description": "检查 PASM 控制单元故障记忆内容",
+      "Status": "未启用",
+      "TimeStamp": "2025-06-02 06:27:58PM",
+      "VID": 13
+    },
+    {
+      "DTC": "89020E",
+      "Description": "前盖灯存在故障",
+      "Status": "未启用",
+      "TimeStamp": "2025-06-02 06:28:00PM",
+      "VID": 13
+    },
+    {
+      "DTC": "C1208A",
+      "Description": "检查 PASM 控制单元故障记忆内容",
+      "Status": "未启用",
+      "TimeStamp": "2025-06-02 06:28:02PM",
+      "VID": 13
+    },
+    {
+      "DTC": "B201000",
+      "Description": "校准",
+      "Status": "启用",
+      "TimeStamp": "2025-06-02 06:28:19PM",
+      "VID": 13
+    },
+    {
+      "DTC": "89020E",
+      "Description": "前盖灯存在故障",
+      "Status": "启用",
+      "TimeStamp": "2025-06-02 06:30:00PM",
+      "VID": 13
+    },
+    {
+      "DTC": "U0447",
+      "Description": "检查网关控制单元故障记忆内容",
+      "Status": "信号异常",
+      "TimeStamp": "2025-06-07 09:50:03PM",
+      "VID": 14
+    },
+    {
+      "DTC": "U0412",
+      "Description": "检查网关控制单元故障记忆内容",
+      "Status": "超出极限值",
+      "TimeStamp": "2025-06-07 09:50:03PM",
+      "VID": 14
+    },
+    {
+      "DTC": "C13002",
+      "Description": "与发电机通信",
+      "Status": "未启用",
+      "TimeStamp": "2025-06-07 09:50:19PM",
+      "VID": 14
+    },
+    {
+      "DTC": "B201A00",
+      "Description": "PCM - 未确认软件更新 （000613）",
+      "Status": " ",
+      "TimeStamp": "2025-06-07 09:50:32PM",
+      "VID": 14
+    },
+    {
+      "DTC": "B126D13",
+      "Description": "AM/FM - 天线放大器，断路 （000005）",
+      "Status": " ",
+      "TimeStamp": "2025-06-07 09:50:32PM",
+      "VID": 14
+    },
+    {
+      "DTC": "B126E13",
+      "Description": "FM - 天线放大器 2，断路 （000006）",
+      "Status": " ",
+      "TimeStamp": "2025-06-07 09:50:32PM",
+      "VID": 14
+    },
+    {
+      "DTC": "B105413",
+      "Description": "GPS - 天线，断路 （000A05）",
+      "Status": "信号错误",
+      "TimeStamp": "2025-06-07 09:50:32PM",
+      "VID": 14
+    },
+    {
+      "DTC": "B106A13",
+      "Description": "已保留 （000214）",
+      "Status": " ",
+      "TimeStamp": "2025-06-07 09:50:38PM",
+      "VID": 14
+    },
+    {
+      "DTC": "B106B13",
+      "Description": "已保留 （000219）",
+      "Status": " ",
+      "TimeStamp": "2025-06-07 09:50:38PM",
+      "VID": 14
+    },
+    {
+      "DTC": "B200045",
+      "Description": "放大器 - 功能限制，编程 （000608）",
+      "Status": " ",
+      "TimeStamp": "2025-06-07 09:50:38PM",
+      "VID": 14
+    },
+    {
+      "DTC": "000041",
+      "Description": "端子 15，信号不可靠",
+      "Status": "启用",
+      "TimeStamp": "2025-06-07 09:50:43PM",
+      "VID": 14
+    },
+    {
+      "DTC": "89020E",
+      "Description": "前盖灯存在故障",
+      "Status": "未启用",
+      "TimeStamp": "2025-06-07 09:50:51PM",
+      "VID": 14
+    },
+    {
+      "DTC": "B201000",
+      "Description": "校准",
+      "Status": "启用",
+      "TimeStamp": "2025-06-07 09:51:12PM",
+      "VID": 14
+    },
+    {
+      "DTC": "B105413",
+      "Description": "GPS - 天线，断路 （000A05）",
+      "Status": " ",
+      "TimeStamp": "2025-06-07 10:16:22PM",
+      "VID": 14
+    },
+    {
+      "DTC": "B201A00",
+      "Description": "PCM - 未确认软件更新 （000613）",
+      "Status": " ",
+      "TimeStamp": "2025-06-12 06:02:06PM",
+      "VID": 15
+    },
+    {
+      "DTC": "B126D13",
+      "Description": "AM/FM - 天线放大器，断路 （000005）",
+      "Status": " ",
+      "TimeStamp": "2025-06-12 06:02:06PM",
+      "VID": 15
+    },
+    {
+      "DTC": "B126E13",
+      "Description": "FM - 天线放大器 2，断路 （000006）",
+      "Status": " ",
+      "TimeStamp": "2025-06-12 06:02:06PM",
+      "VID": 15
+    },
+    {
+      "DTC": "B105413",
+      "Description": "GPS - 天线，断路 （000A05）",
+      "Status": " ",
+      "TimeStamp": "2025-06-12 06:02:06PM",
+      "VID": 15
+    },
+    {
+      "DTC": "U104900",
+      "Description": "MOST 总线 – 断路 （001A0A）",
+      "Status": "信号错误",
+      "TimeStamp": "2025-06-12 06:02:06PM",
+      "VID": 15
+    },
+    {
+      "DTC": "B106A13",
+      "Description": "已保留 （000214）",
+      "Status": " ",
+      "TimeStamp": "2025-06-12 07:13:02PM",
+      "VID": 16
+    },
+    {
+      "DTC": "B106B13",
+      "Description": "已保留 （000219）",
+      "Status": " ",
+      "TimeStamp": "2025-06-12 07:13:02PM",
+      "VID": 16
+    },
+    {
+      "DTC": "B200045",
+      "Description": "放大器 - 功能限制，编程 （000608）",
+      "Status": " ",
+      "TimeStamp": "2025-06-12 07:13:03PM",
+      "VID": 16
+    },
+    {
+      "DTC": "B201A00",
+      "Description": "PCM - 未确认软件更新 （000613）",
+      "Status": " ",
+      "TimeStamp": "2025-06-12 07:13:27PM",
+      "VID": 16
+    },
+    {
+      "DTC": "B127313",
+      "Description": "FM - 天线 2，断路 （000008）",
+      "Status": " ",
+      "TimeStamp": "2025-06-12 07:13:27PM",
+      "VID": 16
+    },
+    {
+      "DTC": "B105413",
+      "Description": "GPS - 天线，断路 （000A05）",
+      "Status": " ",
+      "TimeStamp": "2025-06-12 07:13:27PM",
+      "VID": 16
+    },
+    {
+      "DTC": "B127313",
+      "Description": "FM - 天线 2，断路 （000008）",
+      "Status": "信号错误",
+      "TimeStamp": "2025-06-12 07:25:51PM",
+      "VID": 16
+    },
+    {
+      "DTC": "B201A00",
+      "Description": "PCM - 未确认软件更新 （000613）",
+      "Status": " ",
+      "TimeStamp": "2025-06-12 09:41:52PM",
+      "VID": 18
+    },
+    {
+      "DTC": "B105413",
+      "Description": "GPS - 天线，断路 （000A05）",
+      "Status": " ",
+      "TimeStamp": "2025-06-12 09:41:53PM",
+      "VID": 18
+    },
+    {
+      "DTC": "C13002",
+      "Description": "与发电机通信",
+      "Status": "未启用",
+      "TimeStamp": "2025-06-13 10:10:47AM",
+      "VID": 19
+    },
+    {
+      "DTC": "000603",
+      "Description": "负载中断 （eEm）",
+      "Status": "未启用",
+      "TimeStamp": "2025-06-13 10:10:47AM",
+      "VID": 19
+    },
+    {
+      "DTC": "U0447",
+      "Description": "检查网关控制单元故障记忆内容",
+      "Status": "信号异常",
+      "TimeStamp": "2025-06-13 10:11:20AM",
+      "VID": 19
+    },
+    {
+      "DTC": "U0412",
+      "Description": "检查网关控制单元故障记忆内容",
+      "Status": "超出极限值",
+      "TimeStamp": "2025-06-13 10:11:20AM",
+      "VID": 19
+    },
+    {
+      "DTC": "B201A00",
+      "Description": "PCM - 未确认软件更新 （000613）",
+      "Status": " ",
+      "TimeStamp": "2025-06-13 10:12:42AM",
+      "VID": 19
+    },
+    {
+      "DTC": "B105413",
+      "Description": "GPS - 天线，断路 （000A05）",
+      "Status": " ",
+      "TimeStamp": "2025-06-13 10:12:42AM",
+      "VID": 19
+    },
+    {
+      "DTC": "00A221",
+      "Description": "警告： 行驶时车门/前盖打开",
+      "Status": "未启用",
+      "TimeStamp": "2025-06-13 10:13:10AM",
+      "VID": 19
+    },
+    {
+      "DTC": "B106A13",
+      "Description": "已保留 （000214）",
+      "Status": " ",
+      "TimeStamp": "2025-06-13 10:13:20AM",
+      "VID": 19
+    },
+    {
+      "DTC": "B106B13",
+      "Description": "已保留 （000219）",
+      "Status": " ",
+      "TimeStamp": "2025-06-13 10:13:21AM",
+      "VID": 19
+    },
+    {
+      "DTC": "B200045",
+      "Description": "放大器 - 功能限制，编程 （000608）",
+      "Status": " ",
+      "TimeStamp": "2025-06-13 10:13:21AM",
+      "VID": 19
+    },
+    {
+      "DTC": "000041",
+      "Description": "端子 15，信号不可靠",
+      "Status": "启用",
+      "TimeStamp": "2025-06-13 10:13:26AM",
+      "VID": 19
+    },
+    {
+      "DTC": "89020E",
+      "Description": "前盖灯存在故障",
+      "Status": "启用",
+      "TimeStamp": "2025-06-13 10:13:32AM",
+      "VID": 19
+    },
+    {
+      "DTC": "C13201",
+      "Description": "与刮水器通信",
+      "Status": "未启用",
+      "TimeStamp": "2025-06-13 10:13:32AM",
+      "VID": 19
+    },
+    {
+      "DTC": "C11007",
+      "Description": "校准",
+      "Status": "启用",
+      "TimeStamp": "2025-06-13 10:13:34AM",
+      "VID": 19
+    },
+    {
+      "DTC": "C11000",
+      "Description": "电源电压低于极限值",
+      "Status": "未启用",
+      "TimeStamp": "2025-06-13 10:13:49AM",
+      "VID": 19
+    },
+    {
+      "DTC": "B201000",
+      "Description": "校准",
+      "Status": "启用",
+      "TimeStamp": "2025-06-13 10:13:52AM",
+      "VID": 19
+    },
+    {
+      "DTC": "C13002",
+      "Description": "与发电机通信",
+      "Status": "启用",
+      "TimeStamp": "2025-06-13 11:57:21AM",
+      "VID": 20
+    },
+    {
+      "DTC": "U0447",
+      "Description": "检查网关控制单元故障记忆内容",
+      "Status": "信号异常",
+      "TimeStamp": "2025-06-13 11:57:22AM",
+      "VID": 20
+    },
+    {
+      "DTC": "U0412",
+      "Description": "检查网关控制单元故障记忆内容",
+      "Status": "超出极限值",
+      "TimeStamp": "2025-06-13 11:57:22AM",
+      "VID": 20
+    },
+    {
+      "DTC": "P1432",
+      "Description": "真空系统泄漏 - 冷却系统故障",
+      "Status": "信号异常",
+      "TimeStamp": "2025-06-13 11:57:22AM",
+      "VID": 20
+    },
+    {
+      "DTC": "001802",
+      "Description": "执行器电磁阀 R/P 互锁，不可靠信号",
+      "Status": "信号无效",
+      "TimeStamp": "2025-06-13 11:57:25AM",
+      "VID": 20
+    },
+    {
+      "DTC": "B201A00",
+      "Description": "PCM - 未确认软件更新 （000613）",
+      "Status": " ",
+      "TimeStamp": "2025-06-13 11:57:32AM",
+      "VID": 20
+    },
+    {
+      "DTC": "B105413",
+      "Description": "GPS - 天线，断路 （000A05）",
+      "Status": " ",
+      "TimeStamp": "2025-06-13 11:57:32AM",
+      "VID": 20
+    },
+    {
+      "DTC": "B106A13",
+      "Description": "已保留 （000214）",
+      "Status": " ",
+      "TimeStamp": "2025-06-13 11:57:38AM",
+      "VID": 20
+    },
+    {
+      "DTC": "B106B13",
+      "Description": "已保留 （000219）",
+      "Status": " ",
+      "TimeStamp": "2025-06-13 11:57:38AM",
+      "VID": 20
+    },
+    {
+      "DTC": "B200045",
+      "Description": "放大器 - 功能限制，编程 （000608）",
+      "Status": " ",
+      "TimeStamp": "2025-06-13 11:57:38AM",
+      "VID": 20
+    },
+    {
+      "DTC": "000041",
+      "Description": "端子 15，信号不可靠",
+      "Status": "启用",
+      "TimeStamp": "2025-06-13 11:57:43AM",
+      "VID": 20
+    },
+    {
+      "DTC": "89020E",
+      "Description": "前盖灯存在故障",
+      "Status": "未启用",
+      "TimeStamp": "2025-06-13 11:57:50AM",
+      "VID": 20
+    },
+    {
+      "DTC": "B201000",
+      "Description": "校准",
+      "Status": "启用",
+      "TimeStamp": "2025-06-13 11:58:11AM",
+      "VID": 20
+    },
+    {
+      "DTC": "000243",
+      "Description": "右后车辆水平传感器，信号低于极限值",
+      "Status": "启用",
+      "TimeStamp": "2025-06-13 11:59:43AM",
+      "VID": 20
+    },
+    {
+      "DTC": "C1208A",
+      "Description": "检查 PASM 控制单元故障记忆内容",
+      "Status": "启用",
+      "TimeStamp": "2025-06-13 11:59:45AM",
+      "VID": 20
+    },
+    {
+      "DTC": "C1208A",
+      "Description": "检查 PASM 控制单元故障记忆内容",
+      "Status": "启用",
+      "TimeStamp": "2025-06-13 11:59:49AM",
+      "VID": 20
+    },
+    {
+      "DTC": "C1208A",
+      "Description": "检查 PASM 控制单元故障记忆内容",
+      "Status": "未启用",
+      "TimeStamp": "2025-06-13 12:02:24PM",
+      "VID": 20
+    },
+    {
+      "DTC": "C1208A",
+      "Description": "检查 PASM 控制单元故障记忆内容",
+      "Status": "未启用",
+      "TimeStamp": "2025-06-13 12:02:28PM",
+      "VID": 20
+    },
+    {
+      "DTC": "C13002",
+      "Description": "与发电机通信",
+      "Status": "未启用",
+      "TimeStamp": "2025-06-13 12:28:21PM",
+      "VID": 21
+    },
+    {
+      "DTC": "U0447",
+      "Description": "检查网关控制单元故障记忆内容",
+      "Status": "信号异常",
+      "TimeStamp": "2025-06-13 12:28:23PM",
+      "VID": 21
+    },
+    {
+      "DTC": "U0412",
+      "Description": "检查网关控制单元故障记忆内容",
+      "Status": "超出极限值",
+      "TimeStamp": "2025-06-13 12:28:23PM",
+      "VID": 21
+    },
+    {
+      "DTC": "B201A00",
+      "Description": "PCM - 未确认软件更新 （000613）",
+      "Status": " ",
+      "TimeStamp": "2025-06-13 12:28:34PM",
+      "VID": 21
+    },
+    {
+      "DTC": "B105413",
+      "Description": "GPS - 天线，断路 （000A05）",
+      "Status": " ",
+      "TimeStamp": "2025-06-13 12:28:34PM",
+      "VID": 21
+    },
+    {
+      "DTC": "B106A13",
+      "Description": "已保留 （000214）",
+      "Status": " ",
+      "TimeStamp": "2025-06-13 12:28:40PM",
+      "VID": 21
+    },
+    {
+      "DTC": "B106B13",
+      "Description": "已保留 （000219）",
+      "Status": " ",
+      "TimeStamp": "2025-06-13 12:28:40PM",
+      "VID": 21
+    },
+    {
+      "DTC": "B200045",
+      "Description": "放大器 - 功能限制，编程 （000608）",
+      "Status": " ",
+      "TimeStamp": "2025-06-13 12:28:40PM",
+      "VID": 21
+    },
+    {
+      "DTC": "001820",
+      "Description": "Sport/运动计时器，未准备就绪",
+      "Status": "未启用",
+      "TimeStamp": "2025-06-13 12:28:42PM",
+      "VID": 21
+    }
+  ],
+  "vin_list": [
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 2,
+      "TimeStamp": "2025-04-13 04:29:57PM",
+      "Mileage": "113578"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 3,
+      "TimeStamp": "2025-04-13 04:43:46PM",
+      "Mileage": "113578"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 4,
+      "TimeStamp": "2025-04-13 04:47:13PM",
+      "Mileage": null
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 5,
+      "TimeStamp": "2025-04-15 11:48:44PM",
+      "Mileage": "114398"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 6,
+      "TimeStamp": "2025-04-16 09:52:02AM",
+      "Mileage": "114398"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 7,
+      "TimeStamp": "2025-04-23 11:06:05AM",
+      "Mileage": "114463"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 8,
+      "TimeStamp": "2025-04-23 04:25:25PM",
+      "Mileage": "16777215"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 9,
+      "TimeStamp": "2025-04-23 09:27:10PM",
+      "Mileage": "16777215"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 10,
+      "TimeStamp": "2025-04-23 11:25:39PM",
+      "Mileage": "114589"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 11,
+      "TimeStamp": "2025-05-09 04:06:40PM",
+      "Mileage": "114815"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 12,
+      "TimeStamp": "2025-05-26 04:34:00PM",
+      "Mileage": "115101"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 13,
+      "TimeStamp": "2025-06-02 06:25:00PM",
+      "Mileage": "115408"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 14,
+      "TimeStamp": "2025-06-07 09:49:41PM",
+      "Mileage": "115448"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 15,
+      "TimeStamp": "2025-06-12 06:01:32PM",
+      "Mileage": "115448"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 16,
+      "TimeStamp": "2025-06-12 07:11:18PM",
+      "Mileage": "115448"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 18,
+      "TimeStamp": "2025-06-12 09:40:50PM",
+      "Mileage": "16777215"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 19,
+      "TimeStamp": "2025-06-13 10:08:50AM",
+      "Mileage": "115448"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 20,
+      "TimeStamp": "2025-06-13 11:56:59AM",
+      "Mileage": "115459"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 21,
+      "TimeStamp": "2025-06-13 12:27:40PM",
+      "Mileage": "115467"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 22,
+      "TimeStamp": "2025-06-13 04:12:47PM",
+      "Mileage": "115471"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 23,
+      "TimeStamp": "2025-06-14 12:23:58AM",
+      "Mileage": "115471"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 24,
+      "TimeStamp": "2025-06-16 12:39:25PM",
+      "Mileage": "115603"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 25,
+      "TimeStamp": "2025-06-16 02:15:01PM",
+      "Mileage": "115623"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 26,
+      "TimeStamp": "2025-06-17 12:15:54PM",
+      "Mileage": "16777215"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000002",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 27,
+      "TimeStamp": "2025-06-18 08:39:14PM",
+      "Mileage": "39373"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 28,
+      "TimeStamp": "2025-06-24 12:27:43PM",
+      "Mileage": "16777215"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 29,
+      "TimeStamp": "2025-06-25 04:08:59PM",
+      "Mileage": "115718"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 30,
+      "TimeStamp": "2025-06-26 09:54:31AM",
+      "Mileage": "115719"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 31,
+      "TimeStamp": "2025-06-26 01:53:12PM",
+      "Mileage": "115741"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000002",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 32,
+      "TimeStamp": "2025-06-27 10:41:10PM",
+      "Mileage": "39707"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 33,
+      "TimeStamp": "2025-07-12 05:58:14PM",
+      "Mileage": "116518"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000003",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2015",
+      "VID": 34,
+      "TimeStamp": "2025-07-15 02:08:22PM",
+      "Mileage": "91531"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 35,
+      "TimeStamp": "2025-07-16 06:17:11PM",
+      "Mileage": "116739"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 36,
+      "TimeStamp": "2025-07-24 10:11:40AM",
+      "Mileage": "117036"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 37,
+      "TimeStamp": "2025-07-24 04:06:16PM",
+      "Mileage": "117094"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 38,
+      "TimeStamp": "2025-07-30 10:53:04AM",
+      "Mileage": "117112"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 39,
+      "TimeStamp": "2025-07-30 01:53:42PM",
+      "Mileage": "117115"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 40,
+      "TimeStamp": "2025-08-05 08:46:49AM",
+      "Mileage": "117168"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 41,
+      "TimeStamp": "2025-08-12 05:30:13PM",
+      "Mileage": "117411"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 42,
+      "TimeStamp": "2025-08-12 05:44:34PM",
+      "Mileage": null
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 43,
+      "TimeStamp": "2025-08-17 11:41:12AM",
+      "Mileage": "117592"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 44,
+      "TimeStamp": "2025-08-17 12:11:50PM",
+      "Mileage": "117592"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000004",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2015",
+      "VID": 45,
+      "TimeStamp": "2025-08-21 09:34:42PM",
+      "Mileage": "16777215"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000004",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2015",
+      "VID": 46,
+      "TimeStamp": "2025-08-21 09:47:23PM",
+      "Mileage": "16777215"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 47,
+      "TimeStamp": "2025-08-23 06:59:53AM",
+      "Mileage": "117904"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 48,
+      "TimeStamp": "2025-08-23 07:24:10AM",
+      "Mileage": "117913"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 49,
+      "TimeStamp": "2025-08-24 09:01:49PM",
+      "Mileage": "117968"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 50,
+      "TimeStamp": "2025-08-24 09:24:11PM",
+      "Mileage": "117969"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 51,
+      "TimeStamp": "2025-09-04 11:14:08AM",
+      "Mileage": "118135"
+    },
+    {
+      "VIN": "WP0ZZZ98ZES000001",
+      "Model": "Cayman/Boxster（981）",
+      "Year": "2014",
+      "VID": 52,
+      "TimeStamp": "2025-09-08 10:55:13PM",
+      "Mileage": "118147"
+    }
+  ]
+}

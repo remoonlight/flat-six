@@ -1,0 +1,35 @@
+{
+  "android_metadata": {
+    "cols": [
+      "locale"
+    ],
+    "count": 1
+  },
+  "VIN_INFO": {
+    "cols": [
+      "ID",
+      "VIN",
+      "PLATE",
+      "PACKAGE_ID",
+      "MODEL",
+      "DIAGNOSE_MODEL",
+      "YEAR",
+      "DISPLACEMENT",
+      "TRANS",
+      "VENDER",
+      "REMARK_JSON",
+      "CAR_BRAND",
+      "ENGINE",
+      "CYLINDERS",
+      "CAMSHAFT"
+    ],
+    "count": 12
+  },
+  "sqlite_sequence": {
+    "cols": [
+      "name",
+      "seq"
+    ],
+    "count": 1
+  }
+}

@@ -1,0 +1,25 @@
+---
+description: Electron IPC, data ingest — desktop app, packages, scripts, data, local assets, ADRs
+globs: apps/desktop/**/*.{ts,tsx,mjs,cjs,css},packages/db/**/*.ts,packages/domain/**/*.ts,scripts/**/*.{mjs,js,py},data/petka/**/*,data/seed/**/*,.local/**/*,docs/adr/**/*
+alwaysApply: false
+---
+
+# Workspace scoped rules
+
+MCP 选路见常驻规则 `mcp-routing`（本文件不再重复 MCP 表）。
+
+## Electron desktop
+
+- Renderer → `window.porsche981` only (`electron/preload.cjs`). No Node/SQLite in renderer.
+- New IPC: `main.mjs` handle + `preload.cjs` expose + `src/api.ts` — keep in sync.
+- DB via main → `db-bridge` / `packages/db`. 3D assets in `.local/`; missing → placeholders.
+- UI IA per `docs/requirements.md` §0 #24.
+- 长任务 / GLB 见 `no-hang-3d`。
+
+## Data & ingest
+
+- **SKU**: maintenance subset keeps sku; bulk `{generation}-{oemNormalized}` (`981`|`982`). Don't blindly bulk-overwrite maintenance.
+- **CSV**: `data/petka/*/parts.csv` local authority; Git = templates/bootstrap.
+- **Path**: npm scripts (`ingest:petka`, `parse:petka-bulk`, `sync:petka-bulk-remote`, …) over ad-hoc SQL.
+- **PETKA bulk**: txt → `.local/petka-bulk/` → `parse:petka-bulk`; 远程主机用 env `PORSCHE981_PETKA_SSH`（勿把内网地址写进仓库）。
+- **Public prices**: teile/Design911 非PETKA; `petka_verified` false. Domain → `packages/domain`; schema → `packages/db`.

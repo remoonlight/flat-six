@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" role="img" aria-label="6�`M��">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#c4c0bc"/>
+      <stop offset="100%" stop-color="#8f8a84"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#bg)"/>
+  <!-- �Mn -->
+  <circle cx="220" cy="180" r="70" fill="#5a5550" stroke="#2a2622" stroke-width="4"/>
+  <circle cx="220" cy="180" r="28" fill="#8a847c"/>
+  <rect x="285" y="160" width="70" height="40" rx="6" fill="#6b655d" stroke="#2a2622" stroke-width="2"/>
+  <!-- �n -->
+  <circle cx="580" cy="280" r="70" fill="#5a5550" stroke="#2a2622" stroke-width="4"/>
+  <circle cx="580" cy="280" r="28" fill="#8a847c"/>
+  <rect x="495" y="260" width="70" height="40" rx="6" fill="#6b655d" stroke="#2a2622" stroke-width="2"/>
+  <line x1="290" y1="200" x2="560" y2="280" stroke="#4a4540" stroke-width="3" stroke-dasharray="8 6"/>
+  <text x="400" y="50" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="28" fill="#2a2622" font-weight="600">6�</text>
+  <text x="400" y="78" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="14" fill="#4a4540">� 3D � � PETKA ��</text>
+  <text x="220" y="280" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" fill="#2a2622">�M</text>
+  <text x="580" y="380" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" fill="#2a2622">�</text>
+  <text x="400" y="420" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" fill="#3d3935">>n*�data/petka/brakes/shots/overview.png</text>
+</svg>

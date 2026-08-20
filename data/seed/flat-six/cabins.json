@@ -1,0 +1,118 @@
+{
+  "version": 1,
+  "note": "免费座舱/车身 GLB（flat-six）。.local/flat-six/ 勿提交。981 主用；982 本阶段保留供内饰筛选。CMS 991 车身不用。",
+  "caveatZh": "免费模座舱多为整块或少量分块，非 OEM 零件级；手拼靠 mesh 名 ↔ parts.locator_hotspot",
+  "downloadBase": "https://raw.githubusercontent.com/dmitry-grechko/flat-six/main/public/models",
+  "interiorScreeningMeta": {
+    "date": "2026-08-01",
+    "method": "GLB JSON chunk: node/mesh names vs cabinMeshHints",
+    "verdict_zh": "已筛；手拼种子 interior-stitch.plan.json（主用 cabin981）；982 两套仅对照"
+  },
+  "cabins": [
+    {
+      "id": "cabin-981-boxster",
+      "generation": "981",
+      "role": "primary",
+      "label_zh": "981 Boxster 座舱/车身",
+      "rel": "flat-six/boxster-real.glb",
+      "sourceFile": "boxster-real.glb",
+      "license": "CC BY 4.0",
+      "attribution": "「2015 Porsche Boxster GTS」by Ddiaz Design via flat-six.org / Sketchfab",
+      "sketchfab": "https://skfb.ly/przTS",
+      "cabinMeshHints": [
+        "SM_Interior_0000.003",
+        "SM_Interior_0000.003_MAT_Details_INT.012_0",
+        "SM_Interior_0000.003_MAT_Light.030_0",
+        "SM_Interior_0000.003_MAT_Details_MAT.130_0",
+        "SM_Interior_0000.003_MAT_718_Car_Paint_Base_00.076_0",
+        "SM_SoftTop_0000.001",
+        "SM_SoftTop_0000.001_MAT_SoftTop_0"
+      ],
+      "stitchNote": "内饰主块 SM_Interior_* + SoftTop；材质子 mesh 可分点（Details_INT / Light / Details_MAT），非座椅/方向盘级",
+      "interiorScreening": {
+        "pickability": "medium",
+        "rank": 1,
+        "recommend": "primary_handstitch",
+        "summary_zh": "981 产品车世代匹配；内饰命名最完整（4 材质子块 + SoftTop）。推荐下一步手拼主用。"
+      }
+    },
+    {
+      "id": "cabin-981-cayman",
+      "generation": "981",
+      "role": "alt",
+      "label_zh": "981 Cayman（舱弱，外部分块更好）",
+      "rel": "flat-six/cayman-981.glb",
+      "sourceFile": "cayman.glb",
+      "localName": "cayman-981.glb",
+      "license": "CC BY 4.0",
+      "attribution": "「2014 Porsche Cayman S (981)」by Ddiaz Design via flat-six.org / Sketchfab",
+      "sketchfab": "https://skfb.ly/p8vC9",
+      "cabinMeshHints": [],
+      "stitchNote": "无 Interior/座舱命名节点（仅外后视镜 Glass_Mirrors）；适合外板/材质手对，不作主座舱",
+      "interiorScreening": {
+        "pickability": "none",
+        "rank": 4,
+        "recommend": "exterior_only",
+        "summary_zh": "内饰不可分点；保留作 981 外板对照，不参与内饰手拼。"
+      }
+    },
+    {
+      "id": "cabin-982-boxster",
+      "generation": "982",
+      "role": "primary",
+      "label_zh": "718/982 Boxster S 座舱（内饰筛选保留）",
+      "rel": "flat-six/boxster-s-982.glb",
+      "sourceFile": "boxster-s-982.glb",
+      "license": "CC BY 4.0",
+      "attribution": "「2017 Porsche 718 Boxster S」by Ddiaz Design via flat-six.org / Sketchfab",
+      "cabinMeshHints": [
+        "Boxster_S:Interior_Geo_lodA",
+        "Boxster_S:Interior_Geo_lodA_interior_0",
+        "Boxster_S:InteriorTillingColourZone_Geo_lodA",
+        "Boxster_S:InteriorTillingColourZone_Geo_lodA_standardSurface1_0",
+        "Boxster_S:SeatBelt_Geo_lodA",
+        "Boxster_S:SeatBelt_Geo_lodA_coloured_0"
+      ],
+      "stitchNote": "有 Interior / InteriorTilling / SeatBelt 命名；语义块清晰但分块少于 981 材质切分。本阶段仅对照保留，不做产品世代切换",
+      "interiorScreening": {
+        "pickability": "medium-low",
+        "rank": 2,
+        "recommend": "control_982",
+        "summary_zh": "982 对照首选：有安全带与内饰色区命名；非产品主用。"
+      }
+    },
+    {
+      "id": "cabin-982-cayman",
+      "generation": "982",
+      "role": "alt",
+      "label_zh": "718/982 Cayman（含方向盘细节节点）",
+      "rel": "flat-six/cayman-982.glb",
+      "sourceFile": "cayman-982.glb",
+      "license": "CC BY 4.0",
+      "attribution": "「2017 Porsche 718 Cayman (982)」by Ddiaz Design via flat-six.org / Sketchfab",
+      "cabinMeshHints": [
+        "car_porsche_718:steering_wheel_details_LOD2_UV1_Untitled_114_Default",
+        "car_porsche_718:steering_wheel_details_LOD2_UV1_Untitled_114_Default_car_porsche_718:Default1_0"
+      ],
+      "stitchNote": "舱内几乎仅 steering_wheel_details；可与 Boxster 982 对照方向盘热点命名，不作整舱手拼",
+      "interiorScreening": {
+        "pickability": "low",
+        "rank": 3,
+        "recommend": "control_wheel_only",
+        "summary_zh": "982 方向盘细节对照专用；无整舱 Interior 树。"
+      }
+    }
+  ],
+  "manualStitch": {
+    "meshMap": ".local/cms-mesh-map.json",
+    "transforms": ".local/xray-transforms.json",
+    "stitchPlan": "data/seed/flat-six/interior-stitch.plan.json",
+    "workflow": [
+      "npm run fetch:flat-six-cabins（或见 README 下载命令）",
+      "按 interior-stitch.plan.json 的 proposedLinks（热点对齐 zones.json interior；int-cabin-filter 无 mesh）",
+      "Locator → 单模型 → 选 cabin981（主用）/ cabin982·cayman*（对照）",
+      "点选 mesh → 写入 .local/cms-mesh-map.json",
+      "手拼优先 cabin-981-boxster；982 仅 controlHints，不进默认 zone 映射"
+    ]
+  }
+}

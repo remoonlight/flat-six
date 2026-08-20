@@ -1,0 +1,2 @@
+sku,name_zh,oem_number,system,zone,oem_price,currency,price_as_of,aftermarket_price,aftermarket_quotes,applicability_note,design911_checked,interval_km,interval_months,locator_hotspot,notes
+oil-filter-example,机油滤清器（示例）,9A1.107.201.00,发动机,engine-bay,,GBP,,,Design911:14.95|Mann:9.50,,no,15000,12,engine-bay,删掉本行后再填真数据

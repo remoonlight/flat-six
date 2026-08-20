@@ -1,0 +1,62 @@
+{
+  "authority": "local-pdf",
+  "note": "线束框架：索引 + 外链打开本地 PDF。拆页热点后续再加。有 locatorZoneId 的系统可跳 Locator 草稿区（不做 PDF 拆页）。pdf.path 相对仓库根；对照 PDF 本机自备，不入库。",
+  "pdf": {
+    "id": "981-main",
+    "label": "981 主车线束 PDF",
+    "path": "data/981.pdf"
+  },
+  "doNotUse": [
+    {
+      "id": "982",
+      "label": "982.pdf（对照，勿与 981 混用；本机自备）",
+      "path": ""
+    },
+    {
+      "id": "981gt4",
+      "label": "981GT4_CS.pdf（对照，勿与 981 混用；本机自备）",
+      "path": ""
+    }
+  ],
+  "systems": [
+    {
+      "id": "engine",
+      "label_zh": "发动机 / DME",
+      "status": "stub",
+      "locatorZoneId": "engine-bay"
+    },
+    {
+      "id": "pdk",
+      "label_zh": "PDK",
+      "status": "stub",
+      "locatorZoneId": "chassis",
+      "locatorHotspotId": "underbody"
+    },
+    {
+      "id": "abs",
+      "label_zh": "ABS / 制动",
+      "status": "stub",
+      "locatorZoneId": "brakes",
+      "locatorHotspotId": "front-left"
+    },
+    {
+      "id": "pcm",
+      "label_zh": "PCM / 多媒体",
+      "status": "stub",
+      "locatorZoneId": "electronics"
+    },
+    {
+      "id": "can",
+      "label_zh": "CAN 网关",
+      "status": "stub",
+      "locatorZoneId": "electronics",
+      "locatorHotspotId": "elec-gateway-comfort"
+    },
+    {
+      "id": "body",
+      "label_zh": "车身电器",
+      "status": "stub",
+      "locatorZoneId": "electronics"
+    }
+  ]
+}

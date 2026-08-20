@@ -1,0 +1,1506 @@
+{
+  "source": "data/seed/x431/plaintext-archive/03-sim-981/981_Boxster981_rows.json",
+  "year": "2014",
+  "model": "Boxster(981)",
+  "generatedAt": "2026-08-02T15:10:54.381Z",
+  "rowCount": 78,
+  "systemCount": 34,
+  "systems": [
+    {
+      "system": "安全气囊",
+      "items": [
+        {
+          "function": "编程",
+          "subFunction": null,
+          "rowId": 2592,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：编程",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 安全气囊 / 编程"
+          }
+        },
+        {
+          "function": "设码",
+          "subFunction": null,
+          "rowId": 2593,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：设码",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 安全气囊 / 设码"
+          }
+        }
+      ]
+    },
+    {
+      "system": "保时捷通讯管理系统",
+      "items": [
+        {
+          "function": "特殊功能",
+          "subFunction": "MOST 系统测试",
+          "rowId": 2525,
+          "ed": 0,
+          "playbook": {
+            "risk": "medium",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：特殊功能 / MOST 系统测试",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 保时捷通讯管理系统 / 特殊功能"
+          }
+        },
+        {
+          "function": "特殊功能",
+          "subFunction": "确认更新",
+          "rowId": 2526,
+          "ed": 0,
+          "playbook": {
+            "risk": "medium",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：特殊功能 / 确认更新",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 保时捷通讯管理系统 / 特殊功能"
+          }
+        },
+        {
+          "function": "特殊功能",
+          "subFunction": "禁用生产模式",
+          "rowId": 2527,
+          "ed": 0,
+          "playbook": {
+            "risk": "medium",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：特殊功能 / 禁用生产模式",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 保时捷通讯管理系统 / 特殊功能"
+          }
+        },
+        {
+          "function": "设码",
+          "subFunction": null,
+          "rowId": 2528,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：设码",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 保时捷通讯管理系统 / 设码"
+          }
+        }
+      ]
+    },
+    {
+      "system": "保时捷稳定管理系统",
+      "items": [
+        {
+          "function": "特殊功能",
+          "subFunction": "对制动器排气",
+          "rowId": 2517,
+          "ed": 0,
+          "playbook": {
+            "risk": "medium",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：特殊功能 / 对制动器排气",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 保时捷稳定管理系统 / 特殊功能"
+          }
+        },
+        {
+          "function": "编程",
+          "subFunction": null,
+          "rowId": 2518,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：编程",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 保时捷稳定管理系统 / 编程"
+          }
+        },
+        {
+          "function": "设码",
+          "subFunction": null,
+          "rowId": 2519,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：设码",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 保时捷稳定管理系统 / 设码"
+          }
+        }
+      ]
+    },
+    {
+      "system": "保时捷主动悬挂管理系统",
+      "items": [
+        {
+          "function": "特殊功能",
+          "subFunction": "PASM/PADM 调试",
+          "rowId": 2507,
+          "ed": 0,
+          "playbook": {
+            "risk": "medium",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：特殊功能 / PASM/PADM 调试",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 保时捷主动悬挂管理系统 / 特殊功能"
+          }
+        },
+        {
+          "function": "特殊功能",
+          "subFunction": "校准",
+          "rowId": 2508,
+          "ed": 0,
+          "playbook": {
+            "risk": "medium",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：特殊功能 / 校准",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 保时捷主动悬挂管理系统 / 特殊功能"
+          }
+        },
+        {
+          "function": "特殊功能",
+          "subFunction": "系统测试：单元支座",
+          "rowId": 2509,
+          "ed": 0,
+          "playbook": {
+            "risk": "medium",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：特殊功能 / 系统测试：单元支座",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 保时捷主动悬挂管理系统 / 特殊功能"
+          }
+        },
+        {
+          "function": "特殊功能",
+          "subFunction": "驱动链接测试：减震器阀",
+          "rowId": 2510,
+          "ed": 0,
+          "playbook": {
+            "risk": "medium",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：特殊功能 / 驱动链接测试：减震器阀",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 保时捷主动悬挂管理系统 / 特殊功能"
+          }
+        },
+        {
+          "function": "设码",
+          "subFunction": null,
+          "rowId": 2511,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：设码",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 保时捷主动悬挂管理系统 / 设码"
+          }
+        }
+      ]
+    },
+    {
+      "system": "车道变换辅助系统，右侧(主设备)",
+      "items": [
+        {
+          "function": "特殊功能",
+          "subFunction": "校准",
+          "rowId": 2661,
+          "ed": 0,
+          "playbook": {
+            "risk": "medium",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：特殊功能 / 校准",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 车道变换辅助系统，右侧(主设备) / 特殊功能"
+          }
+        },
+        {
+          "function": "设码",
+          "subFunction": null,
+          "rowId": 2662,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：设码",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 车道变换辅助系统，右侧(主设备) / 设码"
+          }
+        }
+      ]
+    },
+    {
+      "system": "车道变换辅助系统，左侧(从动设备)",
+      "items": [
+        {
+          "function": "特殊功能",
+          "subFunction": "校准",
+          "rowId": 2668,
+          "ed": 0,
+          "playbook": {
+            "risk": "medium",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：特殊功能 / 校准",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 车道变换辅助系统，左侧(从动设备) / 特殊功能"
+          }
+        },
+        {
+          "function": "设码",
+          "subFunction": null,
+          "rowId": 2669,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：设码",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 车道变换辅助系统，左侧(从动设备) / 设码"
+          }
+        }
+      ]
+    },
+    {
+      "system": "乘客侧车门",
+      "items": [
+        {
+          "function": "设码",
+          "subFunction": null,
+          "rowId": 2501,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：设码",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 乘客侧车门 / 设码"
+          }
+        }
+      ]
+    },
+    {
+      "system": "乘客侧座椅位置记忆",
+      "items": [
+        {
+          "function": "特殊功能",
+          "subFunction": "校正座椅电机",
+          "rowId": 2494,
+          "ed": 0,
+          "playbook": {
+            "risk": "medium",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：特殊功能 / 校正座椅电机",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 乘客侧座椅位置记忆 / 特殊功能"
+          }
+        },
+        {
+          "function": "设码",
+          "subFunction": null,
+          "rowId": 2495,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：设码",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 乘客侧座椅位置记忆 / 设码"
+          }
+        }
+      ]
+    },
+    {
+      "system": "倒车摄像机",
+      "items": [
+        {
+          "function": "设码",
+          "subFunction": null,
+          "rowId": 2534,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：设码",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 倒车摄像机 / 设码"
+          }
+        }
+      ]
+    },
+    {
+      "system": "电视调谐器",
+      "items": [
+        {
+          "function": "设码",
+          "subFunction": null,
+          "rowId": 2613,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：设码",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 电视调谐器 / 设码"
+          }
+        }
+      ]
+    },
+    {
+      "system": "调音器",
+      "items": [
+        {
+          "function": "设码",
+          "subFunction": null,
+          "rowId": 2655,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：设码",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 调音器 / 设码"
+          }
+        }
+      ]
+    },
+    {
+      "system": "动力转向",
+      "items": [
+        {
+          "function": "编程",
+          "subFunction": null,
+          "rowId": 2556,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：编程",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 动力转向 / 编程"
+          }
+        },
+        {
+          "function": "设码",
+          "subFunction": null,
+          "rowId": 2557,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：设码",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 动力转向 / 设码"
+          }
+        }
+      ]
+    },
+    {
+      "system": "发动机",
+      "items": [
+        {
+          "function": "特殊功能",
+          "subFunction": "节气门匹配",
+          "rowId": 2563,
+          "ed": 0,
+          "playbook": {
+            "risk": "medium",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：特殊功能 / 节气门匹配",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 发动机 / 特殊功能"
+          }
+        },
+        {
+          "function": "编程",
+          "subFunction": null,
+          "rowId": 2564,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：编程",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 发动机 / 编程"
+          }
+        },
+        {
+          "function": "设码",
+          "subFunction": null,
+          "rowId": 2565,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：设码",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 发动机 / 设码"
+          }
+        }
+      ]
+    },
+    {
+      "system": "附加仪表-时钟",
+      "items": [
+        {
+          "function": "设码",
+          "subFunction": null,
+          "rowId": 2697,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：设码",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 附加仪表-时钟 / 设码"
+          }
+        }
+      ]
+    },
+    {
+      "system": "后端电子设备",
+      "items": [
+        {
+          "function": "编程",
+          "subFunction": null,
+          "rowId": 2578,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：编程",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 后端电子设备 / 编程"
+          }
+        },
+        {
+          "function": "设码",
+          "subFunction": null,
+          "rowId": 2579,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：设码",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 后端电子设备 / 设码"
+          }
+        }
+      ]
+    },
+    {
+      "system": "活顶",
+      "items": [
+        {
+          "function": "编程",
+          "subFunction": null,
+          "rowId": 2606,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：编程",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 活顶 / 编程"
+          }
+        },
+        {
+          "function": "设码",
+          "subFunction": null,
+          "rowId": 2607,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：设码",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 活顶 / 设码"
+          }
+        }
+      ]
+    },
+    {
+      "system": "驾驶员侧车门",
+      "items": [
+        {
+          "function": "设码",
+          "subFunction": null,
+          "rowId": 2728,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：设码",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 驾驶员侧车门 / 设码"
+          }
+        }
+      ]
+    },
+    {
+      "system": "驾驶员侧座椅记忆",
+      "items": [
+        {
+          "function": "特殊功能",
+          "subFunction": "校正座椅电机",
+          "rowId": 2721,
+          "ed": 0,
+          "playbook": {
+            "risk": "medium",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：特殊功能 / 校正座椅电机",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 驾驶员侧座椅记忆 / 特殊功能"
+          }
+        },
+        {
+          "function": "设码",
+          "subFunction": null,
+          "rowId": 2722,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：设码",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 驾驶员侧座椅记忆 / 设码"
+          }
+        }
+      ]
+    },
+    {
+      "system": "紧急呼叫系统 (ERA Glonass)",
+      "items": [
+        {
+          "function": "设码",
+          "subFunction": null,
+          "rowId": 2626,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：设码",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 紧急呼叫系统 (ERA Glonass) / 设码"
+          }
+        }
+      ]
+    },
+    {
+      "system": "空调",
+      "items": [
+        {
+          "function": "编程",
+          "subFunction": null,
+          "rowId": 2619,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：编程",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 空调 / 编程"
+          }
+        },
+        {
+          "function": "设码",
+          "subFunction": null,
+          "rowId": 2620,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：设码",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 空调 / 设码"
+          }
+        }
+      ]
+    },
+    {
+      "system": "轮胎压力监控 (TPM)",
+      "items": [
+        {
+          "function": "编程",
+          "subFunction": null,
+          "rowId": 2684,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：编程",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 轮胎压力监控 (TPM) / 编程"
+          }
+        },
+        {
+          "function": "设码",
+          "subFunction": null,
+          "rowId": 2685,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：设码",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 轮胎压力监控 (TPM) / 设码"
+          }
+        }
+      ]
+    },
+    {
+      "system": "前部摄像机",
+      "items": [
+        {
+          "function": "设码",
+          "subFunction": null,
+          "rowId": 2550,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：设码",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 前部摄像机 / 设码"
+          }
+        }
+      ]
+    },
+    {
+      "system": "前端电子设备",
+      "items": [
+        {
+          "function": "特殊功能",
+          "subFunction": "刮水角度自适应",
+          "rowId": 2540,
+          "ed": 0,
+          "playbook": {
+            "risk": "medium",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：特殊功能 / 刮水角度自适应",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 前端电子设备 / 特殊功能"
+          }
+        },
+        {
+          "function": "特殊功能",
+          "subFunction": "前照灯调试",
+          "rowId": 2541,
+          "ed": 0,
+          "playbook": {
+            "risk": "medium",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：特殊功能 / 前照灯调试",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 前端电子设备 / 特殊功能"
+          }
+        },
+        {
+          "function": "特殊功能",
+          "subFunction": "启动钥匙保持电磁阀",
+          "rowId": 2542,
+          "ed": 0,
+          "playbook": {
+            "risk": "medium",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：特殊功能 / 启动钥匙保持电磁阀",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 前端电子设备 / 特殊功能"
+          }
+        },
+        {
+          "function": "编程",
+          "subFunction": null,
+          "rowId": 2543,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：编程",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 前端电子设备 / 编程"
+          }
+        },
+        {
+          "function": "设码",
+          "subFunction": null,
+          "rowId": 2544,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：设码",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 前端电子设备 / 设码"
+          }
+        }
+      ]
+    },
+    {
+      "system": "外部放大器",
+      "items": [
+        {
+          "function": "编程",
+          "subFunction": null,
+          "rowId": 2585,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：编程",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 外部放大器 / 编程"
+          }
+        },
+        {
+          "function": "设码",
+          "subFunction": null,
+          "rowId": 2586,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：设码",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 外部放大器 / 设码"
+          }
+        }
+      ]
+    },
+    {
+      "system": "网关",
+      "items": [
+        {
+          "function": "特殊功能",
+          "subFunction": "电池更换",
+          "rowId": 2641,
+          "ed": 0,
+          "playbook": {
+            "risk": "medium",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：特殊功能 / 电池更换",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 网关 / 特殊功能"
+          }
+        },
+        {
+          "function": "编程",
+          "subFunction": null,
+          "rowId": 2642,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：编程",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 网关 / 编程"
+          }
+        },
+        {
+          "function": "设码",
+          "subFunction": null,
+          "rowId": 2643,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：设码",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 网关 / 设码"
+          }
+        }
+      ]
+    },
+    {
+      "system": "选择杆",
+      "items": [
+        {
+          "function": "设码",
+          "subFunction": null,
+          "rowId": 2691,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：设码",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 选择杆 / 设码"
+          }
+        }
+      ]
+    },
+    {
+      "system": "右前照灯",
+      "items": [
+        {
+          "function": "编程",
+          "subFunction": null,
+          "rowId": 2571,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：编程",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 右前照灯 / 编程"
+          }
+        },
+        {
+          "function": "设码",
+          "subFunction": null,
+          "rowId": 2572,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：设码",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 右前照灯 / 设码"
+          }
+        }
+      ]
+    },
+    {
+      "system": "驻车辅助系统",
+      "items": [
+        {
+          "function": "设码",
+          "subFunction": null,
+          "rowId": 2715,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：设码",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 驻车辅助系统 / 设码"
+          }
+        }
+      ]
+    },
+    {
+      "system": "驻车制动器",
+      "items": [
+        {
+          "function": "特殊功能",
+          "subFunction": "校准",
+          "rowId": 2703,
+          "ed": 0,
+          "playbook": {
+            "risk": "medium",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：特殊功能 / 校准",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 驻车制动器 / 特殊功能"
+          }
+        },
+        {
+          "function": "特殊功能",
+          "subFunction": "检查驻车制动器的基本设置",
+          "rowId": 2704,
+          "ed": 0,
+          "playbook": {
+            "risk": "medium",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：特殊功能 / 检查驻车制动器的基本设置",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 驻车制动器 / 特殊功能"
+          }
+        },
+        {
+          "function": "特殊功能",
+          "subFunction": "移至安装位置",
+          "rowId": 2705,
+          "ed": 0,
+          "playbook": {
+            "risk": "medium",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：特殊功能 / 移至安装位置",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 驻车制动器 / 特殊功能"
+          }
+        },
+        {
+          "function": "特殊功能",
+          "subFunction": "释放驻车制动器",
+          "rowId": 2706,
+          "ed": 0,
+          "playbook": {
+            "risk": "medium",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：特殊功能 / 释放驻车制动器",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 驻车制动器 / 特殊功能"
+          }
+        },
+        {
+          "function": "特殊功能",
+          "subFunction": "锁紧驻车制动器",
+          "rowId": 2707,
+          "ed": 0,
+          "playbook": {
+            "risk": "medium",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：特殊功能 / 锁紧驻车制动器",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 驻车制动器 / 特殊功能"
+          }
+        },
+        {
+          "function": "编程",
+          "subFunction": null,
+          "rowId": 2708,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：编程",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 驻车制动器 / 编程"
+          }
+        },
+        {
+          "function": "设码",
+          "subFunction": null,
+          "rowId": 2709,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：设码",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 驻车制动器 / 设码"
+          }
+        }
+      ]
+    },
+    {
+      "system": "转向盘电子设备",
+      "items": [
+        {
+          "function": "特殊功能",
+          "subFunction": "功能启动",
+          "rowId": 2675,
+          "ed": 0,
+          "playbook": {
+            "risk": "medium",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：特殊功能 / 功能启动",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 转向盘电子设备 / 特殊功能"
+          }
+        },
+        {
+          "function": "特殊功能",
+          "subFunction": "标定",
+          "rowId": 2676,
+          "ed": 0,
+          "playbook": {
+            "risk": "medium",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：特殊功能 / 标定",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 转向盘电子设备 / 特殊功能"
+          }
+        },
+        {
+          "function": "编程",
+          "subFunction": null,
+          "rowId": 2677,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：编程",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 转向盘电子设备 / 编程"
+          }
+        },
+        {
+          "function": "设码",
+          "subFunction": null,
+          "rowId": 2678,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：设码",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 转向盘电子设备 / 设码"
+          }
+        }
+      ]
+    },
+    {
+      "system": "自适应巡航控制 (ACC)",
+      "items": [
+        {
+          "function": "设码",
+          "subFunction": null,
+          "rowId": 2649,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：设码",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 自适应巡航控制 (ACC) / 设码"
+          }
+        }
+      ]
+    },
+    {
+      "system": "组合仪表",
+      "items": [
+        {
+          "function": "特殊功能",
+          "subFunction": "设置总里程",
+          "rowId": 2632,
+          "ed": 0,
+          "playbook": {
+            "risk": "medium",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：特殊功能 / 设置总里程",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 组合仪表 / 特殊功能"
+          }
+        },
+        {
+          "function": "特殊功能",
+          "subFunction": "重置保养间隔",
+          "rowId": 2633,
+          "ed": 0,
+          "playbook": {
+            "risk": "medium",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：特殊功能 / 重置保养间隔",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 组合仪表 / 特殊功能"
+          }
+        },
+        {
+          "function": "编程",
+          "subFunction": null,
+          "rowId": 2634,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：编程",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 组合仪表 / 编程"
+          }
+        },
+        {
+          "function": "设码",
+          "subFunction": null,
+          "rowId": 2635,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：设码",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 组合仪表 / 设码"
+          }
+        }
+      ]
+    },
+    {
+      "system": "左侧前照灯",
+      "items": [
+        {
+          "function": "编程",
+          "subFunction": null,
+          "rowId": 2599,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：编程",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 左侧前照灯 / 编程"
+          }
+        },
+        {
+          "function": "设码",
+          "subFunction": null,
+          "rowId": 2600,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：设码",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / 左侧前照灯 / 设码"
+          }
+        }
+      ]
+    },
+    {
+      "system": "Tiptronic 变速器控制",
+      "items": [
+        {
+          "function": "特殊功能",
+          "subFunction": "机油加注",
+          "rowId": 2486,
+          "ed": 0,
+          "playbook": {
+            "risk": "medium",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：特殊功能 / 机油加注",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / Tiptronic 变速器控制 / 特殊功能"
+          }
+        },
+        {
+          "function": "编程",
+          "subFunction": null,
+          "rowId": 2487,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：编程",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / Tiptronic 变速器控制 / 编程"
+          }
+        },
+        {
+          "function": "设码",
+          "subFunction": null,
+          "rowId": 2488,
+          "ed": 0,
+          "playbook": {
+            "risk": "high",
+            "steps": [
+              "在 X431 选择：保时捷 → Cayman/Boxster（981）→ 年款 2014 → 对应系统",
+              "进入功能：设码",
+              "先读取/截图当前值作为 before",
+              "按需修改后再次读取作为 after",
+              "回到本应用保存 before/after 快照（本应用不写车）"
+            ],
+            "x431Path": "保时捷 / Boxster(981) / 2014 / Tiptronic 变速器控制 / 设码"
+          }
+        }
+      ]
+    }
+  ]
+}

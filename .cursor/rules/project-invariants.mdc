@@ -1,0 +1,15 @@
+---
+description: Project hard invariants from ADRs — local-only garage, no ECU write, PETKA/CMS boundaries
+alwaysApply: true
+---
+
+# Project invariants
+
+Skim `AGENTS.md` + relevant `docs/adr/` before large changes. Do not re-litigate `docs/requirements.md` §0.
+
+- **No ECU write** — OBD/coding read-only (ADR 001).
+- **Local Windows + SQLite** — `packages/db` + Electron; no cloud/auth (ADR 002).
+- **PETKA GUI** — passive inbox/TSV default; GUI automate only if user allows **this session** (ADR 003). Never invent auth.
+- **No PETKA binaries** — no parse/commit `DATA\PO` / `.zgd`.
+- **CMS rip** — `.local/cms-rip/` only; engine+chassis GLB; no 991 body (ADR 004).
+- **Prices** — source currency stored; UI CNY via `data/seed/fx.json`; teile/Design911 `petka_verified=0`.

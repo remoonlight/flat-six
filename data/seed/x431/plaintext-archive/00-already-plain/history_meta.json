@@ -1,0 +1,73 @@
+{
+  "android_metadata": {
+    "cols": [
+      "locale"
+    ],
+    "count": 1
+  },
+  "Vehicle": {
+    "cols": [
+      "VID",
+      "SN",
+      "VehicleUID",
+      "Make",
+      "Model",
+      "SubModel",
+      "Engine",
+      "Year",
+      "LicenseNumber",
+      "Mileage",
+      "Color",
+      "VIN",
+      "DiagSoftVersion",
+      "VehicleSoftVersion",
+      "VehicleInformation",
+      "StaffIDString",
+      "TimeStamp",
+      "Remark",
+      "OwnerID",
+      "Path",
+      "VehiclePath",
+      "TimeStampYearMonth",
+      "CharSet",
+      "Language",
+      "QuickTest",
+      "SystemScan",
+      "UploadFlag"
+    ],
+    "count": 168
+  },
+  "sqlite_sequence": {
+    "cols": [
+      "name",
+      "seq"
+    ],
+    "count": 3
+  },
+  "System": {
+    "cols": [
+      "SystemID",
+      "SystemIndex",
+      "NameID",
+      "SystemUID",
+      "SystemName",
+      "AvailableDatastream",
+      "AvailableAction",
+      "VID"
+    ],
+    "count": 2938
+  },
+  "DTC": {
+    "cols": [
+      "DtcID",
+      "DTC",
+      "Description",
+      "Status",
+      "SystemID",
+      "TimeStamp",
+      "VID",
+      "IsShowSystem"
+    ],
+    "count": 2190
+  }
+}

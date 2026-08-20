@@ -1,0 +1,19 @@
+﻿# PETKA inbox 示例（被动收价）
+# 复制到 .local/petka-inbox/*.txt 后由 watch/ingest 吃掉。
+# 假 OEM 不会匹配已知零件；真实行仅建议配合 --dry-run 验证。
+
+# 格式1: sku + TAB + 价
+oil-filter	24.58
+
+# 格式2: OEM + TAB + 价
+000.043.203.66	30.82
+
+# 格式3: OEM 空格价
+9A1.107.224.00 24.58
+
+# fuel-filter：可识别但强制不写价
+fuel-filter	99.99
+9A1.201.511.00	99.99
+
+# 假号（不会匹配，仅示范粘贴形态）
+FAKE.000.000.01	1.23

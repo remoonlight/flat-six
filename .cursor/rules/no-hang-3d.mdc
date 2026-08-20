@@ -1,0 +1,13 @@
+---
+description: 3D/GLB/Electron 防 hang：大文件不进上下文、长任务后台超时
+globs: .local/**,apps/desktop/**/*.{ts,tsx,mjs,cjs},scripts/**/*
+alwaysApply: false
+---
+
+# 防 hang（3D / 大资源）
+
+- GLB / 大二进制：**只读大小与 header**，禁止整文件读进对话上下文。
+- Electron 启动、模型转换、CMS rip：**后台化 + 显式超时**；不在前台干等。
+- 3D 验证用截图判定；缺资源走 placeholder（见 `workspace` / ADR 004）。
+- 同一转换/加载失败 **连续 2 次** → 停手汇报，换方案或缩小 mesh 范围。
+- 3D/GLB/Electron 期间并行子 agent **≤1**（严于全局 ≤2）；不派第二个跑 Electron / 模型转换 / rip 的 worker，MCP 只留当前必需的。

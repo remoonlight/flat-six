@@ -1,0 +1,6832 @@
+{
+  "version": 1,
+  "note": "可恢复姿态快照：Copy-Item 到 .local/xray-mesh-state.json。子 mesh TRS/visible；world = layerTRS × meshTRS。运行时真源仍是 .local/。",
+  "layers": {
+    "engine": {
+      "visible": false,
+      "meshes": {
+        "b61_gearbox": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              -1.88
+            ],
+            "rotationEuler": [
+              0,
+              3.141592653589793,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "b61_kolektor_dolotowy_2": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "b61_przepustnica": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "b61_kolektor_dolotowy_1": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        }
+      }
+    },
+    "body": {
+      "visible": false,
+      "meshes": {
+        "SM_RearKit_0000003_MAT_718_Car_Paint_Base_00076_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "SM_Hub_L_0000_Morph002_HR_R003_MAT_Hub_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "SM_Base_0000003_MAT_718_Car_Paint_Base_00076_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "SM_RearKit_0000003_MAT_Details_Chassis_0002025_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "WObject_179TopLevelGroup_c4bb8b1e_dds1_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "SM_FrontKit_0000003_MAT_718_Car_Paint_Base_00076_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "Object_179TopLevelGroup_c4bb8b1e_dds1_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "SM_Disk_R_0000_Morph001_BD_HR_R003_MAT_Disk_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "WTopLevelGroupObject_182__c5ebe6d_dds_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "SM_RearKit_0000003_MAT_Details_MAT130_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        }
+      }
+    },
+    "susp": {
+      "visible": true,
+      "meshes": {
+        "FuseBox_1_bottom": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.17,
+              0,
+              1.34
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "amortyzator_double": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.6,
+              0.1,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "wahaczDol_double": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.42,
+              0.07,
+              0.05
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "CarBattery_1": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.04,
+              0.27,
+              1.34
+            ],
+            "rotationEuler": [
+              0,
+              1.5533430342749535,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "zwrotnicaPrzod_oslona_1": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.72,
+              0.01,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "zwrotnicaTyl_oslona_1": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.77,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              3.141592653589793,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tarczaWentylowana_1": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.79,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tarczaHamulcowa_1": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.85,
+              -0.01,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              3.141592653589793,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "polosNapedowa_9": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.3,
+              0.09,
+              -0.11
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "przekladnia_1": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.17,
+              0,
+              1.1
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "polosNapedowaTylna_2": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.58,
+              0,
+              0.02
+            ],
+            "rotationEuler": [
+              0,
+              3.141592653589793,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "FuseBox_1_top": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.4,
+              0.07,
+              1.35
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "FuseMedium_1": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.67,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "FuseSmall_1": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "Relay_1": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0.75,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "coolant_cap_1": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.93,
+              0.12,
+              1.1
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "coolant_reservoir_1_body": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.66,
+              0.13,
+              1.15
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "czapkaAmorPrzod_1": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.6,
+              0.38,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "czapkaSprezynyTyl_1": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.6,
+              0.34,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "drazekKierowniczy_1": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.26,
+              0.09,
+              1.36
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "ecu_2": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.02,
+              0.58,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "klockiHamulcowe_2": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.87,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "koncowkaDrazkaKier_1": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.39,
+              0.57,
+              -0.38
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "lacznikStabilizatora_double": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.57,
+              0.17,
+              1.36
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "piastaPrzod_1": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.84,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "power_steering_cap_1": {
+          "visible": true,
+          "transform": {
+            "position": [
+              1.19,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "power_steering_reservoir_1_body": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.59,
+              0.09,
+              0.86
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "serwoHamulca_1": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.37,
+              0.22,
+              1.39
+            ],
+            "rotationEuler": [
+              0,
+              1.5707963267948966,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "sprezynaPrzod_1": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.65,
+              0,
+              1.38
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "sprezynaTyl_1": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.7,
+              0,
+              1.25
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "stabilizatorPrzod_1": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.18,
+              0,
+              1.07
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tuleja_1": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.61,
+              0,
+              1.54
+            ],
+            "rotationEuler": [
+              1.5707963267948966,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        }
+      }
+    },
+    "cms991body": {
+      "visible": true,
+      "meshes": {
+        "fender_front_right": {
+          "visible": true,
+          "transform": {
+            "position": [
+              1.56,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "fender_front_left": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -1.56,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "headlight_right": {
+          "visible": true,
+          "transform": {
+            "position": [
+              1.39,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "headlight_left": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -1.39,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "trunk": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              -1.32
+            ],
+            "rotationEuler": [
+              0,
+              3.141592653589793,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "door_front_right": {
+          "visible": true,
+          "transform": {
+            "position": [
+              1.76,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "door_front_left": {
+          "visible": false,
+          "transform": {
+            "position": [
+              -1.76,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "window_door_front_left": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -1.77,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "window_door_front_right": {
+          "visible": true,
+          "transform": {
+            "position": [
+              1.77,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "taillight_right": {
+          "visible": true,
+          "transform": {
+            "position": [
+              1.23,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "taillight_left": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -1.23,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "hood": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              3
+            ],
+            "rotationEuler": [
+              0,
+              3.141592653589793,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "mirror_left": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -1.72,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "mirror_right": {
+          "visible": true,
+          "transform": {
+            "position": [
+              1.72,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        }
+      }
+    },
+    "pm-105-015": {
+      "visible": true,
+      "meshes": {
+        "tripo_part_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_1": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.05,
+              -0.02,
+              0.09
+            ],
+            "rotationEuler": [
+              -0.3839724354387525,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_3": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.04,
+              -0.01,
+              -0.06
+            ],
+            "rotationEuler": [
+              -0.10471975511965977,
+              -0.1308996938995747,
+              -0.02617993877991494
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_2": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0.02,
+              0.14
+            ],
+            "rotationEuler": [
+              -0.5497787143782138,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_7": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_11": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.47,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_5": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        }
+      }
+    },
+    "pm-105-017": {
+      "visible": true,
+      "meshes": {}
+    },
+    "pm-105-015-mirror": {
+      "visible": true,
+      "meshes": {}
+    },
+    "pm-cooling": {
+      "visible": true,
+      "meshes": {
+        "tripo_part_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_1": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_11": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_2": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_3": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_5": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_7": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_0_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_1_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_11_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_2_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_3_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_5_R": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_7_R": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_1_017": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_12": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_3_017": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_4": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_6": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        }
+      }
+    },
+    "pm-401-000": {
+      "visible": true,
+      "meshes": {
+        "tripo_part_2": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.51,
+              0.2,
+              -0.01
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              -1.5707963267948966
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_1": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.5,
+              0.2,
+              -0.04
+            ],
+            "rotationEuler": [
+              0.13962634015954636,
+              0,
+              -1.5707963267948966
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_1_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.5,
+              0.2,
+              -0.04
+            ],
+            "rotationEuler": [
+              0.13962634015954636,
+              0,
+              1.5707963267948966
+            ],
+            "scale": [
+              -1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_2_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.51,
+              0.2,
+              -0.01
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              1.5707963267948966
+            ],
+            "scale": [
+              -1,
+              1,
+              1
+            ]
+          }
+        }
+      }
+    },
+    "pm-402-000": {
+      "visible": false,
+      "meshes": {
+        "tripo_part_1": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.06,
+              -0.08,
+              0.01
+            ],
+            "rotationEuler": [
+              0,
+              -0.03490658503988659,
+              1.5184364492350666
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        }
+      }
+    },
+    "pm-401-005": {
+      "visible": true,
+      "meshes": {}
+    },
+    "pm-suspension": {
+      "visible": true,
+      "meshes": {
+        "tripo_part_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_1": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_2": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_1_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_2_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_0_405": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_1_405": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_2_405": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_3": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_4": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_5": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_0_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_1_405_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_2_405_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_3_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_4_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_5_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_0_4205": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_1_4205": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_2_4205": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_3_4205": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_1_R_4205": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_0_403": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_1_403": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_2_403": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_3_403": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_8": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_0_5010": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_1_5010": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_2_5010": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_3_5010": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_4_5010": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_5_5010": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_0_R_5010": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_1_R_5010": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_2_R_5010": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_3_R_5010": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_4_R_5010": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_5_R_5010": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_0_5011": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_10": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_2_5011": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_3_5011": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_4_5011": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_5_5011": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_6": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_7": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_8_5011": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_9": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_4_R_5011": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_5_R_5011": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_6_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_7_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_8_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_9_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_0_5013": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_1_5013": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_2_5013": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_3_5013": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_1_R_5013": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_2_R_5013": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_3_R_5013": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_0_502": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_1_502": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_3_502": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_4_502": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_5_502": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_6_502": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_7_502": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_8_502": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_0_502_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_1_502_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_3_502_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_4_502_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_5_502_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_6_502_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_7_502_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_8_502_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        }
+      }
+    },
+    "pm-403-000": {
+      "visible": true,
+      "meshes": {
+        "tripo_part_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0.4625122517784973,
+              0.20071286397934787
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_3": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.13,
+              0.16,
+              -0.02
+            ],
+            "rotationEuler": [
+              -0.02617993877991494,
+              0.5759586531581288,
+              -1.3700834628155485
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_1": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.17,
+              -0.04,
+              0.15
+            ],
+            "rotationEuler": [
+              -0.27052603405912107,
+              0.6283185307179586,
+              -1.213003830136059
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_2": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.08,
+              0.37,
+              0.17
+            ],
+            "rotationEuler": [
+              -0.04363323129985824,
+              0.6457718232379019,
+              -1.5446163880149817
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        }
+      }
+    },
+    "pm-402-005": {
+      "visible": true,
+      "meshes": {
+        "tripo_part_2": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.55,
+              0.53,
+              -0.12
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              1.5707963267948966
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_3": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.09,
+              -0.07,
+              -0.12
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              -1.5707963267948966
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_1": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.59,
+              0.02,
+              -0.22
+            ],
+            "rotationEuler": [
+              0.02617993877991494,
+              0,
+              -1.5707963267948966
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0.04,
+              0.03
+            ],
+            "rotationEuler": [
+              -0.15707963267948966,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_1_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.55,
+              0,
+              -0.25
+            ],
+            "rotationEuler": [
+              0.02617993877991494,
+              0,
+              1.5707963267948966
+            ],
+            "scale": [
+              -1,
+              1,
+              1
+            ]
+          }
+        }
+      }
+    },
+    "pm-501-000": {
+      "visible": true,
+      "meshes": {
+        "tripo_part_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_1": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_2": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_3": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_4": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_5": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_0_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_1_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_2_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_3_R": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_4_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_5_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        }
+      }
+    },
+    "pm-501-001": {
+      "visible": true,
+      "meshes": {
+        "tripo_part_4": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.44,
+              0.24,
+              -0.5
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              -1.5707963267948966
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              -0.5
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_2": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.43,
+              0.25,
+              -0.5
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              -1.5707963267948966
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_3": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.43,
+              0.25,
+              -0.5
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              -1.5707963267948966
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_5": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.38,
+              0.3,
+              -0.5
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              -1.5707963267948966
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_6": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.37,
+              0.3,
+              -0.51
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              -1.5707963267948966
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_9": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.37,
+              0.31,
+              -0.51
+            ],
+            "rotationEuler": [
+              0,
+              -0.06981317007977318,
+              -1.5707963267948966
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_8": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.33,
+              0.32,
+              -0.5
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              -1.5707963267948966
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_7": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.41,
+              0.35,
+              -0.5
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              -1.5707963267948966
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_10": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_4_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.54,
+              0.24,
+              -0.5
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              1.5707963267948966
+            ],
+            "scale": [
+              -1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_5_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.48,
+              0.3,
+              -0.51
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              1.5707963267948966
+            ],
+            "scale": [
+              -1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_6_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.48,
+              0.3,
+              -0.51
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              1.5707963267948966
+            ],
+            "scale": [
+              -1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_7_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.48,
+              0.35,
+              -0.51
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              1.5707963267948966
+            ],
+            "scale": [
+              -1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_8_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.48,
+              0.32,
+              -0.5
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              1.5707963267948966
+            ],
+            "scale": [
+              -1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_9_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.48,
+              0.31,
+              -0.51
+            ],
+            "rotationEuler": [
+              0,
+              0.06981317007977318,
+              1.5707963267948966
+            ],
+            "scale": [
+              -1,
+              1,
+              1
+            ]
+          }
+        }
+      }
+    },
+    "pm-501-000__prebake": {
+      "visible": true,
+      "meshes": {
+        "tripo_part_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_1": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.07,
+              0.44,
+              0.21
+            ],
+            "rotationEuler": [
+              -1.1868238913561442,
+              -2.2602013813326565,
+              1.117010721276371
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_2": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.09,
+              0.45,
+              0.21
+            ],
+            "rotationEuler": [
+              -1.1868238913561442,
+              -2.2602013813326565,
+              1.117010721276371
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_3": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_4": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.07,
+              0.44,
+              0.21
+            ],
+            "rotationEuler": [
+              -1.1868238913561442,
+              -2.2602013813326565,
+              1.117010721276371
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_5": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.07,
+              0.45,
+              0.21
+            ],
+            "rotationEuler": [
+              -1.1868238913561442,
+              -2.2602013813326565,
+              1.117010721276371
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        }
+      }
+    },
+    "pm-502-000": {
+      "visible": true,
+      "meshes": {
+        "tripo_part_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.45,
+              0.52,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              -1.5707963267948966
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_1": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.45,
+              0.53,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              -1.5707963267948966
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_7": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.46,
+              0.49,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              -1.5707963267948966
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_8": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.45,
+              0.42,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              -1.5707963267948966
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_5": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.45,
+              0.47,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              -1.5707963267948966
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_3": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.45,
+              0.48,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              -1.5707963267948966
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_6": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.45,
+              0.48,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              -1.5707963267948966
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        }
+      }
+    },
+    "pm-502-000-mirror": {
+      "visible": true,
+      "meshes": {}
+    },
+    "pm-501-003": {
+      "visible": true,
+      "meshes": {
+        "tripo_part_3": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.07,
+              0.46,
+              0.14
+            ],
+            "rotationEuler": [
+              -1.5707963267948966,
+              0,
+              -1.5707963267948966
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_2": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.07,
+              0.46,
+              0.14
+            ],
+            "rotationEuler": [
+              -1.5707963267948966,
+              0,
+              -1.5707963267948966
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_1": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.34,
+              0.49,
+              -0.01
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              -1.5707963267948966
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_1_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.4,
+              0.44,
+              -0.01
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              1.5707963267948966
+            ],
+            "scale": [
+              -1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_2_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0.41,
+              0.14
+            ],
+            "rotationEuler": [
+              -1.5707963267948966,
+              0,
+              1.5707963267948966
+            ],
+            "scale": [
+              -1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_3_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.01,
+              0.41,
+              0.14
+            ],
+            "rotationEuler": [
+              -1.5707963267948966,
+              0,
+              1.5707963267948966
+            ],
+            "scale": [
+              -1,
+              1,
+              1
+            ]
+          }
+        }
+      }
+    },
+    "pm-501-005": {
+      "visible": true,
+      "meshes": {
+        "tripo_part_5": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.02,
+              -0.03,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_10": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.03,
+              -0.07,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_2": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.03,
+              -0.08,
+              0.01
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_6": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.04,
+              -0.08,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_4": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.04,
+              -0.09,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.34,
+              1.09,
+              0.03
+            ],
+            "rotationEuler": [
+              -3.097959422289935,
+              0,
+              0.47123889803846897
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        }
+      }
+    },
+    "pm-202-000": {
+      "visible": true,
+      "meshes": {
+        "tripo_part_2": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.04,
+              0.16,
+              -0.14
+            ],
+            "rotationEuler": [
+              0.017453292519943295,
+              -1.5707963267948966,
+              -1.5707963267948966
+            ],
+            "scale": [
+              1.21,
+              1.21,
+              1.21
+            ]
+          }
+        },
+        "tripo_part_3": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_5": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_4": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_9": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_6": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_10": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_7": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_8": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_1": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.08,
+              0.11,
+              -0.15
+            ],
+            "rotationEuler": [
+              0,
+              -1.5707963267948966,
+              -1.5707963267948966
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_0_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.08,
+              0.11,
+              -0.15
+            ],
+            "rotationEuler": [
+              0,
+              1.5707963267948966,
+              1.5707963267948966
+            ],
+            "scale": [
+              -1,
+              1,
+              1
+            ]
+          }
+        }
+      }
+    },
+    "pm-202-005": {
+      "visible": true,
+      "meshes": {
+        "tripo_part_4": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.05,
+              0,
+              0.01
+            ],
+            "rotationEuler": [
+              -0.017453292519943295,
+              0.23561944901923448,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_8": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.33,
+              0.01,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              1.5707963267948966
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_7": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.2,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_5": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.09,
+              0,
+              -0.05
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_2": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.2,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_3": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.33,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              1.5707963267948966
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        }
+      }
+    },
+    "pm-fuel": {
+      "visible": true,
+      "meshes": {
+        "tripo_part_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0.03,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_1": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_10": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_2": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_3": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_4": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_5": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_6": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_7": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_8": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_9": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_0_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0.03,
+              -0.03
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_11": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_2_205": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_3_205": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_4_205": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_5_205": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_7_205": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_8_205": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        }
+      }
+    },
+    "pm-302-000": {
+      "visible": true,
+      "meshes": {
+        "tripo_part_11": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_12": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_18": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_31": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_35": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_10": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_12_5015": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_2": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_3": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_4": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_5": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_6": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_0_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_10_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_12_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_2_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_3_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_4_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_5_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_6_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        }
+      }
+    },
+    "pm-107-010": {
+      "visible": true,
+      "meshes": {
+        "tripo_part_2": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.07,
+              -0.03,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.2,
+              0.27,
+              0.01
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              1.5707963267948966
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_5": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.06,
+              -0.01,
+              0.02
+            ],
+            "rotationEuler": [
+              0,
+              0.06981317007977318,
+              0
+            ],
+            "scale": [
+              0.9,
+              0.9,
+              0.9
+            ]
+          }
+        },
+        "tripo_part_10": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.08,
+              -0.02,
+              0.18
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_12": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.07,
+              -0.02,
+              0.19
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_4": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.08,
+              -0.02,
+              0.19
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_2_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.07,
+              -0.02,
+              0.13
+            ],
+            "rotationEuler": [
+              0,
+              -3.141592653589793,
+              0
+            ],
+            "scale": [
+              -1,
+              1,
+              1
+            ]
+          }
+        }
+      }
+    },
+    "pm-engine": {
+      "visible": true,
+      "meshes": {
+        "tripo_part_11": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_20": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_4": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_10": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_12": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_2": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_4_107": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_5": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_6": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_7": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_8": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_2_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        }
+      }
+    },
+    "pm-105-020": {
+      "visible": true,
+      "meshes": {
+        "tripo_part_6": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.06,
+              0.45,
+              0.02
+            ],
+            "rotationEuler": [
+              0.15707963267948966,
+              0.6544984694978736,
+              -1.710422666954443
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.31,
+              0.07,
+              -0.16
+            ],
+            "rotationEuler": [
+              0,
+              0.5846852994181003,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_12": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_9": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_11": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_8": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.04,
+              0.4,
+              0.05
+            ],
+            "rotationEuler": [
+              0,
+              0.5846852994181003,
+              -1.5707963267948966
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_3": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.04,
+              0.4,
+              0.18
+            ],
+            "rotationEuler": [
+              0,
+              0.5846852994181003,
+              -1.5707963267948966
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_5": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_7": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_1": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_4": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_0_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.1,
+              0.07,
+              -0.2
+            ],
+            "rotationEuler": [
+              0,
+              -0.5846852994181003,
+              0
+            ],
+            "scale": [
+              -1,
+              1,
+              1
+            ]
+          }
+        }
+      }
+    },
+    "pm-302-000__prebake": {
+      "visible": true,
+      "meshes": {
+        "tripo_part_11": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        }
+      }
+    },
+    "pm-intake": {
+      "visible": true,
+      "meshes": {
+        "tripo_part_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_1": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_11": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_12": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_3": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_4": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_5": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_6": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_7": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_8": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_9": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_0_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        }
+      }
+    }
+  }
+}

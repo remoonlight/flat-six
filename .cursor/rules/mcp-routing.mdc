@@ -1,0 +1,34 @@
+---
+description: porsche981 MCP 路由（常驻；3D/PETKA/docs 场景也必须生效）
+alwaysApply: true
+---
+
+# MCP 路由（porsche981）
+
+仓库读写优先内建 Read/Grep/Shell/`packages/db`。项目 `.cursor/mcp.json` 只常驻 3 个：`context7` · `github` · `ssh-mcp-petka`（本机文件 gitignore；模板见 `.cursor/mcp.json.example`）。`chrome-devtools` / `perplexity` 走全局，禁止本仓再挂。
+
+| 场景 | 用 |
+|------|-----|
+| 库/框架版本敏感 API（node:sqlite / Electron / three.js） | **context7**（先 `resolve-library-id`） |
+| PETKA 主机 | **ssh-mcp-petka**（本机 MCP；主机/用户/密钥不入库） |
+| issue / PR | **github**（需 `GITHUB_PAT`） |
+| 查 `.local/garage.db` | 临时加 **sqlite-garage**，用完删 |
+| UI 验证 | **cursor-ide-browser** 或全局 **chrome-devtools**，二选一；禁止本仓再挂第二套浏览器 MCP |
+| 网页调研 | **perplexity** + WebSearch |
+| Schema/数据变更 | `packages/db` + ingest 脚本，禁止 MCP 写库 |
+
+## 使用纪律
+
+- 同一 server 本会话 `GetMcpTools` **只调一次**：已知 server 就按 server 直取 schema，禁止无 server 空探全量目录。
+- server 没出现在当前会话（例如 `ssh-mcp-petka` 未挂上）→ 直接走 CLI，不重挂、不换别的 MCP：
+  `ssh -i %USERPROFILE%\.ssh\id_ed25519 %PORSCHE981_PETKA_SSH% "<cmd>"`
+- 并行子 agent ≤2（用户规则 Agent load cap）；3D / Electron / CMS rip 场景更严，见 `no-hang-3d`。
+
+## 默认禁用
+
+**mysql-mcp** · **ida-pro-mcp** · **ldj-debug** · **x64dbg** · 其它内网调试机上的 **ssh-mcp**
+
+## 红线复述
+
+- **No ECU write**（ADR 001）。X431 / 远程诊断只做只读与资料整理。
+- Schema/data mutations 走 `packages/db` + ingest，不用 MCP 即席写。
