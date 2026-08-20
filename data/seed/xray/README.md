@@ -17,7 +17,7 @@
 
 | 路径 | 用途 |
 |------|------|
-| `assemblies.json` | Locator + X-ray 微调（petka + CMS MA1.03 + 车壳） |
+| `assemblies.json` | Locator + X-ray 微调（petka + CMS MA1.03 + 车壳；悬架 bake 含 `402-000` 双 + `403-006`） |
 | `garage-assemblies.json` | 车库透视（同批；透视时藏车身） |
 | `garage-flows.json` | 车库流程/装配流 |
 | `transforms.template.json` | 层 TRS 可恢复快照 → `.local/xray-transforms.json` |

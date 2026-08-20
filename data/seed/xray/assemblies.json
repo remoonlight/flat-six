@@ -1,7 +1,7 @@
 {
-  "version": 23,
-  "note": "X-ray/Locator：水冷 + 燃油 + 引擎(010+107) + 进气(105-020) + CMS MA1.03 + 悬架 + 传动 + 402 + 车壳。",
-  "caveatZh": "水冷/燃油/引擎/进气/悬架/传动已 bake；CMS MA1.03 与 402 可调层 TRS。",
+  "version": 30,
+  "note": "X-ray/Locator：水冷 + 燃油 + 引擎 + 进气 + CMS + 悬架 + 传动302 + 机油冷却360 + 车壳。",
+  "caveatZh": "水冷/燃油/引擎/进气/悬架/传动已 bake；CMS 与 机油冷却360 可调层 TRS。",
   "axle": {
     "frontZ": 1.167,
     "rearZ": -1.283,
@@ -129,16 +129,16 @@
       "bridgeHotspot": "underbody"
     },
     {
-      "id": "pm-402-000",
-      "label": "402-000",
-      "label_zh": "底盘 · 402-000",
-      "glbRel": "petka-models/402-000.glb",
+      "id": "pm-360-000",
+      "label": "oil-cooling",
+      "label_zh": "机油冷却系统",
+      "glbRel": "petka-models/360-000.glb",
       "manifestRel": null,
       "hotspot3d": "0 0 0",
       "carSpace": true,
       "worldScale": 1,
       "source": "petka-tripo",
-      "system": "chassis",
+      "system": "driveline",
       "xrayGroup": "drive",
       "xrayGroupZh": "传动系统+前后轮",
       "bridgeZone": "chassis",

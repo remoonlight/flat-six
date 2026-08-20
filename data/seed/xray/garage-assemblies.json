@@ -1,7 +1,7 @@
 {
-  "version": 29,
-  "note": "车库透视：机械(引擎+悬架+传动+402) + 气路(进气+排气) + 管路(水冷) + 车身（不含 CMS）。",
-  "caveatZh": "水冷归管路；进气/排气归气路；已 bake；402 可调；透视时藏车身。",
+  "version": 36,
+  "note": "车库透视：机械(引擎+悬架+传动302) + 进排气 + 管路(水冷+机油冷却360) + 车身。",
+  "caveatZh": "水冷/机油冷却归管路；进气/排气归进排气；油管示意油回路已删；360 可调；透视时藏车身。",
   "axle": {
     "frontZ": 1.167,
     "rearZ": -1.283,
@@ -116,20 +116,21 @@
       "bridgeHotspot": "underbody"
     },
     {
-      "id": "pm-402-000",
-      "label": "402-000",
-      "label_zh": "底盘 · 402-000",
-      "glbRel": "petka-models/402-000.glb",
+      "id": "pm-360-000",
+      "label": "oil-cooling",
+      "label_zh": "机油冷却系统",
+      "glbRel": "petka-models/360-000.glb",
       "manifestRel": null,
       "hotspot3d": "0 0 0",
       "carSpace": true,
       "worldScale": 1,
       "source": "petka-tripo",
-      "system": "chassis",
+      "system": "driveline",
       "xrayGroup": "drive",
       "xrayGroupZh": "传动系统+前后轮",
       "bridgeZone": "chassis",
-      "bridgeHotspot": "underbody"
+      "bridgeHotspot": "underbody",
+      "garageStructure": "lines"
     }
   ]
 }

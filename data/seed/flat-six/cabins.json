@@ -28,7 +28,7 @@
         "SM_SoftTop_0000.001",
         "SM_SoftTop_0000.001_MAT_SoftTop_0"
       ],
-      "stitchNote": "内饰主块 SM_Interior_* + SoftTop；材质子 mesh 可分点（Details_INT / Light / Details_MAT），非座椅/方向盘级",
+      "stitchNote": "内饰主块 SM_Interior_* + SoftTop；Car_Paint 子 mesh 归外观；材质子 mesh 可分点（Details_INT / Light / Details_MAT）",
       "interiorScreening": {
         "pickability": "medium",
         "rank": 1,

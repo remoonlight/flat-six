@@ -47,7 +47,7 @@ export const EXTERIOR_ZONE_HOTSPOTS: Record<
   ExteriorZoneId,
   readonly string[]
 > = {
-  all: [],
+  all: ["body-paint"],
   "front-bumper": [],
   "front-trunk": ["front-trunk", "wipers"],
   "soft-top": ["int-softtop"],
@@ -64,7 +64,7 @@ export const INTERIOR_ZONE_HOTSPOTS: Record<
   "door-trim": ["int-details-int"],
   dashboard: ["int-details-mat", "int-cabin-light"],
   console: ["int-details-mat", "int-cabin-filter"],
-  seats: ["int-details-mat", "int-body-paint"],
+  seats: ["int-details-mat"],
 };
 
 /** 透视机械总成默认 bridge（与 garage-assemblies.json 一致）。 */
@@ -163,7 +163,6 @@ export function hotspotsForGarageView(input: {
         "int-details-int",
         "int-cabin-light",
         "int-details-mat",
-        "int-body-paint",
         "int-softtop",
         "int-cabin-filter",
       ]);

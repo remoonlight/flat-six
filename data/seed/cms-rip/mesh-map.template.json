@@ -29,12 +29,12 @@
       "note": "内饰细节(Details_MAT)"
     },
     {
-      "zoneId": "interior",
+      "zoneId": "body",
       "meshName": "SM_Interior_0000.003_MAT_718_Car_Paint_Base_00.076_0",
-      "hotspotId": "int-body-paint",
+      "hotspotId": "body-paint",
       "assetId": "cabin981",
       "sku": null,
-      "note": "座舱文件内车漆块(Car_Paint)"
+      "note": "车漆(Car_Paint，归外观)"
     },
     {
       "zoneId": "interior",

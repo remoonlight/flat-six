@@ -40,7 +40,7 @@ try {
   const petkaAsm = seed.assemblies.filter((a) =>
     String(a.glbRel || "").startsWith("petka-models/"),
   );
-  // 水冷 + 燃油 + 引擎 + 进气 + 悬架 + 传动 + 402（CMS 另计）
+  // 水冷 + 燃油 + 引擎 + 进气 + 悬架 + 传动 + 360（CMS 另计；402/99134104301 bake 进悬架）
   if (petkaAsm.length !== 7) {
     throw new Error(`locator assemblies expect 7 petka, got ${petkaAsm.length}`);
   }
@@ -71,7 +71,7 @@ try {
   ) {
     throw new Error("pm-302-000 missing merged/driveline.glb");
   }
-  for (const id of ["pm-302-000", "pm-402-000"]) {
+  for (const id of ["pm-302-000", "pm-360-000"]) {
     if (!petkaAsm.some((a) => a.id === id)) throw new Error(`missing ${id}`);
   }
   for (const id of [
@@ -80,6 +80,10 @@ try {
     "pm-107-010",
     "pm-202-000",
     "pm-202-005",
+    "pm-402-000",
+    "pm-402-000-mirror",
+    "pm-99134104301",
+    "pm-99134104301-mirror",
     "pm-501-000",
     "pm-501-001",
     "pm-501-003",
@@ -173,7 +177,7 @@ try {
   if (!petkaLayers.some((a) => a.id === "pm-suspension")) {
     throw new Error("garage missing pm-suspension");
   }
-  for (const id of ["pm-engine", "pm-302-000"]) {
+  for (const id of ["pm-engine", "pm-302-000", "pm-360-000", "pm-suspension"]) {
     if (!petkaLayers.some((a) => a.id === id)) {
       throw new Error(`garage missing ${id}`);
     }
@@ -198,10 +202,20 @@ try {
   if (_test.loadGarageFlows().some((f) => f.id === "coolant")) {
     throw new Error("coolant flow should be removed (pm-cooling owns lines)");
   }
+  if (_test.loadGarageFlows().some((f) => f.id === "oil-lines")) {
+    throw new Error("oil-lines flow should be removed (pm-360-000 owns oil cooling)");
+  }
   {
     const cooling = gSeed.assemblies.find((a) => a.id === "pm-cooling");
     if (cooling?.garageStructure !== "lines") {
       throw new Error("pm-cooling should be garageStructure=lines");
+    }
+    const oilCool = gSeed.assemblies.find((a) => a.id === "pm-360-000");
+    if (oilCool?.garageStructure !== "lines") {
+      throw new Error("pm-360-000 should be garageStructure=lines");
+    }
+    if (oilCool?.label_zh !== "机油冷却系统") {
+      throw new Error("pm-360-000 should be labeled 机油冷却系统");
     }
   }
   if (Number(gSeed.axle?.frontZ) !== 1.167) {
@@ -250,7 +264,7 @@ try {
   if (!fs.existsSync(drivelineAbs)) {
     throw new Error("run: npm run merge:driveline");
   }
-  for (const f of ["010-000.glb", "105-020.glb", "107-010.glb", "302-000.glb", "501-005.glb"]) {
+  for (const f of ["010-000.glb", "105-020.glb", "107-010.glb", "302-000.glb", "360-000.glb", "501-005.glb", "402-000.glb", "403-006.glb", "99134104301.glb"]) {
     const abs = path.join(root, ".local", "petka-models", f);
     if (!fs.existsSync(abs)) throw new Error(`missing petka-models/${f}`);
   }

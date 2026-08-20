@@ -8,7 +8,7 @@
 
 选了分栏后，非焦点会半透显示。点选时这些半透 mesh **当空气**（射线穿过、不挡点），只有当前焦点 mesh 能被点中。
 
-内饰再加一条：**顶篷永远点不着**（含「全部」）；只能点舱内 `SM_Interior`。
+内饰再加一条：**顶篷永远点不着**（含「全部」）；只能点舱内 `SM_Interior`（**不含** `Car_Paint` 车漆块——该块归外观）。
 
 ## 规则（与代码一致）
 
@@ -16,10 +16,10 @@
 |------|----------------|------|------------------|
 | 外观 · 非「全部」 | `applyExteriorZoneFocus` | 分栏 `match` 命中 | 其余 mesh |
 | 外观 · 「全部」 | 不打标（`clearZonePickMarks`） | 平常点选 | — |
-| 内饰 · 任意分栏（含「全部」） | `applyInteriorZoneFocus` | `SM_Interior` ∩ 分栏 `match`，且**非**顶篷 | 顶篷 + 外板等非舱内 + 非本分栏舱内 |
+| 内饰 · 任意分栏（含「全部」） | `applyInteriorZoneFocus` | `SM_Interior` ∩ 分栏 `match`，且**非**顶篷、**非** `Car_Paint` | 顶篷 + 外板 + 车漆块 + 非本分栏舱内 |
 | 透视 xray | `clearZonePickMarks` | 平常点选（再 solid 优先 ghost） | — |
 
-顶篷判定：`isSoftTopMeshName`（`softtop` / `convertible` / `dach` / `hood fabric` 等）。
+顶篷判定：`isSoftTopMeshName`。车漆判定：`isBodyPaintMeshName`（`Car_Paint` / `Paint_Base` 等）。
 
 ## 实现要点
 

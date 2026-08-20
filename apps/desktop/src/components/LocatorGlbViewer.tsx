@@ -294,7 +294,7 @@ function isInteriorLeatherMeshName(name: string): boolean {
 }
 
 /** flat-six body GLB names paint as SM_*_Car_Paint_* — never treat as cabin. */
-function isBodyPaintMeshName(name: string): boolean {
+export function isBodyPaintMeshName(name: string): boolean {
   return /car[_-]?paint|paint[_-]?base|body[_-]?paint/i.test(name);
 }
 
@@ -812,7 +812,11 @@ function applyInteriorZoneFocus(
       return;
     }
     mesh.visible = true;
-    const underInterior = objectMatches(mesh, /SM_Interior/i);
+    const paint =
+      isBodyPaintMeshName(meshLabel(mesh)) || isBodyPaintMeshName(mesh.name);
+    // 座舱文件里的 Car_Paint 归外观，不当内饰焦点
+    const underInterior =
+      !paint && objectMatches(mesh, /SM_Interior/i);
     // 顶篷永不进内饰点选（含「全部」）
     const hit = underInterior && objectMatches(mesh, match);
     if (hit) focusRoots.push(mesh);

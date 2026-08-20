@@ -1,8 +1,8 @@
 {
   "version": 2,
   "generation": "981",
-  "note": "981 PETKA 图号分件。X-ray：cooling、fuel、engine(010+107+105)、CMS MA1.03、suspension、driveline(302+501-005)、402。",
-  "caveatZh": "示意 ≠ OEM。202→燃油；010+107+105→引擎；501/502→悬架。另挂 CMS MA1.03。",
+  "note": "981 PETKA 图号分件。X-ray：cooling、fuel、engine、CMS、suspension(含402/99134104301双)、driveline、360。",
+  "caveatZh": "示意 ≠ OEM。202→燃油；010+107+105→引擎；402/501/502/99134104301→悬架/底盘。另挂 CMS MA1.03。",
   "localDir": "petka-models",
   "dropDir": "data/model",
   "models": [
@@ -130,13 +130,13 @@
       "id": "pm-360-000",
       "bild": "360-000",
       "system": "driveline",
-      "label_zh": "传动 · 360-000",
+      "label_zh": "机油冷却系统",
       "file": "360-000.glb",
       "rel": "petka-models/360-000.glb",
       "browseOnly": true,
       "xrayGroup": "drive",
       "xrayGroupZh": "传动系统+前后轮",
-      "xrayActive": false
+      "xrayActive": true
     },
     {
       "id": "pm-401-000",
@@ -172,7 +172,7 @@
       "browseOnly": true,
       "xrayGroup": "drive",
       "xrayGroupZh": "传动系统+前后轮",
-      "xrayActive": true
+      "xrayActive": false
     },
     {
       "id": "pm-402-005",
@@ -193,6 +193,18 @@
       "label_zh": "底盘 · 403-000",
       "file": "403-000.glb",
       "rel": "petka-models/403-000.glb",
+      "browseOnly": true,
+      "xrayGroup": "drive",
+      "xrayGroupZh": "传动系统+前后轮",
+      "xrayActive": false
+    },
+    {
+      "id": "pm-403-006",
+      "bild": "403-006",
+      "system": "chassis",
+      "label_zh": "底盘 · 403-006",
+      "file": "403-006.glb",
+      "rel": "petka-models/403-006.glb",
       "browseOnly": true,
       "xrayGroup": "drive",
       "xrayGroupZh": "传动系统+前后轮",
@@ -253,6 +265,30 @@
       "label_zh": "底盘 · 502-000",
       "file": "502-000.glb",
       "rel": "petka-models/502-000.glb",
+      "browseOnly": true,
+      "xrayGroup": "drive",
+      "xrayGroupZh": "传动系统+前后轮",
+      "xrayActive": false
+    },
+    {
+      "id": "pm-99134104301",
+      "bild": "99134104301",
+      "system": "chassis",
+      "label_zh": "底盘 · 99134104301",
+      "file": "99134104301.glb",
+      "rel": "petka-models/99134104301.glb",
+      "browseOnly": true,
+      "xrayGroup": "drive",
+      "xrayGroupZh": "传动系统+前后轮",
+      "xrayActive": false
+    },
+    {
+      "id": "pm-99134104301-mirror",
+      "bild": "99134104301",
+      "system": "chassis",
+      "label_zh": "底盘 · 99134104301（镜像）",
+      "file": "99134104301.glb",
+      "rel": "petka-models/99134104301.glb",
       "browseOnly": true,
       "xrayGroup": "drive",
       "xrayGroupZh": "传动系统+前后轮",

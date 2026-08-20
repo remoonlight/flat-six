@@ -22,6 +22,7 @@ import { WiringPage } from "./WiringPage";
 import {
   LocatorGlbViewer,
   EXTERIOR_ZONES,
+  isBodyPaintMeshName,
   type GarageStructureId,
   type GarageViewMode,
 } from "../components/LocatorGlbViewer";
@@ -49,7 +50,7 @@ import {
 const XRAY_STRUCTURE: { id: GarageStructureId; labelZh: string }[] = [
   { id: "all", labelZh: "全部" },
   { id: "mechanical", labelZh: "机械" },
-  { id: "air", labelZh: "气路" },
+  { id: "air", labelZh: "进排气" },
   { id: "lines", labelZh: "管路" },
   { id: "vacuum", labelZh: "真空" },
   { id: "wiring", labelZh: "线束" },
@@ -118,6 +119,8 @@ function modelItemsForView(input: {
     const parts = EXTERIOR_ZONES.map((z) => z.match)
       .filter((m): m is RegExp => m != null)
       .map((m) => m.source);
+    // 含座舱 GLB 内误挂在 SM_Interior 下的车漆块
+    parts.push("Car_Paint", "Paint_Base");
     const match = parts.length ? new RegExp(parts.join("|"), "i") : null;
     return filterNames(body, match).map((n) => ({
       key: `mesh:${n}`,
@@ -130,7 +133,9 @@ function modelItemsForView(input: {
   }
 
   if (mode === "interior") {
-    return filterNames(body, /SM_Interior/i).map((n) => ({
+    return filterNames(body, /SM_Interior/i)
+      .filter((n) => !isBodyPaintMeshName(n))
+      .map((n) => ({
       key: `mesh:${n}`,
       label: n,
       kind: "mesh" as const,

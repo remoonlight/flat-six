@@ -1,9 +1,9 @@
 /**
- * Bake 401… + 501-000/001/003 + 502-000(+镜像) → 底盘悬架 GLB.
+ * Bake 401… + 402-000(+镜像) + 403-000/006 + 501… + 502(+镜像) + 99134104301(+镜像) → 底盘悬架 GLB.
  *
  * - Layer TRS from .local/xray-transforms.json
  * - Sub-mesh TRS from .local/xray-mesh-state.json
- * - 冲突名：_405 / _4205 / _403 / _5010 / _5011 / _5013 / _502
+ * - 冲突名：_405 / _4205 / _402 / _403 / _4036 / _5010 / _5011 / _5013 / _502 / _9431
  * - Output: .local/petka-models/merged/suspension.glb
  *
  * Usage: node scripts/merge-suspension.mjs
@@ -96,12 +96,36 @@ const PARTS = [
     collideTag: "_4205",
   },
   {
+    id: "pm-402-000",
+    glb: "petka-models/402-000.glb",
+    meshStateId: "pm-402-000",
+    mirrorX: false,
+    renameSuffix: null,
+    collideTag: "_402",
+  },
+  {
+    id: "pm-402-000-mirror",
+    glb: "petka-models/402-000.glb",
+    meshStateId: "pm-402-000",
+    mirrorX: true,
+    renameSuffix: "_R",
+    collideTag: "_402",
+  },
+  {
     id: "pm-403-000",
     glb: "petka-models/403-000.glb",
     meshStateId: "pm-403-000",
     mirrorX: false,
     renameSuffix: null,
     collideTag: "_403",
+  },
+  {
+    id: "pm-403-006",
+    glb: "petka-models/403-006.glb",
+    meshStateId: "pm-403-006",
+    mirrorX: false,
+    renameSuffix: null,
+    collideTag: "_4036",
   },
   {
     id: "pm-501-000",
@@ -142,6 +166,22 @@ const PARTS = [
     mirrorX: true,
     renameSuffix: "_R",
     collideTag: "_502",
+  },
+  {
+    id: "pm-99134104301",
+    glb: "petka-models/99134104301.glb",
+    meshStateId: "pm-99134104301",
+    mirrorX: false,
+    renameSuffix: null,
+    collideTag: "_9431",
+  },
+  {
+    id: "pm-99134104301-mirror",
+    glb: "petka-models/99134104301.glb",
+    meshStateId: "pm-99134104301",
+    mirrorX: true,
+    renameSuffix: "_R",
+    collideTag: "_9431",
   },
 ];
 
