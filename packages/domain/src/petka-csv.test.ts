@@ -67,7 +67,7 @@ describe("parsePetkaPartsCsv", () => {
     expect(r.drafts[0]?.locator_hotspot).toBe("chassis");
   });
 
-  it("parses compact aftermarket_quotes and derives Design911 price", () => {
+  it("parses compact aftermarket_quotes and derives min aftermarket_price", () => {
     const csv = [
       HEADER_WITH_QUOTES,
       "oil-filter,机油滤清器,9A1.107.201.00,发动机,engine-bay,,GBP,,,Design911:14.95|Mann:9.50,,yes,15000,12,engine-bay,",
@@ -78,17 +78,18 @@ describe("parsePetkaPartsCsv", () => {
       { brand: "Design911", price: 14.95 },
       { brand: "Mann", price: 9.5 },
     ]);
-    expect(r.drafts[0]?.aftermarket_price).toBe(14.95);
+    // aftermarket_price = lowest quote; full list stays in aftermarket_quotes
+    expect(r.drafts[0]?.aftermarket_price).toBe(9.5);
   });
 
-  it("uses first quote when Design911 absent", () => {
+  it("derives min when Design911 absent", () => {
     const csv = [
       HEADER_WITH_QUOTES,
       "pad,刹车片,970.xxx,制动,brakes,,GBP,,,Brembo:99|Textar:55,,,,,,brakes,",
     ].join("\n");
     const r = parsePetkaPartsCsv(csv);
     expect(r.errors).toEqual([]);
-    expect(r.drafts[0]?.aftermarket_price).toBe(99);
+    expect(r.drafts[0]?.aftermarket_price).toBe(55);
   });
 
   it("old CSV without aftermarket_quotes column still works", () => {
