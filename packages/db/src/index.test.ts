@@ -205,7 +205,7 @@ describe("aftermarket_quotes", () => {
     db.close();
   });
 
-  it("round-trips quotes and syncs aftermarket_price from Design911", () => {
+  it("round-trips quotes and syncs aftermarket_price from min quote", () => {
     const db = openTempDb();
     db.seedIfEmpty({
       parts: [
@@ -243,7 +243,7 @@ describe("aftermarket_quotes", () => {
       { brand: "Design911", price: 12.3 },
       { brand: "Uro", price: 8.5 },
     ]);
-    expect(updated.aftermarket_price).toBe(12.3);
+    expect(updated.aftermarket_price).toBe(8.5);
     const again = db.getPart(part.id)!;
     expect(again.aftermarket_quotes).toHaveLength(2);
     db.close();
@@ -275,7 +275,7 @@ describe("aftermarket_quotes", () => {
       { brand: "Design911", price: 99 },
       { brand: "Brembo", price: 88 },
     ]);
-    expect(part.aftermarket_price).toBe(99);
+    expect(part.aftermarket_price).toBe(88);
     db.upsertPart({
       sku: "front-pad",
       name_zh: "前刹车片",
