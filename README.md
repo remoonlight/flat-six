@@ -2,6 +2,8 @@
 
 2014 Boxster S（981）PDK 的 **本机 Windows** Electron 车库：零件浏览器、维护状态、实时 OBD（只读查码+会话）、车辆设置、部件定位。产品未成型，**不做打包分发**。
 
+**上游 / 父项目**：[FLAT·SIX](https://www.flat-six.org/)（开源仓 [`dmitry-grechko/flat-six`](https://github.com/dmitry-grechko/flat-six)，MIT）。本仓坐标系与幽灵车壳约定对齐 flat-six X-ray；**不**分发 flat-six 的 GLB 本体（本机 `.local/`）。本仓应用代码另用 [PolyForm Noncommercial 1.0.0](LICENSE)。
+
 | 文档 | 用途 |
 |------|------|
 | [`docs/requirements.md`](docs/requirements.md) | 业务需求 v7（权威） |
