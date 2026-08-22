@@ -40,7 +40,7 @@ try {
   const petkaAsm = seed.assemblies.filter((a) =>
     String(a.glbRel || "").startsWith("petka-models/"),
   );
-  // 水冷 + 燃油 + 引擎 + 进气 + 悬架 + 传动 + 360（CMS 另计；402/99134104301 bake 进悬架）
+  // 水冷 + 燃油 + 引擎 + 悬架 + 传动 + 机油冷却 + 801-020（CMS 另计）
   if (petkaAsm.length !== 7) {
     throw new Error(`locator assemblies expect 7 petka, got ${petkaAsm.length}`);
   }
@@ -56,9 +56,11 @@ try {
   if (!eng || !String(eng.glbRel || "").includes("merged/engine.glb")) {
     throw new Error("pm-engine missing");
   }
-  const intake = petkaAsm.find((a) => a.id === "pm-intake");
-  if (!intake || !String(intake.glbRel || "").includes("merged/intake.glb")) {
-    throw new Error("pm-intake missing");
+  if (petkaAsm.some((a) => a.id === "pm-105-020")) {
+    throw new Error("pm-105-020 should be baked into pm-cooling");
+  }
+  if (petkaAsm.some((a) => a.id === "pm-intake")) {
+    throw new Error("pm-intake retired; 105-020 baked into pm-cooling");
   }
   const susp = petkaAsm.find((a) => a.id === "pm-suspension");
   if (!susp || !String(susp.glbRel || "").includes("merged/suspension.glb")) {
@@ -71,12 +73,31 @@ try {
   ) {
     throw new Error("pm-302-000 missing merged/driveline.glb");
   }
-  for (const id of ["pm-302-000", "pm-360-000"]) {
+  for (const id of ["pm-302-000", "pm-360-000", "pm-801-020"]) {
     if (!petkaAsm.some((a) => a.id === id)) throw new Error(`missing ${id}`);
+  }
+  if (petkaAsm.some((a) => a.id === "pm-201-000")) {
+    throw new Error("pm-201-000 should be baked into pm-fuel");
+  }
+  const oilCooling = petkaAsm.find((a) => a.id === "pm-360-000");
+  if (
+    !oilCooling ||
+    !String(oilCooling.glbRel || "").includes("merged/oil-cooling.glb")
+  ) {
+    throw new Error("pm-360-000 missing merged/oil-cooling.glb");
+  }
+  if (petkaAsm.some((a) => a.id === "pm-104-005")) {
+    throw new Error("pm-104-005 should be baked into pm-360-000");
+  }
+  if (petkaAsm.some((a) => a.id === "pm-105-005")) {
+    throw new Error("pm-105-005 should be baked into pm-360-000");
   }
   for (const id of [
     "pm-010-000",
+    "pm-intake",
     "pm-105-020",
+    "pm-105-005",
+    "pm-201-000",
     "pm-107-010",
     "pm-202-000",
     "pm-202-005",
@@ -111,8 +132,8 @@ try {
   }
   const power = petkaAsm.filter((a) => a.xrayGroup === "power");
   const drive = petkaAsm.filter((a) => a.xrayGroup === "drive");
-  if (power.length !== 4 || drive.length !== 3) {
-    throw new Error(`expect petka power=4 drive=3, got ${power.length}/${drive.length}`);
+  if (power.length !== 3 || drive.length !== 4) {
+    throw new Error(`expect petka power=3 drive=4, got ${power.length}/${drive.length}`);
   }
 
   let threw = false;
@@ -177,10 +198,31 @@ try {
   if (!petkaLayers.some((a) => a.id === "pm-suspension")) {
     throw new Error("garage missing pm-suspension");
   }
-  for (const id of ["pm-engine", "pm-302-000", "pm-360-000", "pm-suspension"]) {
+  for (const id of [
+    "pm-engine",
+    "pm-302-000",
+    "pm-360-000",
+    "pm-801-020",
+    "pm-suspension",
+  ]) {
     if (!petkaLayers.some((a) => a.id === id)) {
       throw new Error(`garage missing ${id}`);
     }
+  }
+  if (petkaLayers.some((a) => a.id === "pm-201-000")) {
+    throw new Error("garage pm-201-000 should be baked into pm-fuel");
+  }
+  if (petkaLayers.some((a) => a.id === "pm-104-005")) {
+    throw new Error("garage pm-104-005 should be baked into pm-360-000");
+  }
+  if (petkaLayers.some((a) => a.id === "pm-105-005")) {
+    throw new Error("garage pm-105-005 should be baked into pm-360-000");
+  }
+  if (petkaLayers.some((a) => a.id === "pm-105-020")) {
+    throw new Error("garage pm-105-020 should be baked into pm-cooling");
+  }
+  if (petkaLayers.some((a) => a.id === "pm-intake")) {
+    throw new Error("garage pm-intake retired; 105-020 in pm-cooling");
   }
   {
     const cms = gSeed.assemblies.filter((a) =>
@@ -205,6 +247,9 @@ try {
   if (_test.loadGarageFlows().some((f) => f.id === "oil-lines")) {
     throw new Error("oil-lines flow should be removed (pm-360-000 owns oil cooling)");
   }
+  if (_test.loadGarageFlows().some((f) => f.id === "fuel")) {
+    throw new Error("fuel flow should be removed (pm-fuel owns fuel tank/lines)");
+  }
   {
     const cooling = gSeed.assemblies.find((a) => a.id === "pm-cooling");
     if (cooling?.garageStructure !== "lines") {
@@ -216,6 +261,17 @@ try {
     }
     if (oilCool?.label_zh !== "机油冷却系统") {
       throw new Error("pm-360-000 should be labeled 机油冷却系统");
+    }
+    if (!String(oilCool?.glbRel || "").includes("merged/oil-cooling.glb")) {
+      throw new Error("pm-360-000 should use merged/oil-cooling.glb");
+    }
+    const fuel = gSeed.assemblies.find((a) => a.id === "pm-fuel");
+    if (fuel?.label_zh !== "燃油系统") {
+      throw new Error("pm-fuel should be labeled 燃油系统");
+    }
+    const mech801 = gSeed.assemblies.find((a) => a.id === "pm-801-020");
+    if (mech801?.garageStructure) {
+      throw new Error("pm-801-020 should default to mechanical (no garageStructure)");
     }
   }
   if (Number(gSeed.axle?.frontZ) !== 1.167) {
@@ -240,10 +296,6 @@ try {
   if (!fs.existsSync(engAbs)) {
     throw new Error("run: npm run merge:engine");
   }
-  const intakeAbs = path.join(root, ".local", "petka-models", "merged", "intake.glb");
-  if (!fs.existsSync(intakeAbs)) {
-    throw new Error("run: npm run merge:intake");
-  }
   const cmsEngAbs = path.join(
     root,
     ".local",
@@ -264,7 +316,17 @@ try {
   if (!fs.existsSync(drivelineAbs)) {
     throw new Error("run: npm run merge:driveline");
   }
-  for (const f of ["010-000.glb", "105-020.glb", "107-010.glb", "302-000.glb", "360-000.glb", "501-005.glb", "402-000.glb", "403-006.glb", "99134104301.glb"]) {
+  const oilCoolAbs = path.join(
+    root,
+    ".local",
+    "petka-models",
+    "merged",
+    "oil-cooling.glb",
+  );
+  if (!fs.existsSync(oilCoolAbs)) {
+    throw new Error("run: npm run merge:oil-cooling");
+  }
+  for (const f of ["010-000.glb", "104-005.glb", "105-005.glb", "105-020.glb", "107-010.glb", "201-000.glb", "302-000.glb", "360-000.glb", "501-005.glb", "402-000.glb", "403-006.glb", "801-020.glb", "99134104301.glb"]) {
     const abs = path.join(root, ".local", "petka-models", f);
     if (!fs.existsSync(abs)) throw new Error(`missing petka-models/${f}`);
   }

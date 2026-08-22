@@ -418,11 +418,57 @@ th {
 .xray-tune-viewer {
   flex: 1 1 auto;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.xray-tune-viewport-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  align-items: center;
+  padding: 6px 8px;
+  background: color-mix(in srgb, var(--ink, #1a1714) 6%, transparent);
+  border-radius: 6px;
+}
+
+.xray-tune-toolbar-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.xray-tune-toolbar-label {
+  font-size: 11px;
+  opacity: 0.65;
+  margin-right: 2px;
+}
+
+.xray-tune-viewport-bar button {
+  font-size: 12px;
+  padding: 3px 8px;
+  border: 1px solid color-mix(in srgb, var(--ink, #1a1714) 18%, transparent);
+  border-radius: 4px;
+  background: var(--bg, #f4f1ec);
+  color: inherit;
+  cursor: pointer;
+}
+
+.xray-tune-viewport-bar button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.xray-tune-viewport-bar button.is-active {
+  border-color: color-mix(in srgb, #8b4513 55%, transparent);
+  background: color-mix(in srgb, #8b4513 14%, var(--bg, #f4f1ec));
 }
 
 .xray-tune-viewer .locator-glb {
   aspect-ratio: auto;
-  height: min(62vh, 640px);
+  height: min(58vh, 600px);
   min-height: 360px;
 }
 

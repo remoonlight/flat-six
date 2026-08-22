@@ -68,6 +68,7 @@
     "merge:suspension": "node scripts/merge-suspension.mjs",
     "merge:501-000": "node scripts/merge-501-000.mjs",
     "merge:driveline": "node scripts/merge-driveline.mjs",
+    "merge:oil-cooling": "node scripts/merge-oil-cooling.mjs",
     "mirror:401-000-parts": "node scripts/mirror-petka-parts.mjs --id pm-401-000 --parts tripo_part_1,tripo_part_2",
     "mirror:402-005-part1": "node scripts/mirror-petka-parts.mjs --id pm-402-005 --parts tripo_part_1",
     "mirror:501-001-parts": "node scripts/mirror-petka-parts.mjs --id pm-501-001 --parts tripo_part_4,tripo_part_5,tripo_part_6,tripo_part_7,tripo_part_8,tripo_part_9",

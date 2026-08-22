@@ -27,7 +27,7 @@
 | `.local/xray-mesh-state.json` | 本机子 mesh 状态（gitignore，真源） |
 | `.local/model-oem-links.json` | 本机 OEM 链接（gitignore，真源） |
 | `.local/petka-models/*.glb` | 981 分件源 |
-| `.local/petka-models/merged/*.glb` | 已 bake：cooling / fuel / engine / suspension |
+| `.local/petka-models/merged/*.glb` | 已 bake：cooling / fuel / engine / suspension / driveline / oil-cooling |
 | `.local/cms-rip/engine_b61_porsche/engine.glb` | CMS 991.2 MA1.03 引擎（可调） |
 | `.local/flat-six/boxster-real.glb` | 车身 / 幽灵壳 |
 

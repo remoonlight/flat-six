@@ -1,7 +1,7 @@
 {
   "version": 2,
   "generation": "981",
-  "note": "981 PETKA 图号分件。X-ray：cooling、fuel、engine、CMS、suspension(含402/99134104301双)、driveline、360。",
+  "note": "981 PETKA 图号分件。X-ray：cooling、fuel、engine、CMS、suspension、driveline、机油冷却(360+104-005 bake)。",
   "caveatZh": "示意 ≠ OEM。202→燃油；010+107+105→引擎；402/501/502/99134104301→悬架/底盘。另挂 CMS MA1.03。",
   "localDir": "petka-models",
   "dropDir": "data/model",
@@ -46,7 +46,7 @@
       "id": "pm-105-020",
       "bild": "105-020",
       "system": "engine",
-      "label_zh": "引擎 · 105-020",
+      "label_zh": "冷却液 · 105-020",
       "file": "105-020.glb",
       "rel": "petka-models/105-020.glb",
       "browseOnly": true,
@@ -70,7 +70,7 @@
       "id": "pm-201-000",
       "bild": "201-000",
       "system": "exhaust",
-      "label_zh": "排气/燃油 · 201-000",
+      "label_zh": "燃油箱 · 201-000",
       "file": "201-000.glb",
       "rel": "petka-models/201-000.glb",
       "browseOnly": true,
@@ -136,7 +136,7 @@
       "browseOnly": true,
       "xrayGroup": "drive",
       "xrayGroupZh": "传动系统+前后轮",
-      "xrayActive": true
+      "xrayActive": false
     },
     {
       "id": "pm-401-000",
@@ -293,6 +293,42 @@
       "xrayGroup": "drive",
       "xrayGroupZh": "传动系统+前后轮",
       "xrayActive": false
+    },
+    {
+      "id": "pm-104-005",
+      "bild": "104-005",
+      "system": "engine",
+      "label_zh": "油系 · 104-005",
+      "file": "104-005.glb",
+      "rel": "petka-models/104-005.glb",
+      "browseOnly": true,
+      "xrayGroup": "power",
+      "xrayGroupZh": "引擎+燃油系统",
+      "xrayActive": false
+    },
+    {
+      "id": "pm-105-005",
+      "bild": "105-005",
+      "system": "engine",
+      "label_zh": "油系 · 105-005",
+      "file": "105-005.glb",
+      "rel": "petka-models/105-005.glb",
+      "browseOnly": true,
+      "xrayGroup": "power",
+      "xrayGroupZh": "引擎+燃油系统",
+      "xrayActive": false
+    },
+    {
+      "id": "pm-801-020",
+      "bild": "801-020",
+      "system": "chassis",
+      "label_zh": "机械 · 801-020",
+      "file": "801-020.glb",
+      "rel": "petka-models/801-020.glb",
+      "browseOnly": false,
+      "xrayGroup": "drive",
+      "xrayGroupZh": "传动系统+前后轮",
+      "xrayActive": true
     }
   ]
 }

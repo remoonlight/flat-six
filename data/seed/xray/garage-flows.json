@@ -1,56 +1,7 @@
 {
-  "version": 2,
-  "note": "flat-six flow-systems.ts 子集；机油回路已由 pm-360-000 机油冷却系统替代",
+  "version": 3,
+  "note": "flat-six flow-systems.ts 子集；机油回路→pm-360-000；燃油管→pm-fuel(含201-000)",
   "flows": [
-    {
-      "id": "fuel",
-      "layer": "lines",
-      "label": "燃油管",
-      "labelEn": "Fuel Line",
-      "color": "#F472B6",
-      "pipe": {
-        "color": "#3b3f45",
-        "metalness": 0.6,
-        "roughness": 0.55
-      },
-      "radius": 0.021,
-      "paths": [
-        {
-          "points": [
-            [
-              0,
-              -0.2,
-              0.9
-            ],
-            [
-              -0.1,
-              -0.5,
-              0.55
-            ],
-            [
-              -0.15,
-              -0.54,
-              0
-            ],
-            [
-              -0.18,
-              -0.54,
-              -0.5
-            ],
-            [
-              -0.3,
-              -0.3,
-              -0.72
-            ],
-            [
-              -0.42,
-              0.22,
-              -0.85
-            ]
-          ]
-        }
-      ]
-    },
     {
       "id": "brake-lines",
       "layer": "lines",

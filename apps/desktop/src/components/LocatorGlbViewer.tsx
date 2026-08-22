@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { TransformControls } from "three/addons/controls/TransformControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import type {
   GarageFlowSystem,
@@ -18,6 +19,32 @@ export type GarageStructureId =
   | "lines"
   | "vacuum"
   | "wiring";
+
+/** X-ray 微调：视口三轴 Gizmo 模式（对齐常见 DCC / Tripo 快捷）。 */
+export type GizmoMode = "translate" | "rotate" | "scale";
+
+/** 车坐标视角预设：+Z 车头，+Y 上。 */
+export type ViewPresetId =
+  | "front"
+  | "back"
+  | "left"
+  | "right"
+  | "top"
+  | "bottom"
+  | "iso";
+
+export const VIEW_PRESETS: ReadonlyArray<{
+  id: ViewPresetId;
+  labelZh: string;
+}> = [
+  { id: "front", labelZh: "前" },
+  { id: "back", labelZh: "后" },
+  { id: "left", labelZh: "左" },
+  { id: "right", labelZh: "右" },
+  { id: "top", labelZh: "上" },
+  { id: "bottom", labelZh: "下" },
+  { id: "iso", labelZh: "透视" },
+];
 
 /** 外观分栏。开盖角对齐 CMS Porsche991 config.txt `doorAngle=70`。 */
 export type ExteriorZoneId =
@@ -202,6 +229,20 @@ export type LocatorGlbViewerProps = {
   ) => void;
   /** 点到空白（无 mesh）时取消选中；未传则忽略。 */
   onPickEmpty?: () => void;
+  /** X-ray 微调：启用视口 TransformControls。 */
+  gizmoEnabled?: boolean;
+  gizmoMode?: GizmoMode;
+  /** 层 id（含 body / singleAssetId）。 */
+  gizmoAssemblyId?: string | null;
+  /** 有值时拖子 mesh，否则拖层 wrap。 */
+  gizmoMeshName?: string | null;
+  onGizmoTransformChange?: (
+    assemblyId: string,
+    transform: XrayTransform,
+    meshName: string | null,
+  ) => void;
+  /** 视角预设；seq 变化时触发一次。 */
+  viewPreset?: { id: ViewPresetId; seq: number } | null;
 };
 
 function meshPath(obj: THREE.Object3D): string {
@@ -951,6 +992,50 @@ function restoreBasePlacement(root: THREE.Object3D): boolean {
   return true;
 }
 
+/** 从当前物体 TRS 反推 seed 里的 manual transform（相对 basePlacement / baseLocal）。 */
+function readManualTransform(obj: THREE.Object3D): XrayTransform {
+  const base =
+    (obj.userData.basePlacement as BasePlacement | undefined) ||
+    (obj.userData.baseLocal as BasePlacement | undefined);
+  if (!base) {
+    return {
+      position: [obj.position.x, obj.position.y, obj.position.z],
+      rotationEuler: [obj.rotation.x, obj.rotation.y, obj.rotation.z],
+      scale: [obj.scale.x, obj.scale.y, obj.scale.z],
+    };
+  }
+  const sx = base.scale.x || 1;
+  const sy = base.scale.y || 1;
+  const sz = base.scale.z || 1;
+  return {
+    position: [
+      obj.position.x - base.position.x,
+      obj.position.y - base.position.y,
+      obj.position.z - base.position.z,
+    ],
+    rotationEuler: [
+      obj.rotation.x - base.rotation.x,
+      obj.rotation.y - base.rotation.y,
+      obj.rotation.z - base.rotation.z,
+    ],
+    scale: [obj.scale.x / sx, obj.scale.y / sy, obj.scale.z / sz],
+  };
+}
+
+function findMeshByName(
+  root: THREE.Object3D,
+  name: string,
+): THREE.Mesh | null {
+  let hit: THREE.Mesh | null = null;
+  root.traverse((o) => {
+    if (hit) return;
+    const mesh = o as THREE.Mesh;
+    if (!mesh.isMesh) return;
+    if (meshLabel(mesh) === name || mesh.name === name) hit = mesh;
+  });
+  return hit;
+}
+
 /**
  * Place assembly like flat-six UnifiedSceneClient.AssemblyMesh.
  * Does NOT recenter the whole scene — car-space preserved.
@@ -1127,6 +1212,13 @@ type Runtime = {
     eye: [number, number, number],
   ) => void;
   cabinFill: THREE.PointLight | null;
+  attachGizmo: (
+    assemblyId: string | null,
+    meshName: string | null,
+    mode: GizmoMode,
+  ) => void;
+  applyViewPreset: (id: ViewPresetId) => void;
+  gizmoDragging: () => boolean;
 };
 
 export function LocatorGlbViewer({
@@ -1156,6 +1248,12 @@ export function LocatorGlbViewer({
   linkedAssemblyIds = null,
   onPickMesh,
   onPickEmpty,
+  gizmoEnabled = false,
+  gizmoMode = "translate",
+  gizmoAssemblyId = null,
+  gizmoMeshName = null,
+  onGizmoTransformChange,
+  viewPreset = null,
 }: LocatorGlbViewerProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const [loadProgress, setLoadProgress] = useState<{
@@ -1169,6 +1267,10 @@ export function LocatorGlbViewer({
   pickEmptyRef.current = onPickEmpty;
   const meshesReadyRef = useRef(onMeshesReady);
   meshesReadyRef.current = onMeshesReady;
+  const gizmoChangeRef = useRef(onGizmoTransformChange);
+  gizmoChangeRef.current = onGizmoTransformChange;
+  const gizmoEnabledRef = useRef(gizmoEnabled);
+  gizmoEnabledRef.current = gizmoEnabled;
   const selectedRef = useRef(selectedMeshName);
   selectedRef.current = selectedMeshName;
   const linkedRef = useRef(linkedMeshNames);
@@ -1259,6 +1361,26 @@ export function LocatorGlbViewer({
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.target.set(0, 0.2, 0);
+
+    const transformControls = new TransformControls(camera, renderer.domElement);
+    transformControls.setMode("translate");
+    transformControls.enabled = false;
+    let gizmoDragging = false;
+    let gizmoAssembly: string | null = null;
+    let gizmoMesh: string | null = null;
+    transformControls.addEventListener("objectChange", () => {
+      const obj = transformControls.object;
+      if (!obj || !gizmoAssembly) return;
+      gizmoChangeRef.current?.(
+        gizmoAssembly,
+        readManualTransform(obj),
+        gizmoMesh,
+      );
+    });
+    scene.add(transformControls.getHelper());
+    const worldAxes = new THREE.AxesHelper(0.35);
+    worldAxes.visible = false;
+    scene.add(worldAxes);
 
     scene.add(new THREE.HemisphereLight(0xf0f4ff, 0x3a342c, 0.85));
     const key = new THREE.DirectionalLight(0xffffff, 1.35);
@@ -1381,6 +1503,7 @@ export function LocatorGlbViewer({
       preview: Readonly<Record<string, XrayTransform>> | null | undefined,
       meshState?: XrayMeshState | null,
     ) {
+      if (gizmoDragging) return;
       const ms = meshState ?? meshStateRef.current;
       for (const [id, entry] of layerEntries) {
         const t = preview?.[id] ?? entry.assembly.transform;
@@ -1710,6 +1833,108 @@ export function LocatorGlbViewer({
       }
     }
 
+    function attachGizmo(
+      assemblyId: string | null,
+      meshName: string | null,
+      mode: GizmoMode,
+    ) {
+      transformControls.detach();
+      transformControls.enabled = false;
+      gizmoAssembly = null;
+      gizmoMesh = null;
+      if (!gizmoEnabledRef.current || !assemblyId) {
+        worldAxes.visible = false;
+        return;
+      }
+      worldAxes.visible = true;
+
+      let target: THREE.Object3D | null = null;
+      if (singleWrap && singleAssetId && assemblyId === singleAssetId) {
+        target = meshName
+          ? findMeshByName(singleWrap, meshName)
+          : singleWrap;
+      } else if (assemblyId === "body" && bodyWrap) {
+        target = meshName ? findMeshByName(bodyWrap, meshName) : bodyWrap;
+        if (target === bodyWrap && !bodyWrap.userData.basePlacement) {
+          bodyWrap.userData.basePlacement = {
+            position: new THREE.Vector3(0, 0, 0),
+            rotation: new THREE.Euler(0, 0, 0),
+            scale: new THREE.Vector3(1, 1, 1),
+          };
+        }
+      } else {
+        const entry = layerEntries.get(assemblyId);
+        if (entry) {
+          const side0 = entry.sides?.[0] ?? entry.wrap;
+          target = meshName ? findMeshByName(entry.wrap, meshName) : side0;
+        }
+      }
+      if (!target) return;
+      transformControls.setMode(mode);
+      transformControls.attach(target);
+      transformControls.enabled = true;
+      gizmoAssembly = assemblyId;
+      gizmoMesh = meshName;
+    }
+
+    function applyViewPreset(id: ViewPresetId) {
+      const box = new THREE.Box3().setFromObject(worldRoot);
+      const center = box.isEmpty()
+        ? new THREE.Vector3(0, 0.2, 0)
+        : box.getCenter(new THREE.Vector3());
+      const size = box.isEmpty()
+        ? new THREE.Vector3(2, 1, 4)
+        : box.getSize(new THREE.Vector3());
+      const dist = Math.max(size.x, size.y, size.z, 0.5) * 1.6;
+      const eye = center.clone();
+      switch (id) {
+        case "front":
+          eye.set(center.x, center.y, center.z + dist);
+          break;
+        case "back":
+          eye.set(center.x, center.y, center.z - dist);
+          break;
+        case "left":
+          eye.set(center.x - dist, center.y, center.z);
+          break;
+        case "right":
+          eye.set(center.x + dist, center.y, center.z);
+          break;
+        case "top":
+          eye.set(center.x, center.y + dist, center.z + 0.01);
+          break;
+        case "bottom":
+          eye.set(center.x, center.y - dist, center.z + 0.01);
+          break;
+        default:
+          eye.set(
+            center.x + dist * 0.75,
+            center.y + dist * 0.55,
+            center.z + dist * 0.85,
+          );
+      }
+      controls.target.copy(center);
+      camera.position.copy(eye);
+      camera.near = dist / 200;
+      camera.far = dist * 40;
+      camera.updateProjectionMatrix();
+      controls.update();
+    }
+
+    transformControls.addEventListener("dragging-changed", (event: { value?: boolean }) => {
+      const dragging = Boolean(event.value);
+      gizmoDragging = dragging;
+      controls.enabled = !dragging;
+      if (!dragging && gizmoAssembly) {
+        reapplyTransforms(previewRef.current, meshStateRef.current);
+        attachGizmo(
+          gizmoAssembly,
+          gizmoMesh,
+          transformControls.mode as GizmoMode,
+        );
+      }
+    });
+
     runtimeRef.current = {
       pickRoot: worldRoot,
       bases,
@@ -1728,6 +1953,9 @@ export function LocatorGlbViewer({
       frameFocus,
       frameLook,
       cabinFill,
+      attachGizmo,
+      applyViewPreset,
+      gizmoDragging: () => gizmoDragging,
     };
 
     function resize() {
@@ -2113,6 +2341,7 @@ export function LocatorGlbViewer({
         onContextLost,
       );
       controls.dispose();
+      transformControls.dispose();
       disposeObject(worldRoot);
       scene.remove(worldRoot);
       renderer.dispose();
@@ -2187,6 +2416,31 @@ export function LocatorGlbViewer({
       previewMeshState,
     );
   }, [previewMeshState]);
+
+  useEffect(() => {
+    const rt = runtimeRef.current;
+    if (!rt) return;
+    if (rt.gizmoDragging()) return;
+    rt.attachGizmo(
+      gizmoEnabled ? gizmoAssemblyId : null,
+      gizmoMeshName,
+      gizmoMode,
+    );
+  }, [
+    gizmoEnabled,
+    gizmoAssemblyId,
+    gizmoMeshName,
+    gizmoMode,
+    layersKey,
+    ghostKey,
+    glbRel,
+    loadProgress,
+  ]);
+
+  useEffect(() => {
+    if (!viewPreset) return;
+    runtimeRef.current?.applyViewPreset(viewPreset.id);
+  }, [viewPreset?.seq, viewPreset?.id]);
 
   useEffect(() => {
     const rt = runtimeRef.current;

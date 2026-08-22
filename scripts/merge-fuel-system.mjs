@@ -1,10 +1,9 @@
 /**
- * Bake 202-000 + 202-005 → 燃油系统 GLB.
+ * Bake 202-000 + 202-005 + 201-000 → 燃油系统 GLB.
  *
- * - Layer TRS from .local/xray-transforms.json
- * - Sub-mesh TRS/visible from .local/xray-mesh-state.json
- * - 202-000 含 tripo_part_0_R（镜像子件）
- * - 202-005 冲突名加 _205
+ * - 若已有 merged/fuel.glb：以其为底（保留层 TRS），再叠 201-000
+ * - 否则从 202-* 源 GLB 重编
+ * - 201-000 冲突名 _201
  * - Output: .local/petka-models/merged/fuel.glb（pm-fuel）
  *
  * Usage: node scripts/merge-fuel-system.mjs
@@ -53,6 +52,8 @@ const { GLTFExporter } = await import(
 );
 
 const OUT_ID = "pm-fuel";
+const PREBAKE_ID = "pm-fuel__prebake";
+const SRC_201 = "pm-201-000";
 const OUT_REL = "petka-models/merged/fuel.glb";
 const OUT_ABS = path.join(root, ".local", OUT_REL.replace(/\//g, path.sep));
 const TF_PATH = path.join(root, ".local", "xray-transforms.json");
@@ -63,22 +64,6 @@ const IDENTITY = {
   rotationEuler: [0, 0, 0],
   scale: [1, 1, 1],
 };
-
-/** @type {Array<{ id: string, glb: string, meshStateId: string, collideTag: string | null }>} */
-const PARTS = [
-  {
-    id: "pm-202-000",
-    glb: "petka-models/202-000.glb",
-    meshStateId: "pm-202-000",
-    collideTag: null,
-  },
-  {
-    id: "pm-202-005",
-    glb: "petka-models/202-005.glb",
-    meshStateId: "pm-202-005",
-    collideTag: "_205",
-  },
-];
 
 function loadJson(p, fallback) {
   if (!fs.existsSync(p)) return fallback;
@@ -151,6 +136,32 @@ function uniqueName(srcName, collideTag, used) {
   return out;
 }
 
+function isIdentityTf(t) {
+  if (!t) return true;
+  const [px, py, pz] = t.position || [0, 0, 0];
+  const [rx, ry, rz] = t.rotationEuler || [0, 0, 0];
+  const [sx, sy, sz] = t.scale || [1, 1, 1];
+  return (
+    px === 0 &&
+    py === 0 &&
+    pz === 0 &&
+    rx === 0 &&
+    ry === 0 &&
+    rz === 0 &&
+    sx === 1 &&
+    sy === 1 &&
+    sz === 1
+  );
+}
+
+function layerHasPose(t) {
+  return !isIdentityTf(t);
+}
+
+function has201Suffix(name) {
+  return String(name).includes("_201");
+}
+
 {
   const stamp = new Date().toISOString().replace(/[:.]/g, "-");
   if (fs.existsSync(MS_PATH)) {
@@ -170,6 +181,89 @@ function uniqueName(srcName, collideTag, used) {
 const transforms = loadJson(TF_PATH, { layers: {} });
 const meshState = loadJson(MS_PATH, { layers: {} });
 
+const liveFuel = transforms.layers?.[OUT_ID];
+const preFuel = transforms.layers?.[PREBAKE_ID];
+const sourceFuelTf =
+  preFuel && layerHasPose(preFuel)
+    ? structuredClone(preFuel)
+    : liveFuel && layerHasPose(liveFuel)
+      ? structuredClone(liveFuel)
+      : preFuel
+        ? structuredClone(preFuel)
+        : liveFuel
+          ? structuredClone(liveFuel)
+          : { ...IDENTITY };
+
+const source201Tf = transforms.layers?.[SRC_201]
+  ? structuredClone(transforms.layers[SRC_201])
+  : { ...IDENTITY };
+
+const preMeshes = meshState.layers?.[PREBAKE_ID]?.meshes || {};
+const liveMeshes = meshState.layers?.[OUT_ID]?.meshes || {};
+const sourceFuelMeshes =
+  Object.keys(preMeshes).length &&
+  !Object.keys(preMeshes).some(has201Suffix)
+    ? structuredClone(preMeshes)
+    : Object.keys(liveMeshes).length &&
+        !Object.keys(liveMeshes).some(has201Suffix)
+      ? structuredClone(liveMeshes)
+      : structuredClone(preMeshes);
+
+const source201Meshes = meshState.layers?.[SRC_201]?.meshes || {};
+
+const useMergedBase =
+  fs.existsSync(OUT_ABS) &&
+  (Object.keys(sourceFuelMeshes).length > 0 || layerHasPose(sourceFuelTf));
+
+/** @type {Array<{ id: string, glb: string, meshStateId: string, collideTag: string | null }>} */
+const PARTS = useMergedBase
+  ? [
+      {
+        id: OUT_ID,
+        glb: OUT_REL,
+        meshStateId: OUT_ID,
+        collideTag: null,
+      },
+      {
+        id: SRC_201,
+        glb: "petka-models/201-000.glb",
+        meshStateId: SRC_201,
+        collideTag: "_201",
+      },
+    ]
+  : [
+      {
+        id: "pm-202-000",
+        glb: "petka-models/202-000.glb",
+        meshStateId: "pm-202-000",
+        collideTag: null,
+      },
+      {
+        id: "pm-202-005",
+        glb: "petka-models/202-005.glb",
+        meshStateId: "pm-202-005",
+        collideTag: "_205",
+      },
+      {
+        id: SRC_201,
+        glb: "petka-models/201-000.glb",
+        meshStateId: SRC_201,
+        collideTag: "_201",
+      },
+    ];
+
+function layerTfFor(id) {
+  if (id === OUT_ID) return sourceFuelTf;
+  if (id === SRC_201) return source201Tf;
+  return transforms.layers?.[id] || IDENTITY;
+}
+
+function meshesFor(meshStateId) {
+  if (meshStateId === OUT_ID) return sourceFuelMeshes;
+  if (meshStateId === SRC_201) return source201Meshes;
+  return meshState.layers?.[meshStateId]?.meshes || {};
+}
+
 const rootGroup = new THREE.Group();
 rootGroup.name = "燃油系统";
 
@@ -186,11 +280,13 @@ for (const part of PARTS) {
   const scene = await loadGlb(abs);
   scene.name = part.id;
 
-  const layerMeshes = meshState.layers?.[part.meshStateId]?.meshes || {};
+  const layerMeshes = meshesFor(part.meshStateId);
   const usedNames = new Set(Object.keys(outMeshes));
   scene.traverse((o) => {
     if (!o.isMesh) return;
     const srcName = o.name || `unnamed:${o.uuid.slice(0, 8)}`;
+    // 重跑时 merged 底已含 _201，跳过以免加倍
+    if (part.id === OUT_ID && has201Suffix(srcName)) return;
     const entry = layerMeshes[srcName];
     if (entry?.transform) applyManualTransform(o, entry.transform);
     const outName = uniqueName(srcName, part.collideTag, usedNames);
@@ -212,12 +308,10 @@ for (const part of PARTS) {
   const wrap = new THREE.Group();
   wrap.name = part.id;
   wrap.add(scene);
-
-  const layerTf = transforms.layers?.[part.id] || IDENTITY;
-  applyManualTransform(wrap, layerTf);
+  applyManualTransform(wrap, layerTfFor(part.id));
 
   rootGroup.add(wrap);
-  console.log("baked", part.id, { layer: layerTf.position });
+  console.log("baked", part.id, { layer: layerTfFor(part.id).position });
 }
 
 rootGroup.updateMatrixWorld(true);
@@ -241,6 +335,16 @@ const ms = loadJson(MS_PATH, {
   layers: {},
 });
 ms.layers = ms.layers || {};
+if (
+  !ms.layers[PREBAKE_ID] ||
+  !Object.keys(ms.layers[PREBAKE_ID]?.meshes || {}).length ||
+  Object.keys(ms.layers[PREBAKE_ID]?.meshes || {}).some(has201Suffix)
+) {
+  ms.layers[PREBAKE_ID] = {
+    visible: true,
+    meshes: structuredClone(sourceFuelMeshes),
+  };
+}
 ms.layers[OUT_ID] = { visible: true, meshes: outMeshes };
 ms.version = 1;
 fs.writeFileSync(MS_PATH, JSON.stringify(ms, null, 2) + "\n", "utf8");
@@ -251,6 +355,9 @@ const tf = loadJson(TF_PATH, {
   layers: {},
 });
 tf.layers = tf.layers || {};
+if (!tf.layers[PREBAKE_ID] || !layerHasPose(tf.layers[PREBAKE_ID])) {
+  tf.layers[PREBAKE_ID] = structuredClone(sourceFuelTf);
+}
 tf.layers[OUT_ID] = { ...IDENTITY };
 tf.version = 1;
 fs.writeFileSync(TF_PATH, JSON.stringify(tf, null, 2) + "\n", "utf8");
@@ -263,11 +370,9 @@ console.log(
       out: OUT_REL,
       bytes: glb.length,
       meshes: meshCount,
-      named: Object.keys(outMeshes).length,
-      sampleR: Object.keys(outMeshes).filter((n) => n.includes("_R")).slice(0, 5),
-      sample205: Object.keys(outMeshes)
-        .filter((n) => n.includes("_205"))
-        .slice(0, 5),
+      useMergedBase,
+      sourceFuel: sourceFuelTf.position,
+      source201: source201Tf.position,
     },
     null,
     2,

@@ -6,7 +6,7 @@ import {
   type XrayScene,
   type XrayTransform,
 } from "../api";
-import { LocatorGlbViewer } from "../components/LocatorGlbViewer";
+import { LocatorGlbViewer, VIEW_PRESETS, type GizmoMode, type ViewPresetId } from "../components/LocatorGlbViewer";
 import {
   sectionsFromLayers,
   sectionsFromScene,
@@ -17,6 +17,8 @@ import {
   identityTransform,
   XrayTransformSliders,
 } from "../components/XrayTransformSliders";
+
+const DEG90 = Math.PI / 2;
 
 function toUint8(raw: unknown): Uint8Array {
   if (raw instanceof Uint8Array) return raw;
@@ -81,6 +83,11 @@ export function XrayTunePage() {
   const [meshMap, setMeshMap] = useState<CmsMeshMap | null>(null);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set());
   const [ready, setReady] = useState(false);
+  const [gizmoMode, setGizmoMode] = useState<GizmoMode>("translate");
+  const [viewPreset, setViewPreset] = useState<{
+    id: ViewPresetId;
+    seq: number;
+  } | null>(null);
   const persistTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const meshPersistTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -356,6 +363,34 @@ export function XrayTunePage() {
     updateGizmoTransform(identityTransform());
   }
 
+  function nudgeRotation(axis: 0 | 1 | 2, deltaRad: number) {
+    const next = {
+      position: [...gizmoValue.position] as [number, number, number],
+      rotationEuler: [...gizmoValue.rotationEuler] as [number, number, number],
+      scale: [...gizmoValue.scale] as [number, number, number],
+    };
+    next.rotationEuler[axis] += deltaRad;
+    updateGizmoTransform(next);
+  }
+
+  function applyView(id: ViewPresetId) {
+    setViewPreset((prev) => ({ id, seq: (prev?.seq ?? 0) + 1 }));
+  }
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+      const k = e.key.toLowerCase();
+      if (k === "w") setGizmoMode("translate");
+      else if (k === "e") setGizmoMode("rotate");
+      else if (k === "r") setGizmoMode("scale");
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   async function refresh() {
     try {
       if (tuneAssetId) {
@@ -480,6 +515,66 @@ export function XrayTunePage() {
 
       <div className="xray-tune-main">
         <div className="xray-tune-viewer">
+          <div className="xray-tune-viewport-bar" role="toolbar" aria-label="视口工具">
+            <div className="xray-tune-toolbar-group">
+              <span className="xray-tune-toolbar-label">视角</span>
+              {VIEW_PRESETS.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  className={
+                    viewPreset?.id === p.id ? "is-active" : undefined
+                  }
+                  onClick={() => applyView(p.id)}
+                >
+                  {p.labelZh}
+                </button>
+              ))}
+            </div>
+            <div className="xray-tune-toolbar-group">
+              <span className="xray-tune-toolbar-label">Gizmo</span>
+              {(
+                [
+                  ["translate", "移动", "W"],
+                  ["rotate", "旋转", "E"],
+                  ["scale", "缩放", "R"],
+                ] as const
+              ).map(([mode, label, key]) => (
+                <button
+                  key={mode}
+                  type="button"
+                  className={gizmoMode === mode ? "is-active" : undefined}
+                  disabled={!gizmoTargetId}
+                  title={`${label} (${key})`}
+                  onClick={() => setGizmoMode(mode)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div className="xray-tune-toolbar-group">
+              <span className="xray-tune-toolbar-label">转 ±90°</span>
+              {(
+                [
+                  ["X+", 0, DEG90],
+                  ["X−", 0, -DEG90],
+                  ["Y+", 1, DEG90],
+                  ["Y−", 1, -DEG90],
+                  ["Z+", 2, DEG90],
+                  ["Z−", 2, -DEG90],
+                ] as const
+              ).map(([label, axis, delta]) => (
+                <button
+                  key={label}
+                  type="button"
+                  disabled={!gizmoTargetId}
+                  onClick={() => nudgeRotation(axis, delta)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
           {tuneAssetId && singleGlbRel ? (
             <LocatorGlbViewer
               glbRel={singleGlbRel}
@@ -490,13 +585,50 @@ export function XrayTunePage() {
               previewTransforms={previewTransforms}
               previewMeshState={meshState}
               onMeshesReady={setMeshesByAssembly}
+              gizmoEnabled
+              gizmoMode={gizmoMode}
+              gizmoAssemblyId={gizmoTargetId}
+              gizmoMeshName={pickedMesh}
+              viewPreset={viewPreset}
+              onGizmoTransformChange={(assemblyId, transform, meshName) => {
+                setPickedAssemblyId(assemblyId);
+                if (meshName) {
+                  setPickedMesh(meshName);
+                  const sid = meshStateIdFor(assemblyId, xrayScene, tuneAssetId);
+                  setMeshState((prev) => {
+                    const layers = { ...(prev?.layers || {}) };
+                    const layer = {
+                      visible: layers[sid]?.visible !== false,
+                      meshes: { ...(layers[sid]?.meshes || {}) },
+                    };
+                    layer.meshes[meshName] = {
+                      visible: layer.meshes[meshName]?.visible !== false,
+                      transform,
+                    };
+                    layers[sid] = layer;
+                    return {
+                      version: 1,
+                      note: prev?.note || "",
+                      layers,
+                    };
+                  });
+                  scheduleMeshPersist(sid, meshName, transform);
+                } else {
+                  setPickedMesh(null);
+                  setPreviewTransforms((prev) => ({
+                    ...prev,
+                    [assemblyId]: transform,
+                  }));
+                  schedulePersist(assemblyId, transform);
+                }
+              }}
               onPickMesh={(name, _path, assemblyId) => {
                 setPickedMesh(name);
                 setPickedAssemblyId(assemblyId || tuneAssetId);
                 setExpandedIds((prev) =>
                   new Set(prev).add(assemblyId || tuneAssetId),
                 );
-                setMsg(`已选 ${tuneAssetId}/${name}，拖滑条调 TRS`);
+                setMsg(`已选 ${tuneAssetId}/${name}，拖 Gizmo 或滑条调 TRS`);
               }}
             />
           ) : (
@@ -514,6 +646,43 @@ export function XrayTunePage() {
               previewTransforms={previewTransforms}
               previewMeshState={meshState}
               onMeshesReady={setMeshesByAssembly}
+              gizmoEnabled
+              gizmoMode={gizmoMode}
+              gizmoAssemblyId={gizmoTargetId}
+              gizmoMeshName={pickedMesh}
+              viewPreset={viewPreset}
+              onGizmoTransformChange={(assemblyId, transform, meshName) => {
+                setPickedAssemblyId(assemblyId);
+                if (meshName) {
+                  setPickedMesh(meshName);
+                  const sid = meshStateIdFor(assemblyId, xrayScene, null);
+                  setMeshState((prev) => {
+                    const layers = { ...(prev?.layers || {}) };
+                    const layer = {
+                      visible: layers[sid]?.visible !== false,
+                      meshes: { ...(layers[sid]?.meshes || {}) },
+                    };
+                    layer.meshes[meshName] = {
+                      visible: layer.meshes[meshName]?.visible !== false,
+                      transform,
+                    };
+                    layers[sid] = layer;
+                    return {
+                      version: 1,
+                      note: prev?.note || "",
+                      layers,
+                    };
+                  });
+                  scheduleMeshPersist(sid, meshName, transform);
+                } else {
+                  setPickedMesh(null);
+                  setPreviewTransforms((prev) => ({
+                    ...prev,
+                    [assemblyId]: transform,
+                  }));
+                  schedulePersist(assemblyId, transform);
+                }
+              }}
               onPickMesh={(name, _path, assemblyId) => {
                 setPickedMesh(name);
                 if (assemblyId) {
@@ -522,7 +691,7 @@ export function XrayTunePage() {
                 }
                 setMsg(
                   assemblyId
-                    ? `已选 ${assemblyId}/${name}，拖滑条调 TRS`
+                    ? `已选 ${assemblyId}/${name}，拖 Gizmo 或滑条调 TRS`
                     : null,
                 );
               }}
@@ -600,8 +769,8 @@ export function XrayTunePage() {
       </div>
 
       <p className="muted locator-hint">
-        右侧点大块调层 · 展开调零件 · world = 层 × mesh · 落盘{" "}
-        <code>.local/xray-transforms.json</code> /{" "}
+        右侧点大块调层 · 展开调零件 · 视口拖 RGB 轴 / W·E·R 切换模式 · world = 层 ×
+        mesh · 落盘 <code>.local/xray-transforms.json</code> /{" "}
         <code>.local/xray-mesh-state.json</code>
         {pickedMesh ? (
           <>
