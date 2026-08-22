@@ -15,6 +15,7 @@ export type GarageViewMode = "exterior" | "interior" | "xray";
 export type GarageStructureId =
   | "all"
   | "mechanical"
+  | "cabin"
   | "air"
   | "lines"
   | "vacuum"
@@ -123,7 +124,8 @@ export type InteriorZoneId =
   | "door-trim"
   | "dashboard"
   | "console"
-  | "seats";
+  | "seats"
+  | "liner";
 
 type InteriorZoneDef = {
   id: InteriorZoneId;
@@ -169,6 +171,13 @@ export const INTERIOR_ZONES: readonly InteriorZoneDef[] = [
     labelEn: "SEATS",
     match: /Details_MAT/i,
     look: { target: [0.25, 0.35, -0.05], eye: [0.9, 0.55, -0.7] },
+  },
+  {
+    id: "liner",
+    labelZh: "内衬",
+    labelEn: "TRIM LINER",
+    match: /(?!)/,
+    look: { target: [0, 0.35, 0], eye: [0, 0.55, -1.1] },
   },
 ];
 
@@ -1472,6 +1481,7 @@ export function LocatorGlbViewer({
       const selAsm = selectedAsmRef.current;
       const structure = structureOverride ?? garageStructureRef.current;
       const flowStructure =
+        structure === "cabin" ||
         structure === "air" ||
         structure === "lines" ||
         structure === "vacuum" ||
@@ -1635,11 +1645,22 @@ export function LocatorGlbViewer({
         }
       }
       for (const entry of layerEntries.values()) {
-        entry.wrap.visible = xrayOn;
+        const iz = entry.assembly.interiorZone as InteriorZoneId | null | undefined;
         if (xrayOn) {
-          clearZonePickMarks(entry.wrap);
+          // interiorZone 件仅顶栏内饰，不进车库透视
+          if (iz) {
+            entry.wrap.visible = false;
+            markBodyUnpickable(entry.wrap);
+          } else {
+            entry.wrap.visible = true;
+            clearZonePickMarks(entry.wrap);
+          }
+        } else if (mode === "interior" && iz) {
+          entry.wrap.visible = intZoneId === "all" || intZoneId === iz;
+          if (entry.wrap.visible) clearZonePickMarks(entry.wrap);
+          else markBodyUnpickable(entry.wrap);
         } else {
-          // three Raycaster 不跳过 visible=false → 隐藏机械层仍会「点穿」车身
+          entry.wrap.visible = false;
           markBodyUnpickable(entry.wrap);
         }
       }
@@ -2022,16 +2043,17 @@ export function LocatorGlbViewer({
       // 非焦点已设空 raycast（pickIgnore），不进 intersects；再 solid 优先于 ghost
       const hits = raycaster.intersectObject(worldRoot, true);
       const mode = garageModeRef.current;
-      // 外观/内饰只点车身；机械/管路层即使仍 visible=false 也不应抢点
-      const allowMech = !garageUnified || mode === "xray";
       const solid = hits.find((h) => {
         const m = h.object as THREE.Mesh;
         if (!m.isMesh || m.userData?.pickIgnore || m.userData?.ghost) {
           return false;
         }
-        if (!allowMech) {
-          const asm = m.userData?.assemblyId as string | undefined;
-          if (asm && asm !== "body") return false;
+        const asm = m.userData?.assemblyId as string | undefined;
+        if (garageUnified && mode !== "xray" && asm && asm !== "body") {
+          const iz = layerEntries.get(asm)?.assembly.interiorZone;
+          if (!iz || mode !== "interior") return false;
+          const z = interiorZoneRef.current;
+          if (z !== "all" && z !== iz) return false;
         }
         return true;
       });

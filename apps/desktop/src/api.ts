@@ -265,6 +265,8 @@ export type XrayAssembly = {
   xrayGroupZh?: string | null;
   /** 车库透视分栏（仅 garage-assemblies）；未设则归机械 */
   garageStructure?: string | null;
+  /** 顶栏内饰子类（仅 garage-assemblies + 807 等 PETKA 内饰件） */
+  interiorZone?: string | null;
   loadLayer: boolean;
   present: boolean;
   bytes: number;

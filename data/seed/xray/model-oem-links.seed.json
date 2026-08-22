@@ -1804,30 +1804,30 @@
       "note": null
     },
     {
-      "id": "mesh:pm-801-020:tripo_part_6",
+      "id": "mesh:pm-suspension:tripo_part_6_8010",
       "kind": "mesh",
-      "ref": "tripo_part_6",
-      "assemblyId": "pm-801-020",
+      "ref": "tripo_part_6_8010",
+      "assemblyId": "pm-suspension",
       "skus": [
         "981-99150423302"
       ],
       "note": null
     },
     {
-      "id": "mesh:pm-801-020:tripo_part_4",
+      "id": "mesh:pm-suspension:tripo_part_4_8010",
       "kind": "mesh",
-      "ref": "tripo_part_4",
-      "assemblyId": "pm-801-020",
+      "ref": "tripo_part_4_8010",
+      "assemblyId": "pm-suspension",
       "skus": [
         "981-99150423302"
       ],
       "note": null
     },
     {
-      "id": "mesh:pm-801-020:tripo_part_5",
+      "id": "mesh:pm-suspension:tripo_part_5_8010",
       "kind": "mesh",
-      "ref": "tripo_part_5",
-      "assemblyId": "pm-801-020",
+      "ref": "tripo_part_5_8010",
+      "assemblyId": "pm-suspension",
       "skus": [
         "981-99150423302"
       ],

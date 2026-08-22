@@ -23,6 +23,14 @@ import {
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "../../..");
 const tfPath = path.join(root, ".local", "xray-transforms.json");
+
+/** GLB JSON chunk contains mesh node name (no Three loader). */
+function glbJsonHas(abs, needle) {
+  const buf = fs.readFileSync(abs);
+  if (buf.length < 20 || buf.toString("ascii", 0, 4) !== "glTF") return false;
+  const jsonLen = buf.readUInt32LE(12);
+  return buf.subarray(20, 20 + jsonLen).toString("utf8").includes(needle);
+}
 const meshPath = path.join(root, ".local", "xray-mesh-state.json");
 const backup = tfPath + ".selfcheck.bak";
 const meshBackup = meshPath + ".selfcheck.bak";
@@ -40,9 +48,9 @@ try {
   const petkaAsm = seed.assemblies.filter((a) =>
     String(a.glbRel || "").startsWith("petka-models/"),
   );
-  // 水冷 + 燃油 + 引擎 + 悬架 + 传动 + 机油冷却 + 801-020（CMS 另计）
-  if (petkaAsm.length !== 7) {
-    throw new Error(`locator assemblies expect 7 petka, got ${petkaAsm.length}`);
+  // 水冷+燃油+进气+引擎+悬架(含801)+传动+机油冷却 + 内饰807 + 碳罐 + 604（CMS 另计）
+  if (petkaAsm.length !== 11) {
+    throw new Error(`locator assemblies expect 11 petka, got ${petkaAsm.length}`);
   }
   const cooling = petkaAsm.find((a) => a.id === "pm-cooling");
   if (!cooling || !String(cooling.glbRel || "").includes("merged/cooling.glb")) {
@@ -56,11 +64,12 @@ try {
   if (!eng || !String(eng.glbRel || "").includes("merged/engine.glb")) {
     throw new Error("pm-engine missing");
   }
-  if (petkaAsm.some((a) => a.id === "pm-105-020")) {
-    throw new Error("pm-105-020 should be baked into pm-cooling");
+  const intake = petkaAsm.find((a) => a.id === "pm-intake");
+  if (!intake || !String(intake.glbRel || "").includes("merged/intake.glb")) {
+    throw new Error("pm-intake missing merged/intake.glb");
   }
-  if (petkaAsm.some((a) => a.id === "pm-intake")) {
-    throw new Error("pm-intake retired; 105-020 baked into pm-cooling");
+  if (petkaAsm.some((a) => a.id === "pm-105-020")) {
+    throw new Error("pm-105-020 should be baked into pm-intake");
   }
   const susp = petkaAsm.find((a) => a.id === "pm-suspension");
   if (!susp || !String(susp.glbRel || "").includes("merged/suspension.glb")) {
@@ -73,8 +82,18 @@ try {
   ) {
     throw new Error("pm-302-000 missing merged/driveline.glb");
   }
-  for (const id of ["pm-302-000", "pm-360-000", "pm-801-020"]) {
+  for (const id of [
+    "pm-302-000",
+    "pm-360-000",
+    "pm-807-000",
+    "pm-807-005",
+    "pm-201-020",
+    "pm-604-000",
+  ]) {
     if (!petkaAsm.some((a) => a.id === id)) throw new Error(`missing ${id}`);
+  }
+  if (petkaAsm.some((a) => a.id === "pm-801-020")) {
+    throw new Error("pm-801-020 should be baked into pm-suspension");
   }
   if (petkaAsm.some((a) => a.id === "pm-201-000")) {
     throw new Error("pm-201-000 should be baked into pm-fuel");
@@ -94,7 +113,6 @@ try {
   }
   for (const id of [
     "pm-010-000",
-    "pm-intake",
     "pm-105-020",
     "pm-105-005",
     "pm-201-000",
@@ -132,8 +150,8 @@ try {
   }
   const power = petkaAsm.filter((a) => a.xrayGroup === "power");
   const drive = petkaAsm.filter((a) => a.xrayGroup === "drive");
-  if (power.length !== 3 || drive.length !== 4) {
-    throw new Error(`expect petka power=3 drive=4, got ${power.length}/${drive.length}`);
+  if (power.length !== 5 || drive.length !== 6) {
+    throw new Error(`expect petka power=5 drive=6, got ${power.length}/${drive.length}`);
   }
 
   let threw = false;
@@ -159,8 +177,8 @@ try {
   if (new Set(uniqueGlbs).size !== uniqueGlbs.length) {
     throw new Error("layer dedupe fail");
   }
-  if ((layers.layers?.length ?? 0) !== 8) {
-    throw new Error(`xray layers expect 8, got ${layers.layers?.length}`);
+  if ((layers.layers?.length ?? 0) !== 12) {
+    throw new Error(`xray layers expect 12, got ${layers.layers?.length}`);
   }
 
   const marker = `selfcheck-${Date.now()}`;
@@ -189,8 +207,8 @@ try {
   const petkaLayers = gSeed.assemblies.filter((a) =>
     String(a.glbRel || "").startsWith("petka-models/"),
   );
-  if (petkaLayers.length !== 7) {
-    throw new Error(`garage expect 7 petka, got ${petkaLayers.map((a) => a.id)}`);
+  if (petkaLayers.length !== 11) {
+    throw new Error(`garage expect 11 petka, got ${petkaLayers.map((a) => a.id)}`);
   }
   if (!petkaLayers.some((a) => a.id === "pm-cooling")) {
     throw new Error("garage missing pm-cooling");
@@ -200,14 +218,22 @@ try {
   }
   for (const id of [
     "pm-engine",
+    "pm-intake",
+    "pm-fuel",
     "pm-302-000",
     "pm-360-000",
-    "pm-801-020",
+    "pm-807-000",
+    "pm-807-005",
+    "pm-201-020",
+    "pm-604-000",
     "pm-suspension",
   ]) {
     if (!petkaLayers.some((a) => a.id === id)) {
       throw new Error(`garage missing ${id}`);
     }
+  }
+  if (petkaLayers.some((a) => a.id === "pm-801-020")) {
+    throw new Error("garage pm-801-020 should be baked into pm-suspension");
   }
   if (petkaLayers.some((a) => a.id === "pm-201-000")) {
     throw new Error("garage pm-201-000 should be baked into pm-fuel");
@@ -219,10 +245,7 @@ try {
     throw new Error("garage pm-105-005 should be baked into pm-360-000");
   }
   if (petkaLayers.some((a) => a.id === "pm-105-020")) {
-    throw new Error("garage pm-105-020 should be baked into pm-cooling");
-  }
-  if (petkaLayers.some((a) => a.id === "pm-intake")) {
-    throw new Error("garage pm-intake retired; 105-020 in pm-cooling");
+    throw new Error("garage pm-105-020 should be baked into pm-intake");
   }
   {
     const cms = gSeed.assemblies.filter((a) =>
@@ -238,7 +261,7 @@ try {
   if (gSeed.assemblies.some((a) => String(a.glbRel || "").includes("porsche991_body"))) {
     throw new Error("garage must not use CMS body");
   }
-  if (_test.loadGarageFlows().length < 5) {
+  if (_test.loadGarageFlows().length < 4) {
     throw new Error("garage flows missing");
   }
   if (_test.loadGarageFlows().some((f) => f.id === "coolant")) {
@@ -249,6 +272,9 @@ try {
   }
   if (_test.loadGarageFlows().some((f) => f.id === "fuel")) {
     throw new Error("fuel flow should be removed (pm-fuel owns fuel tank/lines)");
+  }
+  if (_test.loadGarageFlows().some((f) => f.id === "brake-lines")) {
+    throw new Error("brake-lines flow should be removed (pm-604-000 owns brake system)");
   }
   {
     const cooling = gSeed.assemblies.find((a) => a.id === "pm-cooling");
@@ -269,9 +295,50 @@ try {
     if (fuel?.label_zh !== "燃油系统") {
       throw new Error("pm-fuel should be labeled 燃油系统");
     }
-    const mech801 = gSeed.assemblies.find((a) => a.id === "pm-801-020");
-    if (mech801?.garageStructure) {
-      throw new Error("pm-801-020 should default to mechanical (no garageStructure)");
+    for (const id of ["pm-807-000", "pm-807-005"]) {
+      const a = gSeed.assemblies.find((x) => x.id === id);
+      if (a?.garageStructure) {
+        throw new Error(`${id} should use interiorZone not garageStructure`);
+      }
+      if (a?.interiorZone !== "liner") {
+        throw new Error(`${id} should be interiorZone=liner (内衬)`);
+      }
+    }
+    const frontTrunk = gSeed.assemblies.find((a) => a.id === "pm-807-000");
+    if (frontTrunk?.label_zh !== "前备箱内饰") {
+      throw new Error("pm-807-000 should be labeled 前备箱内饰");
+    }
+    const rearTrunk = gSeed.assemblies.find((a) => a.id === "pm-807-005");
+    if (rearTrunk?.label_zh !== "后备箱内饰") {
+      throw new Error("pm-807-005 should be labeled 后备箱内饰");
+    }
+    const intakeAir = gSeed.assemblies.find((a) => a.id === "pm-intake");
+    if (intakeAir?.garageStructure !== "air") {
+      throw new Error("pm-intake should be garageStructure=air (进排气)");
+    }
+    if (intakeAir?.label_zh !== "进气系统") {
+      throw new Error("pm-intake should be labeled 进气系统");
+    }
+    const canister = gSeed.assemblies.find((a) => a.id === "pm-201-020");
+    if (canister?.garageStructure !== "air") {
+      throw new Error("pm-201-020 should be garageStructure=air (进排气)");
+    }
+    if (canister?.label_zh !== "活性碳罐") {
+      throw new Error("pm-201-020 should be labeled 活性碳罐");
+    }
+    if (!String(canister?.glbRel || "").includes("petka-models/201-020.glb")) {
+      throw new Error("pm-201-020 should use petka-models/201-020.glb");
+    }
+    const fuelAir = gSeed.assemblies.find((a) => a.id === "pm-fuel");
+    if (fuelAir?.garageStructure !== "air") {
+      throw new Error("pm-fuel should be garageStructure=air");
+    }
+    const brake = gSeed.assemblies.find((a) => a.id === "pm-604-000");
+    if (brake?.garageStructure !== "lines") {
+      throw new Error("pm-604-000 should be garageStructure=lines (管路)");
+    }
+    if (brake?.label_zh !== "制动系统") {
+      throw new Error("pm-604-000 should be labeled 制动系统");
     }
   }
   if (Number(gSeed.axle?.frontZ) !== 1.167) {
@@ -316,6 +383,10 @@ try {
   if (!fs.existsSync(drivelineAbs)) {
     throw new Error("run: npm run merge:driveline");
   }
+  const intakeAbs = path.join(root, ".local", "petka-models", "merged", "intake.glb");
+  if (!fs.existsSync(intakeAbs)) {
+    throw new Error("run: npm run merge:intake");
+  }
   const oilCoolAbs = path.join(
     root,
     ".local",
@@ -326,9 +397,18 @@ try {
   if (!fs.existsSync(oilCoolAbs)) {
     throw new Error("run: npm run merge:oil-cooling");
   }
-  for (const f of ["010-000.glb", "104-005.glb", "105-005.glb", "105-020.glb", "107-010.glb", "201-000.glb", "302-000.glb", "360-000.glb", "501-005.glb", "402-000.glb", "403-006.glb", "801-020.glb", "99134104301.glb"]) {
+  for (const f of ["010-000.glb", "104-005.glb", "105-005.glb", "105-020.glb", "107-010.glb", "201-000.glb", "201-020.glb", "302-000.glb", "360-000.glb", "501-005.glb", "402-000.glb", "403-006.glb", "604-000.glb", "801-020.glb", "807-000.glb", "807-005.glb", "99134104301.glb"]) {
     const abs = path.join(root, ".local", "petka-models", f);
     if (!fs.existsSync(abs)) throw new Error(`missing petka-models/${f}`);
+  }
+  const intakeSrc = path.join(root, ".local", "petka-models", "105-020.glb");
+  if (
+    !glbJsonHas(intakeSrc, '"name":"tripo_part_0"') ||
+    glbJsonHas(intakeSrc, '"name":"tripo_part_10"')
+  ) {
+    throw new Error(
+      "105-020.glb is not intake (wrong PETKA export); git checkout e33b58d -- .local/petka-models/105-020.glb && npm run merge:intake",
+    );
   }
   const suspAbs = path.join(root, ".local", "petka-models", "merged", "suspension.glb");
   if (!fs.existsSync(suspAbs)) {

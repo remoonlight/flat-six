@@ -1,5 +1,5 @@
 /**
- * Bake 105-015(+镜像) + 105-017 + 105-020 → 水冷系统 GLB.
+ * Bake 105-015(+镜像) + 105-017 → 水冷系统 GLB（105-020 归 pm-intake）。
  *
  * - Layer TRS from .local/xray-transforms.json
  * - Sub-mesh TRS/visible from .local/xray-mesh-state.json
@@ -91,14 +91,6 @@ const PARTS = [
     mirrorX: false,
     renameSuffix: null,
     collideTag: "_017",
-  },
-  {
-    id: "pm-105-020",
-    glb: "petka-models/105-020.glb",
-    meshStateId: "pm-105-020",
-    mirrorX: false,
-    renameSuffix: null,
-    collideTag: "_020",
   },
 ];
 

@@ -21,11 +21,13 @@ export type InteriorZoneId =
   | "door-trim"
   | "dashboard"
   | "console"
-  | "seats";
+  | "seats"
+  | "liner";
 
 export type GarageStructureId =
   | "all"
   | "mechanical"
+  | "cabin"
   | "air"
   | "lines"
   | "vacuum"
@@ -65,6 +67,7 @@ export const INTERIOR_ZONE_HOTSPOTS: Record<
   dashboard: ["int-details-mat", "int-cabin-light"],
   console: ["int-details-mat", "int-cabin-filter"],
   seats: ["int-details-mat"],
+  liner: ["front-trunk", "engine-bay"],
 };
 
 /** 透视机械总成默认 bridge（与 garage-assemblies.json 一致）。 */
@@ -83,6 +86,7 @@ export const XRAY_FLOW_HOTSPOTS: Record<
   Exclude<GarageStructureId, "all" | "mechanical">,
   readonly string[]
 > = {
+  cabin: [],
   air: [],
   lines: [],
   vacuum: [],

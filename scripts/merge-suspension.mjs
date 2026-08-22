@@ -1,5 +1,5 @@
 /**
- * Bake 401… + 402-000(+镜像) + 403-000/006 + 501… + 502(+镜像) + 99134104301(+镜像) → 底盘悬架 GLB.
+ * Bake 401… + 402-000(+镜像) + 403-000/006 + 501… + 502(+镜像) + 99134104301(+镜像) + 801-020 → 底盘悬架 GLB.
  *
  * - Layer TRS from .local/xray-transforms.json
  * - Sub-mesh TRS from .local/xray-mesh-state.json
@@ -182,6 +182,14 @@ const PARTS = [
     mirrorX: true,
     renameSuffix: "_R",
     collideTag: "_9431",
+  },
+  {
+    id: "pm-801-020",
+    glb: "petka-models/801-020.glb",
+    meshStateId: "pm-801-020",
+    mirrorX: false,
+    renameSuffix: null,
+    collideTag: "_8010",
   },
 ];
 

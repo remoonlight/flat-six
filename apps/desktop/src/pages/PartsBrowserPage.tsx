@@ -22,9 +22,11 @@ import { WiringPage } from "./WiringPage";
 import {
   LocatorGlbViewer,
   EXTERIOR_ZONES,
+  INTERIOR_ZONES,
   isBodyPaintMeshName,
   type GarageStructureId,
   type GarageViewMode,
+  type InteriorZoneId,
 } from "../components/LocatorGlbViewer";
 import {
   api,
@@ -98,21 +100,35 @@ function structureForAssemblyId(
   assemblyId: string,
 ): GarageStructureId {
   const gs = layers.find((l) => l.id === assemblyId)?.garageStructure;
-  if (gs === "air" || gs === "lines" || gs === "vacuum" || gs === "wiring") {
+  if (
+    gs === "cabin" ||
+    gs === "air" ||
+    gs === "lines" ||
+    gs === "vacuum" ||
+    gs === "wiring"
+  ) {
     return gs;
   }
   return "mechanical";
+}
+
+function isInteriorZoneAssembly(
+  layers: readonly XrayAssembly[],
+  assemblyId: string,
+): boolean {
+  return Boolean(layers.find((l) => l.id === assemblyId)?.interiorZone);
 }
 
 /** 按左侧当前模式筛出模型块（mesh / 装配 / flow）。外观/内饰固定「全部」。 */
 function modelItemsForView(input: {
   mode: GarageViewMode;
   xrayStructure: GarageStructureId;
+  interiorZone: InteriorZoneId;
   meshesByAsm: Record<string, string[]>;
   layers: readonly XrayAssembly[];
   flows: readonly GarageFlowSystem[];
 }): ModelListItemBase[] {
-  const { mode, meshesByAsm, layers, flows } = input;
+  const { mode, meshesByAsm, layers, flows, interiorZone } = input;
   const body = meshesByAsm.body ?? [];
 
   if (mode === "exterior") {
@@ -133,26 +149,47 @@ function modelItemsForView(input: {
   }
 
   if (mode === "interior") {
-    return filterNames(body, /SM_Interior/i)
-      .filter((n) => !isBodyPaintMeshName(n))
-      .map((n) => ({
-      key: `mesh:${n}`,
-      label: n,
-      kind: "mesh" as const,
-      ref: n,
-      meshName: n,
-      assemblyId: "body",
-    }));
+    const zone =
+      INTERIOR_ZONES.find((z) => z.id === interiorZone) ?? INTERIOR_ZONES[0];
+    const petkaItems: ModelListItemBase[] = layers
+      .filter((l) => l.interiorZone)
+      .filter(
+        (l) => interiorZone === "all" || l.interiorZone === interiorZone,
+      )
+      .map((l) => ({
+        key: `asm:${l.id}`,
+        label: l.label_zh || l.label || l.id,
+        kind: "assembly" as const,
+        ref: l.id,
+        assemblyId: l.id,
+      }));
+    const bodyMatch =
+      zone.id === "all" ? /SM_Interior/i : zone.match;
+    const bodyItems =
+      bodyMatch == null
+        ? []
+        : filterNames(body, bodyMatch)
+            .filter((n) => !isBodyPaintMeshName(n))
+            .map((n) => ({
+              key: `mesh:${n}`,
+              label: n,
+              kind: "mesh" as const,
+              ref: n,
+              meshName: n,
+              assemblyId: "body",
+            }));
+    return [...petkaItems, ...bodyItems];
   }
 
-  // xray：garageStructure 非空则归气路/管路/真空/线束；否则机械
-  const flowStructs = new Set(["air", "lines", "vacuum", "wiring"]);
-  const mechLayers = layers.filter(
+  // xray：garageStructure 非空则归内饰/气路/管路/真空/线束；否则机械
+  const flowStructs = new Set(["cabin", "air", "lines", "vacuum", "wiring"]);
+  const xrayLayers = layers.filter((l) => !l.interiorZone);
+  const mechLayers = xrayLayers.filter(
     (l) => !flowStructs.has(String(l.garageStructure || "")),
   );
 
   if (input.xrayStructure === "all") {
-    return layers.map((l) => ({
+    return xrayLayers.map((l) => ({
       key: `asm:${l.id}`,
       label: l.label_zh || l.label || l.id,
       kind: "assembly" as const,
@@ -173,7 +210,7 @@ function modelItemsForView(input: {
 
   if (flowStructs.has(input.xrayStructure)) {
     const struct = input.xrayStructure;
-    const items: ModelListItemBase[] = layers
+    const items: ModelListItemBase[] = xrayLayers
       .filter((l) => l.garageStructure === struct)
       .map((l) => ({
         key: `asm:${l.id}`,
@@ -239,6 +276,7 @@ export function PartsBrowserPage({ onLocate }: PartsBrowserPageProps) {
   const [meshState, setMeshState] = useState<XrayMeshState | null>(null);
   const [locatorMap, setLocatorMap] = useState<LocatorMap | null>(null);
   const [mode, setMode] = useState<GarageViewMode>("exterior");
+  const [interiorZone, setInteriorZone] = useState<InteriorZoneId>("all");
   const [xrayStructure, setXrayStructure] =
     useState<GarageStructureId>("all");
   const [showWiring, setShowWiring] = useState(false);
@@ -267,6 +305,12 @@ export function PartsBrowserPage({ onLocate }: PartsBrowserPageProps) {
       })
       .catch((e) => setErr(String(e)));
   }, []);
+
+  useEffect(() => {
+    if (mode === "xray" && xrayStructure === "cabin") {
+      setXrayStructure("all");
+    }
+  }, [mode, xrayStructure]);
 
   useEffect(() => {
     function reloadLinks() {
@@ -306,6 +350,7 @@ export function PartsBrowserPage({ onLocate }: PartsBrowserPageProps) {
     const base = modelItemsForView({
       mode,
       xrayStructure,
+      interiorZone,
       meshesByAsm,
       layers: garageLayers,
       flows: garageFlows,
@@ -338,6 +383,7 @@ export function PartsBrowserPage({ onLocate }: PartsBrowserPageProps) {
   }, [
     mode,
     xrayStructure,
+    interiorZone,
     meshesByAsm,
     garageLayers,
     garageFlows,
@@ -381,7 +427,7 @@ export function PartsBrowserPage({ onLocate }: PartsBrowserPageProps) {
       {
         mode,
         exteriorZone: "all",
-        interiorZone: "all",
+        interiorZone,
         xrayStructure,
         assemblyBridgeHotspots,
       },
@@ -390,6 +436,7 @@ export function PartsBrowserPage({ onLocate }: PartsBrowserPageProps) {
   }, [
     parts,
     mode,
+    interiorZone,
     xrayStructure,
     assemblyBridgeHotspots,
     focusSkus,
@@ -550,10 +597,15 @@ export function PartsBrowserPage({ onLocate }: PartsBrowserPageProps) {
     setLinkedMeshNames(null);
     setLinkedAssemblyIds(null);
 
-    // 装配父块：手风琴展开 + 透视高亮（Q1B / Q3A / Q5A）
+    // 装配父块：手风琴展开；透视件切透视，顶栏内饰 PETKA 留在内饰
     if (item.kind === "assembly" && item.assemblyId) {
-      setMode("xray");
-      setXrayStructure(structureForAssemblyId(garageLayers, item.assemblyId));
+      if (
+        mode !== "interior" ||
+        !isInteriorZoneAssembly(garageLayers, item.assemblyId)
+      ) {
+        setMode("xray");
+        setXrayStructure(structureForAssemblyId(garageLayers, item.assemblyId));
+      }
       setSelectedAssemblyId(item.assemblyId);
       setSelectedMeshName(null);
       setExpandedAssemblyId((prev) =>
@@ -652,8 +704,10 @@ export function PartsBrowserPage({ onLocate }: PartsBrowserPageProps) {
     clearOemSelection();
 
     if (asm !== "body") {
-      setMode("xray");
-      setXrayStructure(structureForAssemblyId(garageLayers, asm));
+      if (mode !== "interior" || !isInteriorZoneAssembly(garageLayers, asm)) {
+        setMode("xray");
+        setXrayStructure(structureForAssemblyId(garageLayers, asm));
+      }
       setExpandedAssemblyId(asm);
     } else if (mode === "xray") {
       setExpandedAssemblyId(null);
@@ -772,8 +826,14 @@ export function PartsBrowserPage({ onLocate }: PartsBrowserPageProps) {
           <div
             className="chip-row parts-browser-xray-structure parts-browser-subtoolbar"
             role="group"
-            aria-label={mode === "xray" ? "透视结构层" : undefined}
-            aria-hidden={mode !== "xray"}
+            aria-label={
+              mode === "xray"
+                ? "透视结构层"
+                : mode === "interior"
+                  ? "内饰分栏"
+                  : undefined
+            }
+            aria-hidden={mode !== "xray" && mode !== "interior"}
           >
             {mode === "xray"
               ? XRAY_STRUCTURE.map((c) => (
@@ -793,6 +853,24 @@ export function PartsBrowserPage({ onLocate }: PartsBrowserPageProps) {
                   </button>
                 ))
               : null}
+            {mode === "interior"
+              ? INTERIOR_ZONES.map((z) => (
+                  <button
+                    key={z.id}
+                    type="button"
+                    className={`chip${interiorZone === z.id ? " active" : ""}`}
+                    onClick={() => {
+                      setInteriorZone(z.id);
+                      clearOemSelection();
+                      clearModelHighlight();
+                      setExpandedAssemblyId(null);
+                      setExpandedChildKey(null);
+                    }}
+                  >
+                    {z.labelZh}
+                  </button>
+                ))
+              : null}
           </div>
           {hasScene ? (
             <LocatorGlbViewer
@@ -803,7 +881,7 @@ export function PartsBrowserPage({ onLocate }: PartsBrowserPageProps) {
               garageStructure={xrayStructure}
               garageFlows={garageFlows}
               exteriorZone="all"
-              interiorZone="all"
+              interiorZone={interiorZone}
               readGlb={readGlb}
               selectedMeshName={selectedMeshName}
               selectedAssemblyId={selectedAssemblyId}

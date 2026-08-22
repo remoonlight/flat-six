@@ -172,6 +172,7 @@ function sceneFromSeed(seed) {
       xrayGroup: a.xrayGroup || null,
       xrayGroupZh: a.xrayGroupZh || null,
       garageStructure: a.garageStructure || null,
+      interiorZone: a.interiorZone || null,
       loadLayer,
       present,
       bytes: present ? fs.statSync(abs).size : 0,

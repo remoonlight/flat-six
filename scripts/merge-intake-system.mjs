@@ -162,7 +162,7 @@ let meshCount = 0;
   wrap.add(scene);
 
   const layerTf = transforms.layers?.[PART.id] || IDENTITY;
-  applyManualTransform(wrap, layerTf);
+  // Layer TRS stays on pm-intake at runtime; only sub-mesh TRS is baked into the GLB.
   rootGroup.add(wrap);
 }
 
@@ -197,7 +197,19 @@ const tf = loadJson(TF_PATH, {
   layers: {},
 });
 tf.layers = tf.layers || {};
-tf.layers[OUT_ID] = { ...IDENTITY };
+const prevIntake = tf.layers[OUT_ID];
+const intakeTuned =
+  prevIntake &&
+  ((prevIntake.position || []).some((v) => Math.abs(v) > 1e-6) ||
+    (prevIntake.rotationEuler || []).some((v) => Math.abs(v) > 1e-6) ||
+    (prevIntake.scale || []).some((v) => Math.abs((v ?? 1) - 1) > 1e-6));
+tf.layers[OUT_ID] = intakeTuned
+  ? { ...prevIntake }
+  : {
+      position: [...(layerTf.position || [0, 0, 0])],
+      rotationEuler: [...(layerTf.rotationEuler || [0, 0, 0])],
+      scale: [...(layerTf.scale || [1, 1, 1])],
+    };
 tf.version = 1;
 fs.writeFileSync(TF_PATH, JSON.stringify(tf, null, 2) + "\n", "utf8");
 
