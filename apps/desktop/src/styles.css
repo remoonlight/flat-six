@@ -85,6 +85,7 @@ nav.side button:hover {
 
 main.content {
   padding: 24px 28px 40px;
+  min-width: 0;
 }
 
 .bridge-banner {
@@ -131,6 +132,21 @@ h2 {
   gap: 12px;
   flex-wrap: wrap;
   align-items: end;
+}
+
+.garage-maint .row label {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.garage-maint .row select {
+  width: 16rem;
+  max-width: 100%;
+}
+
+.garage-maint .table-scroll {
+  overflow-x: auto;
+  max-width: 100%;
 }
 
 label {

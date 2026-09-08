@@ -123,7 +123,7 @@ export function App() {
             {banner}
           </div>
         )}
-        {tab === "parts" && <PartsBrowserPage onLocate={openLocator} />}
+        {tab === "parts" && <PartsBrowserPage />}
         {tab === "maintenance" && <GaragePage />}
         {tab === "obd" && <ObdPage onLocate={openLocator} />}
         {tab === "settings" && <VehicleSettingsPage />}

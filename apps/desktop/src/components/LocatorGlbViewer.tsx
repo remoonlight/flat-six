@@ -348,6 +348,11 @@ export function isBodyPaintMeshName(name: string): boolean {
   return /car[_-]?paint|paint[_-]?base|body[_-]?paint/i.test(name);
 }
 
+/** 座舱 bulk mesh（内饰分栏）；外观模型列表应排除。 */
+export function isBodyInteriorMeshName(name: string): boolean {
+  return /SM_Interior/i.test(name);
+}
+
 /** Wheels / tires / brakes must never take body paint. */
 function isRollingStockMeshName(name: string): boolean {
   return /tire|opon|rubber|rim|felga|wheel|brake|disk|hub|rotor|caliper|tire_brake/i.test(

@@ -145,9 +145,55 @@ describe("buildGaragePartsList / consumables", () => {
     expect(front.every((r) => !r.skus.includes("oil-filter"))).toBe(true);
 
     const cons = buildGarageConsumablesList(sample, { carGeneration: "981" });
-    expect(cons.some((r) => r.skus.includes("front-brake-pads"))).toBe(true);
+    expect(cons.map((r) => r.name_zh)).toEqual([
+      "机油滤清器",
+      "空调过滤器",
+      "前刹车片",
+      "蓄电池",
+    ]);
     expect(cons.some((r) => r.skus.includes("982-9A110722400"))).toBe(false);
-    expect(cons.some((r) => r.skus.includes("battery"))).toBe(false);
+  });
+
+  it("consumables allowlist excludes belt/fuel-filter; alias tire-fl → 前轮胎", () => {
+    const more: GaragePartRef[] = [
+      ...sample,
+      {
+        sku: "serpentine-belt",
+        name_zh: "驱动皮带",
+        oem_number: "9A1.102.218.00",
+        system: "发动机",
+        generation: "981",
+        interval_km: 90000,
+        interval_months: 72,
+        locator_hotspot: "engine-bay",
+      },
+      {
+        sku: "tire-fl",
+        name_zh: "左前轮胎",
+        oem_number: null,
+        system: "底盘",
+        generation: "981",
+        interval_km: 40000,
+        interval_months: 72,
+        locator_hotspot: "front-left",
+      },
+      {
+        sku: "coil-pack",
+        name_zh: "点火线圈",
+        oem_number: "9A1.602.104.07",
+        system: "发动机",
+        generation: "981",
+        interval_km: null,
+        interval_months: null,
+        locator_hotspot: "engine-bay",
+      },
+    ];
+    const cons = buildGarageConsumablesList(more, { carGeneration: "981" });
+    expect(cons.some((r) => r.skus.includes("serpentine-belt"))).toBe(false);
+    expect(cons.find((r) => r.name_zh === "前轮胎")?.skus).toEqual(["tire-fl"]);
+    expect(cons.find((r) => r.name_zh === "点火线圈")?.skus).toEqual([
+      "coil-pack",
+    ]);
   });
 
   it("empty hotspot zone stays empty", () => {

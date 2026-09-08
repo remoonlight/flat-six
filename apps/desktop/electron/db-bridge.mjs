@@ -146,9 +146,20 @@ const handlers = {
       payload.price_as_of,
       payload.aftermarket_quotes,
     ),
+  "parts:updateNames": (payload) =>
+    garage.updatePartNames(String(payload?.sku || ""), {
+      oem_number:
+        payload?.oem_number === undefined ? undefined : payload.oem_number,
+      name_zh: payload?.name_zh === undefined ? undefined : payload.name_zh,
+      name_en: payload?.name_en === undefined ? undefined : payload.name_en,
+      petka_note:
+        payload?.petka_note === undefined ? undefined : payload.petka_note,
+      pr_label: payload?.pr_label === undefined ? undefined : payload.pr_label,
+    }),
   "parts:interval": (partId) => garage.partIntervalStatus(Number(partId)),
   "service:list": () => garage.listServiceRecords(),
   "service:add": (input) => garage.addServiceRecord(input),
+  "service:remove": (id) => garage.deleteServiceRecord(Number(id)),
   "faults:list": () => garage.listFaults(),
   "faultLogs:list": () => garage.listFaultLogs(),
   "faultLogs:add": (input) => garage.addFaultLog(input),

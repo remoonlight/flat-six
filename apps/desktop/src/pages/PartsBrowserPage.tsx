@@ -1,28 +1,23 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   buildGarageConsumablesList,
-  buildGaragePartsList,
   collectSkusForModelSelection,
   findModelsForSku,
   findSkuByOemNumber,
   formatModelChildCaption,
   formatModelOemPointer,
-  mergePartsByOem,
   resolveBodyPaintHex,
   resolveBodyPaintPbr,
   resolveInteriorHex,
   resolveModelOemSkus,
-  resolveSkuToLocator,
   resolveSoftTopHex,
   suggestOemByInput,
   type FxTable,
 } from "@porsche981/domain";
-import { CatalogPage } from "./CatalogPage";
-import { WiringPage } from "./WiringPage";
 import {
   LocatorGlbViewer,
-  EXTERIOR_ZONES,
   INTERIOR_ZONES,
+  isBodyInteriorMeshName,
   isBodyPaintMeshName,
   type GarageStructureId,
   type GarageViewMode,
@@ -31,7 +26,6 @@ import {
 import {
   api,
   type GarageFlowSystem,
-  type LocatorMap,
   type ModelOemKind,
   type ModelOemLink,
   type Part,
@@ -41,7 +35,6 @@ import {
   type XrayScene,
   type XrayTransform,
 } from "../api";
-import type { LocatorFocus } from "../locator-focus";
 import {
   DEFAULT_FX_TABLE,
   formatMoney,
@@ -58,7 +51,7 @@ const XRAY_STRUCTURE: { id: GarageStructureId; labelZh: string }[] = [
   { id: "wiring", labelZh: "线束" },
 ];
 
-type RightTab = "model" | "oem" | "consumables";
+type RightTab = "model" | "consumables";
 
 type ModelListItem = {
   key: string;
@@ -119,6 +112,16 @@ function isInteriorZoneAssembly(
   return Boolean(layers.find((l) => l.id === assemblyId)?.interiorZone);
 }
 
+/** 透视「全部」点选装配不切子分栏；已在子分栏时对齐到装配所属层。 */
+function xrayStructureForAssemblyPick(
+  layers: readonly XrayAssembly[],
+  assemblyId: string,
+  currentStructure: GarageStructureId,
+): GarageStructureId {
+  if (currentStructure === "all") return "all";
+  return structureForAssemblyId(layers, assemblyId);
+}
+
 /** 按左侧当前模式筛出模型块（mesh / 装配 / flow）。外观/内饰固定「全部」。 */
 function modelItemsForView(input: {
   mode: GarageViewMode;
@@ -132,20 +135,17 @@ function modelItemsForView(input: {
   const body = meshesByAsm.body ?? [];
 
   if (mode === "exterior") {
-    const parts = EXTERIOR_ZONES.map((z) => z.match)
-      .filter((m): m is RegExp => m != null)
-      .map((m) => m.source);
-    // 含座舱 GLB 内误挂在 SM_Interior 下的车漆块
-    parts.push("Car_Paint", "Paint_Base");
-    const match = parts.length ? new RegExp(parts.join("|"), "i") : null;
-    return filterNames(body, match).map((n) => ({
-      key: `mesh:${n}`,
-      label: n,
-      kind: "mesh" as const,
-      ref: n,
-      meshName: n,
-      assemblyId: "body",
-    }));
+    // 外观 = 车壳全部子 mesh，仅排除 SM_Interior 座舱块（平铺）
+    return filterNames(body, null)
+      .filter((n) => !isBodyInteriorMeshName(n))
+      .map((n) => ({
+        key: `mesh:${n}`,
+        label: n,
+        kind: "mesh" as const,
+        ref: n,
+        meshName: n,
+        assemblyId: "body",
+      }));
   }
 
   if (mode === "interior") {
@@ -234,15 +234,11 @@ function modelItemsForView(input: {
   return [];
 }
 
-export type PartsBrowserPageProps = {
-  onLocate?: (focus: LocatorFocus) => void;
-};
-
 /**
- * 车库 · 零件浏览器 — 左 3D 固定；右「模型|零件|消耗品」。
- * 模型跟分栏 mesh/装配；OEM 跟热点且仅 981；消耗品在右侧分栏。
+ * 车库 · 零件浏览器 — 左 3D 固定；右「模型|消耗品」。
+ * 模型跟分栏 mesh/装配；消耗品在右侧分栏。
  */
-export function PartsBrowserPage({ onLocate }: PartsBrowserPageProps) {
+export function PartsBrowserPage() {
   const [parts, setParts] = useState<Part[]>([]);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [selectedMeshName, setSelectedMeshName] = useState<string | null>(null);
@@ -257,7 +253,6 @@ export function PartsBrowserPage({ onLocate }: PartsBrowserPageProps) {
   );
   const [meshesByAsm, setMeshesByAsm] = useState<Record<string, string[]>>({});
   const [modelLinks, setModelLinks] = useState<ModelOemLink[]>([]);
-  const [focusSkus, setFocusSkus] = useState<string[] | null>(null);
   const [rightTab, setRightTab] = useState<RightTab>("model");
   /** 模型栏手风琴：展开的装配 id（其它收起） */
   const [expandedAssemblyId, setExpandedAssemblyId] = useState<string | null>(
@@ -266,6 +261,11 @@ export function PartsBrowserPage({ onLocate }: PartsBrowserPageProps) {
   /** 子模型/叶子：展开看价；关联按钮再开 OEM 弹窗 */
   const [expandedChildKey, setExpandedChildKey] = useState<string | null>(null);
   const [oemDialog, setOemDialog] = useState<ModelListItem | null>(null);
+  /** 消耗品：改零件库 oem_number（按 sku） */
+  const [partOemEdit, setPartOemEdit] = useState<{
+    sku: string;
+    label: string;
+  } | null>(null);
   const [oemDraft, setOemDraft] = useState("");
   /** 联想查询防抖，避免每键全库扫一次卡输入 */
   const [oemSuggestQ, setOemSuggestQ] = useState("");
@@ -274,13 +274,10 @@ export function PartsBrowserPage({ onLocate }: PartsBrowserPageProps) {
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [garage, setGarage] = useState<XrayScene | null>(null);
   const [meshState, setMeshState] = useState<XrayMeshState | null>(null);
-  const [locatorMap, setLocatorMap] = useState<LocatorMap | null>(null);
   const [mode, setMode] = useState<GarageViewMode>("exterior");
   const [interiorZone, setInteriorZone] = useState<InteriorZoneId>("all");
   const [xrayStructure, setXrayStructure] =
     useState<GarageStructureId>("all");
-  const [showWiring, setShowWiring] = useState(false);
-  const [showCatalogEdit, setShowCatalogEdit] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [fx, setFx] = useState<FxTable>(DEFAULT_FX_TABLE);
 
@@ -290,16 +287,14 @@ export function PartsBrowserPage({ onLocate }: PartsBrowserPageProps) {
       api().getVehicle().catch(() => null),
       api().xrayGarageLayers().catch(() => null),
       api().xrayGetMeshState().catch(() => null),
-      api().locatorMap().catch(() => null),
       api().modelOemLinksGet?.().catch(() => null) ?? Promise.resolve(null),
       Promise.resolve(api().getFx?.() ?? null).catch(() => null),
     ])
-      .then(([p, v, scene, ms, map, links, fxTable]) => {
+      .then(([p, v, scene, ms, links, fxTable]) => {
         setParts(p);
         if (v) setVehicle(v);
         if (scene) setGarage(scene);
         if (ms) setMeshState(ms);
-        if (map) setLocatorMap(map);
         if (links?.links) setModelLinks(links.links);
         if (fxTable) setFx(fxTable);
       })
@@ -336,14 +331,6 @@ export function PartsBrowserPage({ onLocate }: PartsBrowserPageProps) {
   const garageFlows = useMemo(
     () => (garage?.flows ?? []) as GarageFlowSystem[],
     [garage],
-  );
-
-  const assemblyBridgeHotspots = useMemo(
-    () =>
-      garageLayers
-        .map((l) => l.bridgeHotspot)
-        .filter((h): h is string => Boolean(h)),
-    [garageLayers],
   );
 
   const modelItems = useMemo(() => {
@@ -417,49 +404,10 @@ export function PartsBrowserPage({ onLocate }: PartsBrowserPageProps) {
       });
   }, [expandedAssemblyId, meshesByAsm, modelLinks, parts]);
 
-  const oemRows = useMemo(() => {
-    if (focusSkus?.length) {
-      const hit = parts.filter((p) => focusSkus.includes(p.sku));
-      return mergePartsByOem(hit);
-    }
-    return buildGaragePartsList(
-      parts,
-      {
-        mode,
-        exteriorZone: "all",
-        interiorZone,
-        xrayStructure,
-        assemblyBridgeHotspots,
-      },
-      { carGeneration: "981" },
-    );
-  }, [
-    parts,
-    mode,
-    interiorZone,
-    xrayStructure,
-    assemblyBridgeHotspots,
-    focusSkus,
-  ]);
-
   const consumableRows = useMemo(
     () => buildGarageConsumablesList(parts, { carGeneration: "981" }),
     [parts],
   );
-
-  const listRows = rightTab === "consumables" ? consumableRows : oemRows;
-
-  const selectedRow = useMemo(
-    () =>
-      rightTab === "model"
-        ? null
-        : (listRows.find((r) => r.key === selectedKey) ?? null),
-    [rightTab, listRows, selectedKey],
-  );
-  const selectedPart = selectedRow?.parts[0] ?? null;
-  const selectedPrice = selectedPart
-    ? formatMoneyDisplay(selectedPart.oem_price, selectedPart.price_note, fx)
-    : null;
 
   function partForModelItem(item: ModelListItem): Part | null {
     const sku = item.linkedSkus[0];
@@ -499,7 +447,6 @@ export function PartsBrowserPage({ onLocate }: PartsBrowserPageProps) {
     }
     if (opts?.toggle === false) setExpandedChildKey(item.key);
     else setExpandedChildKey((prev) => (prev === item.key ? null : item.key));
-    setFocusSkus(null);
     clearOemSelection();
   }
 
@@ -509,18 +456,13 @@ export function PartsBrowserPage({ onLocate }: PartsBrowserPageProps) {
   );
 
   useEffect(() => {
-    if (!oemDialog) {
+    if (!oemDialog && !partOemEdit) {
       setOemSuggestQ("");
       return;
     }
     const t = window.setTimeout(() => setOemSuggestQ(oemDraft), 280);
     return () => window.clearTimeout(t);
-  }, [oemDraft, oemDialog]);
-
-  const locateTarget = useMemo(() => {
-    if (!selectedPart || !locatorMap) return null;
-    return resolveSkuToLocator(selectedPart.sku, parts, locatorMap.zones);
-  }, [selectedPart, parts, locatorMap]);
+  }, [oemDraft, oemDialog, partOemEdit]);
 
   const bodyPaintHex = resolveBodyPaintHex(vehicle?.paint_name);
   const bodyPaintPbr = resolveBodyPaintPbr(vehicle?.paint_name);
@@ -604,7 +546,13 @@ export function PartsBrowserPage({ onLocate }: PartsBrowserPageProps) {
         !isInteriorZoneAssembly(garageLayers, item.assemblyId)
       ) {
         setMode("xray");
-        setXrayStructure(structureForAssemblyId(garageLayers, item.assemblyId));
+        setXrayStructure(
+          xrayStructureForAssemblyPick(
+            garageLayers,
+            item.assemblyId,
+            xrayStructure,
+          ),
+        );
       }
       setSelectedAssemblyId(item.assemblyId);
       setSelectedMeshName(null);
@@ -612,7 +560,6 @@ export function PartsBrowserPage({ onLocate }: PartsBrowserPageProps) {
         prev === item.assemblyId ? null : item.assemblyId!,
       );
       setRightTab("model");
-      setFocusSkus(null);
       clearOemSelection();
       return;
     }
@@ -622,6 +569,7 @@ export function PartsBrowserPage({ onLocate }: PartsBrowserPageProps) {
   }
 
   function openOemDialog(item: ModelListItem) {
+    setPartOemEdit(null);
     setOemDialogErr(null);
     const sku = item.linkedSkus[0];
     const p = sku ? parts.find((x) => x.sku === sku) : null;
@@ -637,11 +585,45 @@ export function PartsBrowserPage({ onLocate }: PartsBrowserPageProps) {
     setLinkedAssemblyIds(null);
   }
 
+  function openPartOemDialog(row: (typeof consumableRows)[number]) {
+    const sku = row.skus[0];
+    if (!sku) return;
+    setOemDialog(null);
+    setOemDialogErr(null);
+    setOemDraft(row.oem_number?.trim() || "");
+    setPartOemEdit({ sku, label: row.name_zh });
+  }
+
   function closeOemDialog() {
     if (oemSaving) return;
     setOemDialog(null);
+    setPartOemEdit(null);
     setOemDialogErr(null);
     setOemDraft("");
+  }
+
+  async function savePartOemDialog() {
+    if (!partOemEdit) return;
+    const oem = oemDraft.trim();
+    setOemSaving(true);
+    setOemDialogErr(null);
+    try {
+      const updated = await api().updatePartNames!({
+        sku: partOemEdit.sku,
+        oem_number: oem || null,
+      });
+      if (!updated) {
+        setOemDialogErr(`未找到零件 sku=${partOemEdit.sku}`);
+        return;
+      }
+      const next = await api().listParts();
+      setParts(next);
+      closeOemDialog();
+    } catch (e) {
+      setOemDialogErr(String(e));
+    } finally {
+      setOemSaving(false);
+    }
   }
 
   async function saveOemDialog() {
@@ -682,11 +664,61 @@ export function PartsBrowserPage({ onLocate }: PartsBrowserPageProps) {
     }
   }
 
+  /** 零件/消耗品：点击展开详情（与模型子块同款手风琴）。 */
   function selectOemRow(key: string, skus: readonly string[]) {
+    if (selectedKey === key) {
+      clearOemSelection();
+      clearModelHighlight();
+      return;
+    }
     setSelectedKey(key);
     const sku = skus[0];
     if (sku) highlightForSku(sku);
     else clearModelHighlight();
+  }
+
+  function renderOemRowExpand(row: (typeof consumableRows)[number]) {
+    const p = row.parts[0] ?? null;
+    const oemDisp = p
+      ? formatMoneyDisplay(p.oem_price, p.price_note, fx)
+      : null;
+    const am = aftermarketLines(p);
+    return (
+      <div className="parts-browser-part-expand">
+        <p>
+          <span className="muted">PART NO.</span>{" "}
+          {row.oem_number ?? row.skus[0] ?? "—"}
+        </p>
+        <p>
+          <span className="muted">系统</span> {row.system || "—"}
+        </p>
+        <p>
+          <span className="muted">OEM 价</span> {oemDisp?.primary ?? "—"}
+        </p>
+        <p>
+          <span className="muted">副厂</span>{" "}
+          {am.length ? am.join(" · ") : "—"}
+        </p>
+        <p>
+          <span className="muted">世代</span> {row.generationLabel}
+        </p>
+        <p>
+          <span className="muted">SKU</span> {row.skus.join(" · ")}
+        </p>
+        {p?.notes ? <p>{p.notes}</p> : null}
+        <button
+          type="button"
+          className="primary"
+          disabled={!row.skus[0]}
+          onClick={(e) => {
+            e.stopPropagation();
+            openPartOemDialog(row);
+          }}
+        >
+          关联
+        </button>
+      </div>
+    );
   }
 
   function onPickFromViewer(
@@ -700,13 +732,14 @@ export function PartsBrowserPage({ onLocate }: PartsBrowserPageProps) {
     setSelectedMeshName(meshName);
     setSelectedAssemblyId(asm);
     setRightTab("model");
-    setFocusSkus(null);
     clearOemSelection();
 
     if (asm !== "body") {
       if (mode !== "interior" || !isInteriorZoneAssembly(garageLayers, asm)) {
         setMode("xray");
-        setXrayStructure(structureForAssemblyId(garageLayers, asm));
+        setXrayStructure(
+          xrayStructureForAssemblyPick(garageLayers, asm, xrayStructure),
+        );
       }
       setExpandedAssemblyId(asm);
     } else if (mode === "xray") {
@@ -735,9 +768,7 @@ export function PartsBrowserPage({ onLocate }: PartsBrowserPageProps) {
     rightTab === "model"
       ? modelItems.length +
         (expandedAssemblyId ? expandedChildren.length : 0)
-      : rightTab === "consumables"
-        ? consumableRows.length
-        : oemRows.length;
+      : consumableRows.length;
 
   function renderModelPartExpand(item: ModelListItem) {
     const p = partForModelItem(item);
@@ -812,7 +843,6 @@ export function PartsBrowserPage({ onLocate }: PartsBrowserPageProps) {
                   setMode(id);
                   clearOemSelection();
                   clearModelHighlight();
-                  setFocusSkus(null);
                   setExpandedAssemblyId(null);
                   setExpandedChildKey(null);
                 }}
@@ -900,7 +930,6 @@ export function PartsBrowserPage({ onLocate }: PartsBrowserPageProps) {
               onPickEmpty={() => {
                 clearModelHighlight();
                 clearOemSelection();
-                setFocusSkus(null);
                 setExpandedAssemblyId(null);
                 setExpandedChildKey(null);
               }}
@@ -924,7 +953,6 @@ export function PartsBrowserPage({ onLocate }: PartsBrowserPageProps) {
             {(
               [
                 ["model", "模型"],
-                ["oem", "零件"],
                 ["consumables", "消耗品"],
               ] as const
             ).map(([id, label]) => (
@@ -1043,96 +1071,36 @@ export function PartsBrowserPage({ onLocate }: PartsBrowserPageProps) {
             </>
           ) : (
             <>
-              {rightTab === "oem" && focusSkus?.length ? (
-                <p className="muted">
-                  已按模型关联筛选{" "}
-                  <button
-                    type="button"
-                    className="ghost"
-                    onClick={() => setFocusSkus(null)}
-                  >
-                    显示全部分栏 OEM
-                  </button>
-                </p>
-              ) : null}
               <ul className="parts-browser-list plain-list">
-                {listRows.map((r) => (
-                  <li key={r.key}>
-                    <button
-                      type="button"
-                      className={
-                        selectedKey === r.key
-                          ? "parts-browser-item active"
-                          : "parts-browser-item"
-                      }
-                      onClick={() => selectOemRow(r.key, r.skus)}
-                    >
-                      <strong>{r.name_zh}</strong>
-                      <span className="muted">
-                        {r.oem_number ?? r.skus[0]} · {r.generationLabel}
-                      </span>
-                    </button>
-                  </li>
-                ))}
+                {consumableRows.map((r) => {
+                  const open = selectedKey === r.key;
+                  return (
+                    <li key={r.key}>
+                      <button
+                        type="button"
+                        className={
+                          open
+                            ? "parts-browser-item active"
+                            : "parts-browser-item"
+                        }
+                        onClick={() => selectOemRow(r.key, r.skus)}
+                        aria-expanded={open}
+                      >
+                        <strong>
+                          {open ? "▾" : "▸"} {r.name_zh}
+                        </strong>
+                        <span className="muted">
+                          {r.oem_number ?? r.skus[0]} · {r.generationLabel}
+                        </span>
+                      </button>
+                      {open ? renderOemRowExpand(r) : null}
+                    </li>
+                  );
+                })}
               </ul>
-              {listRows.length === 0 ? (
+              {consumableRows.length === 0 ? (
                 <p className="muted parts-browser-empty">
-                  {rightTab === "consumables"
-                    ? "没有 981 周期更换件。"
-                    : focusSkus?.length
-                      ? "该模型已关联的 OEM 在零件库中未找到。"
-                      : "当前分栏没有已绑定热点的 981 OEM。"}
-                </p>
-              ) : null}
-
-              {selectedRow && selectedPart ? (
-                <div className="parts-browser-detail callout">
-                  <p className="muted">{selectedRow.system}</p>
-                  <h3>{selectedRow.name_zh}</h3>
-                  <p>
-                    <span className="muted">PART NO.</span>{" "}
-                    {selectedRow.oem_number ?? "—"}
-                  </p>
-                  <p>
-                    <span className="muted">OEM 价</span>{" "}
-                    {selectedPrice?.primary ?? "—"}
-                  </p>
-                  <p>
-                    <span className="muted">副厂</span>{" "}
-                    {aftermarketLines(selectedPart).length
-                      ? aftermarketLines(selectedPart).join(" · ")
-                      : "—"}
-                  </p>
-                  <p>
-                    <span className="muted">世代</span>{" "}
-                    {selectedRow.generationLabel}
-                  </p>
-                  <p>
-                    <span className="muted">SKU</span>{" "}
-                    {selectedRow.skus.join(" · ")}
-                  </p>
-                  {selectedPart.notes ? <p>{selectedPart.notes}</p> : null}
-                  {onLocate ? (
-                    <button
-                      type="button"
-                      className="ghost"
-                      disabled={!locateTarget}
-                      onClick={() => {
-                        if (!locateTarget || !onLocate) return;
-                        onLocate({
-                          zoneId: locateTarget.zoneId,
-                          hotspotId: locateTarget.hotspotId,
-                          sku: locateTarget.sku,
-                        });
-                      }}
-                    >
-                      定位
-                    </button>
-                  ) : null}
-                </div>
-              ) : listRows.length > 0 ? (
-                <p className="muted parts-browser-empty">
-                  点选零件看 OEM 与价格
+                  没有 981 周期更换件。
                 </p>
               ) : null}
             </>
@@ -1140,35 +1108,7 @@ export function PartsBrowserPage({ onLocate }: PartsBrowserPageProps) {
         </aside>
       </div>
 
-      <section className="parts-browser-extra">
-        <button
-          type="button"
-          className="ghost"
-          onClick={() => setShowCatalogEdit((v) => !v)}
-        >
-          {showCatalogEdit ? "▾" : "▸"} 报价编辑（Catalog）
-        </button>
-        {showCatalogEdit ? (
-          <div className="parts-browser-catalog">
-            <CatalogPage onLocate={onLocate} />
-          </div>
-        ) : null}
-
-        <button
-          type="button"
-          className="ghost"
-          onClick={() => setShowWiring((v) => !v)}
-        >
-          {showWiring ? "▾" : "▸"} 线束参考
-        </button>
-        {showWiring ? (
-          <div className="parts-browser-wiring">
-            <WiringPage onLocate={onLocate} />
-          </div>
-        ) : null}
-      </section>
-
-      {oemDialog ? (
+      {oemDialog || partOemEdit ? (
         <div className="model-oem-dialog-backdrop" role="presentation">
           <div
             className="model-oem-dialog panel"
@@ -1176,14 +1116,25 @@ export function PartsBrowserPage({ onLocate }: PartsBrowserPageProps) {
             aria-modal="true"
             aria-labelledby="parts-oem-dialog-title"
           >
-            <h2 id="parts-oem-dialog-title">关联 OEM</h2>
+            <h2 id="parts-oem-dialog-title">
+              {partOemEdit ? "修改零件号" : "关联 OEM"}
+            </h2>
             <p className="muted">
-              {oemDialog.label}{" "}
-              <span>
-                ({oemDialog.kind}
-                {oemDialog.assemblyId ? `:${oemDialog.assemblyId}` : ""}:
-                {oemDialog.ref})
-              </span>
+              {partOemEdit ? (
+                <>
+                  {partOemEdit.label}{" "}
+                  <span>(sku:{partOemEdit.sku})</span>
+                </>
+              ) : oemDialog ? (
+                <>
+                  {oemDialog.label}{" "}
+                  <span>
+                    ({oemDialog.kind}
+                    {oemDialog.assemblyId ? `:${oemDialog.assemblyId}` : ""}:
+                    {oemDialog.ref})
+                  </span>
+                </>
+              ) : null}
             </p>
             <label className="model-oem-dialog-field">
               OEM 零件号
@@ -1192,10 +1143,16 @@ export function PartsBrowserPage({ onLocate }: PartsBrowserPageProps) {
                 value={oemDraft}
                 onChange={(e) => setOemDraft(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") void saveOemDialog();
+                  if (e.key === "Enter") {
+                    void (partOemEdit ? savePartOemDialog() : saveOemDialog());
+                  }
                   if (e.key === "Escape") closeOemDialog();
                 }}
-                placeholder="留空保存 = 取消关联；例如 9A1.107.224.00"
+                placeholder={
+                  partOemEdit
+                    ? "留空保存 = 清空零件号；例如 9A1.107.224.00"
+                    : "留空保存 = 取消关联；例如 9A1.107.224.00"
+                }
                 autoComplete="off"
               />
             </label>
@@ -1231,7 +1188,9 @@ export function PartsBrowserPage({ onLocate }: PartsBrowserPageProps) {
                 type="button"
                 className="primary"
                 disabled={oemSaving}
-                onClick={() => void saveOemDialog()}
+                onClick={() =>
+                  void (partOemEdit ? savePartOemDialog() : saveOemDialog())
+                }
               >
                 保存
               </button>

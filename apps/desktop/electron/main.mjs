@@ -346,11 +346,15 @@ function registerIpc() {
 
     "parts:updatePrices",
 
+    "parts:updateNames",
+
     "parts:interval",
 
     "service:list",
 
     "service:add",
+
+    "service:remove",
 
     "faults:list",
 

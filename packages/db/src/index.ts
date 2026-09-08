@@ -2,7 +2,7 @@ import { DatabaseSync } from "node:sqlite";
 import fs from "node:fs";
 import path from "node:path";
 import {
-  applyMileageIncrease,
+  applyMileageSet,
   computeInterval,
   type IntervalResult,
 } from "@porsche981/domain";
@@ -199,7 +199,7 @@ export type ObdDtc = {
   raw_json: string | null;
 };
 
-/** Mileage change audit (R1) — increases via setMileage only. */
+/** Mileage change audit — setMileage records every write (up or down). */
 export type MileageAudit = {
   id: number;
   previous_km: number;
@@ -440,9 +440,9 @@ export class GarageDb {
 
   setMileage(nextKm: number, reason = "user_update"): Vehicle {
     const v = this.getVehicle();
-    const applied = applyMileageIncrease(v.current_km, nextKm);
+    const applied = applyMileageSet(nextKm);
     if (!applied.ok) {
-      throw new Error(`mileage_decrease_not_allowed:${v.current_km}`);
+      throw new Error(`mileage_invalid:${nextKm}`);
     }
     const now = new Date().toISOString();
     this.db
@@ -757,6 +757,18 @@ export class GarageDb {
     return this.db
       .prepare("SELECT * FROM service_records ORDER BY replaced_at DESC, id DESC")
       .all() as ServiceRecord[];
+  }
+
+  deleteServiceRecord(id: number): { ok: true } {
+    const n = Number(id);
+    if (!Number.isInteger(n) || n <= 0) {
+      throw new Error(`service_record_invalid:${id}`);
+    }
+    const info = this.db
+      .prepare("DELETE FROM service_records WHERE id = ?")
+      .run(n);
+    if (!info.changes) throw new Error(`service_record_not_found:${n}`);
+    return { ok: true };
   }
 
   latestServiceForPart(partId: number): ServiceRecord | undefined {

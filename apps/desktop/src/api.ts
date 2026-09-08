@@ -392,6 +392,14 @@ export type PorscheApi = {
     price_note: string | null;
     price_as_of: string | null;
   }) => Promise<Part>;
+  updatePartNames: (payload: {
+    sku: string;
+    oem_number?: string | null;
+    name_zh?: string | null;
+    name_en?: string | null;
+    petka_note?: string | null;
+    pr_label?: string | null;
+  }) => Promise<Part | null | undefined>;
   partInterval: (partId: number) => Promise<IntervalResult | null>;
   listService: () => Promise<ServiceRecord[]>;
   addService: (input: {
@@ -403,6 +411,7 @@ export type PorscheApi = {
     cost?: number | null;
     notes?: string | null;
   }) => Promise<ServiceRecord>;
+  removeService: (id: number) => Promise<{ ok: true }>;
   listFaults: () => Promise<FaultEntry[]>;
   listFaultLogs: () => Promise<FaultLog[]>;
   addFaultLog: (input: {

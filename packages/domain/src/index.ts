@@ -143,15 +143,12 @@ export function computeInterval(input: IntervalInput): IntervalResult {
 
 export type MileageApplyResult =
   | { ok: true; currentKm: number }
-  | { ok: false; reason: "decrease_not_allowed"; currentKm: number };
+  | { ok: false; reason: "invalid"; currentKm: number };
 
-/** Mileage only increases; corrections go through audit events elsewhere. */
-export function applyMileageIncrease(
-  currentKm: number,
-  nextKm: number,
-): MileageApplyResult {
-  if (nextKm < currentKm) {
-    return { ok: false, reason: "decrease_not_allowed", currentKm };
+/** Set odometer to nextKm (increase or decrease). Rejects negative / non-finite. */
+export function applyMileageSet(nextKm: number): MileageApplyResult {
+  if (!Number.isFinite(nextKm) || nextKm < 0) {
+    return { ok: false, reason: "invalid", currentKm: nextKm };
   }
   return { ok: true, currentKm: nextKm };
 }
@@ -249,7 +246,9 @@ export {
   isPartFor981Car,
   mergeGenerationLabel,
   mergePartsByOem,
+  resolveConsumableSlotSku,
   EXTERIOR_ZONE_HOTSPOTS,
+  GARAGE_CONSUMABLE_SLOTS,
   INTERIOR_ZONE_HOTSPOTS,
   XRAY_FLOW_HOTSPOTS,
   XRAY_MECHANICAL_HOTSPOTS,

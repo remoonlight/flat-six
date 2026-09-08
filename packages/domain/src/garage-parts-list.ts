@@ -107,6 +107,48 @@ export function isConsumablePart(p: {
 }
 
 /**
+ * 车库「消耗品」固定清单（顺序即展示序）。
+ * 只认这些 sku；其余周期件不进该分栏。
+ */
+export const GARAGE_CONSUMABLE_SLOTS = [
+  { sku: "oil-filter", labelZh: "机油滤清器" },
+  { sku: "air-filter", labelZh: "空气过滤器" },
+  { sku: "cabin-filter", labelZh: "空调过滤器" },
+  { sku: "spark-plugs", labelZh: "火花塞" },
+  { sku: "coil-pack", labelZh: "点火线圈" },
+  { sku: "wiper-blades", labelZh: "雨刮片" },
+  { sku: "pdk-fluid", labelZh: "变速箱油" },
+  { sku: "pdk-gear-oil", labelZh: "齿轮箱油" },
+  { sku: "engine-oil", labelZh: "发动机润滑油" },
+  { sku: "coolant", labelZh: "冷却液" },
+  { sku: "brake-fluid", labelZh: "制动液" },
+  { sku: "tire-front", labelZh: "前轮胎" },
+  { sku: "tire-rear", labelZh: "后轮胎" },
+  { sku: "front-brake-pads", labelZh: "前刹车片" },
+  { sku: "rear-brake-pads", labelZh: "后刹车片" },
+  { sku: "battery", labelZh: "蓄电池" },
+] as const;
+
+const CONSUMABLE_SKU_SET: Set<string> = new Set(
+  GARAGE_CONSUMABLE_SLOTS.map((s) => s.sku),
+);
+
+/** 旧 sku → 新槽位（合并进消耗品清单）。 */
+const CONSUMABLE_SKU_ALIASES: Record<string, string> = {
+  "tire-fl": "tire-front",
+  "tire-fr": "tire-front",
+  "tire-rl": "tire-rear",
+  "tire-rr": "tire-rear",
+};
+
+export function resolveConsumableSlotSku(sku: string): string | null {
+  const raw = String(sku || "").trim();
+  if (!raw) return null;
+  if (CONSUMABLE_SKU_SET.has(raw)) return raw;
+  return CONSUMABLE_SKU_ALIASES[raw] ?? null;
+}
+
+/**
  * 当前车为 981：只留 981 / 未标世代（保养子集）；剔除 718/982。
  */
 export function isPartFor981Car(p: {
@@ -296,13 +338,32 @@ export function buildGaragePartsList<T extends GaragePartRef>(
   return mergePartsByOem(scoped);
 }
 
-/** 消耗品分栏：周期件；不跟 3D 分栏联动，仍可按车世代筛。 */
+/** 消耗品分栏：固定 16 项；按槽位序；展示名用槽位中文。 */
 export function buildGarageConsumablesList<T extends GaragePartRef>(
   parts: readonly T[],
   opts: GarageOemListOpts = {},
 ): MergedOemPartRow<T>[] {
-  const base = applyCarGenerationFilter(parts, opts.carGeneration).filter(
-    isConsumablePart,
-  );
-  return mergePartsByOem(base);
+  const scoped = applyCarGenerationFilter(parts, opts.carGeneration);
+  const bySlot = new Map<string, T[]>();
+  for (const p of scoped) {
+    const slot = resolveConsumableSlotSku(p.sku);
+    if (!slot) continue;
+    const list = bySlot.get(slot);
+    if (list) list.push(p);
+    else bySlot.set(slot, [p]);
+  }
+
+  const rows: MergedOemPartRow<T>[] = [];
+  for (const slot of GARAGE_CONSUMABLE_SLOTS) {
+    const group = bySlot.get(slot.sku);
+    if (!group?.length) continue;
+    // 优先正式 sku；别名仅在缺正式行时顶上（避免 tire-fl + tire-front 双行）
+    const preferred = group.filter((p) => p.sku === slot.sku);
+    const use = preferred.length > 0 ? preferred : [group[0]!];
+    const merged = mergePartsByOem(use);
+    for (const row of merged) {
+      rows.push({ ...row, name_zh: slot.labelZh });
+    }
+  }
+  return rows;
 }

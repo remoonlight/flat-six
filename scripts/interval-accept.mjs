@@ -147,8 +147,8 @@ console.log("with service_record:", JSON.stringify(after, null, 2));
 if (!after || after.status === "no_baseline") {
   throw new Error("expected computed interval after service");
 }
-if (after.nextDueKm !== 55_000) throw new Error(`nextDueKm ${after.nextDueKm}`);
-if (after.remainingKm !== 10_000) {
+if (after.nextDueKm !== 50_000) throw new Error(`nextDueKm ${after.nextDueKm}`);
+if (after.remainingKm !== 5_000) {
   throw new Error(`remainingKm ${after.remainingKm}`);
 }
 

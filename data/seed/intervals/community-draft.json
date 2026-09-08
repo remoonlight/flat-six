@@ -1,40 +1,40 @@
 {
-  "note": "社区/手册交叉审计台账。数值应与 data/seed/parts/bootstrap.json 对齐；改间隔后先改本文件再 npm run sync:intervals。",
-  "source": "PCNA 981 maintenance checklists (PNA 000 162 MA/MB via House Auto Group / Pcarwise mirrors) + PCA/Rennlist/indie community for PDK conservative",
-  "audited_at": "2026-07-31",
+  "note": "大陆建议间隔（城市停走/灰尘/高温）。厂方 PCNA 对照仍写在 notes。改完后 npm run sync:intervals。",
+  "source": "PCNA PNA 000 162 MA/MB + 大陆工况加严（机油跟国内常见 1 万 km/12 月；非厂方项标 soft）",
+  "audited_at": "2026-09-08",
   "vehicle": "2014 Boxster S 981 PDK",
   "intervals": [
     {
       "sku": "oil-filter",
       "name_zh": "机油滤清器",
-      "interval_km": 15000,
+      "interval_km": 10000,
       "interval_months": 12,
       "audit_status": "audited",
-      "notes": "随机油更换。来源：PCNA Oil Change 10,000 mi / 15,000 km or 1 year（PNA 000 162 LC / MB）。"
+      "notes": "随机油更换。PCNA 为 15,000 km/1 年；大陆建议 10,000 km/12 月（国内 4S 常见机油服务口径 + 城市短途）。"
     },
     {
       "sku": "engine-oil",
       "name_zh": "机油",
-      "interval_km": 15000,
+      "interval_km": 10000,
       "interval_months": 12,
       "audit_status": "audited",
-      "notes": "0W-40 / 厂家规格。来源：PCNA Oil Change every 10,000 mi (15,000 km) or 1 year。"
+      "notes": "0W-40 / 厂家规格。PCNA 15,000 km/1 年；大陆建议 10,000 km/12 月。"
     },
     {
       "sku": "air-filter",
       "name_zh": "空气滤清器",
-      "interval_km": 60000,
-      "interval_months": 48,
+      "interval_km": 30000,
+      "interval_months": 24,
       "audit_status": "audited",
-      "notes": "仅出现在 Major Maintenance（40k mi / 60k km 或 4 年）清单「Air filter: Replace」；Intermediate 不含此项。原草稿 30k/24 误混花粉滤。来源：PNA 000 162 MB。"
+      "notes": "厂方 Major 60,000 km/4 年才换。大陆灰尘建议 30,000 km/24 月。"
     },
     {
       "sku": "cabin-filter",
       "name_zh": "空调滤芯",
-      "interval_km": 30000,
-      "interval_months": 24,
+      "interval_km": 15000,
+      "interval_months": 12,
       "audit_status": "audited",
-      "notes": "Pollen filter / pre-filter 在 Intermediate（20k mi / 30k km 或 2 年）与 Major 均更换。来源：PNA 000 162 MA/MB。"
+      "notes": "厂方 Intermediate 30,000 km/2 年。大陆空气质量建议 15,000 km/12 月。"
     },
     {
       "sku": "spark-plugs",
@@ -42,7 +42,7 @@
       "interval_km": 60000,
       "interval_months": 48,
       "audit_status": "audited",
-      "notes": "MA1.23 3.4L。厂方：every 40,000 mi / 60,000 km or 4 years。原草稿 45k km 易与涡轮车型混淆，已改。来源：PNA 000 162 MB Additional Maintenance 03 81 00。"
+      "notes": "MA1.23 3.4L。厂方 60,000 km/4 年。大陆不改。"
     },
     {
       "sku": "brake-fluid",
@@ -50,33 +50,34 @@
       "interval_km": null,
       "interval_months": 24,
       "audit_status": "audited",
-      "notes": "DOT4；时间优先。来源：PCNA Additional Maintenance every 2 years（03 51 00）Change brake fluid。"
+      "notes": "DOT4；时间优先。厂方每 2 年。大陆潮湿也不要拖过 24 月。"
     },
     {
       "sku": "front-brake-pads",
       "name_zh": "前刹车片",
-      "interval_km": 40000,
+      "interval_km": 30000,
       "interval_months": null,
       "interval_kind": "soft",
       "audit_status": "audited",
-      "notes": "厂方（PCNA PNA 000 162 MA/MB）仅为目视磨损检查 / 传感器，无固定更换里程。40k km 为社区软提醒粗估，按磨损或报警提前换；非 OEM 价项。"
+      "notes": "厂方无固定里程。大陆城市点刹：30,000 km 软提醒；按厚度/报警提前换。"
     },
     {
       "sku": "rear-brake-pads",
       "name_zh": "后刹车片",
-      "interval_km": 50000,
+      "interval_km": 40000,
       "interval_months": null,
       "interval_kind": "soft",
       "audit_status": "audited",
-      "notes": "厂方清单无固定更换里程，按磨损检查。50k km 为社区软提醒粗估（后轴通常慢于前轴）；按磨损或报警提前换。"
+      "notes": "厂方无固定里程。大陆软提醒 40,000 km（后轴一般慢于前轴）；按磨损换。"
     },
     {
       "sku": "serpentine-belt",
-      "name_zh": "多楔带",
-      "interval_km": 90000,
-      "interval_months": 72,
+      "name_zh": "驱动皮带",
+      "interval_km": 60000,
+      "interval_months": 48,
+      "interval_kind": "soft",
       "audit_status": "audited",
-      "notes": "Replace drive belt every 60,000 mi / 90,000 km or 6 years（中间有 check 节点）。来源：PNA 000 162 MB Labor 03 83 00。"
+      "notes": "厂方检查约 60,000 km/4 年，更换 90,000 km/6 年。大陆热/臭氧：60,000 km 或 48 月软提醒检查，开裂即换。"
     },
     {
       "sku": "coolant",
@@ -85,32 +86,32 @@
       "interval_months": 48,
       "interval_kind": "soft",
       "audit_status": "audited",
-      "notes": "厂方清单仅为 Check level/antifreeze，无定期更换项；社区常称「寿命液」。48 月为社区软提醒（非厂方周期），液位/冰点异常或污染时提前更换。"
+      "notes": "厂方只检查液位/冰点。48 月软提醒；异常提前换。"
     },
     {
       "sku": "pdk-fluid",
       "name_zh": "PDK 离合器油(FFL-3)",
-      "interval_km": 60000,
-      "interval_months": 72,
+      "interval_km": 40000,
+      "interval_months": 48,
       "audit_status": "audited",
-      "notes": "厂方：PDK clutch oil 120k mi / 180k km 或 12 年（PNA 000 162 MB 03 88 00）。本 App 采用社区保守提醒约 60k km / 6 年（indie/PCA 常见 40k mi 量级）。非官方数字；与齿轮油分项。"
+      "notes": "厂方约 180,000 km/12 年。大陆停走+热：40,000 km/48 月社区保守（非官方）；与齿轮油同做。"
     },
     {
       "sku": "pdk-gear-oil",
       "name_zh": "PDK 齿轮油(75W-90)",
-      "interval_km": 60000,
-      "interval_months": 72,
+      "interval_km": 40000,
+      "interval_months": 48,
       "audit_status": "audited",
-      "notes": "厂方：PDK transmission oil 与离合器油同条 120k mi / 180k km 或 12 年。本 App 与离合器油同采社区保守 60k km / 6 年。非官方数字。"
+      "notes": "与离合器油同采大陆保守 40,000 km/48 月。厂方更长。非官方数字。"
     },
     {
       "sku": "battery",
       "name_zh": "蓄电池",
       "interval_km": null,
-      "interval_months": 48,
+      "interval_months": 36,
       "interval_kind": "soft",
       "audit_status": "audited",
-      "notes": "厂方仅为 Check condition，无固定更换月限。48 月为社区常见寿命软提醒；按测试/起动表现提前换。更换后须 X431/诊断仪做电池登记。"
+      "notes": "厂方只检查。大陆高温：36 月软提醒。换后须诊断仪做电池登记。"
     },
     {
       "sku": "wiper-blades",
@@ -118,25 +119,34 @@
       "interval_km": null,
       "interval_months": 12,
       "audit_status": "audited",
-      "notes": "厂方清单为 Check wiper blades（无强制更换周期）。12 月为社区常见更换节奏；按需提前。"
+      "notes": "厂方只检查。12 月社区节奏；沙尘/暴晒可提前。"
     },
     {
-      "sku": "fuel-filter",
-      "name_zh": "燃油滤清器",
-      "interval_km": 60000,
-      "interval_months": 48,
+      "sku": "tire-front",
+      "name_zh": "前轮胎",
+      "interval_km": 30000,
+      "interval_months": 60,
       "interval_kind": "soft",
       "audit_status": "audited",
-      "notes": "981 滤芯集成油箱泵模块；PCA/社区：正常条件下非定期件；PCNA 保养清单无更换项。60k/48 仅为「若曾拆泵模块」后的软提醒占位，非厂方周期。OEM/价须 VIN+PETKA 终核，价空不动。"
+      "notes": "厂方无固定里程。大陆运动胎：30,000 km 或 60 月（年龄）软提醒；看胎纹/裂纹/周号。"
     },
     {
-      "sku": "tire-fl",
-      "name_zh": "左前轮胎",
-      "interval_km": 40000,
-      "interval_months": 72,
+      "sku": "tire-rear",
+      "name_zh": "后轮胎",
+      "interval_km": 30000,
+      "interval_months": 60,
       "interval_kind": "soft",
       "audit_status": "audited",
-      "notes": "厂方为 Check condition/pressure，无固定更换里程。40k km / 6 年（年龄）为社区软提醒；以胎纹深度、裂纹、异响与制造周为准提前换。无单一 OEM，价空。"
+      "notes": "同前胎。后驱后轴往往先磨。"
+    },
+    {
+      "sku": "coil-pack",
+      "name_zh": "点火线圈",
+      "interval_km": null,
+      "interval_months": 60,
+      "interval_kind": "soft",
+      "audit_status": "audited",
+      "notes": "厂方按需。大陆热循环：60 月软提醒体检；失火/裂纹提前换。"
     }
   ]
 }

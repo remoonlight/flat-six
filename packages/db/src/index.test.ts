@@ -81,19 +81,12 @@ describe("setVehicleSettings", () => {
 });
 
 describe("setMileage", () => {
-  it("allows increase and same km", () => {
+  it("allows increase, same km, and decrease", () => {
     const db = openTempDb();
     expect(db.setMileage(45_000).current_km).toBe(45_000);
     expect(db.setMileage(45_000).current_km).toBe(45_000);
     expect(db.setMileage(50_000).current_km).toBe(50_000);
-    db.close();
-  });
-
-  it("rejects decrease", () => {
-    const db = openTempDb();
-    db.setMileage(45_000);
-    expect(() => db.setMileage(40_000)).toThrow(/mileage_decrease_not_allowed/);
-    expect(db.getVehicle().current_km).toBe(45_000);
+    expect(db.setMileage(40_000).current_km).toBe(40_000);
     db.close();
   });
 });
@@ -164,6 +157,50 @@ describe("partIntervalStatus no_baseline", () => {
     expect(status?.remainingDays).toBeNull();
     expect(status?.nextDueKm).toBeNull();
     expect(status?.nextDueDate).toBeNull();
+    db.close();
+  });
+});
+
+describe("deleteServiceRecord", () => {
+  it("removes only the given row", () => {
+    const db = openTempDb();
+    db.seedIfEmpty({
+      parts: [
+        {
+          sku: "engine-oil",
+          name_zh: "机油",
+          oem_number: null,
+          system: "engine",
+          interval_km: 15_000,
+          interval_months: 12,
+          oem_price: null,
+          aftermarket_price: null,
+          aftermarket_quotes: null,
+          price_note: null,
+          price_as_of: null,
+          locator_hotspot: null,
+          notes: null,
+          generation: null,
+        },
+      ],
+      faults: [],
+    });
+    const oil = db.listParts().find((p) => p.sku === "engine-oil")!;
+    const a = db.addServiceRecord({
+      part_id: oil.id,
+      title: "机油",
+      replaced_at: "2026-01-01",
+      odometer_km: 10_000,
+    });
+    const b = db.addServiceRecord({
+      part_id: oil.id,
+      title: "机油",
+      replaced_at: "2026-06-01",
+      odometer_km: 20_000,
+    });
+    expect(db.deleteServiceRecord(a.id)).toEqual({ ok: true });
+    expect(db.listServiceRecords().map((r) => r.id)).toEqual([b.id]);
+    expect(() => db.deleteServiceRecord(a.id)).toThrow(/service_record_not_found/);
     db.close();
   });
 });

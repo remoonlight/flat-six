@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  applyMileageIncrease,
+  applyMileageSet,
   computeInterval,
   hasIntervalBaseline,
   validateCodingSnapshot,
@@ -82,16 +82,19 @@ describe("hasIntervalBaseline", () => {
   });
 });
 
-describe("applyMileageIncrease", () => {
-  it("rejects decrease", () => {
-    const r = applyMileageIncrease(10_000, 9_000);
-    expect(r.ok).toBe(false);
+describe("applyMileageSet", () => {
+  it("accepts decrease and increase", () => {
+    const down = applyMileageSet(9_000);
+    expect(down.ok).toBe(true);
+    if (down.ok) expect(down.currentKm).toBe(9_000);
+    const up = applyMileageSet(10_500);
+    expect(up.ok).toBe(true);
+    if (up.ok) expect(up.currentKm).toBe(10_500);
   });
 
-  it("accepts increase", () => {
-    const r = applyMileageIncrease(10_000, 10_500);
-    expect(r.ok).toBe(true);
-    if (r.ok) expect(r.currentKm).toBe(10_500);
+  it("rejects negative", () => {
+    const r = applyMileageSet(-1);
+    expect(r.ok).toBe(false);
   });
 });
 

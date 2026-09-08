@@ -1,5 +1,5 @@
 /**
- * R1 mileage acceptance: increase-only setMileage; decreases rejected.
+ * Mileage acceptance: setMileage may increase or decrease; still audits.
  */
 
 import fs from "node:fs";
@@ -28,25 +28,13 @@ const same = db.setMileage(45_000);
 if (same.current_km !== 45_000) throw new Error("same km should be allowed");
 console.log("setMileage same km OK");
 
-let threwDecrease = false;
-try {
-  db.setMileage(40_000);
-} catch (e) {
-  threwDecrease = String(e.message || e).includes("mileage_decrease_not_allowed");
-  console.log("setMileage decrease rejected:", e.message || e);
-}
-if (!threwDecrease) throw new Error("setMileage must reject decrease");
-if (db.getVehicle().current_km !== 45_000) {
-  throw new Error("km mutated after rejected decrease");
-}
-
-if (typeof db.correctMileage === "function") {
-  throw new Error("correctMileage must be removed");
-}
+const down = db.setMileage(40_000);
+if (down.current_km !== 40_000) throw new Error(`decrease failed: ${down.current_km}`);
+console.log("setMileage decrease →", down.current_km);
 
 const again = db.setMileage(46_000);
-if (again.current_km !== 46_000) throw new Error("post-reject increase failed");
-console.log("setMileage after reject →", again.current_km);
+if (again.current_km !== 46_000) throw new Error("post-decrease increase failed");
+console.log("setMileage after decrease →", again.current_km);
 
 console.log("\nMILEAGE ACCEPT PASS");
 db.close();

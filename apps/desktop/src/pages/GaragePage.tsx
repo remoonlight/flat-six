@@ -15,6 +15,18 @@ const INTERVAL_STATUS_LABEL: Record<IntervalResult["status"], string> = {
   no_baseline: "需登记首次更换",
 };
 
+/** 到期/登记更换不列：旧左前胎、燃油滤、以及与消耗品重复的空调过滤器。 */
+const HIDDEN_MAINT_SKUS = new Set([
+  "tire-fl",
+  "fuel-filter",
+  "cabin-filter",
+]);
+
+function isMaintDuePart(p: Part): boolean {
+  if (HIDDEN_MAINT_SKUS.has(p.sku)) return false;
+  return p.interval_km != null || p.interval_months != null;
+}
+
 /** Soft community reminders: never show red overdue / amber dueSoon scare pills. */
 function intervalDisplay(
   part: Part,
@@ -44,7 +56,6 @@ export function GaragePage() {
   const [error, setError] = useState<string | null>(null);
 
   const [svcPartId, setSvcPartId] = useState<string>("");
-  const [svcTitle, setSvcTitle] = useState("机油保养");
   const [svcDate, setSvcDate] = useState(new Date().toISOString().slice(0, 10));
   const [svcKm, setSvcKm] = useState("");
   const [svcBrand, setSvcBrand] = useState("");
@@ -63,7 +74,7 @@ export function GaragePage() {
     setRecords(await api().listService());
     const map: Record<number, IntervalResult | null> = {};
     for (const part of p) {
-      if (part.interval_km || part.interval_months) {
+      if (isMaintDuePart(part)) {
         map[part.id] = await api().partInterval(part.id);
       }
     }
@@ -99,9 +110,13 @@ export function GaragePage() {
     try {
       const partId = svcPartId ? Number(svcPartId) : null;
       const part = parts.find((p) => p.id === partId);
+      if (!part) {
+        setError("请选择零件");
+        return;
+      }
       await api().addService({
         part_id: partId,
-        title: svcTitle || part?.name_zh || "保养记录",
+        title: part.name_zh,
         replaced_at: svcDate,
         odometer_km: Number(svcKm),
         brand: svcBrand || null,
@@ -115,19 +130,27 @@ export function GaragePage() {
     }
   }
 
+  async function removeService(id: number) {
+    if (!window.confirm("删除这条服务记录？")) return;
+    setError(null);
+    try {
+      await api().removeService(id);
+      await refresh();
+    } catch (e) {
+      setError(String(e));
+    }
+  }
+
   if (!vehicle) {
     return <p className="muted">加载中…</p>;
   }
 
   const intervalParts = parts.filter((p) => intervals[p.id]);
+  const servicePartChoices = parts.filter(isMaintDuePart);
 
   return (
-    <div>
+    <div className="garage-maint">
       <h1>零件维护状态</h1>
-      <p className="muted">
-        {vehicle.year} {vehicle.model} {vehicle.trim} · 底盘 {vehicle.chassis} ·
-        数据仅存本机
-      </p>
       {error && <p className="error">{error}</p>}
 
       <div className="panel">
@@ -138,7 +161,7 @@ export function GaragePage() {
             <input value={kmInput} onChange={(e) => setKmInput(e.target.value)} />
           </label>
           <button className="primary" type="button" onClick={saveMileage}>
-            更新公里（只增）
+            更新公里
           </button>
           <label>
             日均公里（用于推算到期日）
@@ -163,17 +186,13 @@ export function GaragePage() {
           <label>
             零件
             <select value={svcPartId} onChange={(e) => setSvcPartId(e.target.value)}>
-              <option value="">（自定义）</option>
-              {parts.map((p) => (
+              <option value="">请选择零件</option>
+              {servicePartChoices.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name_zh}
                 </option>
               ))}
             </select>
-          </label>
-          <label>
-            标题
-            <input value={svcTitle} onChange={(e) => setSvcTitle(e.target.value)} />
           </label>
           <label>
             日期
@@ -203,9 +222,7 @@ export function GaragePage() {
 
       <div className="panel">
         <h2>到期状态</h2>
-        <p className="muted">
-          无更换史时不推算剩余公里/天（状态「需登记首次更换」），不以交车日瞎算。社区软提醒（刹车片/冷却液等）不按硬过期恐吓。
-        </p>
+        <div className="table-scroll">
         <table>
           <thead>
             <tr>
@@ -238,6 +255,7 @@ export function GaragePage() {
             })}
           </tbody>
         </table>
+        </div>
         {intervalParts.length === 0 && (
           <p className="muted">尚无带间隔的零件。请先导入/种子间隔数据。</p>
         )}
@@ -245,30 +263,46 @@ export function GaragePage() {
 
       <div className="panel">
         <h2>服务历史</h2>
+        <div className="table-scroll">
         <table>
           <thead>
             <tr>
               <th>日期</th>
-              <th>标题</th>
+              <th>零件</th>
               <th>公里</th>
               <th>品牌</th>
               <th>费用</th>
               <th>备注</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
             {records.map((r) => (
               <tr key={r.id}>
                 <td>{r.replaced_at}</td>
-                <td>{r.title}</td>
+                <td>
+                  {r.part_id != null
+                    ? (parts.find((p) => p.id === r.part_id)?.name_zh ?? r.title)
+                    : r.title || "—"}
+                </td>
                 <td>{r.odometer_km}</td>
                 <td>{r.brand ?? "—"}</td>
                 <td>{r.cost ?? "—"}</td>
                 <td>{r.notes ?? "—"}</td>
+                <td>
+                  <button
+                    className="ghost"
+                    type="button"
+                    onClick={() => void removeService(r.id)}
+                  >
+                    删除
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

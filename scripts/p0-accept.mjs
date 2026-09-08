@@ -40,8 +40,8 @@ db.addServiceRecord({
 const iv = db.partIntervalStatus(oil.id);
 console.log(JSON.stringify(iv, null, 2));
 if (!iv) throw new Error("no interval");
-if (iv.nextDueKm !== 55_000) throw new Error(`nextDueKm ${iv.nextDueKm}`);
-if (iv.remainingKm !== 10_000) throw new Error(`remainingKm ${iv.remainingKm}`);
+if (iv.nextDueKm !== 50_000) throw new Error(`nextDueKm ${iv.nextDueKm}`);
+if (iv.remainingKm !== 5_000) throw new Error(`remainingKm ${iv.remainingKm}`);
 if (!iv.nextDueDate) throw new Error("missing nextDueDate");
 console.log("P0 ACCEPT PASS");
 db.close();
