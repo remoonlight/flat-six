@@ -25,7 +25,7 @@ mustInclude("src/pages/XrayTunePage.tsx", "data-page=\"xray-tune\"");
 mustInclude("src/pages/XrayTunePage.tsx", "tuneAssetFromHash");
 mustInclude("src/pages/XrayTunePage.tsx", "tuneGarageFromHash");
 mustInclude("src/App.tsx", "isXrayTuneHash");
-mustInclude("src/pages/LocatorPage.tsx", "单独微调窗口");
+mustInclude("src/pages/LocatorPage.tsx", "模型微调");
 mustInclude("src/pages/LocatorPage.tsx", "openXrayTuneWindow?.(assetId");
 mustInclude("src/pages/PartsBrowserPage.tsx", "scene: \"garage\"");
 mustInclude("src/components/XrayTransformSliders.tsx", "uniformScale");

@@ -12,7 +12,7 @@
       "price_note": null,
       "price_as_of": null,
       "locator_hotspot": "engine-bay",
-      "notes": "随机油更换；OEM 经公开目录复审自 9A1.107.201.00 更正"
+      "notes": "随机油更换"
     },
     {
       "sku": "engine-oil",
@@ -26,7 +26,7 @@
       "price_note": null,
       "price_as_of": null,
       "locator_hotspot": "engine-bay",
-      "notes": "0W-40 / 厂家规格"
+      "notes": "0W-40"
     },
     {
       "sku": "air-filter",
@@ -40,7 +40,7 @@
       "price_note": null,
       "price_as_of": null,
       "locator_hotspot": "engine-bay",
-      "notes": "每车2只；Major 保养更换（60k km/4年）；OEM 经公开目录复审自 9A1.110.201.00 更正"
+      "notes": "每车2只"
     },
     {
       "sku": "cabin-filter",
@@ -54,7 +54,7 @@
       "price_note": null,
       "price_as_of": null,
       "locator_hotspot": "int-cabin-filter",
-      "notes": "挂 interior 热点；免费模无独立滤芯 mesh"
+      "notes": null
     },
     {
       "sku": "spark-plugs",
@@ -68,7 +68,7 @@
       "price_note": null,
       "price_as_of": null,
       "locator_hotspot": "engine-bay",
-      "notes": "MA1.23 3.4L；需6只；厂方 60k km/4年；OEM 经公开目录复审自 9A1.602.123.00 更正"
+      "notes": "需6只"
     },
     {
       "sku": "brake-fluid",
@@ -82,7 +82,7 @@
       "price_note": null,
       "price_as_of": null,
       "locator_hotspot": "front-left",
-      "notes": "DOT4；后继常见 000.043.210.82(LV)"
+      "notes": "DOT4"
     },
     {
       "sku": "front-brake-pads",
@@ -96,7 +96,7 @@
       "price_note": null,
       "price_as_of": null,
       "locator_hotspot": "front-left",
-      "notes": "interval_kind=soft; 非PCCB；OEM 经公开目录复审自 9A1.698.151.41 更正；VIN 终核"
+      "notes": "interval_kind=soft"
     },
     {
       "sku": "rear-brake-pads",
@@ -110,7 +110,7 @@
       "price_note": null,
       "price_as_of": null,
       "locator_hotspot": "rear-left",
-      "notes": "interval_kind=soft; 非PCCB；OEM 经公开目录复审自 9A1.698.451.40 更正"
+      "notes": "interval_kind=soft"
     },
     {
       "sku": "front-pad-sensor",
@@ -180,7 +180,7 @@
       "price_note": null,
       "price_as_of": null,
       "locator_hotspot": "underbody",
-      "notes": "Pentosin FFL-3；PDK 离合器油；与齿轮油分项"
+      "notes": "Pentosin FFL-3；PDK 离合器油"
     },
     {
       "sku": "pdk-gear-oil",
@@ -194,7 +194,7 @@
       "price_note": null,
       "price_as_of": null,
       "locator_hotspot": "underbody",
-      "notes": "PDK 齿轮/差速腔 75W-90；OEM 以 PETKA/手册终核"
+      "notes": null
     },
     {
       "sku": "battery",
@@ -208,7 +208,7 @@
       "price_note": null,
       "price_as_of": null,
       "locator_hotspot": "front-trunk",
-      "notes": "interval_kind=soft; 更换后需在 X431/诊断仪做电池登记；挂 front-trunk 主锚点（无独立电瓶 mesh）"
+      "notes": "interval_kind=soft; 更换后需在 X431/诊断仪做电池登记"
     },
     {
       "sku": "wiper-blades",
@@ -222,7 +222,7 @@
       "price_note": null,
       "price_as_of": null,
       "locator_hotspot": "wipers",
-      "notes": "挂 front-trunk/wipers（风挡前沿）；无独立雨刮 mesh"
+      "notes": null
     },
     {
       "sku": "fuel-filter",
@@ -264,7 +264,7 @@
       "price_note": null,
       "price_as_of": null,
       "locator_hotspot": "front-left",
-      "notes": "interval_kind=soft; 按磨损更换；原 tire-fl 并入"
+      "notes": "interval_kind=soft"
     },
     {
       "sku": "tire-rear",
@@ -278,7 +278,7 @@
       "price_note": null,
       "price_as_of": null,
       "locator_hotspot": "rear-left",
-      "notes": "interval_kind=soft; 按磨损更换"
+      "notes": "interval_kind=soft"
     },
     {
       "sku": "coil-pack",
@@ -292,7 +292,7 @@
       "price_note": null,
       "price_as_of": null,
       "locator_hotspot": "engine-bay",
-      "notes": "interval_kind=soft; 按需；OEM 经公开目录复审自 9A1.602.107.00 更正"
+      "notes": "interval_kind=soft"
     }
   ]
 }

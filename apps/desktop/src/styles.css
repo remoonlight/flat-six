@@ -271,7 +271,7 @@ th {
 
 .locator-dual {
   display: grid;
-  grid-template-columns: 1.2fr 1.2fr 1fr;
+  grid-template-columns: 1fr;
   gap: 16px;
   align-items: start;
 }

@@ -6,6 +6,7 @@ import {
   findSkuByOemNumber,
   formatModelChildCaption,
   formatModelOemPointer,
+  applyIntervalKindMarker,
   resolveBodyPaintHex,
   resolveBodyPaintPbr,
   resolveInteriorHex,
@@ -67,6 +68,18 @@ type ModelListItem = {
 };
 
 type ModelListItemBase = Omit<ModelListItem, "oemPointer" | "linkedSkus">;
+
+function formatConsumableLife(p: {
+  interval_km: number | null;
+  interval_months: number | null;
+} | null): string {
+  if (!p) return "—";
+  const km =
+    p.interval_km != null ? `${p.interval_km.toLocaleString("zh-CN")} km` : null;
+  const mo = p.interval_months != null ? `${p.interval_months} 月` : null;
+  if (!km && !mo) return "—";
+  return [km, mo].filter(Boolean).join(" / ");
+}
 
 function toUint8(raw: unknown): Uint8Array {
   if (raw instanceof Uint8Array) return raw;
@@ -683,14 +696,12 @@ export function PartsBrowserPage() {
       ? formatMoneyDisplay(p.oem_price, p.price_note, fx)
       : null;
     const am = aftermarketLines(p);
+    const notesDisp = applyIntervalKindMarker(p?.notes, "hard");
     return (
       <div className="parts-browser-part-expand">
         <p>
           <span className="muted">PART NO.</span>{" "}
-          {row.oem_number ?? row.skus[0] ?? "—"}
-        </p>
-        <p>
-          <span className="muted">系统</span> {row.system || "—"}
+          {row.oem_number ?? "—"}
         </p>
         <p>
           <span className="muted">OEM 价</span> {oemDisp?.primary ?? "—"}
@@ -700,12 +711,9 @@ export function PartsBrowserPage() {
           {am.length ? am.join(" · ") : "—"}
         </p>
         <p>
-          <span className="muted">世代</span> {row.generationLabel}
+          <span className="muted">寿命</span> {formatConsumableLife(p)}
         </p>
-        <p>
-          <span className="muted">SKU</span> {row.skus.join(" · ")}
-        </p>
-        {p?.notes ? <p>{p.notes}</p> : null}
+        {notesDisp ? <p>{notesDisp}</p> : null}
         <button
           type="button"
           className="primary"
@@ -1090,7 +1098,7 @@ export function PartsBrowserPage() {
                           {open ? "▾" : "▸"} {r.name_zh}
                         </strong>
                         <span className="muted">
-                          {r.oem_number ?? r.skus[0]} · {r.generationLabel}
+                          {r.oem_number ?? "—"}
                         </span>
                       </button>
                       {open ? renderOemRowExpand(r) : null}
