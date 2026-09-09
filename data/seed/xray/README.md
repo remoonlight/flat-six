@@ -11,6 +11,8 @@
 | **运行时真源** | `.local/xray-transforms.json` 等 | gitignore；App 读写此处 |
 | **可提交快照** | 本目录 `*.template.json` / `*.seed.json` | clone 后可恢复姿态/链接，避免公开发布丢调参 |
 
+**首次启动**：若 `.local` 里还没有这三份运行时文件，Electron 会从本目录自动拷一份（已有 `.local` 文件不覆盖）。拉完 git 后直接开车库即可，不必再手拷。
+
 手调完成后，把 `.local` 内容回写进对应 template/seed，再提交（勿提交 `.local` 本身）。
 
 ## 文件

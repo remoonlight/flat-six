@@ -4,11 +4,19 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { ensureLocalFromSeed } from "./ensure-local-snapshot.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "../../..");
 const LOCAL_ROOT = path.join(repoRoot, ".local");
 const LINKS_PATH = path.join(LOCAL_ROOT, "model-oem-links.json");
+const LINKS_SEED = path.join(
+  repoRoot,
+  "data",
+  "seed",
+  "xray",
+  "model-oem-links.seed.json",
+);
 
 function emptyFile() {
   return {
@@ -49,6 +57,7 @@ function migrateMeshIds(file) {
 }
 
 function readLinksFile() {
+  ensureLocalFromSeed(LINKS_PATH, LINKS_SEED);
   if (!fs.existsSync(LINKS_PATH)) return emptyFile();
   try {
     const raw = JSON.parse(fs.readFileSync(LINKS_PATH, "utf8"));

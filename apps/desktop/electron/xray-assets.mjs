@@ -4,6 +4,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { ensureLocalFromSeed } from "./ensure-local-snapshot.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "../../..");
@@ -25,6 +26,20 @@ const GARAGE_FLOWS_PATH = path.join(
 );
 const TRANSFORMS_PATH = path.join(LOCAL_ROOT, "xray-transforms.json");
 const MESH_STATE_PATH = path.join(LOCAL_ROOT, "xray-mesh-state.json");
+const TRANSFORMS_SEED = path.join(
+  repoRoot,
+  "data",
+  "seed",
+  "xray",
+  "transforms.template.json",
+);
+const MESH_STATE_SEED = path.join(
+  repoRoot,
+  "data",
+  "seed",
+  "xray",
+  "mesh-state.template.json",
+);
 
 /** @typedef {{ position?: number[]; rotationEuler?: number[]; scale?: number[] }} XrayTransform */
 /** @typedef {Record<string, XrayTransform>} XrayTransformLayers */
@@ -103,6 +118,7 @@ function normalizeTransform(t) {
 }
 
 export function loadXrayTransforms() {
+  ensureLocalFromSeed(TRANSFORMS_PATH, TRANSFORMS_SEED);
   if (!fs.existsSync(TRANSFORMS_PATH)) return emptyTransforms();
   try {
     const raw = JSON.parse(fs.readFileSync(TRANSFORMS_PATH, "utf8"));
@@ -284,6 +300,7 @@ export function meshStateAssemblyId(assemblyId) {
 }
 
 export function loadXrayMeshState() {
+  ensureLocalFromSeed(MESH_STATE_PATH, MESH_STATE_SEED);
   if (!fs.existsSync(MESH_STATE_PATH)) return emptyMeshState();
   try {
     const raw = JSON.parse(fs.readFileSync(MESH_STATE_PATH, "utf8"));

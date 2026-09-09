@@ -5,6 +5,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import os from "node:os";
+import { ensureLocalFromSeed } from "./ensure-local-snapshot.mjs";
 import {
   listGarageModelCatalog,
   listGlbNodeNames,
@@ -22,8 +24,45 @@ function assert(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
+{
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "p981-snap-"));
+  const dest = path.join(dir, "xray-transforms.json");
+  const seed = path.join(
+    root,
+    "data",
+    "seed",
+    "xray",
+    "transforms.template.json",
+  );
+  try {
+    assert(ensureLocalFromSeed(dest, seed) === true, "bootstrap copies seed");
+    const n = Object.keys(
+      JSON.parse(fs.readFileSync(dest, "utf8")).layers || {},
+    ).length;
+    assert(n > 0, "bootstrapped transforms have layers");
+    assert(ensureLocalFromSeed(dest, seed) === false, "existing dest not overwritten");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+const seedLinks = JSON.parse(
+  fs.readFileSync(
+    path.join(root, "data", "seed", "xray", "model-oem-links.seed.json"),
+    "utf8",
+  ),
+);
+assert(
+  Array.isArray(seedLinks.links) && seedLinks.links.length > 0,
+  "oem seed has links",
+);
+
 const before = loadModelOemLinks();
 assert(Array.isArray(before.links), "links array");
+assert(
+  before.links.length > 0,
+  "local oem links after load (missing .local is seeded from git snapshot)",
+);
 
 const after = upsertModelOemLink({
   kind: "assembly",
