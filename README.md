@@ -1,142 +1,86 @@
-# Porsche 981 Garage
+# 981 车库
 
-面向 **2014 Porsche Boxster S（981）PDK** 的本机 Windows Electron 车库，包含零件浏览、维护状态、只读 OBD 会话、车辆设置与部件定位。
+## 下载后怎么用
 
-本项目是 [FLAT·SIX](https://www.flat-six.org/) 开源仓库 [`dmitry-grechko/flat-six`](https://github.com/dmitry-grechko/flat-six)（MIT）的 fork 开发分支：[`remoonlight/flat-six: porsche981`](https://github.com/remoonlight/flat-six/tree/porsche981)。坐标系与幽灵车壳约定沿用 flat-six X-ray；本分支原创应用代码采用 [PolyForm Noncommercial 1.0.0](LICENSE)。
+这是源码版，**没有安装器，也没有 electron-builder 安装包**。第一次运行需要 Windows 10/11 和网络，用于安装运行所需的 Node.js、依赖与 Electron。
 
-当前仅支持源码自行部署和开发运行，**不提供安装器、electron-builder 包或其他打包发行物**。
+1. 打开 [GitHub 的 porsche981 分支](https://github.com/remoonlight/flat-six/tree/porsche981)。请确认分支是 **porsche981**，不是 `main`。
+2. 点击绿色 **Code** → **Download ZIP**，解压 ZIP。
+3. 进入解压后的文件夹，双击根目录的 **`开始车库.cmd`**（若中文文件名乱码，改双击 **`START.cmd`**）。
+4. 首次运行时，按黑色窗口提示安装 Node.js LTS；有 `winget` 的 Windows 可直接确认自动安装。若安装后提示找不到 Node.js，关掉窗口后再双击一次。
+5. 等待安装完成。弹出的 Electron 窗口才是车库；请保留黑色窗口，关闭它会退出车库。
 
-## 使用方法
+首次下载约 **450 MB**，因为 3D GLB 文件直接随 Git 下载，不使用 Git LFS。以后仍从同一个 `开始车库.cmd` 启动即可。
 
-### Windows 一键启动（推荐）
+### 这个启动器会做什么
 
-前置条件：
+`开始车库.cmd` 会调用 `scripts\run-desktop.cmd`，并依次：
 
-- Windows 10/11
-- Node.js **≥ 20**，并已加入 `PATH`
-- 已 clone 本仓库
+1. 确认你完整解压了仓库。
+2. 检查 Node.js 是否为 20 或更高；缺失时给出官网 <https://nodejs.org/>，并在可用时使用 `winget` 安装 `OpenJS.NodeJS.LTS`。
+3. 设置 Electron 下载镜像、清理上次残留的开发进程。
+4. 首次从 `data/seed/xray/` 准备姿态和 OEM 关联文件。
+5. 首次安装依赖，然后在**同一个黑色窗口**运行车库。
 
-在资源管理器中双击：
+可在桌面为解压后文件夹中的 `开始车库.cmd` 建快捷方式；快捷方式的“目标”直接指向该文件即可。
 
-```text
-scripts\run-desktop.cmd
+### 用 Git 获取（可选）
+
+会使用 Git 的人，也必须切换到指定分支：
+
+```powershell
+git clone https://github.com/remoonlight/flat-six.git
+cd flat-six
+git checkout porsche981
 ```
 
-该启动器是纯 CMD 脚本，不使用隐藏 PowerShell，便于杀毒软件检查。它会：
+## 它是什么
 
-1. 切换到仓库根目录；
-2. 清理遗留的 Vite `5173` 监听进程，以及命令行中属于 `porsche981` 的 Node/Electron 进程；
-3. 在缺少 `node_modules` 时执行 `npm install`；
-4. 未设置时补充 `ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/`；
-5. 最小化启动 `npm run dev`。
+面向 **2014 Porsche Boxster S（981）PDK** 的本机 Windows Electron 车库：零件浏览、保养、只读 OBD、车辆设置和 3D 定位。
 
-最终使用的是弹出的 **Electron UI**；最小化的控制台只是开发服务。
+所有数据和数据库均在本机，无云服务、无账号。开发数据库路径是 `.local/garage.db`。
 
-更方便的做法是在桌面创建快捷方式：
+## 使用边界
 
-- 目标：`D:\code\porsche981\scripts\run-desktop.cmd`
-- “起始位置”可留空；脚本通过 `cd /d "%~dp0.."` 自动进入仓库根目录
+- OBD、诊断和车辆设置均为**只读**，不会写入 ECU。
+- 仅在本机 Windows + SQLite 运行。
+- 不解析 PETKA `DATA\PO` 或 `.zgd` 文件。
+- 界面价格统一折算为 CNY；teile / Design911 价格不等于 PETKA 已核价格。
+- flat-six 与 PETKA 模型 GLB 已随仓库提供；CMS 991 抠模只可保留在本机，产品不使用 991 车身。
 
-也可以在桌面新建 `.bat` 调用启动器，例如仓库相对桌面位于 `..\code\porsche981` 时：
+## 给开发者
 
-```bat
-@echo off
-call "%~dp0..\code\porsche981\scripts\run-desktop.cmd"
-```
-
-仓库实际位于 `D:\code\porsche981` 时，优先使用上面的快捷方式，避免桌面盘符或目录布局不同导致相对路径失效。
-
-相关脚本：
-
-- `scripts\run-desktop.cmd`：推荐的一键启动入口
-- `scripts\run-desktop.ps1`：PowerShell 启动入口
-- `scripts\kill-dev-related.ps1`：清理相关开发进程
-
-### 手动开发启动
-
-在仓库根目录打开 PowerShell：
+在仓库根目录运行：
 
 ```powershell
 npm install
-npm run ingest:x431   # 可选：导入已有 X431 明文数据
-npm run build
-npm test
 npm run dev
 ```
 
-如果 Electron 二进制下载慢或超时，可在执行 `npm install` 前设置镜像：
+常用检查：
 
 ```powershell
-$env:ELECTRON_MIRROR = "https://npmmirror.com/mirrors/electron/"
-npm install
-```
-
-开发数据库位于 `.local/garage.db`（已 gitignore）。SQLite 由系统 Node 子进程 `apps/desktop/electron/db-bridge.mjs` 访问。
-
-可选完整验收：
-
-```powershell
+npm test
 npm run accept:all
 ```
 
-PETKA、CMS、mesh-map 等数据状态命令见 [`package.json`](package.json)。
+## 简要结构
 
-## 3D 资产
-
-| 资产 | 入库状态 | 说明 |
-|------|----------|------|
-| flat-six 车身、座舱与系统件 | 已入 Git | `.local/flat-six/**/*.glb`；CC BY，详见上游与 NOTICE |
-| PETKA 图号分件及 merged 模型 | 已入 Git | `.local/petka-models/**/*.glb` |
-| CMS 991 引擎/底盘抠模 | **不入库** | 仅限本机从正版游戏导出；产品不使用 991 车身 |
-| PETKA 本机价格 CSV | 已入 Git | `data/petka/*/parts.csv`（保养子集；导入 `npm run ingest:petka`） |
-| X-ray 姿态 JSON | seed 模板入库 | 恢复方式见 [`data/seed/xray/README.md`](data/seed/xray/README.md) |
-
-GLB 以普通 Git blob 保存，不使用 Git LFS；公开 fork 首次 clone 会因此增加约 **450 MB** 下载量。单个已提交 GLB 均低于 GitHub 100 MB 限制。
-
-## 硬边界
-
-- **不写 ECU**：OBD、设码与诊断仅只读（ADR 001）
-- **仅本机运行**：Windows + SQLite，无云服务、无账号（ADR 002）
-- PETKA GUI 默认不自动操作；仅在当前会话得到明确授权后使用（ADR 003）
-- 不破解、不解析、不提交 PETKA `DATA\PO` 或 `.zgd`
-- CMS 抠模仅保存在本机，不重新分发；产品不使用 991 车身（ADR 004）
-- UI 价格统一折算为 CNY；teile / Design911 数据不视为 PETKA 已核价格
+```text
+apps/desktop/  Electron 桌面界面
+packages/*/    业务逻辑与 SQLite 数据库代码
+data/seed/     随仓库提供的种子数据
+.local/        本机数据库、缓存和运行时文件
+```
 
 ## 文档
 
-| 文档 | 用途 |
-|------|------|
-| [`docs/requirements.md`](docs/requirements.md) | 权威业务需求 |
-| [`docs/progress.md`](docs/progress.md) | 当前进度与已确定结论 |
-| [`docs/obd-plan.md`](docs/obd-plan.md) | 实时 OBD 分期计划 |
-| [`docs/adr/`](docs/adr/) | 不写 ECU、仅本地、PETKA GUI、CMS 本机资产等决策 |
-| [`docs/cms-991-engine-rip.md`](docs/cms-991-engine-rip.md) | CMS 991 引擎/底盘本机资产说明 |
-| [`data/petka/README.md`](data/petka/README.md) | PETKA 明文采集与 inbox 约定 |
-| [`data/seed/flat-six/README.md`](data/seed/flat-six/README.md) | flat-six 车身与座舱数据 |
-| [`data/seed/xray/README.md`](data/seed/xray/README.md) | X-ray 拼装与姿态模板 |
-| [`data/seed/fx.json`](data/seed/fx.json) | UI 折算 CNY 使用的手工汇率 |
-| [`LICENSE`](LICENSE) | PolyForm Noncommercial 1.0.0 |
-
-## 项目结构
-
-```text
-apps/desktop/     Electron 主进程、preload 与 React UI
-packages/domain/  间隔、定位、价格标记、CSV 等纯业务逻辑
-packages/db/      SQLite schema 与查询
-data/petka/       PETKA 明文导出与 zone 价 CSV（`*/parts.csv`）
-data/seed/        间隔、定位、线束、X-ray、flat-six、CMS、X431 种子
-scripts/          启动、导入、验收、监视与状态脚本
-docs/             需求、进度、研究记录与 ADR
-.local/           数据库、缓存和本机 3D 资产
-```
+- [需求说明](docs/requirements.md)
+- [架构决策记录](docs/adr/)
+- [许可证](LICENSE)
 
 ## 许可证与第三方材料
 
-仓库作者原创代码采用 **[PolyForm Noncommercial License 1.0.0](LICENSE)**，仅许可非商业用途。
+本分支基于上游 fork [dmitry-grechko/flat-six](https://github.com/dmitry-grechko/flat-six)（MIT）。本分支原创代码采用 [PolyForm Noncommercial 1.0.0](LICENSE)，仅限非商业用途。
 
-以下第三方或来源材料不属于该许可的授权范围，研究和二次使用责任由使用者自行承担：
-
-- DTC 手册译文与相关种子
-- teile / Design911 等公开价格抓取结果
-- X431 导出与设码明文归档
-- flat-six、PETKA、游戏或其他第三方 3D 资产
+DTC、teile / Design911、X431 导出资料，以及 flat-six、PETKA、游戏和其他第三方 3D 资产，可能各有独立来源与使用条件；它们不因本分支许可证而获得额外授权。
