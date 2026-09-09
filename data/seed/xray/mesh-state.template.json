@@ -214,8 +214,8 @@
           "visible": true,
           "transform": {
             "position": [
-              0,
-              0,
+              -1.0182987832661191e-13,
+              5.538928843483411e-13,
               0
             ],
             "rotationEuler": [
@@ -271,6 +271,286 @@
           }
         },
         "SM_RearKit_0000003_MAT_Details_MAT130_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "SM_Base_0000003_MAT_Details_MAT130_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "SM_Base_0000003_MAT_Glass067_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "SM_Brake_FL_0000_Morph001_BD_HR_R003_MAT_Tire_Brake132_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "SM_Brake_FR_0000_Morph001_BD_HR_R003_MAT_Tire_Brake132_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "SM_Brake_RL_0000_Morph002_BD_W_F003_MAT_Tire_Brake132_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "SM_Disk_L_0000_Morph001_BD_HR_R003_MAT_Disk_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "SM_FrontKit_0000003_MAT_Details_EXT077_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "SM_FrontKit_0000003_MAT_Details_MAT130_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "SM_FrontKit_0000003_MAT_Glass067_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "SM_FrontKit_0000003_MAT_Light030_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "SM_Hub_L_0000_Morph003_W_R004_MAT_Hub_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "SM_Interior_0000003_MAT_718_Car_Paint_Base_00076_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "SM_Interior_0000003_MAT_Light030_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "W2__1529b39_dds_0": {
           "visible": true,
           "transform": {
             "position": [
@@ -1442,14 +1722,14 @@
           "visible": true,
           "transform": {
             "position": [
-              0,
-              0,
-              0
+              -0.026110755464238054,
+              0.023954800295532822,
+              0.025580272062960957
             ],
             "rotationEuler": [
-              0,
-              0,
-              0
+              -0.11427645840847034,
+              0.04864970305447086,
+              -0.1442537136980132
             ],
             "scale": [
               1,
@@ -1479,17 +1759,17 @@
           }
         },
         "tripo_part_5": {
-          "visible": false,
+          "visible": true,
           "transform": {
             "position": [
-              0,
-              0,
-              0
+              0.0076318465570384885,
+              0.22384944403471338,
+              -0.011766275431588967
             ],
             "rotationEuler": [
-              0,
-              0,
-              0
+              0.18703456375922925,
+              0.14296481228098015,
+              -0.10208632329050092
             ],
             "scale": [
               1,
@@ -1499,17 +1779,17 @@
           }
         },
         "tripo_part_7": {
-          "visible": false,
+          "visible": true,
           "transform": {
             "position": [
-              0,
-              0,
-              0
+              -0.21938256133762085,
+              0.17760316098622475,
+              -0.08536269024511081
             ],
             "rotationEuler": [
-              0,
-              0,
-              0
+              -0.7006822435751042,
+              -0.07345087706245933,
+              -0.20968869861284822
             ],
             "scale": [
               1,
@@ -1582,14 +1862,14 @@
           "visible": true,
           "transform": {
             "position": [
-              0,
-              0,
-              0
+              -0.07456455359881606,
+              0.02952581206071468,
+              0.025887082028887787
             ],
             "rotationEuler": [
-              0,
-              0,
-              0
+              0.01654054793454629,
+              0.09759920514831674,
+              -0.2812081912682731
             ],
             "scale": [
               1,
@@ -1619,17 +1899,17 @@
           }
         },
         "tripo_part_5_R": {
-          "visible": false,
+          "visible": true,
           "transform": {
             "position": [
-              0,
-              0,
-              0
+              -0.0008940840962059111,
+              0.20458790615296887,
+              0.004582242008972057
             ],
             "rotationEuler": [
-              0,
-              0,
-              0
+              -0.0025969367652372535,
+              0.33762659473520473,
+              -0.07202967506815947
             ],
             "scale": [
               1,
@@ -1639,17 +1919,17 @@
           }
         },
         "tripo_part_7_R": {
-          "visible": false,
+          "visible": true,
           "transform": {
             "position": [
-              0,
-              0,
-              0
+              -0.1904638651322572,
+              0.21122352985820958,
+              -0.027153663919455312
             ],
             "rotationEuler": [
-              0,
-              0,
-              0
+              -0.6332552589368788,
+              -0.025831575140510155,
+              -0.008464157643877295
             ],
             "scale": [
               1,
@@ -1739,206 +2019,6 @@
           }
         },
         "tripo_part_6": {
-          "visible": true,
-          "transform": {
-            "position": [
-              0,
-              0,
-              0
-            ],
-            "rotationEuler": [
-              0,
-              0,
-              0
-            ],
-            "scale": [
-              1,
-              1,
-              1
-            ]
-          }
-        },
-        "tripo_part_1_020": {
-          "visible": true,
-          "transform": {
-            "position": [
-              0,
-              0,
-              0
-            ],
-            "rotationEuler": [
-              0,
-              0,
-              0
-            ],
-            "scale": [
-              1,
-              1,
-              1
-            ]
-          }
-        },
-        "tripo_part_10": {
-          "visible": true,
-          "transform": {
-            "position": [
-              0,
-              0,
-              0
-            ],
-            "rotationEuler": [
-              0,
-              0,
-              0
-            ],
-            "scale": [
-              1,
-              1,
-              1
-            ]
-          }
-        },
-        "tripo_part_2_020": {
-          "visible": true,
-          "transform": {
-            "position": [
-              0,
-              0,
-              0
-            ],
-            "rotationEuler": [
-              0,
-              0,
-              0
-            ],
-            "scale": [
-              1,
-              1,
-              1
-            ]
-          }
-        },
-        "tripo_part_3_020": {
-          "visible": true,
-          "transform": {
-            "position": [
-              0,
-              0,
-              0
-            ],
-            "rotationEuler": [
-              0,
-              0,
-              0
-            ],
-            "scale": [
-              1,
-              1,
-              1
-            ]
-          }
-        },
-        "tripo_part_4_020": {
-          "visible": true,
-          "transform": {
-            "position": [
-              0,
-              0,
-              0
-            ],
-            "rotationEuler": [
-              0,
-              0,
-              0
-            ],
-            "scale": [
-              1,
-              1,
-              1
-            ]
-          }
-        },
-        "tripo_part_5_020": {
-          "visible": true,
-          "transform": {
-            "position": [
-              0,
-              0,
-              0
-            ],
-            "rotationEuler": [
-              0,
-              0,
-              0
-            ],
-            "scale": [
-              1,
-              1,
-              1
-            ]
-          }
-        },
-        "tripo_part_6_020": {
-          "visible": true,
-          "transform": {
-            "position": [
-              0,
-              0,
-              0
-            ],
-            "rotationEuler": [
-              0,
-              0,
-              0
-            ],
-            "scale": [
-              1,
-              1,
-              1
-            ]
-          }
-        },
-        "tripo_part_7_020": {
-          "visible": true,
-          "transform": {
-            "position": [
-              0,
-              0,
-              0
-            ],
-            "rotationEuler": [
-              0,
-              0,
-              0
-            ],
-            "scale": [
-              1,
-              1,
-              1
-            ]
-          }
-        },
-        "tripo_part_8": {
-          "visible": true,
-          "transform": {
-            "position": [
-              0,
-              0,
-              0
-            ],
-            "rotationEuler": [
-              0,
-              0,
-              0
-            ],
-            "scale": [
-              1,
-              1,
-              1
-            ]
-          }
-        },
-        "tripo_part_9": {
           "visible": true,
           "transform": {
             "position": [
@@ -4258,6 +4338,66 @@
           }
         },
         "tripo_node_08ccb0e8_R": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_4_8010": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_5_8010": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_6_8010": {
           "visible": true,
           "transform": {
             "position": [
@@ -7035,12 +7175,12 @@
           "visible": true,
           "transform": {
             "position": [
-              0,
-              0,
-              0
+              -0.006208557873948556,
+              -0.16964729358902414,
+              0.11497756381769589
             ],
             "rotationEuler": [
-              0,
+              3.141592653589793,
               0,
               0
             ],
@@ -7135,9 +7275,9 @@
           "visible": true,
           "transform": {
             "position": [
-              0,
-              0,
-              0
+              -0.011476187465540438,
+              0.33526649737668507,
+              0.004268280924150315
             ],
             "rotationEuler": [
               0,
@@ -7504,15 +7644,15 @@
       }
     },
     "pm-intake": {
-      "visible": false,
+      "visible": true,
       "meshes": {
         "tripo_part_0": {
           "visible": true,
           "transform": {
             "position": [
-              0,
-              0,
-              0
+              -0.07,
+              -0.05596454432672521,
+              -0.010000000000000009
             ],
             "rotationEuler": [
               0,
@@ -7530,14 +7670,14 @@
           "visible": false,
           "transform": {
             "position": [
-              -0.51,
-              0,
-              0
+              0.5223650879765735,
+              0.28752689436038986,
+              -0.33719007448743965
             ],
             "rotationEuler": [
-              0,
-              0,
-              0
+              -0.6327245778745176,
+              -5.551115123125783e-17,
+              1.2963425729439668
             ],
             "scale": [
               1,
@@ -7590,14 +7730,14 @@
           "visible": true,
           "transform": {
             "position": [
-              0,
-              0,
-              0
+              0.22,
+              0.2605060737571311,
+              0.31
             ],
             "rotationEuler": [
-              0,
-              0,
-              0
+              -0.3939954141071034,
+              -0.7166388574007589,
+              1.5911703531913366
             ],
             "scale": [
               1,
@@ -7610,14 +7750,14 @@
           "visible": false,
           "transform": {
             "position": [
-              -0.3,
-              0,
-              0
+              0.7394837920487318,
+              0.5077228186732887,
+              -0.3184850896711549
             ],
             "rotationEuler": [
-              0,
-              0,
-              0
+              0.035757895232294036,
+              0.044342262971487814,
+              1.7601681082586662
             ],
             "scale": [
               1,
@@ -7630,9 +7770,9 @@
           "visible": true,
           "transform": {
             "position": [
-              0.05,
-              -0.06,
-              -0.24
+              0.00006918558272133704,
+              -0.11228824487362418,
+              -0.2
             ],
             "rotationEuler": [
               0,
@@ -7650,14 +7790,14 @@
           "visible": true,
           "transform": {
             "position": [
-              0,
-              0,
+              -0.10692010673613635,
+              0.3215231368052718,
               0
             ],
             "rotationEuler": [
-              0,
-              0,
-              0
+              0.9314930917440867,
+              0.7860897128130854,
+              -1.3705941753807203
             ],
             "scale": [
               1,
@@ -7690,19 +7830,19 @@
           "visible": true,
           "transform": {
             "position": [
-              0,
-              0,
-              0
+              0.37625971535880043,
+              0.4011648288168431,
+              -0.007244517693587264
             ],
             "rotationEuler": [
               0,
-              0,
-              0
+              -0.49741883681838395,
+              1.5707963267948966
             ],
             "scale": [
-              1,
-              1,
-              1
+              0.93,
+              0.93,
+              0.93
             ]
           }
         },
@@ -7730,9 +7870,9 @@
           "visible": true,
           "transform": {
             "position": [
-              0,
-              0,
-              0
+              -0.039999999999999994,
+              -0.06835863516188034,
+              0.04000000000000001
             ],
             "rotationEuler": [
               0,
@@ -8502,7 +8642,7 @@
           }
         },
         "tripo_part_3_1055": {
-          "visible": true,
+          "visible": false,
           "transform": {
             "position": [
               0,
@@ -8522,7 +8662,7 @@
           }
         },
         "tripo_part_4_1055": {
-          "visible": true,
+          "visible": false,
           "transform": {
             "position": [
               0,
@@ -8542,7 +8682,7 @@
           }
         },
         "tripo_part_5_1055": {
-          "visible": true,
+          "visible": false,
           "transform": {
             "position": [
               0,
@@ -8562,7 +8702,7 @@
           }
         },
         "tripo_part_6_1055": {
-          "visible": true,
+          "visible": false,
           "transform": {
             "position": [
               0,
@@ -9582,6 +9722,606 @@
             "rotationEuler": [
               0,
               0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        }
+      }
+    },
+    "pm-201-020": {
+      "visible": true,
+      "meshes": {
+        "tripo_part_6": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.014219824543812348,
+              0.06663816753428708,
+              -0.10878618393839395
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_1": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.04111209669568383,
+              0.10835296137336042,
+              -0.23136475298756642
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_3": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.09242689626762729,
+              0.08003108537514764,
+              0.0330186563710993
+            ],
+            "rotationEuler": [
+              -0.07068300483494423,
+              0.0013649592121193453,
+              -0.038601122588739864
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_4": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.11239129818629667,
+              0.25176938961944073,
+              -0.3145332794864307
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_2": {
+          "visible": false,
+          "transform": {
+            "position": [
+              -0.9521798453722785,
+              1.1102230246251565e-16,
+              -0.5203046968763873
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        }
+      }
+    },
+    "pm-604-000": {
+      "visible": true,
+      "meshes": {
+        "tripo_part_2": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.14239980510154746,
+              0.41617693738993444,
+              -0.45436893632439557
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0.0030264530782855847,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0.2617993877991494
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_4": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.3073031390397182,
+              0.07270981757143241,
+              -0.034695923904748585
+            ],
+            "rotationEuler": [
+              -0.01856273104108764,
+              -0.0019016105198235145,
+              0.20416677974056646
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_6": {
+          "visible": false,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_1": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.12550405868042358,
+              0.4442430555467012,
+              -0.2676517031550906
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_3": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.2662736917890745,
+              -0.13490529761317205,
+              -0.07321108022878908
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        }
+      }
+    },
+    "pm-807-000": {
+      "visible": true,
+      "meshes": {
+        "tripo_part_3": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.23289776600898793,
+              0.10783863411484562,
+              0.08508225061398231
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_9": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.19285041110629925,
+              -0.057744404410557115,
+              0.10491954979072377
+            ],
+            "rotationEuler": [
+              0.009670199170797427,
+              -0.0063529838430200995,
+              0.5202975679777626
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_7": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.2816076122438098,
+              -0.18009627800636685,
+              0.32221160749210154
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_4": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.21184275194884483,
+              -0.2082462542664777,
+              -0.1519538920538021
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_8": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.25744248124373736,
+              -0.30631099547247775,
+              -0.1191192926041866
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_6": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.03229738812440243,
+              0.08354753959973282,
+              -0.12252475965138077
+            ],
+            "rotationEuler": [
+              -0.01915089513920142,
+              -0.009130548358477559,
+              0.1029450140893489
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_5": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.001361805157785334,
+              0.07895046419372809,
+              0.3220791201069084
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_1": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.20761413410127888,
+              -0.30791167556840815,
+              0.2327218207276143
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_2": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.3119109015142549,
+              -0.3798214922775229,
+              0.21978648790359492
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.009676575651693248,
+              0.011412773142981197,
+              -0.00004541048878135834
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        }
+      }
+    },
+    "pm-807-005": {
+      "visible": true,
+      "meshes": {
+        "tripo_part_4": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.1309052841751801,
+              -0.17580024773664665,
+              -2.7755575615628914e-17
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_2": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.2266657991877647,
+              -0.125471956950989,
+              0.3432887004914731
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_8": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.0971147090144282,
+              -0.07795567857505403,
+              -0.08480938067590493
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_7": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.1151858176255367,
+              -0.06397129430620296,
+              -0.06555318630245656
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_6": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.300300351489299,
+              -0.12025962143215951,
+              0.015234008256457071
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_3": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.2964109866140643,
+              -0.2615105780455652,
+              0.01715635772418936
+            ],
+            "rotationEuler": [
+              0,
+              -0.09907118723120996,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_1": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.2523052154684162,
+              -0.12308259857664461,
+              0.025675432612592947
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "tripo_part_5": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.21658545448041933,
+              -0.2636329773956031,
+              0.07037623421987502
+            ],
+            "rotationEuler": [
+              0,
+              0.07453727544970619,
               0
             ],
             "scale": [
