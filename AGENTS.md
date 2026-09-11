@@ -16,13 +16,14 @@ Windows 本地 Electron 车库：**2014 Boxster S（981）PDK**。无云、无�
 ## 常用命令
 
 - `npm run dev` · `npm test` · `npm run accept:all`
+- macOS 开发启动：`bash scripts/run-desktop.sh`（或根目录 `开始车库.command` / `START.command`）
 - PETKA：`status:petka` · `ingest:petka` · `parse:petka-bulk` · `sync:petka-bulk-remote`
 - 3D：`status:mesh-map` · `status:cms-rip` · `accept:ploc2` · `archive:petka-models`
 
 ## 硬边界（详见 ADR）
 
 1. **不写 ECU**（设码/OBD 只读）— `docs/adr/001-no-ecu-write.md`
-2. **仅本机 Windows + SQLite** — `docs/adr/002-local-only-windows.md`
+2. **产品仅 Windows + SQLite**；macOS 仅开发运行 — `docs/adr/002-local-only-windows.md`
 3. **PETKA GUI 默认禁止**；仅当用户本会话明示授权 — `docs/adr/003-petka-gui-explicit-only.md`
 4. **CMS 抠模仅本机**；产品不用 991 车身 — `docs/adr/004-cms-rip-local-only.md`
 5. **禁止**解析/入库 PETKA `DATA\PO` / `.zgd`；只收明文导出/剪贴板/inbox

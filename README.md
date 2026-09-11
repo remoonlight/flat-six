@@ -34,6 +34,32 @@ cd flat-six
 git checkout porsche981
 ```
 
+### macOS 开发启动
+
+macOS 仅用于开发和贡献，不是车主正式支持平台。OBD、串口和蓝牙行为以 Windows 为准，Mac 上可能不一致。
+
+使用 Git 时，请切到 `porsche981` 分支：
+
+```zsh
+git clone https://github.com/remoonlight/flat-six.git
+cd flat-six
+git checkout porsche981
+```
+
+随后双击根目录的 **`开始车库.command`**；若中文文件名乱码，双击 **`START.command`**。也可在终端运行：
+
+```zsh
+bash scripts/run-desktop.sh
+```
+
+或直接安装依赖并启动：
+
+```zsh
+npm install && npm run dev
+```
+
+首次被 Gatekeeper 提示无法打开时，在访达中右键该 `.command` 文件，选择“打开”；也可先执行 `chmod +x 开始车库.command START.command`。
+
 ## 它是什么
 
 面向 **2014 Porsche Boxster S（981）PDK** 的本机 Windows Electron 车库：零件浏览、保养、只读 OBD、车辆设置和 3D 定位。
@@ -44,15 +70,23 @@ git checkout porsche981
 
 - OBD、诊断和车辆设置均为**只读**，不会写入 ECU。
 - 仅在本机 Windows + SQLite 运行。
+- macOS 仅提供开发启动路径，不作为车主正式支持平台。
 - 不解析 PETKA `DATA\PO` 或 `.zgd` 文件。
 - 界面价格统一折算为 CNY；teile / Design911 价格不等于 PETKA 已核价格。
 - flat-six 与 PETKA 模型 GLB 已随仓库提供；CMS 991 抠模只可保留在本机，产品不使用 991 车身。
 
 ## 给开发者
 
-在仓库根目录运行：
+Windows PowerShell：
 
 ```powershell
+npm install
+npm run dev
+```
+
+macOS / zsh：
+
+```zsh
 npm install
 npm run dev
 ```
