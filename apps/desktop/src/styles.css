@@ -12,6 +12,54 @@
   font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
 }
 
+.coding-workspace { margin-top: 22px; }
+.coding-heading { display: flex; justify-content: space-between; align-items: center; gap: 24px; margin-bottom: 20px; }
+.coding-heading h2 { font-size: 26px; margin: 4px 0 10px; }
+.coding-heading p { margin: 6px 0; }
+.coding-heading > div:first-child > p:first-child { font-size: 11px; letter-spacing: .12em; }
+.coding-connection { display: grid; gap: 7px; flex-shrink: 0; padding: 16px 20px; border: 1px solid var(--line); border-radius: 10px; background: #fff; font-size: 13px; }
+.coding-connection span { color: var(--muted); font-size: 12px; }
+.coding-source { display: flex; gap: 12px; flex-wrap: wrap; justify-content: space-between; margin: 18px 0; color: var(--muted); font-size: 12px; }
+.coding-source a { color: var(--accent); }
+.coding-filters { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(150px, .6fr) auto; align-items: end; gap: 16px; margin-bottom: 18px; }
+.coding-filters label, .coding-record-fields label { display: grid; gap: 8px; font-size: 13px; }
+.coding-filters input, .coding-filters select, .coding-record-fields input, .coding-record-fields textarea { width: 100%; min-width: 0; }
+.coding-filters .coding-check { display: flex; flex-direction: row; align-items: center; gap: 8px; padding: 10px 0; }
+.coding-check input, .coding-feature > input { width: 16px; min-width: 16px; height: 16px; padding: 0; accent-color: var(--accent); flex: 0 0 16px; }
+.coding-layout { display: grid; grid-template-columns: minmax(260px, .8fr) minmax(0, 1.35fr); gap: 20px; align-items: start; }
+.coding-layout .panel { margin: 0; }
+.coding-catalog { max-height: 670px; overflow-y: auto; padding: 12px; }
+.coding-list-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 8px 14px; }
+.coding-list-head span { color: var(--muted); font-size: 12px; }
+.coding-feature { display: flex; align-items: flex-start; padding: 12px 10px; gap: 10px; border-top: 1px solid #eeeae5; border-radius: 6px; }
+.coding-feature.active { background: #f5eeeb; box-shadow: inset 3px 0 var(--accent); }
+.coding-feature > input { margin-top: 4px; }
+.coding-feature > button { padding: 0; border: 0; background: transparent; text-align: left; display: grid; gap: 6px; color: var(--ink); width: 100%; line-height: 1.5; }
+.coding-feature > button:hover { background: transparent; }
+.coding-feature strong { font-size: 14px; font-weight: 600; }
+.coding-feature span, .coding-feature small { color: var(--muted); font-size: 11px; }
+.coding-detail h3 { font-size: 21px; margin: 8px 0; }
+.coding-detail p { line-height: 1.7; }
+.coding-steps { padding-left: 25px; }
+.coding-steps li { padding: 14px 0 18px 5px; border-bottom: 1px solid var(--line); }
+.coding-steps li > strong { display: block; font-size: 14px; line-height: 1.6; }
+.coding-workspace code { display: block; color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; line-height: 1.65; margin: 8px 0; }
+.coding-values { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0; }
+.coding-values span { background: #f7f6f4; padding: 10px 12px; font-size: 11px; color: var(--muted); }
+.coding-values b { display: block; font-size: 13px; margin-top: 6px; color: var(--ink); overflow-wrap: anywhere; }
+.coding-module { display: inline-block; background: #eeeae5; padding: 3px 7px; font-size: 11px; margin-bottom: 6px; border-radius: 4px; }
+.coding-actionbar { position: sticky; bottom: 12px; display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 20px 0 0; padding: 14px 18px; background: #fff; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 3px 18px #0000000b; font-size: 13px; }
+.coding-plan-group { margin-top: 28px; }
+.coding-plan-group h3 { border-bottom: 2px solid var(--accent); padding-bottom: 10px; }
+.coding-plan-step { padding: 16px 0; border-bottom: 1px solid var(--line); }
+.coding-plan-step p { font-size: 13px; line-height: 1.6; }
+.coding-record-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0; }
+.coding-snapshot, .coding-license { padding: 16px 0; border-top: 1px solid var(--line); }
+.coding-snapshot summary, .coding-license summary { cursor: pointer; line-height: 1.7; }
+.coding-snapshot pre, .coding-license pre { white-space: pre-wrap; overflow-wrap: anywhere; color: var(--muted); font-size: 12px; }
+@media (max-width: 1050px) { .coding-heading { align-items: start; flex-direction: column; } .coding-filters { grid-template-columns: 1fr 1fr; } .coding-layout { grid-template-columns: 1fr; } .coding-catalog { max-height: 380px; } }
+@media (max-width: 650px) { .coding-filters, .coding-record-fields { grid-template-columns: 1fr; } .coding-actionbar { flex-wrap: wrap; } }
+
 * {
   box-sizing: border-box;
 }
@@ -865,6 +913,28 @@ ul.plain-list {
   margin-bottom: 12px;
 }
 
+.obd-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.obd-live-header {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(140px, 1fr));
+  gap: 6px 16px;
+  margin: 0;
+  font-size: 13px;
+}
+.obd-live-header dt { color: var(--muted, #888); font-weight: 500; }
+.obd-live-header dd { margin: 0; font-variant-numeric: tabular-nums; }
+.obd-ecu-table { width: 100%; border-collapse: collapse; }
+.obd-ecu-table th, .obd-ecu-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border, #ddd); }
+.obd-adapter-list label { display: flex; gap: 8px; align-items: center; }
+.obd-module { margin: 12px 0; }
+
 .page-head h1 {
   margin-bottom: 4px;
 }
@@ -1126,6 +1196,54 @@ button.chip:disabled {
   margin-bottom: 12px;
 }
 
+.obd-workbench > .panel { margin-bottom: 16px; }
+.obd-source { border: 1px solid currentColor; padding: 3px 8px; border-radius: 4px; font-size: 12px; color: var(--accent); }
+.obd-acquisition-strip { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 12px 0 20px; }
+.obd-acquisition-strip progress { width: 100%; height: 6px; accent-color: var(--accent); }
+.obd-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
+.obd-metric { padding: 8px 0; min-width: 0; border-bottom: 1px solid var(--border, #ddd); }
+.obd-metric h3 { margin: 4px 0 8px; }
+.obd-value { font-size: 27px; font-variant-numeric: tabular-nums; font-weight: 600; }
+.obd-value small { font-size: 13px; font-weight: 400; }
+.obd-curve { width: 100%; max-height: 140px; }
+.obd-curve text { font-size: 10px; fill: currentColor; }
+.obd-run-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 0; }
+.obd-run-list li > div { flex: 1; min-width: 220px; }
+.obd-replay input[type="range"] { flex: 1; min-width: 140px; }
+.obd-evidence { margin: 16px 0; }
+.obd-evidence > summary { cursor: pointer; font-weight: 600; }
+.obd-evidence li { padding: 8px 0; }
+.obd-evidence pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 220px; overflow: auto; }
+
+.obd-fault-list { list-style: none; padding-left: 0; margin: 8px 0; }
+.obd-fault-row { margin: 8px 0; }
+.obd-fault-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 10px 0; border-bottom: 1px solid var(--border, #ddd); }
+.obd-fault-title {
+  background: none; border: 0; padding: 0; font: inherit; cursor: pointer; text-align: left; color: inherit;
+}
+.obd-fault-title:hover { text-decoration: underline; }
+.obd-fault-detail { margin: 8px 0 8px 28px; }
+.obd-fault-panes { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.obd-analysis-split { display: grid; grid-template-columns: minmax(260px, 0.8fr) minmax(320px, 1.2fr); gap: 16px; align-items: start; }
+.obd-analysis-left, .obd-analysis-right { min-width: 0; max-height: min(680px, 65vh); overflow: auto; overscroll-behavior: contain; }
+.obd-analysis-reading { font-size: 22px; font-variant-numeric: tabular-nums; font-weight: 600; }
+.obd-analysis-missing ul { margin: 6px 0; }
+.obd-analysis-missing { max-height: 180px; overflow: auto; border-left: 3px solid var(--border, #ddd); padding-left: 12px; margin-bottom: 12px; }
+.obd-analysis-left { padding-right: 12px; border-right: 1px solid var(--border, #ddd); }
+.obd-analysis-left .plain-list, .obd-analysis-right .plain-list { list-style: none; padding: 0; margin: 0; }
+.obd-analysis-mod > button { width: 100%; text-align: left; margin-top: 8px; background: var(--surface-2, #f5f3f0); }
+.obd-analysis-item-line { display: flex; align-items: center; gap: 8px; padding: 7px 2px; border-bottom: 1px solid var(--border, #eee); }
+.obd-analysis-item-line input[type="checkbox"], .obd-fault-check input[type="checkbox"] { width: 16px; height: 16px; padding: 0; margin: 0; flex: 0 0 16px; }
+.obd-analysis-item-name { flex: 1; min-width: 0; padding: 2px; border: 0; background: none; text-align: left; font: inherit; color: inherit; }
+.obd-analysis-item-name:hover { text-decoration: underline; }
+.obd-analysis-right li[data-obd="analysis-value"] { padding: 12px 4px; border-bottom: 1px solid var(--border, #ddd); }
+.obd-analysis-right li p { margin: 5px 0; }
+.obd-analysis-focus { padding: 10px; border: 1px solid var(--border, #ddd); border-radius: 6px; margin-bottom: 12px; }
+.obd-fault-check { display: inline-flex; flex: 0 0 16px; margin: 0; }
+@media (max-width: 900px) {
+  .obd-analysis-split { grid-template-columns: 1fr; }
+}
+
 .field {
   display: flex;
   flex-direction: column;
@@ -1133,4 +1251,3 @@ button.chip:disabled {
   margin-top: 10px;
   max-width: 280px;
 }
-

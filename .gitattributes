@@ -1,0 +1,4 @@
+# Preserve CRLF bytes in Windows batch files, including source ZIP downloads.
+# cmd.exe can truncate UTF-8 commands when these files use LF alone.
+*.cmd -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+*.bat -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

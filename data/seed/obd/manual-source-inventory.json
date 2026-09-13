@@ -1,0 +1,424 @@
+{
+ "generated": "2026-09-13T11:17:23",
+ "python": "C:\\Users\\Ric\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+ "recovery": {
+  "arial": "non-ASCII +0x2d71 including already-CJK; ASCII kept; Arial punct map WITHOUT U+318F (maps to 开)",
+  "simsun": "non-ASCII +0x4a2c only; watermark stripped",
+  "reviewStatusPolicy": "no automatic procedure-verified; all body extracts are extracted-candidate / partial-evidence",
+  "fitz982": "get_text(sort=True); NBSP/soft-hyphen normalized; header code at physical top"
+ },
+ "files": {
+  "981_Boxster BoxsterS BoxsterGTS.pdf": {
+   "pages": 4455,
+   "toc_excluded": [
+    3831,
+    3840
+   ],
+   "detail_loaded": [
+    3831,
+    4455
+   ]
+  },
+  "982_Boxster BoxsterS BoxsterGTS.pdf": {
+   "pages": 8160,
+   "loaded": [
+    4220,
+    5220
+   ],
+   "index_refs_minmax": [
+    4242,
+    5195
+   ],
+   "last_diagnostic_information_page": 5219
+  },
+  "981_Cayman CaymanS CaymanGTS.pdf": {
+   "loaded": [
+    3700,
+    4420
+   ]
+  },
+  "PDK factory t-shoot document.pdf": {
+   "codes": [
+    "P0602",
+    "P0603",
+    "P0604",
+    "P0605",
+    "P0614",
+    "P0702",
+    "P0711",
+    "P0730",
+    "P0841",
+    "P0846",
+    "P1552",
+    "P172D",
+    "P1731",
+    "P1734",
+    "P1743",
+    "P1744",
+    "P1745",
+    "P1749",
+    "P174B",
+    "P174C",
+    "P174E",
+    "P1760",
+    "P1764",
+    "P1768",
+    "P1769",
+    "P176A",
+    "P176F",
+    "P1779",
+    "P177A",
+    "P177F",
+    "P17A3",
+    "P17B1",
+    "P17B2",
+    "P17B3",
+    "P17B4",
+    "P17BB",
+    "P17BD",
+    "P17BE",
+    "P17D0",
+    "P17F0",
+    "P17F2",
+    "P186F",
+    "P1870",
+    "P1871",
+    "P1872",
+    "P1897",
+    "P189A",
+    "P189D",
+    "P18A0",
+    "P18B4",
+    "P18B5",
+    "P1990",
+    "P1991"
+   ]
+  }
+ },
+ "index_union_981_982": 1106,
+ "grouped_981_header_owned": 481,
+ "grouped_982_header_owned": 835,
+ "grouped_cayman_header_owned": 474,
+ "status_counts": {
+  "index-only": 25,
+  "partial-evidence": 1081
+ },
+ "extra_codes_header_owned": [
+  {
+   "fullCode": "C104A4B",
+   "base": "C104A",
+   "source": "982_boxster",
+   "pages": [
+    4922
+   ],
+   "title": "C104A4B Overtemperature in control unit",
+   "module": "DME"
+  },
+  {
+   "fullCode": "C11005",
+   "base": "C1100",
+   "source": "982_boxster",
+   "pages": [
+    4936,
+    4937
+   ],
+   "title": "Control module  faulty",
+   "module": "Adaptive cruise control (ACC)"
+  },
+  {
+   "fullCode": "C11006",
+   "base": "C1100",
+   "source": "982_boxster",
+   "pages": [
+    4936,
+    4938,
+    4939,
+    4940,
+    4941,
+    4942,
+    4943
+   ],
+   "title": "D00009",
+   "module": "Adaptive cruise control (ACC)"
+  },
+  {
+   "fullCode": "C113C01",
+   "base": "C113C",
+   "source": "982_boxster",
+   "pages": [
+    4923
+   ],
+   "title": "C113C01 Short circuit in line to sound actuator",
+   "module": "DME"
+  },
+  {
+   "fullCode": "C113C13",
+   "base": "C113C",
+   "source": "982_boxster",
+   "pages": [
+    4924
+   ],
+   "title": "C113C13 Open circuit in line to sound actuator",
+   "module": "DME"
+  },
+  {
+   "fullCode": "U043500",
+   "base": "U0435",
+   "source": "982_boxster",
+   "pages": [
+    5201
+   ],
+   "title": "Fault entry in the specified control unit",
+   "module": "CAN"
+  },
+  {
+   "fullCode": "U101100",
+   "base": "U1011",
+   "source": "982_boxster",
+   "pages": [
+    4927
+   ],
+   "title": "U101100 Supply voltage below lower limit value",
+   "module": "DME control module"
+  },
+  {
+   "fullCode": "U101200",
+   "base": "U1012",
+   "source": "982_boxster",
+   "pages": [
+    4928
+   ],
+   "title": "U101200 Supply voltage above upper limit value",
+   "module": "DME control module"
+  },
+  {
+   "fullCode": "U10D900",
+   "base": "U10D9",
+   "source": "982_boxster",
+   "pages": [
+    4929
+   ],
+   "title": "U10D900 Installed incorrectly in vehicle, will not function",
+   "module": "DME control module"
+  },
+  {
+   "fullCode": "U112300",
+   "base": "U1123",
+   "source": "982_boxster",
+   "pages": [
+    4932
+   ],
+   "title": "Read out control unit fault memory content",
+   "module": "valid for all s"
+  },
+  {
+   "fullCode": "U120000",
+   "base": "U1200",
+   "source": "982_boxster",
+   "pages": [
+    4933
+   ],
+   "title": "Communication with CAN bus",
+   "module": "valid for all s"
+  },
+  {
+   "fullCode": "U140000",
+   "base": "U1400",
+   "source": "982_boxster",
+   "pages": [
+    4934
+   ],
+   "title": "U140000 Function restriction due to undervoltage",
+   "module": "DME control module"
+  },
+  {
+   "fullCode": "U140100",
+   "base": "U1401",
+   "source": "982_boxster",
+   "pages": [
+    4935
+   ],
+   "title": "U140100 Function restriction due to overvoltage",
+   "module": "DME control module"
+  },
+  {
+   "fullCode": "U171000",
+   "base": "U1710",
+   "source": "982_boxster",
+   "pages": [
+    5202
+   ],
+   "title": "Communication with control unit not possible",
+   "module": "CAN"
+  },
+  {
+   "fullCode": "U171300",
+   "base": "U1713",
+   "source": "982_boxster",
+   "pages": [
+    5203
+   ],
+   "title": "Communication with control unit not possible",
+   "module": "CAN"
+  },
+  {
+   "fullCode": "U171400",
+   "base": "U1714",
+   "source": "982_boxster",
+   "pages": [
+    5204
+   ],
+   "title": "Fault entry in the specified control unit",
+   "module": "CAN"
+  },
+  {
+   "fullCode": "U171A00",
+   "base": "U171A",
+   "source": "982_boxster",
+   "pages": [
+    5205
+   ],
+   "title": "Communication with control unit not possible",
+   "module": "CAN"
+  },
+  {
+   "fullCode": "U177000",
+   "base": "U1770",
+   "source": "982_boxster",
+   "pages": [
+    5206
+   ],
+   "title": "Serial communication timeout: selector lever",
+   "module": "PDK"
+  },
+  {
+   "fullCode": "U17A000",
+   "base": "U17A0",
+   "source": "982_boxster",
+   "pages": [
+    5207
+   ],
+   "title": "Communication with control unit not possible",
+   "module": "CAN"
+  },
+  {
+   "fullCode": "U181000",
+   "base": "U1810",
+   "source": "982_boxster",
+   "pages": [
+    5208
+   ],
+   "title": "Fault entry in the specified control unit",
+   "module": "CAN"
+  },
+  {
+   "fullCode": "U187000",
+   "base": "U1870",
+   "source": "982_boxster",
+   "pages": [
+    5209,
+    5210,
+    5213,
+    5214,
+    5215,
+    5217,
+    5219
+   ],
+   "title": "Pressure sensor",
+   "module": "PDCC"
+  }
+ ],
+ "extra_count": 21,
+ "page_attribution_audit": [
+  {
+   "code": "P0301",
+   "need_pages": [
+    3962,
+    3963,
+    3964,
+    4410,
+    4411
+   ],
+   "expect_any": [
+    3962,
+    3963
+   ],
+   "ok": true,
+   "status": "partial-evidence",
+   "n_needs": 35,
+   "title": "检测到缺火 气缸1 气缸2 气缸3 气缸4 气缸5 气缸6 K 导向型故障查找可用䯰"
+  },
+  {
+   "code": "P0571",
+   "need_pages": [
+    4033,
+    4034,
+    4509
+   ],
+   "expect_any": [
+    4033
+   ],
+   "ok": true,
+   "status": "partial-evidence",
+   "n_needs": 11,
+   "title": "制动灯开关- 信号不可靠"
+  },
+  {
+   "code": "P0420",
+   "need_pages": [
+    3999,
+    4465
+   ],
+   "expect_any": [
+    3999
+   ],
+   "ok": true,
+   "status": "partial-evidence",
+   "n_needs": 7,
+   "title": "气缸组1 催化转化器系统- 效果不够"
+  },
+  {
+   "code": "P000A",
+   "need_pages": [
+    3841,
+    4242
+   ],
+   "expect_any": [
+    3841,
+    4242
+   ],
+   "ok": true,
+   "status": "partial-evidence",
+   "n_needs": 8,
+   "title": "气缸组1 进气凸轮轴调节太慢"
+  },
+  {
+   "code": "P0010",
+   "need_pages": [
+    3843,
+    4246
+   ],
+   "expect_any": [],
+   "ok": true,
+   "status": "partial-evidence",
+   "n_needs": 6,
+   "title": "气缸组1 进气凸轮轴调节- 断路"
+  }
+ ],
+ "visually_inspected_not_auto_verified": [
+  "pages/981-fitz-p3841.png",
+  "pages/981-fitz-p3962.png",
+  "pages/981-fitz-p3963.png",
+  "pages/981-fitz-p3999.png",
+  "pages/981-fitz-p4033.png",
+  "pages/982-fitz-p4242.png"
+ ],
+ "elapsed_s": 22.2,
+ "gaps": [
+  "procedure-verified count is 0 by policy until human completes full step pages",
+  "981 continuation after 功能 not treated as checks; other leftover CJK on continuation pages may still truncate (p3963 layout)",
+  "982 pages beyond last Diagnostic information not treated as DME sheets",
+  "cayman letter WM has 033500 only, no per-DTC PIWIS sheets",
+  "982-only applicability to 2014 981 unverified"
+ ]
+}

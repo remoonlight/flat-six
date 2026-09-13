@@ -1,3 +1,17 @@
+import type {
+  AdapterIdentity,
+  AnalysisBatch,
+  AnalysisSelection,
+  ClearReport,
+  EcuChange,
+  EcuIdentity,
+  LiveHeader,
+  ModuleCapability,
+  ObdRuntimeState,
+  ObdRun,
+  ObdScenario,
+  ScanSnapshot,
+} from "@porsche981/domain";
 export type Vehicle = {
   id: number;
   year: number;
@@ -377,7 +391,42 @@ export type FxTable = {
   rates_to_cny: Record<string, number>;
 };
 
+export type ObdLiveSnapshot = {
+  mock: boolean;
+  op: string | null;
+  selected: AdapterIdentity | null;
+  header: LiveHeader;
+  lastScan: ScanSnapshot | null;
+  capabilities: ModuleCapability[];
+  adapterConnected: boolean;
+  vehicleCommunicating: boolean;
+};
+
 export type PorscheApi = {
+  obdGetState: () => Promise<ObdRuntimeState>;
+  obdStartSimulation: (input: { scenario: ObdScenario; budgetMs: number }) => Promise<ObdRuntimeState>;
+  obdStop: () => Promise<ObdRuntimeState>;
+  obdListRuns: () => Promise<ObdRun[]>;
+  obdReplay: (id: number) => Promise<ObdRuntimeState>;
+  obdExport: (id: number) => Promise<{ saved: boolean }>;
+  obdLive: () => Promise<ObdLiveSnapshot>;
+  obdListAdapters: () => Promise<AdapterIdentity[]>;
+  obdSelectAdapter: (a: AdapterIdentity) => Promise<AdapterIdentity>;
+  obdConnect: () => Promise<ObdLiveSnapshot>;
+  obdDisconnect: () => Promise<ObdLiveSnapshot>;
+  obdPollStatus: () => Promise<LiveHeader>;
+  obdScanFaults: () => Promise<ScanSnapshot>;
+  obdClearDtcs: () => Promise<ClearReport>;
+  obdListEcus: () => Promise<EcuIdentity[]>;
+  obdListSavedVehicles: () => Promise<string[]>;
+  obdGetSavedVehicle: () => Promise<string | null>;
+  obdSetSavedVehicle: (vehicleKey: string | null) => Promise<string | null>;
+  obdListSavedEcus: (vehicleKey: string) => Promise<EcuIdentity[]>;
+  obdListChanges: (vehicleKey: string) => Promise<EcuChange[]>;
+  obdOpenBluetooth: () => Promise<unknown>;
+  obdReadAnalysis: (selections: AnalysisSelection[]) => Promise<AnalysisBatch>;
+  onObdState: (cb: (state: ObdRuntimeState) => void) => () => void;
+  onObdLive: (cb: (state: ObdLiveSnapshot) => void) => () => void;
   getVehicle: () => Promise<Vehicle>;
   setMileage: (km: number) => Promise<Vehicle>;
   setAvgKmPerDay: (avg: number | null) => Promise<Vehicle>;

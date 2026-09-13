@@ -21,6 +21,8 @@ apps/desktop/dist/
 packages/*/dist/
 .turbo/
 *.tsbuildinfo
+__pycache__/
+*.py[cod]
 
 # PETKA EPC 明文导出（本机权威；体积大、勿提交目录正文）
 data/seed/petka/plaintext-archive/*

@@ -23,6 +23,8 @@ if (!dbPath) {
 }
 
 const garage = new GarageDb(dbPath);
+// A restarted bridge never silently resumes an old acquisition.
+garage.obd.recover();
 
 function loadJson(rel) {
   return JSON.parse(
@@ -170,6 +172,12 @@ const handlers = {
   "obdSessions:create": (input) => garage.createObdSession(input ?? {}),
   "obdDtcs:add": (input) => garage.addObdDtc(input),
   "obdDtcs:list": (sessionId) => garage.listObdDtcs(Number(sessionId)),
+  "obdRuns:begin": (input) => garage.obd.begin(input),
+  "obdRuns:append": ({ sessionId, observation }) => garage.obd.append(sessionId, observation),
+  "obdRuns:finish": (input) => garage.obd.finish(input),
+  "obdRuns:list": () => garage.obd.list(),
+  "obdRuns:recording": (sessionId) => garage.obd.recording(sessionId),
+  "obdProd:op": ({ op, value }) => garage.obd.productionOp(op, value ?? {}),
   "coding:menu": () => {
     try {
       return loadJson("x431/981-2014-coding-menu.json");

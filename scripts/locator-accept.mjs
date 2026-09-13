@@ -3,12 +3,15 @@
  */
 import { spawn } from "node:child_process";
 import readline from "node:readline";
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "..");
-const dbPath = path.join(root, ".local", "garage.db");
+// This suite inserts service history; keep it out of the user's garage database.
+const dbPath = path.join(root, ".local", "locator-accept.db");
+if (fs.existsSync(dbPath)) fs.unlinkSync(dbPath);
 
 const child = spawn("node", ["apps/desktop/electron/db-bridge.mjs"], {
   cwd: root,

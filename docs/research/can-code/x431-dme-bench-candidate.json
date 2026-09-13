@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "purpose": "offline review of a no-vehicle X431 trace",
+  "executable": false,
+  "productionReady": false,
+  "sourceSha256": "dec73b39dcf066091bc544256f639e2716d6d0d64b174975664aced047495198",
+  "eventCount": 75,
+  "traceErrors": 0,
+  "vciCallCount": 24,
+  "diagnosticRequests": [
+    {
+      "sourceSeq": 39,
+      "encodedAddress": "FC 00",
+      "candidateCanId": "0x7E0",
+      "addressInterpretation": "SJA1000-style 11-bit packing hypothesis; not bus-verified",
+      "isoTpSingleFrame": "02 10 89 AA AA AA AA AA",
+      "diagnosticPayload": "10 89",
+      "durationMs": 550,
+      "vciReturnInt": 2,
+      "vciReturnBytes": "FF 02",
+      "ecuResponseStatus": "not decoded or validated by this extractor"
+    },
+    {
+      "sourceSeq": 41,
+      "encodedAddress": "FC 00",
+      "candidateCanId": "0x7E0",
+      "addressInterpretation": "SJA1000-style 11-bit packing hypothesis; not bus-verified",
+      "isoTpSingleFrame": "02 10 89 AA AA AA AA AA",
+      "diagnosticPayload": "10 89",
+      "durationMs": 654,
+      "vciReturnInt": 2,
+      "vciReturnBytes": "FF 02",
+      "ecuResponseStatus": "not decoded or validated by this extractor"
+    },
+    {
+      "sourceSeq": 69,
+      "encodedAddress": "FC 00",
+      "candidateCanId": "0x7E0",
+      "addressInterpretation": "SJA1000-style 11-bit packing hypothesis; not bus-verified",
+      "isoTpSingleFrame": "02 3E 00 AA AA AA AA AA",
+      "diagnosticPayload": "3E 00",
+      "durationMs": 556,
+      "vciReturnInt": 2,
+      "vciReturnBytes": "FF 02",
+      "ecuResponseStatus": "not decoded or validated by this extractor"
+    },
+    {
+      "sourceSeq": 71,
+      "encodedAddress": "FC 00",
+      "candidateCanId": "0x7E0",
+      "addressInterpretation": "SJA1000-style 11-bit packing hypothesis; not bus-verified",
+      "isoTpSingleFrame": "03 22 F1 9E AA AA AA AA",
+      "diagnosticPayload": "22 F1 9E",
+      "durationMs": 611,
+      "vciReturnInt": 2,
+      "vciReturnBytes": "FF 02",
+      "ecuResponseStatus": "not decoded or validated by this extractor"
+    },
+    {
+      "sourceSeq": 73,
+      "encodedAddress": "FC 00",
+      "candidateCanId": "0x7E0",
+      "addressInterpretation": "SJA1000-style 11-bit packing hypothesis; not bus-verified",
+      "isoTpSingleFrame": "03 22 F1 9E AA AA AA AA",
+      "diagnosticPayload": "22 F1 9E",
+      "durationMs": 588,
+      "vciReturnInt": 2,
+      "vciReturnBytes": "FF 02",
+      "ecuResponseStatus": "not decoded or validated by this extractor"
+    }
+  ],
+  "receiveFilterCandidates": [
+    {
+      "sourceSeq": 27,
+      "encodedAddress": "FD 00",
+      "candidateCanId": "0x7E8",
+      "status": "candidate receive filter; not bus-verified"
+    },
+    {
+      "sourceSeq": 57,
+      "encodedAddress": "FD 00",
+      "candidateCanId": "0x7E8",
+      "status": "candidate receive filter; not bus-verified"
+    }
+  ],
+  "bitRate": null,
+  "obdPins": null,
+  "vehicleResponse": null,
+  "limitations": [
+    "Function buffers are app-to-VCI traffic, not a CAN bus capture.",
+    "A VCI return length or status is not proof of an ECU response.",
+    "The address packing remains a hypothesis; parameter value 03 has no verified bit-rate mapping.",
+    "Observed requests are evidence, not an approved replay sequence."
+  ]
+}

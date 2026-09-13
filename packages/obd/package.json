@@ -1,0 +1,9 @@
+{
+  "name": "@porsche981/obd",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": "./src/engine.mjs",
+  "dependencies": { "@porsche981/domain": "*" },
+  "scripts": { "test": "node --test src/*.test.mjs" }
+}

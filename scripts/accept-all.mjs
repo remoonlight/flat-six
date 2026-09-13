@@ -20,6 +20,7 @@ const jobs = [
   { id: "wiring", kind: "core", script: "scripts/wiring-accept.mjs" },
   { id: "coding", kind: "core", script: "scripts/coding-accept.mjs" },
   { id: "obd-phase1", kind: "core", script: "scripts/obd-phase1-accept.mjs" },
+  { id: "obd-offline", kind: "core", script: "scripts/obd-offline-accept.mjs" },
   { id: "ploc2", kind: "core", script: "scripts/ploc2-accept.mjs" },
   { id: "p0", kind: "extra", script: "scripts/p0-accept.mjs" },
   { id: "p123", kind: "extra", script: "scripts/p123-accept.mjs" },

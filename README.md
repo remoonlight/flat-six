@@ -36,19 +36,21 @@ git checkout porsche981
 
 ## 它是什么
 
-面向 **2014 Porsche Boxster S（981）PDK** 的本机 Windows Electron 车库：零件浏览、保养、只读 OBD、车辆设置和 3D 定位。
+面向 **2014 Porsche Boxster S（981）PDK** 的本机 Windows Electron 车库：零件浏览、保养、OBD 诊断、车辆设置和 3D 定位。
 
 所有数据和数据库均在本机，无云服务、无账号。开发数据库路径是 `.local/garage.db`。
 
 ## 使用边界
 
-- OBD、诊断和车辆设置均为**只读**，不会写入 ECU。
+- OBD 以读取为主；明确支持范围内的故障码清除是唯一写操作例外，执行前留证、执行后复读。设码和 X431 页面用于参考与记录，不发送编码或刷写指令。详见 [操作边界](docs/adr/001-no-ecu-write.md)。
 - 仅在本机 Windows + SQLite 运行。
 - 不解析 PETKA `DATA\PO` 或 `.zgd` 文件。
 - 界面价格统一折算为 CNY；teile / Design911 价格不等于 PETKA 已核价格。
 - flat-six 与 PETKA 模型 GLB 已随仓库提供；CMS 991 抠模只可保留在本机，产品不使用 991 车身。
 
 ## 给开发者
+
+实时 OBD 的使用方法、当前覆盖和实车待验证项见 [使用说明](docs/obd-live-guide.md)。故障勾选后可进入数据分析；981/982 统一知识库的收录量不代表本车读取支持量。完整文档入口见 [docs/README.md](docs/README.md)。
 
 在仓库根目录运行：
 

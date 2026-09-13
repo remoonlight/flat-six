@@ -1,4 +1,5 @@
-import { app, BrowserWindow, ipcMain, shell } from "electron";
+import { app, BrowserWindow, ipcMain, shell, dialog } from "electron";
+import { createObdController } from "./obd-controller.mjs";
 
 import { spawn } from "node:child_process";
 
@@ -99,6 +100,21 @@ function call(method, params) {
   return bridgeCtrl.call(method, params);
 
 }
+
+const obdCtrl = createObdController({
+  dbCall: call,
+  publish: (state) => {
+    for (const win of BrowserWindow.getAllWindows()) {
+      if (!win.isDestroyed()) win.webContents.send("obd:state", state);
+    }
+  },
+  publishLive: (state) => {
+    for (const win of BrowserWindow.getAllWindows()) {
+      if (!win.isDestroyed()) win.webContents.send("obd:live", state);
+    }
+  },
+  openBluetooth: () => shell.openExternal("ms-settings:bluetooth"),
+});
 
 
 
@@ -255,12 +271,15 @@ function createWindow() {
 
   const smokeOut = process.env.PORSCHE981_VISUAL_SMOKE || "";
   const win = new BrowserWindow({
+    show: process.env.PORSCHE981_OBD_SMOKE !== "1",
 
     width: 1280,
 
     height: 840,
 
     webPreferences: {
+
+      ...(process.env.PORSCHE981_OBD_SMOKE === "1" ? { offscreen: true, backgroundThrottling: false } : {}),
 
       preload: path.join(__dirname, "preload.cjs"),
 
@@ -408,6 +427,43 @@ function registerIpc() {
 
   ipcMain.handle("db-bridge:status", () => bridgeCtrl.getStatus());
 
+  const obdHandlers = {
+    "obd:getState": () => obdCtrl.getState(),
+    "obd:startSimulation": (input) => obdCtrl.start(input),
+    "obd:stop": () => obdCtrl.stop(),
+    "obd:listRuns": () => obdCtrl.list(),
+    "obd:replay": (id) => obdCtrl.replay(id),
+    "obd:export": async (id) => {
+      const recording = await obdCtrl.recording(id);
+      const chosen = await dialog.showSaveDialog({ title: "导出模拟采集记录", defaultPath: `obd-simulation-${recording.run.sessionId}.json`, filters: [{ name: "OBD 记录", extensions: ["json"] }] });
+      if (chosen.canceled || !chosen.filePath) return { saved: false };
+      await fs.promises.writeFile(chosen.filePath, JSON.stringify(recording, null, 2), "utf8");
+      return { saved: true };
+    },
+    "obd:live": () => obdCtrl.production.snapshot(),
+    "obd:listAdapters": () => obdCtrl.production.listAdapters(),
+    "obd:selectAdapter": (a) => obdCtrl.production.selectAdapter(a),
+    "obd:connect": () => obdCtrl.production.connect(),
+    "obd:disconnect": () => obdCtrl.production.disconnect(),
+    "obd:pollStatus": () => obdCtrl.production.pollStatus(),
+    "obd:scanFaults": () => obdCtrl.production.scanFaults(),
+    "obd:clearDtcs": () => obdCtrl.production.clearDtcs(),
+    "obd:listEcus": () => obdCtrl.production.listEcus(),
+    "obd:listSavedVehicles": () => obdCtrl.production.listSavedVehicles(),
+    "obd:getSavedVehicle": () => obdCtrl.production.getSavedVehicle(),
+    "obd:setSavedVehicle": (vehicleKey) => obdCtrl.production.setSavedVehicle(vehicleKey),
+    "obd:listSavedEcus": (vehicleKey) => obdCtrl.production.listSavedEcus(vehicleKey),
+    "obd:listChanges": (vehicleKey) => obdCtrl.production.listChanges(vehicleKey),
+    "obd:openBluetooth": () => obdCtrl.production.openBluetooth(),
+    "obd:readAnalysis": (selections) => obdCtrl.production.readAnalysis(selections),
+  };
+  for (const [channel, handler] of Object.entries(obdHandlers)) {
+    ipcMain.handle(channel, (event, input) => {
+      if (!BrowserWindow.fromWebContents(event.sender) || event.senderFrame !== event.sender.mainFrame) throw new Error("obd_invalid_sender");
+      return handler(input);
+    });
+  }
+
 
 
   ipcMain.handle("wiring:index", () => loadWiringIndex());
@@ -524,7 +580,9 @@ app.whenReady().then(() => {
 
 
 
-app.on("window-all-closed", () => {
+app.on("window-all-closed", async () => {
+
+  await obdCtrl.shutdown();
 
   bridgeCtrl.stop();
 
@@ -532,4 +590,10 @@ app.on("window-all-closed", () => {
 
 });
 
-
+let obdQuitReady = false;
+app.on("before-quit", (event) => {
+  if (obdQuitReady) return;
+  event.preventDefault();
+  obdQuitReady = true;
+  obdCtrl.shutdown().finally(() => { bridgeCtrl.stop(); app.quit(); });
+});

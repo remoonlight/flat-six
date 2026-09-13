@@ -1,6 +1,38 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("porsche981", {
+  obdGetState: () => ipcRenderer.invoke("obd:getState"),
+  obdStartSimulation: (input) => ipcRenderer.invoke("obd:startSimulation", input),
+  obdStop: () => ipcRenderer.invoke("obd:stop"),
+  obdListRuns: () => ipcRenderer.invoke("obd:listRuns"),
+  obdReplay: (id) => ipcRenderer.invoke("obd:replay", id),
+  obdExport: (id) => ipcRenderer.invoke("obd:export", id),
+  obdLive: () => ipcRenderer.invoke("obd:live"),
+  obdListAdapters: () => ipcRenderer.invoke("obd:listAdapters"),
+  obdSelectAdapter: (a) => ipcRenderer.invoke("obd:selectAdapter", a),
+  obdConnect: () => ipcRenderer.invoke("obd:connect"),
+  obdDisconnect: () => ipcRenderer.invoke("obd:disconnect"),
+  obdPollStatus: () => ipcRenderer.invoke("obd:pollStatus"),
+  obdScanFaults: () => ipcRenderer.invoke("obd:scanFaults"),
+  obdClearDtcs: () => ipcRenderer.invoke("obd:clearDtcs"),
+  obdListEcus: () => ipcRenderer.invoke("obd:listEcus"),
+  obdListSavedVehicles: () => ipcRenderer.invoke("obd:listSavedVehicles"),
+  obdGetSavedVehicle: () => ipcRenderer.invoke("obd:getSavedVehicle"),
+  obdSetSavedVehicle: (vehicleKey) => ipcRenderer.invoke("obd:setSavedVehicle", vehicleKey),
+  obdListSavedEcus: (vehicleKey) => ipcRenderer.invoke("obd:listSavedEcus", vehicleKey),
+  obdListChanges: (vehicleKey) => ipcRenderer.invoke("obd:listChanges", vehicleKey),
+  obdOpenBluetooth: () => ipcRenderer.invoke("obd:openBluetooth"),
+  obdReadAnalysis: (selections) => ipcRenderer.invoke("obd:readAnalysis", selections),
+  onObdState: (cb) => {
+    const handler = (_e, state) => cb(state);
+    ipcRenderer.on("obd:state", handler);
+    return () => ipcRenderer.removeListener("obd:state", handler);
+  },
+  onObdLive: (cb) => {
+    const handler = (_e, state) => cb(state);
+    ipcRenderer.on("obd:live", handler);
+    return () => ipcRenderer.removeListener("obd:live", handler);
+  },
   getVehicle: () => ipcRenderer.invoke("vehicle:get"),
   setMileage: (km) => ipcRenderer.invoke("vehicle:setMileage", km),
   setAvgKmPerDay: (avg) => ipcRenderer.invoke("vehicle:setAvgKmPerDay", avg),

@@ -1,6 +1,7 @@
 import { DatabaseSync } from "node:sqlite";
 import fs from "node:fs";
 import path from "node:path";
+import { ObdStore } from "./obd-store.js";
 import {
   applyMileageSet,
   computeInterval,
@@ -348,6 +349,7 @@ export type SeedPayload = {
 
 export class GarageDb {
   readonly db: DatabaseSync;
+  readonly obd: ObdStore;
 
   constructor(dbPath: string) {
     const dir = path.dirname(dbPath);
@@ -358,6 +360,7 @@ export class GarageDb {
     this.ensurePartsColumns();
     this.migrateAftermarketQuotes();
     this.ensureVehicle();
+    this.obd = new ObdStore(this.db);
   }
 
   private ensurePartsColumns() {
@@ -985,7 +988,7 @@ export class GarageDb {
 
   listObdSessions(): ObdSession[] {
     return this.db
-      .prepare("SELECT * FROM obd_sessions ORDER BY started_at DESC, id DESC")
+      .prepare("SELECT * FROM obd_sessions WHERE id NOT IN (SELECT session_id FROM obd_acquisitions) ORDER BY started_at DESC, id DESC")
       .all() as ObdSession[];
   }
 
