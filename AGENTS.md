@@ -22,7 +22,7 @@ Windows 本地 Electron 车库：**2014 Boxster S（981）PDK**。无云、无�
 
 ## 硬边界（详见 ADR）
 
-1. **不写 ECU**（设码/OBD 只读）— `docs/adr/001-no-ecu-write.md`
+1. **诊断与独立设码按阶段实施**：2026-09-27 用户明确要求逆向故障码、数据定义和隐藏功能，最终由项目经 vLinker 独立通信。允许离线协议/设码定义研究；当前可执行范围为已定义的只读诊断与具名 981 DME/Gateway 的受限清故障码，独立实车验证仍待完成。设码及其他写入逐功能建立身份匹配、原值备份、写入/回读与恢复方案后单独验证；不得猜测或重放未知写指令 — `docs/adr/001-no-ecu-write.md`
 2. **产品仅 Windows + SQLite**；macOS 仅开发运行 — `docs/adr/002-local-only-windows.md`
 3. **PETKA GUI 默认禁止**；仅当用户本会话明示授权 — `docs/adr/003-petka-gui-explicit-only.md`
 4. **CMS 抠模仅本机**；产品不用 991 车身 — `docs/adr/004-cms-rip-local-only.md`

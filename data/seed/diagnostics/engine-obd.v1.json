@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "liveVerified": false,
+  "evidenceStatus": "standard-obd-unverified-on-vehicle",
+  "profileId": "porsche-981-2014-dme",
+  "pair": { "txId": "7E0", "rxId": "7E8" },
+  "supportQuery": {
+    "requestHex": "0100",
+    "positivePrefixHex": "4100",
+    "responseLen": 6
+  },
+  "pids": [
+    {
+      "pid": "04",
+      "requestHex": "0104",
+      "label": "Calculated engine load",
+      "unit": "%",
+      "responseLen": 3,
+      "formula": "A*100/255"
+    },
+    {
+      "pid": "05",
+      "requestHex": "0105",
+      "label": "Engine coolant temperature",
+      "unit": "C",
+      "responseLen": 3,
+      "formula": "A-40"
+    },
+    {
+      "pid": "0C",
+      "requestHex": "010C",
+      "label": "Engine RPM",
+      "unit": "rpm",
+      "responseLen": 4,
+      "formula": "(256*A+B)/4"
+    },
+    {
+      "pid": "0D",
+      "requestHex": "010D",
+      "label": "Vehicle speed",
+      "unit": "km/h",
+      "responseLen": 3,
+      "formula": "A"
+    },
+    {
+      "pid": "0F",
+      "requestHex": "010F",
+      "label": "Intake air temperature",
+      "unit": "C",
+      "responseLen": 3,
+      "formula": "A-40"
+    },
+    {
+      "pid": "11",
+      "requestHex": "0111",
+      "label": "Throttle position",
+      "unit": "%",
+      "responseLen": 3,
+      "formula": "A*100/255"
+    }
+  ],
+  "options": {
+    "sampleCycles": { "min": 1, "max": 10, "default": 5 },
+    "intervalMs": { "min": 500, "max": 5000, "default": 1000 }
+  },
+  "sources": [
+    "https://python-obd.readthedocs.io/en/latest/Command%20Tables/",
+    "https://github.com/brendan-w/python-OBD/tree/master/obd"
+  ],
+  "note": "Standard Mode 01 definitions are not evidence that this 981 DME supports them. Do not query PID 0120 or other support groups."
+}

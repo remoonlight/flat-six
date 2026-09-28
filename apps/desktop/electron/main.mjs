@@ -33,6 +33,12 @@ import {
   removeModelOemLink,
   upsertModelOemLink,
 } from "./model-oem-links.mjs";
+import { handleOfflineDiagnostics } from "./offline-diagnostics.mjs";
+import {
+  SESSION_CHANNEL,
+  createReadOnlySessionManager,
+} from "./read-only-session.mjs";
+import { CONNECTION_CHANNEL, attachSessionHandoff, createObdConnectionManager, createTransportGate } from "./obd-connection.mjs";
 
 
 
@@ -69,6 +75,20 @@ function broadcastBridgeStatus(status) {
 }
 
 
+
+const transportGate = createTransportGate();
+const connMgr = createObdConnectionManager({ repoRoot, gate: transportGate });
+const sessionMgr = attachSessionHandoff(
+  connMgr,
+  createReadOnlySessionManager({
+    repoRoot,
+    gate: transportGate,
+    getLiveDeviceId: () => connMgr.selectedId(),
+    onSessionEnded: () => {
+      void connMgr.resumeAfterSession();
+    },
+  }),
+);
 
 const bridgeCtrl = createBridgeController({
 
@@ -259,6 +279,8 @@ function createWindow() {
     width: 1280,
 
     height: 840,
+
+    show: process.env.PORSCHE981_HEADLESS !== "1",
 
     webPreferences: {
 
@@ -493,6 +515,24 @@ function registerIpc() {
       payload?.assemblyId,
     ),
   );
+  ipcMain.handle("diagnostics:offline", (_e, request) =>
+    handleOfflineDiagnostics(request, {
+      repoRoot,
+      variantsPath: process.env.PORSCHE981_VARIANTS || undefined,
+    }),
+  );
+
+  ipcMain.handle(SESSION_CHANNEL, async (e, request) => {
+    const out = await sessionMgr.handle(request, { ownerId: e.sender.id });
+    if (request?.action === "overview" && out?.ok) {
+      const v = connMgr.voltageView();
+      return { ...out, ...v, voltageLabel: connMgr.snapshot().voltageLabel };
+    }
+    return out;
+  });
+
+  ipcMain.handle(CONNECTION_CHANNEL, (_e, request) => connMgr.handle(request));
+
   ipcMain.handle("modelOem:catalog", async () => {
     const scene = await listGarageXrayLayers();
     return listGarageModelCatalog({
@@ -522,6 +562,19 @@ app.whenReady().then(() => {
 
 });
 
+app.on("web-contents-created", (_e, contents) => {
+  contents.once("destroyed", () => {
+    sessionMgr.cancelOwned(contents.id);
+  });
+});
+
+let sessionQuitting = false;
+app.on("before-quit", (e) => {
+  if (sessionQuitting) return;
+  e.preventDefault();
+  sessionQuitting = true;
+  Promise.allSettled([sessionMgr.shutdown(), connMgr.shutdown()]).finally(() => app.quit());
+});
 
 
 app.on("window-all-closed", () => {

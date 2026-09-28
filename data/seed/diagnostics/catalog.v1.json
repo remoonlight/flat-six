@@ -1,0 +1,377 @@
+{
+  "schemaVersion": 1,
+  "evidenceStatusNote": "observed-x431-capture is not independently-verified-vlinker. Public docs/research/can-data/diagnostic/definitions.json is reference only.",
+  "adapterBinding": {
+    "vlinkerMac": "0425E85BD4CB",
+    "baud": 115200,
+    "notes": "Enumerate by MAC in serial hwid. Do not select COM9 by name alone."
+  },
+  "profiles": [
+    {
+      "id": "porsche-981-2014-dme",
+      "model": "981",
+      "year": 2014,
+      "yearQualifier": "X431 label Boxster GTS 2014; project vehicle is Boxster S PDK. Address pair is this capture, not a universal DME map.",
+      "ecu": "DME",
+      "txId": "7E0",
+      "rxId": "7E8",
+      "bitrate": 500000,
+      "transport": {
+        "kind": "iso-15765-2-normal-addressing",
+        "idType": "11-bit",
+        "bitrate": 500000
+      },
+      "identityConstraints": {
+        "dsn": "P200",
+        "software": "W06C30C1348CD1L",
+        "hardware": "H04",
+        "porschePart": "98161864015",
+        "hardwarePart": "99161860203",
+        "vinBound": false
+      },
+      "coding": {
+        "enabled": false,
+        "executable": false,
+        "payloads": null,
+        "menuTextIsNotProtocol": true,
+        "notes": "No coding bytes observed as a project write sequence. X431 menu text is not protocol."
+      },
+      "operations": [
+        {
+          "id": "dme-dsn",
+          "label": "DSN",
+          "liveAllowed": true,
+          "serviceFamily": "kwp-2000-like",
+          "requestHex": "1A9F",
+          "positivePrefixHex": "5A9F",
+          "decode": { "type": "ascii", "offset": 2, "length": 4, "unit": null },
+          "expectedValue": "P200",
+          "evidenceStatus": "observed-x431-capture",
+          "provenance": {
+            "runId": "20260926-233624-327076",
+            "framesSha256": "89CC9714D1F83C8804D5C0760C9116F7370A2B4EA6E4E148C7F2FE16960C41E4",
+            "frameIndices": [54, 55]
+          }
+        },
+        {
+          "id": "dme-software",
+          "label": "software",
+          "liveAllowed": true,
+          "serviceFamily": "kwp-2000-like",
+          "requestHex": "1A95",
+          "positivePrefixHex": "5A95",
+          "decode": { "type": "ascii", "offset": 2, "length": 15, "unit": null },
+          "expectedValue": "W06C30C1348CD1L",
+          "evidenceStatus": "observed-x431-capture",
+          "provenance": {
+            "runId": "20260926-233624-327076",
+            "framesSha256": "89CC9714D1F83C8804D5C0760C9116F7370A2B4EA6E4E148C7F2FE16960C41E4",
+            "frameIndices": [56, 57, 59, 60]
+          }
+        },
+        {
+          "id": "dme-hardware",
+          "label": "hardware",
+          "liveAllowed": true,
+          "serviceFamily": "kwp-2000-like",
+          "requestHex": "1A93",
+          "positivePrefixHex": "5A93",
+          "decode": { "type": "ascii", "offset": 2, "length": 3, "unit": null },
+          "expectedValue": "H04",
+          "evidenceStatus": "observed-x431-capture",
+          "provenance": {
+            "runId": "20260926-233624-327076",
+            "framesSha256": "89CC9714D1F83C8804D5C0760C9116F7370A2B4EA6E4E148C7F2FE16960C41E4",
+            "frameIndices": [68, 69]
+          }
+        },
+        {
+          "id": "dme-porsche-part",
+          "label": "Porsche part number",
+          "liveAllowed": true,
+          "serviceFamily": "kwp-2000-like",
+          "requestHex": "1A87",
+          "positivePrefixHex": "5A87",
+          "decode": { "type": "ascii", "offset": 2, "length": 11, "unit": null },
+          "expectedValue": "98161864015",
+          "evidenceStatus": "observed-x431-capture",
+          "provenance": {
+            "runId": "20260926-233624-327076",
+            "framesSha256": "89CC9714D1F83C8804D5C0760C9116F7370A2B4EA6E4E148C7F2FE16960C41E4",
+            "frameIndices": [70, 71, 73]
+          }
+        },
+        {
+          "id": "dme-hardware-part",
+          "label": "hardware part number",
+          "liveAllowed": true,
+          "serviceFamily": "kwp-2000-like",
+          "requestHex": "1A91",
+          "positivePrefixHex": "5A91",
+          "decode": { "type": "ascii", "offset": 2, "length": 11, "unit": null },
+          "expectedValue": "99161860203",
+          "evidenceStatus": "observed-x431-capture",
+          "provenance": {
+            "runId": "20260926-233624-327076",
+            "framesSha256": "89CC9714D1F83C8804D5C0760C9116F7370A2B4EA6E4E148C7F2FE16960C41E4",
+            "frameIndices": [81, 82, 84]
+          }
+        },
+        {
+          "id": "dme-vin",
+          "label": "VIN",
+          "liveAllowed": true,
+          "serviceFamily": "kwp-2000-like",
+          "requestHex": "1A90",
+          "positivePrefixHex": "5A90",
+          "decode": { "type": "vin-ascii", "offset": 2, "length": 17, "unit": null },
+          "expectedValue": null,
+          "evidenceStatus": "observed-x431-capture",
+          "provenance": {
+            "runId": "20260926-233624-327076",
+            "framesSha256": "89CC9714D1F83C8804D5C0760C9116F7370A2B4EA6E4E148C7F2FE16960C41E4",
+            "frameIndices": [87, 88, 90, 91]
+          }
+        },
+        {
+          "id": "dme-dtc",
+          "label": "stored DTC (KWP 18)",
+          "liveAllowed": true,
+          "serviceFamily": "kwp-2000-like",
+          "requestHex": "1800FF00",
+          "positivePrefixHex": "58",
+          "observedPositivePrefixHex": "5802",
+          "decode": {
+            "type": "kwp-dtc-18",
+            "offset": 1,
+            "length": null,
+            "unit": null,
+            "observedCatalog": {
+              "C447": {
+                "displayCode": "U0447",
+                "text": "检查网关控制单元故障记忆内容",
+                "statusHex": "28",
+                "statusText": "信号异常",
+                "source": "x431-diagnosing-2026-09-26"
+              },
+              "C412": {
+                "displayCode": "U0412",
+                "text": "检查网关控制单元故障记忆内容",
+                "statusHex": "21",
+                "statusText": "超出极限值",
+                "source": "x431-diagnosing-2026-09-26"
+              }
+            }
+          },
+          "expectedValue": "C44728 C41221",
+          "notes": "Retain raw C447/C412 and status 28/21. Display SAE-mapped U0447/U0412 plus X431 observed text/status for these exact codes. Do not invent generic manufacturer status bits.",
+          "observedPrecedingSessionHex": "1089",
+          "sessionRequired": false,
+          "evidenceStatus": "observed-x431-capture",
+          "provenance": {
+            "runId": "20260926-233624-327076",
+            "framesSha256": "89CC9714D1F83C8804D5C0760C9116F7370A2B4EA6E4E148C7F2FE16960C41E4",
+            "frameIndices": [170, 171, 173]
+          }
+        }
+      ]
+    },
+    {
+      "id": "porsche-981-2014-gateway",
+      "model": "981",
+      "year": 2014,
+      "yearQualifier": "Same 2014 capture session as DME. 0x710/0x77A is this gateway, not a universal map.",
+      "ecu": "Gateway",
+      "txId": "710",
+      "rxId": "77A",
+      "bitrate": 500000,
+      "transport": {
+        "kind": "iso-15765-2-normal-addressing",
+        "idType": "11-bit",
+        "bitrate": 500000
+      },
+      "identityConstraints": {
+        "dsn": "A7.1",
+        "system": "zentr Gateway",
+        "identification": "CAN/CAN Gateway",
+        "porschePart": "95B907530N",
+        "hardwarePart": "95B907530N",
+        "hardware": "430",
+        "dataRecord": "40222051",
+        "vinBound": false
+      },
+      "coding": {
+        "enabled": false,
+        "executable": false,
+        "payloads": null,
+        "menuTextIsNotProtocol": true,
+        "notes": "No coding bytes observed as a project write sequence. X431 menu text is not protocol."
+      },
+      "operations": [
+        {
+          "id": "gw-part-f187",
+          "label": "Porsche part number",
+          "liveAllowed": true,
+          "serviceFamily": "uds-like",
+          "requestHex": "22F187",
+          "positivePrefixHex": "62F187",
+          "decode": { "type": "ascii", "offset": 3, "length": 11, "unit": null },
+          "expectedValue": "95B907530N",
+          "evidenceStatus": "observed-x431-capture",
+          "provenance": {
+            "runId": "20260926-234115-903227",
+            "framesSha256": "D11AFF7542A902750EEA278A4D431D1202BF8A55521C325A42EF8E2CE3A89273",
+            "frameIndices": [60, 61, 63, 64]
+          }
+        },
+        {
+          "id": "gw-hw-part-f191",
+          "label": "hardware part number",
+          "liveAllowed": true,
+          "serviceFamily": "uds-like",
+          "requestHex": "22F191",
+          "positivePrefixHex": "62F191",
+          "decode": { "type": "ascii", "offset": 3, "length": 11, "unit": null },
+          "expectedValue": "95B907530N",
+          "evidenceStatus": "observed-x431-capture",
+          "provenance": {
+            "runId": "20260926-234115-903227",
+            "framesSha256": "D11AFF7542A902750EEA278A4D431D1202BF8A55521C325A42EF8E2CE3A89273",
+            "frameIndices": [122, 123, 125, 126]
+          }
+        },
+        {
+          "id": "gw-dsn-f1a2",
+          "label": "DSN",
+          "liveAllowed": true,
+          "serviceFamily": "uds-like",
+          "requestHex": "22F1A2",
+          "positivePrefixHex": "62F1A2",
+          "decode": { "type": "ascii", "offset": 3, "length": 4, "unit": null },
+          "expectedValue": "A7.1",
+          "evidenceStatus": "observed-x431-capture",
+          "provenance": {
+            "runId": "20260926-234115-903227",
+            "framesSha256": "D11AFF7542A902750EEA278A4D431D1202BF8A55521C325A42EF8E2CE3A89273",
+            "frameIndices": [2, 3, 5]
+          }
+        },
+        {
+          "id": "gw-system-f197",
+          "label": "system name",
+          "liveAllowed": true,
+          "serviceFamily": "uds-like",
+          "requestHex": "22F197",
+          "positivePrefixHex": "62F197",
+          "decode": { "type": "ascii", "offset": 3, "length": 13, "unit": null },
+          "expectedValue": "zentr Gateway",
+          "evidenceStatus": "observed-x431-capture",
+          "provenance": {
+            "runId": "20260926-234115-903227",
+            "framesSha256": "D11AFF7542A902750EEA278A4D431D1202BF8A55521C325A42EF8E2CE3A89273",
+            "frameIndices": [41, 42, 44, 45]
+          }
+        },
+        {
+          "id": "gw-ident-f19e",
+          "label": "system identification",
+          "liveAllowed": true,
+          "serviceFamily": "uds-like",
+          "requestHex": "22F19E",
+          "positivePrefixHex": "62F19E",
+          "decode": { "type": "ascii", "offset": 3, "length": 16, "unit": null },
+          "expectedValue": "CAN/CAN Gateway",
+          "evidenceStatus": "observed-x431-capture",
+          "provenance": {
+            "runId": "20260926-234115-903227",
+            "framesSha256": "D11AFF7542A902750EEA278A4D431D1202BF8A55521C325A42EF8E2CE3A89273",
+            "frameIndices": [6, 7, 9, 10]
+          }
+        },
+        {
+          "id": "gw-hw-ver-f1a3",
+          "label": "hardware version",
+          "liveAllowed": true,
+          "serviceFamily": "uds-like",
+          "requestHex": "22F1A3",
+          "positivePrefixHex": "62F1A3",
+          "decode": { "type": "ascii", "offset": 3, "length": 3, "unit": null },
+          "expectedValue": "430",
+          "evidenceStatus": "observed-x431-capture",
+          "provenance": {
+            "runId": "20260926-234115-903227",
+            "framesSha256": "D11AFF7542A902750EEA278A4D431D1202BF8A55521C325A42EF8E2CE3A89273",
+            "frameIndices": [70, 71]
+          }
+        },
+        {
+          "id": "gw-data-record-f182",
+          "label": "data record identifier",
+          "liveAllowed": true,
+          "serviceFamily": "uds-like",
+          "requestHex": "22F182",
+          "positivePrefixHex": "62F182",
+          "decode": { "type": "ascii", "offset": 3, "length": 8, "unit": null },
+          "expectedValue": "40222051",
+          "evidenceStatus": "observed-x431-capture",
+          "provenance": {
+            "runId": "20260926-234115-903227",
+            "framesSha256": "D11AFF7542A902750EEA278A4D431D1202BF8A55521C325A42EF8E2CE3A89273",
+            "frameIndices": [72, 73, 75]
+          }
+        },
+        {
+          "id": "gw-vin",
+          "label": "VIN",
+          "liveAllowed": true,
+          "serviceFamily": "uds-like",
+          "requestHex": "22F190",
+          "positivePrefixHex": "62F190",
+          "decode": { "type": "vin-ascii", "offset": 3, "length": 17, "unit": null },
+          "expectedValue": null,
+          "evidenceStatus": "observed-x431-capture",
+          "provenance": {
+            "runId": "20260926-234115-903227",
+            "framesSha256": "D11AFF7542A902750EEA278A4D431D1202BF8A55521C325A42EF8E2CE3A89273",
+            "frameIndices": [50, 51, 53, 54]
+          }
+        },
+        {
+          "id": "gw-dtc",
+          "label": "DTC by status mask (UDS 19 02)",
+          "liveAllowed": true,
+          "serviceFamily": "uds-like",
+          "requestHex": "190208",
+          "positivePrefixHex": "5902",
+          "observedPositivePrefixHex": "590219",
+          "decode": {
+            "type": "uds-dtc-19-02",
+            "offset": 3,
+            "length": null,
+            "unit": null,
+            "observedCatalog": {
+              "C13002": {
+                "displayCode": "C13002",
+                "manufacturerCode": true,
+                "text": "与发电机通信",
+                "statusHex": "09",
+                "statusText": "启用",
+                "source": "x431-diagnosing-2026-09-26"
+              }
+            }
+          },
+          "expectedValue": "C13002 status=09",
+          "notes": "Preserve raw 3-byte manufacturer code C13002 and status 09. Do not map to a U-code. Observed X431 text only for this exact code/status.",
+          "observedPrecedingSessionHex": "1003",
+          "sessionRequired": false,
+          "evidenceStatus": "observed-x431-capture",
+          "provenance": {
+            "runId": "20260926-234115-903227",
+            "framesSha256": "D11AFF7542A902750EEA278A4D431D1202BF8A55521C325A42EF8E2CE3A89273",
+            "frameIndices": [195, 196]
+          }
+        }
+      ]
+    }
+  ]
+}

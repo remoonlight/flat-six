@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "liveVerified": false,
+  "sourceObservedResponse": false,
+  "responseGap": "X431 GetDtcData confirms request wire only. Positive bytes are protocol-reference (Scapy KWP_CDIPR group echo; UDS 14 empty positive), not Porsche vehicle captures or native-branch proof.",
+  "profiles": {
+    "porsche-981-2014-dme": {
+      "liveClearEnabled": true,
+      "requestHex": "14FF00",
+      "expectedPositiveHex": "54FF00",
+      "protocol": "kwp-cdi-16bit-group-echo",
+      "requestLen": 3,
+      "responseLen": 3,
+      "boundVariant": "SDI9_1_981_3_4L_EU5",
+      "positiveReference": "https://github.com/secdev/scapy/blob/master/scapy/contrib/automotive/kwp.py KWP_CDIPR",
+      "evidence": [
+        "data/seed/diagnostics/protocol-inventory.v1.json ecuId 1 clearWireHex 14FF00",
+        "scripts/x431_re/test_sysdata.py eu5 dtcClear wireHex 14FF00"
+      ]
+    },
+    "porsche-981-2014-gateway": {
+      "liveClearEnabled": true,
+      "requestHex": "14FFFFFF",
+      "expectedPositiveHex": "54",
+      "protocol": "uds-14-empty-positive",
+      "requestLen": 4,
+      "responseLen": 1,
+      "boundVariant": "CAN_CAN_Gateway_A7_1",
+      "positiveReference": "https://udsoncan.readthedocs.io/en/latest/_modules/udsoncan/services/ClearDiagnosticInformation.html",
+      "evidence": [
+        "data/seed/diagnostics/protocol-inventory.v1.json CAN_CAN_Gateway_A7_1 clearWireHex 14FFFFFF",
+        "scripts/x431_re/test_sysdata.py a71 dtcClear wireHex 14FFFFFF"
+      ]
+    }
+  }
+}

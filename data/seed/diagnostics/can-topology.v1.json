@@ -1,0 +1,864 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    {
+      "id": "981-wiring",
+      "file": "981.pdf",
+      "modelYear": "2013 (D)",
+      "pages": 62,
+      "sha256": "40e4c38cfbea097edba39e5eca57a4c93d08a489f5248ded9985ba16153dd5bd"
+    },
+    {
+      "id": "982-wiring",
+      "file": "982.pdf",
+      "modelYear": "2017 (H)",
+      "pages": 79,
+      "sha256": "225e241226ea72fddb8c3de3d8fb851b714c2897c768291c2114276ef79dd55f"
+    }
+  ],
+  "generations": [
+    {
+      "id": "981",
+      "label": "981 Boxster",
+      "referenceNote": "2013 年款 (D) Boxster 接线图，供 2014 Boxster S PDK 参考，不是该车 VIN 装车证明。拓扑演示注明仅限左舵。",
+      "diagnostic": {
+        "label": "OBD 诊断 CAN",
+        "high": "X001 A6",
+        "low": "X001 A14",
+        "gatewayHigh": "A010 A19",
+        "gatewayLow": "A010 A9",
+        "sourcePages": [
+          11
+        ]
+      },
+      "gateway": {
+        "id": "gateway",
+        "short": "GW",
+        "label": "网关",
+        "profileId": "porsche-981-2014-gateway",
+        "sourcePages": [
+          11
+        ],
+        "notes": "A010.1 网关控制单元。诊断 CAN 只到 OBD（X001），五条主 CAN 不在标准诊断插座引出。A2 为 LIN 蓄电池传感器，不是 CAN 模块。X998 CAN_VERTEILER 为分配器不是 ECU。"
+      },
+      "branches": [
+        {
+          "id": "drive",
+          "label": "驱动 CAN",
+          "color": "#C62828",
+          "gatewayPins": {
+            "high": "A010 A16",
+            "low": "A010 A6"
+          },
+          "sourcePages": [
+            11,
+            12
+          ],
+          "nodes": [
+            {
+              "id": "dme",
+              "short": "DME",
+              "label": "发动机",
+              "sourcePages": [
+                12,
+                53
+              ],
+              "notes": "拓扑：Y444/Y445 与 Y447/448。图中并列 981 手动变速器 与 981 B6 PDK 变速箱 两路 DME，本种子按 PDK 参考车收录；未断言实车标定。针脚/速率未在拓扑页给出。",
+              "connectionType": "CAN",
+              "profileId": "porsche-981-2014-dme"
+            },
+            {
+              "id": "pdk",
+              "short": "PDK",
+              "label": "PDK 变速器",
+              "sourcePages": [
+                12
+              ],
+              "notes": "Y447/448、TSX90_2 后交叉。图另标 981 手动变速器，已省略为非本参考路径。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "selector",
+              "short": "SEL",
+              "label": "选档杆",
+              "sourcePages": [
+                12
+              ],
+              "notes": "驱动 CAN，与 PDK/DME 同网。适用性随变速器选项。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "airbag",
+              "short": "AB",
+              "label": "安全气囊",
+              "sourcePages": [
+                12
+              ],
+              "notes": "981 拓扑画在驱动 CAN，不在碰撞 CAN。碰撞 CAN 本图仅前照灯。",
+              "connectionType": "CAN"
+            }
+          ]
+        },
+        {
+          "id": "chassis",
+          "label": "底盘 CAN",
+          "color": "#1565C0",
+          "gatewayPins": {
+            "high": "A010 A20",
+            "low": "A010 A10"
+          },
+          "sourcePages": [
+            11,
+            12
+          ],
+          "nodes": [
+            {
+              "id": "psm",
+              "short": "PSM",
+              "label": "PSM",
+              "sourcePages": [
+                12
+              ],
+              "notes": "Y065/066 一带；车内图也标 PSM。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "pasm",
+              "short": "PASM",
+              "label": "PASM",
+              "sourcePages": [
+                12
+              ],
+              "notes": "Y069/070、TSX90_2。图注 981 / 981 B6，选项未断言装车。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "eps",
+              "short": "EPS",
+              "label": "电动转向",
+              "sourcePages": [
+                12
+              ],
+              "notes": "图面「电动转向机」/ TSX45 电动转向，车辆。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "epb",
+              "short": "EPB",
+              "label": "电子驻车",
+              "sourcePages": [
+                12
+              ],
+              "notes": "图注 EPB 控制单元 981。",
+              "connectionType": "CAN"
+            }
+          ]
+        },
+        {
+          "id": "comfort",
+          "label": "舒适性 CAN",
+          "color": "#2E7D32",
+          "gatewayPins": {
+            "high": "A010 A15",
+            "low": "A010 A5"
+          },
+          "sourcePages": [
+            11,
+            12
+          ],
+          "nodes": [
+            {
+              "id": "bcm-front",
+              "short": "BCM-F",
+              "label": "BCM 前部",
+              "sourcePages": [
+                12
+              ],
+              "notes": "YW432/438、TSX4_1。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "bcm-rear",
+              "short": "BCM-R",
+              "label": "BCM 后部",
+              "sourcePages": [
+                12
+              ],
+              "notes": "Y152/153 一带；图注 981 CABRIO 与活顶同区。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "steering-column",
+              "short": "KLS",
+              "label": "转向柱切换模块",
+              "sourcePages": [
+                5,
+                12
+              ],
+              "notes": "S034.1 主键舒适性 CAN（A1 高 / A2 低）。同插头另有底盘 CAN（A5 高 / A6 低），两路独立接口。UI 按同一 ECU 计一次。",
+              "connectionType": "CAN",
+              "additionalBranches": [
+                {
+                  "branchId": "chassis",
+                  "sourcePages": [
+                    5,
+                    12
+                  ],
+                  "notes": "p5 S034.1 A5/A6 底盘 CAN；p12 底盘分栏亦画出该模块。"
+                }
+              ]
+            },
+            {
+              "id": "door-driver",
+              "short": "DOOR-L",
+              "label": "驾驶员侧车门",
+              "sourcePages": [
+                12
+              ],
+              "notes": "TSX11；图注左舵/右舵两套门控，本节点代表左舵演示路径。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "door-passenger",
+              "short": "DOOR-R",
+              "label": "乘客侧车门",
+              "sourcePages": [
+                12
+              ],
+              "notes": "TSX12 / 前部乘客车门控制单元。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "seat-driver",
+              "short": "SEAT-L",
+              "label": "驾驶员座椅",
+              "sourcePages": [
+                12
+              ],
+              "notes": "TSX16。座椅模块常为选项。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "seat-passenger",
+              "short": "SEAT-R",
+              "label": "乘客座椅",
+              "sourcePages": [
+                12
+              ],
+              "notes": "TSX17。座椅模块常为选项。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "roof",
+              "short": "ROOF",
+              "label": "活顶",
+              "sourcePages": [
+                12
+              ],
+              "notes": "活顶控制单元，图注 981 CABRIO。Coupe 不适用。",
+              "connectionType": "CAN"
+            }
+          ]
+        },
+        {
+          "id": "mmi",
+          "label": "MMI CAN",
+          "color": "#6A1B9A",
+          "gatewayPins": {
+            "high": "A010 A18",
+            "low": "A010 A8"
+          },
+          "sourcePages": [
+            11,
+            12
+          ],
+          "nodes": [
+            {
+              "id": "rdk",
+              "short": "RDK",
+              "label": "胎压监测",
+              "sourcePages": [
+                12
+              ],
+              "notes": "YW053/054。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "hvac",
+              "short": "HVAC",
+              "label": "空调",
+              "sourcePages": [
+                12
+              ],
+              "notes": "空调控制单元。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "pcm",
+              "short": "PCM",
+              "label": "PCM / CDR",
+              "sourcePages": [
+                12
+              ],
+              "notes": "图面 PCM / CDR 同一节点，在 MMI CAN。音频附件不在五条主 CAN 拓扑：p34 ASK 放大器、p32 天线放大器、p36 电视调谐器、p62 保险丝总览亦列放大器。未建 MOST 分支。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "can-adapter",
+              "short": "CAN-AD",
+              "label": "CAN 适配器",
+              "sourcePages": [
+                12
+              ],
+              "notes": "MMI 上 CAN 适配器，靠近 PCM/组合仪表。不是诊断地址档案；不要当成独立覆盖菜单系统。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "cluster",
+              "short": "IC",
+              "label": "组合仪表",
+              "sourcePages": [
+                12
+              ],
+              "notes": "Y491/492、TSX4_5。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "clock",
+              "short": "CLK",
+              "label": "秒表",
+              "sourcePages": [
+                12
+              ],
+              "notes": "TSX6_5；图注 981，选项未断言。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "parking",
+              "short": "PDC",
+              "label": "驻车辅助",
+              "sourcePages": [
+                12
+              ],
+              "notes": "拓扑同时写驻车辅助控制单元与 PDC 控制单元，按同一模块收录。",
+              "connectionType": "CAN"
+            }
+          ]
+        },
+        {
+          "id": "crash",
+          "label": "碰撞 CAN",
+          "color": "#EF6C00",
+          "gatewayPins": {
+            "high": "A010 A17",
+            "low": "A010 A7"
+          },
+          "sourcePages": [
+            11,
+            12
+          ],
+          "nodes": [
+            {
+              "id": "headlamp-left",
+              "short": "HL-L",
+              "label": "左侧前照灯",
+              "sourcePages": [
+                12
+              ],
+              "notes": "Y059/060。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "headlamp-right",
+              "short": "HL-R",
+              "label": "右侧前照灯",
+              "sourcePages": [
+                12
+              ],
+              "notes": "Y059/060。",
+              "connectionType": "CAN"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "982",
+      "label": "982 Boxster/Cayman",
+      "referenceNote": "2017 年款 (H) 982 Boxster/Cayman 接线图。图面含跨代 981 标注与未证实选项模块，不是装车清单。拓扑演示注明仅限左舵。",
+      "diagnostic": {
+        "label": "OBD 诊断 CAN",
+        "high": "X001 A6",
+        "low": "X001 A14",
+        "gatewayHigh": "A010 A19",
+        "gatewayLow": "A010 A9",
+        "sourcePages": [
+          12
+        ]
+      },
+      "gateway": {
+        "id": "gateway",
+        "short": "GW",
+        "label": "网关",
+        "sourcePages": [
+          12,
+          13
+        ],
+        "notes": "A010.1 针脚定义在表单 07_1（PDF p12），底盘/舒适续页 07_2（p13）。诊断 CAN 只到 X001。无 profileId。"
+      },
+      "excludedCandidates": [
+        {
+          "id": "pdcc",
+          "label": "PDCC 控制单元",
+          "sourcePages": [11],
+          "reason": "982 p11 底盘分栏画在 981 B4T / PASM 一带。共享图签不能证明 982 适用性，故不进显示节点。"
+        },
+        {
+          "id": "awd",
+          "label": "全轮驱动 单元",
+          "sourcePages": [11],
+          "reason": "982 p11 与 PDCC、981 B4T 同区。图未给出 982 车型适用条件，故不进显示节点。"
+        },
+        {
+          "id": "lift",
+          "label": "举升功能控制单元",
+          "sourcePages": [11, 75],
+          "reason": "982 p11 舒适性分栏有该框；p75 缩写亦有「举升功能 前桥」。981 p60 图例同样有该词。拓扑出现不等于 982 装车证明，故不进显示节点。"
+        }
+      ],
+      "branches": [
+        {
+          "id": "drive",
+          "label": "驱动 CAN",
+          "color": "#C62828",
+          "gatewayPins": {
+            "high": "A010 A16",
+            "low": "A010 A6"
+          },
+          "sourcePages": [
+            11,
+            12
+          ],
+          "nodes": [
+            {
+              "id": "dme",
+              "short": "DME",
+              "label": "发动机",
+              "sourcePages": [
+                11
+              ],
+              "notes": "图仍标 DME 控制单元 981。Y444/Y445、Y141/142 为驱动 CAN 剪接，未单列。无 profileId。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "pdk",
+              "short": "PDK",
+              "label": "PDK 变速器",
+              "sourcePages": [
+                11
+              ],
+              "notes": "图仍标 PDK 控制单元 981。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "selector",
+              "short": "SEL",
+              "label": "选档杆",
+              "sourcePages": [
+                11,
+                12
+              ],
+              "notes": "p12 交叉引用选档杆 A1/A9。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "airbag",
+              "short": "AB",
+              "label": "安全气囊",
+              "sourcePages": [
+                11,
+                12
+              ],
+              "notes": "拓扑在驱动 CAN；p12 另有气囊针脚交叉，不另建碰撞 CAN 节点。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "shaker",
+              "short": "SHAKER",
+              "label": "内部声音执行器",
+              "sourcePages": [
+                11,
+                12
+              ],
+              "notes": "图面 SG SHAKER；p12 交叉「内部声音执行器」。选项，未断言装车。",
+              "connectionType": "CAN"
+            }
+          ]
+        },
+        {
+          "id": "chassis",
+          "label": "底盘 CAN",
+          "color": "#1565C0",
+          "gatewayPins": {
+            "high": "A010 A20",
+            "low": "A010 A10"
+          },
+          "sourcePages": [
+            11,
+            13
+          ],
+          "nodes": [
+            {
+              "id": "psm",
+              "short": "PSM",
+              "label": "PSM",
+              "sourcePages": [
+                11,
+                13
+              ],
+              "notes": "p13 交叉 PSM A26/A14。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "pasm",
+              "short": "PASM",
+              "label": "PASM",
+              "sourcePages": [
+                11,
+                13
+              ],
+              "notes": "同时出现 PASM 控制单元 981、981 B4T、SG PASM 982，收录为同一功能节点并标注选项/跨代图签。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "eps",
+              "short": "EPS",
+              "label": "电动转向",
+              "sourcePages": [
+                11,
+                13
+              ],
+              "notes": "TSX45；p13 交叉。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "epb",
+              "short": "EPB",
+              "label": "电子驻车",
+              "sourcePages": [
+                11,
+                13
+              ],
+              "notes": "图仍标 EPB 控制单元 981。",
+              "connectionType": "CAN"
+            }
+          ]
+        },
+        {
+          "id": "comfort",
+          "label": "舒适性 CAN",
+          "color": "#2E7D32",
+          "gatewayPins": {
+            "high": "A010 A15",
+            "low": "A010 A5"
+          },
+          "sourcePages": [
+            11,
+            13
+          ],
+          "nodes": [
+            {
+              "id": "bcm-front",
+              "short": "BCM-F",
+              "label": "BCM 前部",
+              "sourcePages": [
+                1,
+                11,
+                13
+              ],
+              "notes": "舒适性 CAN：p1 A001 C34 低 / C42 高。同页 D19 为碰撞信号输入(脉宽调制)，不是碰撞 CAN。p1 碰撞 CAN A2/A3 属于 ACC A031，不是 BCM。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "bcm-rear",
+              "short": "BCM-R",
+              "label": "BCM 后部",
+              "sourcePages": [
+                11,
+                13
+              ],
+              "notes": "图分 981 COUPE / 981 CABRIO 两路 BCM 后部画法。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "steering-column",
+              "short": "KLS",
+              "label": "转向柱切换模块",
+              "sourcePages": [
+                5,
+                11
+              ],
+              "notes": "S034.1 主键舒适性 CAN（A1 高 / A2 低）。同插头另有底盘 CAN（A5 高 / A6 低）。UI 按同一 ECU 计一次。",
+              "connectionType": "CAN",
+              "additionalBranches": [
+                {
+                  "branchId": "chassis",
+                  "sourcePages": [
+                    5,
+                    11
+                  ],
+                  "notes": "p5 S034.1 A5/A6 底盘 CAN；p11 底盘分栏亦画出该模块。"
+                }
+              ]
+            },
+            {
+              "id": "door-driver",
+              "short": "DOOR-L",
+              "label": "驾驶员侧车门",
+              "sourcePages": [
+                11,
+                13
+              ],
+              "notes": "TSX11，左舵演示。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "door-passenger",
+              "short": "DOOR-R",
+              "label": "乘客侧车门",
+              "sourcePages": [
+                11,
+                13
+              ],
+              "notes": "TSX12。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "seat-driver",
+              "short": "SEAT-L",
+              "label": "驾驶员座椅",
+              "sourcePages": [
+                11,
+                13
+              ],
+              "notes": "TSX16。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "seat-passenger",
+              "short": "SEAT-R",
+              "label": "乘客座椅",
+              "sourcePages": [
+                11,
+                13
+              ],
+              "notes": "TSX17。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "roof",
+              "short": "ROOF",
+              "label": "活顶",
+              "sourcePages": [
+                11,
+                13
+              ],
+              "notes": "活顶控制单元 981，CABRIO/TARGA。Coupe 不适用。",
+              "connectionType": "CAN"
+            }
+          ]
+        },
+        {
+          "id": "mmi",
+          "label": "MMI CAN",
+          "color": "#6A1B9A",
+          "gatewayPins": {
+            "high": "A010 A18",
+            "low": "A010 A8"
+          },
+          "sourcePages": [
+            11,
+            12
+          ],
+          "nodes": [
+            {
+              "id": "rdk",
+              "short": "RDK",
+              "label": "胎压监测",
+              "sourcePages": [
+                11,
+                12
+              ],
+              "notes": "p12 交叉 RDK A3/A1。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "hvac",
+              "short": "HVAC",
+              "label": "空调",
+              "sourcePages": [
+                11,
+                12
+              ],
+              "notes": "p12 交叉空调 C5/C14。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "pcm",
+              "short": "PCM",
+              "label": "PCM / CDR",
+              "sourcePages": [
+                11,
+                12
+              ],
+              "notes": "MMI CAN 上 PCM/CDR。音频附件不在五条主 CAN：p35 PCM4 表单有 MOST 输入/输出与光学波导管，p37 ASK 放大器，p38 BOSE 放大器。未建 MOST 分支，未列为 CAN 节点。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "can-adapter",
+              "short": "CAN-AD",
+              "label": "CAN 适配器",
+              "sourcePages": [
+                11
+              ],
+              "notes": "MMI，靠近 PCM。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "cluster",
+              "short": "IC",
+              "label": "组合仪表",
+              "sourcePages": [
+                11
+              ],
+              "notes": "Y491/492。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "clock",
+              "short": "CLK",
+              "label": "秒表",
+              "sourcePages": [
+                11
+              ],
+              "notes": "图仍标秒表 981 / TSX6_5，选项。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "parking",
+              "short": "PDC",
+              "label": "驻车辅助",
+              "sourcePages": [
+                11,
+                12
+              ],
+              "notes": "带 PDC / 无 PDC 脚注。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "reverse-camera",
+              "short": "RVC",
+              "label": "倒车摄像机",
+              "sourcePages": [
+                11
+              ],
+              "notes": "Y188/189、TSX25_2、982 倒车摄像机。选项。",
+              "connectionType": "CAN"
+            }
+          ]
+        },
+        {
+          "id": "crash",
+          "label": "碰撞 CAN",
+          "color": "#EF6C00",
+          "gatewayPins": {
+            "high": "A010 A17",
+            "low": "A010 A7"
+          },
+          "sourcePages": [
+            11,
+            12
+          ],
+          "nodes": [
+            {
+              "id": "headlamp-left",
+              "short": "HL-L",
+              "label": "左侧前照灯",
+              "sourcePages": [
+                11,
+                12
+              ],
+              "notes": "Y059/060。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "headlamp-right",
+              "short": "HL-R",
+              "label": "右侧前照灯",
+              "sourcePages": [
+                11,
+                12
+              ],
+              "notes": "Y059/060。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "headlamp-sg",
+              "short": "HL-SG",
+              "label": "前照灯控制单元",
+              "sourcePages": [
+                11,
+                12
+              ],
+              "notes": "SG 前照灯。与左右灯模块分开列出。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "acc",
+              "short": "ACC",
+              "label": "ACC",
+              "sourcePages": [
+                11,
+                12
+              ],
+              "notes": "碰撞 CAN 选项。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "front-camera",
+              "short": "FCAM",
+              "label": "前部摄像机",
+              "sourcePages": [
+                11
+              ],
+              "notes": "碰撞 CAN 选项。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "swa-left",
+              "short": "SWA-L",
+              "label": "变道辅助左",
+              "sourcePages": [
+                11,
+                12
+              ],
+              "notes": "SWA LINKS；p12 车道变更辅助装置 左。选项。",
+              "connectionType": "CAN"
+            },
+            {
+              "id": "swa-right",
+              "short": "SWA-R",
+              "label": "变道辅助右",
+              "sourcePages": [
+                11,
+                12
+              ],
+              "notes": "SWA RECHTS。选项。",
+              "connectionType": "CAN"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

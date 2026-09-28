@@ -1,0 +1,38 @@
+.ros {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ros-toolbar,
+.ros-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  align-items: end;
+}
+
+.ros label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.ros-checks label {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.ros-kind {
+  font-weight: 600;
+}
+
+.ros-plan,
+.ros-progress,
+.ros-result {
+  margin: 0;
+  white-space: pre-wrap;
+  font-size: 13px;
+}

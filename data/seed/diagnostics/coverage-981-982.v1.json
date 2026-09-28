@@ -1,0 +1,2023 @@
+{
+  "schemaVersion": 1,
+  "executionEnabled": false,
+  "independentVehicleVerified": false,
+  "observedcapture": false,
+  "independentlive": false,
+  "write_status": "DATA_ONLY_DISABLED",
+  "staticUnobserved": true,
+  "task": "offline_981_982_five_pool_expansion",
+  "stable_id_scheme": "9x1:{module}:{variant_name}",
+  "native_abi": {
+    "GetOdxSysAdd": {
+      "0x40a250": "identity",
+      "0x40a254": "measurement",
+      "0x40a258": "coding",
+      "0x40a25c": "routine",
+      "0x40a260": "dtc"
+    },
+    "rejected": "TOKEN+0x604..0x614 / dtc_id_chains as third pool"
+  },
+  "provenance": {
+    "dsn_decoded": {
+      "file": "DSN.BIN.dec",
+      "sha256": "55E87F5AEE37AC5E6A2566434C3E78B3CD3CE1FDA86CE70FE9FDA981D802291F",
+      "bytes": 674172
+    },
+    "x9_decoded": {
+      "file": "9X1_ALLDATA.BIN.dec",
+      "sha256": "F32173D768CA9F8D2CAF109BC7159FA43BDE816F924FEA5A91F1F202A2A76A2E",
+      "bytes": 10351388
+    },
+    "menu": {
+      "file": "MENU.BIN",
+      "sha256": "A8B0A1407883B72FEDAA2E0BE6C818A88F5F7754C089D6D8AB6788F678B21F58",
+      "bytes": 35223
+    },
+    "ggp": {
+      "file": "PORSCHE_CN.GGP",
+      "sha256": "7CAF1C27E475511E4A75DB8FE92008684F5632EEB9FBB4484CBC16FA0EEC7DE3",
+      "bytes": 40899326
+    }
+  },
+  "counts": {
+    "source_total": 403,
+    "target_eligible": 291,
+    "excluded": 76,
+    "ambiguous": 0,
+    "candidate": 279,
+    "confirmed": 12,
+    "unmapped_module_variants": 36,
+    "dropped": 0,
+    "menu_sys_ecus": 35,
+    "menu_target_routes": 4,
+    "unmapped_9x1_modules": [
+      "Allrad",
+      "BV_BatteEnergContrModulOBD",
+      "BV_BrakeBoostOBD",
+      "BV_BrakeOBD",
+      "BV_DriveMotorContrModulOBD",
+      "BV_EnginContrModulOBD",
+      "BV_ThermManagOBD",
+      "BV_TransContrModulOBD",
+      "Hinterachslenkung",
+      "Lift_VA",
+      "Lift_VA_Gen2",
+      "PDCC_2",
+      "RaceApp",
+      "TUER_HINTEN"
+    ],
+    "all_four_share_sys_select": true,
+    "sys_select_parents": [
+      2644,
+      2691,
+      2550,
+      2597
+    ]
+  },
+  "category_totals": {
+    "identity": {
+      "decoded": 3920,
+      "empty": 0,
+      "missing": 5,
+      "unsupported": 0,
+      "labels_unresolved": 0,
+      "labels_source_empty": 0,
+      "formulas_unresolved": 0,
+      "enums_unresolved": 0,
+      "enums_source_empty": 0,
+      "enums_not_applicable": 3287,
+      "units_unresolved": 0,
+      "units_source_empty": 0,
+      "units_not_applicable": 3784,
+      "measurement_fields_ok": 0,
+      "measurement_fields_unsupported": 0
+    },
+    "measurement": {
+      "decoded": 92634,
+      "empty": 0,
+      "missing": 33,
+      "unsupported": 0,
+      "labels_unresolved": 0,
+      "labels_source_empty": 0,
+      "formulas_unresolved": 0,
+      "enums_unresolved": 0,
+      "enums_source_empty": 0,
+      "enums_not_applicable": 55458,
+      "units_unresolved": 0,
+      "units_source_empty": 10,
+      "units_not_applicable": 70305,
+      "measurement_fields_ok": 92634,
+      "measurement_fields_unsupported": 0
+    },
+    "coding": {
+      "decoded": 59871,
+      "empty": 0,
+      "missing": 18,
+      "unsupported": 0,
+      "labels_unresolved": 0,
+      "labels_source_empty": 5976,
+      "formulas_unresolved": 0,
+      "enums_unresolved": 0,
+      "enums_source_empty": 0,
+      "enums_not_applicable": 19896,
+      "units_unresolved": 0,
+      "units_source_empty": 6,
+      "units_not_applicable": 40839,
+      "measurement_fields_ok": 0,
+      "measurement_fields_unsupported": 0
+    },
+    "routine": {
+      "decoded": 5385,
+      "empty": 0,
+      "missing": 67,
+      "unsupported": 0,
+      "labels_unresolved": 0,
+      "labels_source_empty": 113,
+      "formulas_unresolved": 0,
+      "enums_unresolved": 0,
+      "enums_source_empty": 0,
+      "enums_not_applicable": 0,
+      "units_unresolved": 0,
+      "units_source_empty": 0,
+      "units_not_applicable": 0,
+      "measurement_fields_ok": 0,
+      "measurement_fields_unsupported": 0
+    },
+    "dtc": {
+      "decoded": 74865,
+      "empty": 0,
+      "missing": 0,
+      "unsupported": 0,
+      "labels_unresolved": 0,
+      "labels_source_empty": 0,
+      "formulas_unresolved": 0,
+      "enums_unresolved": 0,
+      "enums_source_empty": 0,
+      "enums_not_applicable": 0,
+      "units_unresolved": 0,
+      "units_source_empty": 0,
+      "units_not_applicable": 0,
+      "measurement_fields_ok": 0,
+      "measurement_fields_unsupported": 0
+    }
+  },
+  "menu_ecus": [
+    {
+      "menu_off": 12470,
+      "label": "安全气囊",
+      "ecu_id": 4,
+      "dsn_modules": [
+        "Airbag"
+      ],
+      "variant_count": 7,
+      "membership": {
+        "confirmed": 0,
+        "candidate": 7,
+        "ambiguous": 0,
+        "excluded": 0
+      },
+      "pools": {
+        "identity": {
+          "decoded": 210,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 7
+        },
+        "measurement": {
+          "decoded": 2348,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 7
+        },
+        "coding": {
+          "decoded": 341,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 7
+        },
+        "routine": {
+          "decoded": 12,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 7
+        },
+        "dtc": {
+          "decoded": 3091,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 7
+        }
+      }
+    },
+    {
+      "menu_off": 12610,
+      "label": "网关",
+      "ecu_id": 9,
+      "dsn_modules": [
+        "CAN_CAN_Gateway"
+      ],
+      "variant_count": 19,
+      "membership": {
+        "confirmed": 0,
+        "candidate": 19,
+        "ambiguous": 0,
+        "excluded": 0
+      },
+      "pools": {
+        "identity": {
+          "decoded": 439,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 19
+        },
+        "measurement": {
+          "decoded": 34709,
+          "empty": 0,
+          "missing": 2,
+          "unsupported": 0,
+          "variants_attempted": 19
+        },
+        "coding": {
+          "decoded": 2441,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 19
+        },
+        "routine": {
+          "decoded": 272,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 19
+        },
+        "dtc": {
+          "decoded": 2924,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 19
+        }
+      }
+    },
+    {
+      "menu_off": 12435,
+      "label": "ECM/DME(发动机控制模块)",
+      "ecu_id": 1,
+      "dsn_modules": [
+        "BV_ECM_UDS",
+        "DME_BDE_Continental",
+        "MED17_1_11",
+        "BV_EnginContrModul1UDS"
+      ],
+      "variant_count": 44,
+      "membership": {
+        "confirmed": 12,
+        "candidate": 32,
+        "ambiguous": 0,
+        "excluded": 0
+      },
+      "pools": {
+        "identity": {
+          "decoded": 934,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 44
+        },
+        "measurement": {
+          "decoded": 35337,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 44
+        },
+        "coding": {
+          "decoded": 2694,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 44
+        },
+        "routine": {
+          "decoded": 2201,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 44
+        },
+        "dtc": {
+          "decoded": 37838,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 44
+        }
+      }
+    },
+    {
+      "menu_off": 13625,
+      "label": "Tiptronic 变速器控制",
+      "ecu_id": 2,
+      "dsn_modules": [
+        "Getriebesteuerung_PDK"
+      ],
+      "variant_count": 10,
+      "membership": {
+        "confirmed": 0,
+        "candidate": 10,
+        "ambiguous": 0,
+        "excluded": 0
+      },
+      "pools": {
+        "identity": {
+          "decoded": 160,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 10
+        },
+        "measurement": {
+          "decoded": 928,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 10
+        },
+        "coding": {
+          "decoded": 9,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 10
+        },
+        "routine": {
+          "decoded": 0,
+          "empty": 0,
+          "missing": 10,
+          "unsupported": 0,
+          "variants_attempted": 10
+        },
+        "dtc": {
+          "decoded": 1731,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 10
+        }
+      }
+    },
+    {
+      "menu_off": 13415,
+      "label": "选档杆",
+      "ecu_id": 68,
+      "dsn_modules": [
+        "Waehlhebel"
+      ],
+      "variant_count": 3,
+      "membership": {
+        "confirmed": 0,
+        "candidate": 3,
+        "ambiguous": 0,
+        "excluded": 0
+      },
+      "pools": {
+        "identity": {
+          "decoded": 9,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 3
+        },
+        "measurement": {
+          "decoded": 10,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 3
+        },
+        "coding": {
+          "decoded": 0,
+          "empty": 0,
+          "missing": 3,
+          "unsupported": 0,
+          "variants_attempted": 3
+        },
+        "routine": {
+          "decoded": 0,
+          "empty": 0,
+          "missing": 3,
+          "unsupported": 0,
+          "variants_attempted": 3
+        },
+        "dtc": {
+          "decoded": 33,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 3
+        }
+      }
+    },
+    {
+      "menu_off": 12575,
+      "label": "IC(仪表)",
+      "ecu_id": 8,
+      "dsn_modules": [
+        "Kombiinstrument_MM"
+      ],
+      "variant_count": 16,
+      "membership": {
+        "confirmed": 0,
+        "candidate": 16,
+        "ambiguous": 0,
+        "excluded": 0
+      },
+      "pools": {
+        "identity": {
+          "decoded": 174,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 16
+        },
+        "measurement": {
+          "decoded": 1181,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 16
+        },
+        "coding": {
+          "decoded": 26901,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 16
+        },
+        "routine": {
+          "decoded": 199,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 16
+        },
+        "dtc": {
+          "decoded": 2369,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 16
+        }
+      }
+    },
+    {
+      "menu_off": 13345,
+      "label": "转向盘电子设备",
+      "ecu_id": 54,
+      "dsn_modules": [
+        "Lenkstockschalter"
+      ],
+      "variant_count": 5,
+      "membership": {
+        "confirmed": 0,
+        "candidate": 5,
+        "ambiguous": 0,
+        "excluded": 0
+      },
+      "pools": {
+        "identity": {
+          "decoded": 49,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 5
+        },
+        "measurement": {
+          "decoded": 291,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 5
+        },
+        "coding": {
+          "decoded": 125,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 5
+        },
+        "routine": {
+          "decoded": 50,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 5
+        },
+        "dtc": {
+          "decoded": 531,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 5
+        }
+      }
+    },
+    {
+      "menu_off": 12715,
+      "label": "附加仪表 - 时钟",
+      "ecu_id": 29,
+      "dsn_modules": [
+        "Zusatzinstrument"
+      ],
+      "variant_count": 9,
+      "membership": {
+        "confirmed": 0,
+        "candidate": 9,
+        "ambiguous": 0,
+        "excluded": 0
+      },
+      "pools": {
+        "identity": {
+          "decoded": 89,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 9
+        },
+        "measurement": {
+          "decoded": 90,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 9
+        },
+        "coding": {
+          "decoded": 150,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 9
+        },
+        "routine": {
+          "decoded": 75,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 9
+        },
+        "dtc": {
+          "decoded": 229,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 9
+        }
+      }
+    },
+    {
+      "menu_off": 12750,
+      "label": "PCM/CDR（通信管理/CD、收音机）",
+      "ecu_id": 70,
+      "dsn_modules": [
+        "BV_InforContrUnit1UDS",
+        "Head_Unit",
+        "BV_InforContrUnit1UDSDesay"
+      ],
+      "variant_count": 13,
+      "membership": {
+        "confirmed": 0,
+        "candidate": 13,
+        "ambiguous": 0,
+        "excluded": 0
+      },
+      "pools": {
+        "identity": {
+          "decoded": 126,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 13
+        },
+        "measurement": {
+          "decoded": 3746,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 13
+        },
+        "coding": {
+          "decoded": 7414,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 13
+        },
+        "routine": {
+          "decoded": 209,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 13
+        },
+        "dtc": {
+          "decoded": 3969,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 13
+        }
+      }
+    },
+    {
+      "menu_off": 13520,
+      "label": "电视调谐器",
+      "ecu_id": 75,
+      "dsn_modules": [
+        "BV_TVTunerUDS",
+        "TVTuner"
+      ],
+      "variant_count": 6,
+      "membership": {
+        "confirmed": 0,
+        "candidate": 6,
+        "ambiguous": 0,
+        "excluded": 0
+      },
+      "pools": {
+        "identity": {
+          "decoded": 22,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 6
+        },
+        "measurement": {
+          "decoded": 41,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 6
+        },
+        "coding": {
+          "decoded": 107,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 6
+        },
+        "routine": {
+          "decoded": 26,
+          "empty": 0,
+          "missing": 2,
+          "unsupported": 0,
+          "variants_attempted": 6
+        },
+        "dtc": {
+          "decoded": 145,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 6
+        }
+      }
+    },
+    {
+      "menu_off": 13380,
+      "label": "外部放大器",
+      "ecu_id": 65,
+      "dsn_modules": [
+        "BV_SoundSysteUDS",
+        "Verstaerker"
+      ],
+      "variant_count": 9,
+      "membership": {
+        "confirmed": 0,
+        "candidate": 9,
+        "ambiguous": 0,
+        "excluded": 0
+      },
+      "pools": {
+        "identity": {
+          "decoded": 82,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 9
+        },
+        "measurement": {
+          "decoded": 136,
+          "empty": 0,
+          "missing": 2,
+          "unsupported": 0,
+          "variants_attempted": 9
+        },
+        "coding": {
+          "decoded": 270,
+          "empty": 0,
+          "missing": 2,
+          "unsupported": 0,
+          "variants_attempted": 9
+        },
+        "routine": {
+          "decoded": 29,
+          "empty": 0,
+          "missing": 2,
+          "unsupported": 0,
+          "variants_attempted": 9
+        },
+        "dtc": {
+          "decoded": 638,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 9
+        }
+      }
+    },
+    {
+      "menu_off": 12540,
+      "label": "AC(空调系统)",
+      "ecu_id": 7,
+      "dsn_modules": [
+        "BKE"
+      ],
+      "variant_count": 14,
+      "membership": {
+        "confirmed": 0,
+        "candidate": 14,
+        "ambiguous": 0,
+        "excluded": 0
+      },
+      "pools": {
+        "identity": {
+          "decoded": 149,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 14
+        },
+        "measurement": {
+          "decoded": 6122,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 14
+        },
+        "coding": {
+          "decoded": 700,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 14
+        },
+        "routine": {
+          "decoded": 1189,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 14
+        },
+        "dtc": {
+          "decoded": 2961,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 14
+        }
+      }
+    },
+    {
+      "menu_off": 12645,
+      "label": "驻车辅助系统",
+      "ecu_id": 18,
+      "dsn_modules": [
+        "PDC"
+      ],
+      "variant_count": 8,
+      "membership": {
+        "confirmed": 0,
+        "candidate": 8,
+        "ambiguous": 0,
+        "excluded": 0
+      },
+      "pools": {
+        "identity": {
+          "decoded": 82,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 8
+        },
+        "measurement": {
+          "decoded": 204,
+          "empty": 0,
+          "missing": 2,
+          "unsupported": 0,
+          "variants_attempted": 8
+        },
+        "coding": {
+          "decoded": 1081,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 8
+        },
+        "routine": {
+          "decoded": 37,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 8
+        },
+        "dtc": {
+          "decoded": 750,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 8
+        }
+      }
+    },
+    {
+      "menu_off": 13240,
+      "label": "驻车制动器",
+      "ecu_id": 50,
+      "dsn_modules": [
+        "EPB"
+      ],
+      "variant_count": 3,
+      "membership": {
+        "confirmed": 0,
+        "candidate": 3,
+        "ambiguous": 0,
+        "excluded": 0
+      },
+      "pools": {
+        "identity": {
+          "decoded": 18,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 3
+        },
+        "measurement": {
+          "decoded": 81,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 3
+        },
+        "coding": {
+          "decoded": 12,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 3
+        },
+        "routine": {
+          "decoded": 8,
+          "empty": 0,
+          "missing": 2,
+          "unsupported": 0,
+          "variants_attempted": 3
+        },
+        "dtc": {
+          "decoded": 259,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 3
+        }
+      }
+    },
+    {
+      "menu_off": 13275,
+      "label": "轮胎压力监控 （TPM）",
+      "ecu_id": 55,
+      "dsn_modules": [
+        "RDK",
+        "RDK3"
+      ],
+      "variant_count": 10,
+      "membership": {
+        "confirmed": 0,
+        "candidate": 10,
+        "ambiguous": 0,
+        "excluded": 0
+      },
+      "pools": {
+        "identity": {
+          "decoded": 60,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 10
+        },
+        "measurement": {
+          "decoded": 580,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 10
+        },
+        "coding": {
+          "decoded": 123,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 10
+        },
+        "routine": {
+          "decoded": 12,
+          "empty": 0,
+          "missing": 4,
+          "unsupported": 0,
+          "variants_attempted": 10
+        },
+        "dtc": {
+          "decoded": 665,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 10
+        }
+      }
+    },
+    {
+      "menu_off": 12680,
+      "label": "水平高度控制/PASM",
+      "ecu_id": 19,
+      "dsn_modules": [
+        "PASM_PADM"
+      ],
+      "variant_count": 11,
+      "membership": {
+        "confirmed": 0,
+        "candidate": 11,
+        "ambiguous": 0,
+        "excluded": 0
+      },
+      "pools": {
+        "identity": {
+          "decoded": 76,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 11
+        },
+        "measurement": {
+          "decoded": 122,
+          "empty": 0,
+          "missing": 2,
+          "unsupported": 0,
+          "variants_attempted": 11
+        },
+        "coding": {
+          "decoded": 42,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 11
+        },
+        "routine": {
+          "decoded": 0,
+          "empty": 0,
+          "missing": 11,
+          "unsupported": 0,
+          "variants_attempted": 11
+        },
+        "dtc": {
+          "decoded": 959,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 11
+        }
+      }
+    },
+    {
+      "menu_off": 13450,
+      "label": "EPS(电动助力转向系统)",
+      "ecu_id": 69,
+      "dsn_modules": [
+        "Steering_Control_Unit"
+      ],
+      "variant_count": 7,
+      "membership": {
+        "confirmed": 0,
+        "candidate": 7,
+        "ambiguous": 0,
+        "excluded": 0
+      },
+      "pools": {
+        "identity": {
+          "decoded": 53,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 7
+        },
+        "measurement": {
+          "decoded": 70,
+          "empty": 0,
+          "missing": 2,
+          "unsupported": 0,
+          "variants_attempted": 7
+        },
+        "coding": {
+          "decoded": 79,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 7
+        },
+        "routine": {
+          "decoded": 10,
+          "empty": 0,
+          "missing": 2,
+          "unsupported": 0,
+          "variants_attempted": 7
+        },
+        "dtc": {
+          "decoded": 532,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 7
+        }
+      }
+    },
+    {
+      "menu_off": 12505,
+      "label": "ESP/PSM(电控稳定系统)",
+      "ecu_id": 5,
+      "dsn_modules": [
+        "PSM"
+      ],
+      "variant_count": 9,
+      "membership": {
+        "confirmed": 0,
+        "candidate": 9,
+        "ambiguous": 0,
+        "excluded": 0
+      },
+      "pools": {
+        "identity": {
+          "decoded": 79,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 9
+        },
+        "measurement": {
+          "decoded": 161,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 9
+        },
+        "coding": {
+          "decoded": 204,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 9
+        },
+        "routine": {
+          "decoded": 0,
+          "empty": 0,
+          "missing": 9,
+          "unsupported": 0,
+          "variants_attempted": 9
+        },
+        "dtc": {
+          "decoded": 1459,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 9
+        }
+      }
+    },
+    {
+      "menu_off": 12855,
+      "label": "前端电子设备",
+      "ecu_id": 32,
+      "dsn_modules": [
+        "BCM_vorne"
+      ],
+      "variant_count": 12,
+      "membership": {
+        "confirmed": 0,
+        "candidate": 12,
+        "ambiguous": 0,
+        "excluded": 0
+      },
+      "pools": {
+        "identity": {
+          "decoded": 388,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 12
+        },
+        "measurement": {
+          "decoded": 3384,
+          "empty": 0,
+          "missing": 2,
+          "unsupported": 0,
+          "variants_attempted": 12
+        },
+        "coding": {
+          "decoded": 8040,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 12
+        },
+        "routine": {
+          "decoded": 317,
+          "empty": 0,
+          "missing": 3,
+          "unsupported": 0,
+          "variants_attempted": 12
+        },
+        "dtc": {
+          "decoded": 3220,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 12
+        }
+      }
+    },
+    {
+      "menu_off": 12890,
+      "label": "后端电子设备",
+      "ecu_id": 35,
+      "dsn_modules": [
+        "BCM_hinten"
+      ],
+      "variant_count": 7,
+      "membership": {
+        "confirmed": 0,
+        "candidate": 7,
+        "ambiguous": 0,
+        "excluded": 0
+      },
+      "pools": {
+        "identity": {
+          "decoded": 184,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 7
+        },
+        "measurement": {
+          "decoded": 1370,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 7
+        },
+        "coding": {
+          "decoded": 1894,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 7
+        },
+        "routine": {
+          "decoded": 265,
+          "empty": 0,
+          "missing": 2,
+          "unsupported": 0,
+          "variants_attempted": 7
+        },
+        "dtc": {
+          "decoded": 1660,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 7
+        }
+      }
+    },
+    {
+      "menu_off": 13135,
+      "label": "左侧前照灯",
+      "ecu_id": 47,
+      "dsn_modules": [
+        "SCHEINWERFER_LED",
+        "SWSG"
+      ],
+      "variant_count": 19,
+      "membership": {
+        "confirmed": 0,
+        "candidate": 19,
+        "ambiguous": 0,
+        "excluded": 0
+      },
+      "pools": {
+        "identity": {
+          "decoded": 83,
+          "empty": 0,
+          "missing": 5,
+          "unsupported": 0,
+          "variants_attempted": 19
+        },
+        "measurement": {
+          "decoded": 771,
+          "empty": 0,
+          "missing": 6,
+          "unsupported": 0,
+          "variants_attempted": 19
+        },
+        "coding": {
+          "decoded": 4842,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 19
+        },
+        "routine": {
+          "decoded": 171,
+          "empty": 0,
+          "missing": 6,
+          "unsupported": 0,
+          "variants_attempted": 19
+        },
+        "dtc": {
+          "decoded": 2472,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 19
+        }
+      }
+    },
+    {
+      "menu_off": 13170,
+      "label": "中央前照灯",
+      "ecu_id": 88,
+      "dsn_modules": [
+        "SCHEINWERFER"
+      ],
+      "variant_count": 5,
+      "membership": {
+        "confirmed": 0,
+        "candidate": 5,
+        "ambiguous": 0,
+        "excluded": 0
+      },
+      "pools": {
+        "identity": {
+          "decoded": 110,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 5
+        },
+        "measurement": {
+          "decoded": 54,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 5
+        },
+        "coding": {
+          "decoded": 205,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 5
+        },
+        "routine": {
+          "decoded": 40,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 5
+        },
+        "dtc": {
+          "decoded": 1102,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 5
+        }
+      }
+    },
+    {
+      "menu_off": 13205,
+      "label": "右前照灯",
+      "ecu_id": 48,
+      "dsn_modules": [
+        "SWSG"
+      ],
+      "variant_count": 14,
+      "membership": {
+        "confirmed": 0,
+        "candidate": 14,
+        "ambiguous": 0,
+        "excluded": 0
+      },
+      "pools": {
+        "identity": {
+          "decoded": 83,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 14
+        },
+        "measurement": {
+          "decoded": 771,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 14
+        },
+        "coding": {
+          "decoded": 4827,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 14
+        },
+        "routine": {
+          "decoded": 171,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 14
+        },
+        "dtc": {
+          "decoded": 1946,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 14
+        }
+      }
+    },
+    {
+      "menu_off": 13555,
+      "label": "驾驶员侧座椅存储器",
+      "ecu_id": 76,
+      "dsn_modules": [
+        "Sitzsteuergeraet"
+      ],
+      "variant_count": 5,
+      "membership": {
+        "confirmed": 0,
+        "candidate": 5,
+        "ambiguous": 0,
+        "excluded": 0
+      },
+      "pools": {
+        "identity": {
+          "decoded": 25,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 5
+        },
+        "measurement": {
+          "decoded": 145,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 5
+        },
+        "coding": {
+          "decoded": 223,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 5
+        },
+        "routine": {
+          "decoded": 63,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 5
+        },
+        "dtc": {
+          "decoded": 289,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 5
+        }
+      }
+    },
+    {
+      "menu_off": 13590,
+      "label": "乘客侧座椅存储器",
+      "ecu_id": 78,
+      "dsn_modules": [
+        "Sitzsteuergeraet"
+      ],
+      "variant_count": 5,
+      "membership": {
+        "confirmed": 0,
+        "candidate": 5,
+        "ambiguous": 0,
+        "excluded": 0
+      },
+      "pools": {
+        "identity": {
+          "decoded": 25,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 5
+        },
+        "measurement": {
+          "decoded": 145,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 5
+        },
+        "coding": {
+          "decoded": 223,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 5
+        },
+        "routine": {
+          "decoded": 63,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 5
+        },
+        "dtc": {
+          "decoded": 289,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 5
+        }
+      }
+    },
+    {
+      "menu_off": 12785,
+      "label": "驾驶员侧车门",
+      "ecu_id": 30,
+      "dsn_modules": [
+        "TUER_VORNE"
+      ],
+      "variant_count": 4,
+      "membership": {
+        "confirmed": 0,
+        "candidate": 4,
+        "ambiguous": 0,
+        "excluded": 0
+      },
+      "pools": {
+        "identity": {
+          "decoded": 20,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 4
+        },
+        "measurement": {
+          "decoded": 122,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 4
+        },
+        "coding": {
+          "decoded": 190,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 4
+        },
+        "routine": {
+          "decoded": 24,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 4
+        },
+        "dtc": {
+          "decoded": 336,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 4
+        }
+      }
+    },
+    {
+      "menu_off": 12820,
+      "label": "乘客侧车门",
+      "ecu_id": 31,
+      "dsn_modules": [
+        "TUER_VORNE"
+      ],
+      "variant_count": 4,
+      "membership": {
+        "confirmed": 0,
+        "candidate": 4,
+        "ambiguous": 0,
+        "excluded": 0
+      },
+      "pools": {
+        "identity": {
+          "decoded": 20,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 4
+        },
+        "measurement": {
+          "decoded": 122,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 4
+        },
+        "coding": {
+          "decoded": 190,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 4
+        },
+        "routine": {
+          "decoded": 24,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 4
+        },
+        "dtc": {
+          "decoded": 336,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 4
+        }
+      }
+    },
+    {
+      "menu_off": 12925,
+      "label": "可折叠顶篷",
+      "ecu_id": 39,
+      "dsn_modules": [
+        "Verdeck_Synchronisation",
+        "Verdeck_Targa"
+      ],
+      "variant_count": 2,
+      "membership": {
+        "confirmed": 0,
+        "candidate": 2,
+        "ambiguous": 0,
+        "excluded": 0
+      },
+      "pools": {
+        "identity": {
+          "decoded": 12,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 2
+        },
+        "measurement": {
+          "decoded": 16,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 2
+        },
+        "coding": {
+          "decoded": 6,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 2
+        },
+        "routine": {
+          "decoded": 2,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 2
+        },
+        "dtc": {
+          "decoded": 218,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 2
+        }
+      }
+    },
+    {
+      "menu_off": 12960,
+      "label": "CCS/ACC(巡航控制系统)",
+      "ecu_id": 64,
+      "dsn_modules": [
+        "ACC3"
+      ],
+      "variant_count": 9,
+      "membership": {
+        "confirmed": 0,
+        "candidate": 9,
+        "ambiguous": 0,
+        "excluded": 0
+      },
+      "pools": {
+        "identity": {
+          "decoded": 90,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 9
+        },
+        "measurement": {
+          "decoded": 32,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 9
+        },
+        "coding": {
+          "decoded": 239,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 9
+        },
+        "routine": {
+          "decoded": 32,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 9
+        },
+        "dtc": {
+          "decoded": 479,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 9
+        }
+      }
+    },
+    {
+      "menu_off": 12995,
+      "label": "前摄像头",
+      "ecu_id": 74,
+      "dsn_modules": [
+        "Frontkamera"
+      ],
+      "variant_count": 9,
+      "membership": {
+        "confirmed": 0,
+        "candidate": 9,
+        "ambiguous": 0,
+        "excluded": 0
+      },
+      "pools": {
+        "identity": {
+          "decoded": 72,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 9
+        },
+        "measurement": {
+          "decoded": 306,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 9
+        },
+        "coding": {
+          "decoded": 792,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 9
+        },
+        "routine": {
+          "decoded": 119,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 9
+        },
+        "dtc": {
+          "decoded": 2151,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 9
+        }
+      }
+    },
+    {
+      "menu_off": 13030,
+      "label": "倒车摄像头",
+      "ecu_id": 81,
+      "dsn_modules": [
+        "Rueckfahrkamera_II"
+      ],
+      "variant_count": 4,
+      "membership": {
+        "confirmed": 0,
+        "candidate": 4,
+        "ambiguous": 0,
+        "excluded": 0
+      },
+      "pools": {
+        "identity": {
+          "decoded": 36,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 4
+        },
+        "measurement": {
+          "decoded": 49,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 4
+        },
+        "coding": {
+          "decoded": 541,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 4
+        },
+        "routine": {
+          "decoded": 6,
+          "empty": 0,
+          "missing": 2,
+          "unsupported": 0,
+          "variants_attempted": 4
+        },
+        "dtc": {
+          "decoded": 275,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 4
+        }
+      }
+    },
+    {
+      "menu_off": 13065,
+      "label": "调音器",
+      "ecu_id": 87,
+      "dsn_modules": [
+        "BV_ActuaForStrucBorneSoundUDS",
+        "BV_ActuaForStrucBorneSoundUDS"
+      ],
+      "variant_count": 3,
+      "membership": {
+        "confirmed": 0,
+        "candidate": 3,
+        "ambiguous": 0,
+        "excluded": 0
+      },
+      "pools": {
+        "identity": {
+          "decoded": 22,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 3
+        },
+        "measurement": {
+          "decoded": 4,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 3
+        },
+        "coding": {
+          "decoded": 12,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 3
+        },
+        "routine": {
+          "decoded": 5,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 3
+        },
+        "dtc": {
+          "decoded": 64,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 3
+        }
+      }
+    },
+    {
+      "menu_off": 13660,
+      "label": "车道变换辅助系统，右侧（主设备）",
+      "ecu_id": 95,
+      "dsn_modules": [
+        "BV_ContrUnitLaneChangAssis2UDS"
+      ],
+      "variant_count": 5,
+      "membership": {
+        "confirmed": 0,
+        "candidate": 5,
+        "ambiguous": 0,
+        "excluded": 0
+      },
+      "pools": {
+        "identity": {
+          "decoded": 42,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 5
+        },
+        "measurement": {
+          "decoded": 89,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 5
+        },
+        "coding": {
+          "decoded": 76,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 5
+        },
+        "routine": {
+          "decoded": 8,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 5
+        },
+        "dtc": {
+          "decoded": 1400,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 5
+        }
+      }
+    },
+    {
+      "menu_off": 13695,
+      "label": "车道变换辅助系统，左侧（从动设备）",
+      "ecu_id": 96,
+      "dsn_modules": [
+        "BV_ContrUnitLaneChangAssis2UDS"
+      ],
+      "variant_count": 5,
+      "membership": {
+        "confirmed": 0,
+        "candidate": 5,
+        "ambiguous": 0,
+        "excluded": 0
+      },
+      "pools": {
+        "identity": {
+          "decoded": 42,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 5
+        },
+        "measurement": {
+          "decoded": 89,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 5
+        },
+        "coding": {
+          "decoded": 76,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 5
+        },
+        "routine": {
+          "decoded": 8,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 5
+        },
+        "dtc": {
+          "decoded": 1400,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 5
+        }
+      }
+    },
+    {
+      "menu_off": 13100,
+      "label": "紧急呼叫系统 （ERA Glonass）",
+      "ecu_id": 165,
+      "dsn_modules": [
+        "ERA_GLONASS",
+        "ERA_GLONASS_VFA"
+      ],
+      "variant_count": 4,
+      "membership": {
+        "confirmed": 0,
+        "candidate": 4,
+        "ambiguous": 0,
+        "excluded": 0
+      },
+      "pools": {
+        "identity": {
+          "decoded": 25,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 4
+        },
+        "measurement": {
+          "decoded": 135,
+          "empty": 0,
+          "missing": 1,
+          "unsupported": 0,
+          "variants_attempted": 4
+        },
+        "coding": {
+          "decoded": 118,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 4
+        },
+        "routine": {
+          "decoded": 4,
+          "empty": 0,
+          "missing": 2,
+          "unsupported": 0,
+          "variants_attempted": 4
+        },
+        "dtc": {
+          "decoded": 116,
+          "empty": 0,
+          "missing": 0,
+          "unsupported": 0,
+          "variants_attempted": 4
+        }
+      }
+    }
+  ],
+  "regressions": {
+    "eu5": {
+      "present": true,
+      "dtc": 495,
+      "measurement": 691,
+      "coding": 39
+    },
+    "gateway_a71_C13002": {
+      "present": true,
+      "text_id_hex": "F1003B5E",
+      "text": "与发电机通信"
+    }
+  },
+  "gaps": [
+    "coding/parameters unobserved on vehicle; Dynamicparameters unobserved",
+    "suffix byte/bit: coding within-one-byte LSB proven; property byte unresolved; no multibyte write claim",
+    "identity derived_request_hex only 1A/22; coding 21/22 read candidate disabled",
+    "no ready-to-replay coding write payload",
+    "shared MENU ECU is selectable under four models; physical fit unverified except explicit 981 names",
+    "not a complete real-vehicle compatibility claim",
+    "structurally decoded != GAG-complete; see category_totals unresolved vs source_empty vs not_applicable",
+    "measurement disabled read candidate only; SID31 aliases wire 22; never send 31"
+  ],
+  "notes": "Compact tracked summary. Full per-variant records stay in the local expansion output."
+}

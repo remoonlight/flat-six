@@ -2,38 +2,54 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { resolveSkuToLocator } from "@porsche981/domain";
 import {
   api,
+  hasDesktopApi,
+  topologyFixtureEnabled,
   type DtcEntry,
   type LocatorMap,
   type ObdDtc,
+  type ObdConnectionDevice,
   type ObdSession,
   type Part,
+  type PorscheApi,
   type Vehicle,
 } from "../api";
+import { headerTaskLabel, headerTaskState } from "../can-topology-logic.mjs";
+import { formatHeaderVoltage } from "../obd-connection-logic.mjs";
 import type { LocatorFocus } from "../locator-focus";
 import { CodingPage } from "./CodingPage";
 import { DiagnosticsPage } from "./DiagnosticsPage";
+import { OfflineDiagnosticsPage } from "./OfflineDiagnosticsPage";
+import { ReadOnlySessionPage } from "./ReadOnlySessionPage";
+import { TopologyPage } from "./TopologyPage";
+import { EngineDataPage } from "./EngineDataPage";
 
 export type ObdPageProps = {
   onLocate?: (focus: LocatorFocus) => void;
 };
 
 type ObdTab =
+  | "topology"
   | "connection"
   | "live"
   | "faults"
   | "monitors"
   | "insights"
   | "vehicle"
-  | "coding";
+  | "coding"
+  | "offline"
+  | "session";
 
 const TABS: { id: ObdTab; label: string }[] = [
-  { id: "connection", label: "连接" },
+  { id: "topology", label: "系统拓扑" },
+  { id: "connection", label: "连接设置" },
   { id: "live", label: "实时数据" },
   { id: "faults", label: "故障码" },
   { id: "monitors", label: "就绪监控" },
   { id: "insights", label: "分析洞察" },
   { id: "vehicle", label: "车辆信息" },
   { id: "coding", label: "设码" },
+  { id: "offline", label: "离线工作台" },
+  { id: "session", label: "只读采集" },
 ];
 
 async function faultLogFromObdDtc(
@@ -55,7 +71,7 @@ async function faultLogFromObdDtc(
 }
 
 export function ObdPage({ onLocate }: ObdPageProps) {
-  const [tab, setTab] = useState<ObdTab>("faults");
+  const [tab, setTab] = useState<ObdTab>("topology");
   const [codeInput, setCodeInput] = useState("");
   const [active, setActive] = useState<DtcEntry | null>(null);
   const [parts, setParts] = useState<Part[]>([]);
@@ -68,6 +84,33 @@ export function ObdPage({ onLocate }: ObdPageProps) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [logBusy, setLogBusy] = useState<number | null>(null);
+  const [topoBusy, setTopoBusy] = useState(false);
+  const [sessionBusy, setSessionBusy] = useState(false);
+  const [engineBusy, setEngineBusy] = useState(false);
+  const [overview, setOverview] = useState<{
+    ok?: boolean;
+    taskState?: string;
+    voltageVolts?: number | null;
+    voltageLabel?: string;
+  } | null>(null);
+  const [commLost, setCommLost] = useState(false);
+  const [devices, setDevices] = useState<ObdConnectionDevice[]>([]);
+  const [listErrors, setListErrors] = useState<string[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [connBusy, setConnBusy] = useState(false);
+  const [connNote, setConnNote] = useState<string | null>(null);
+  const [connected, setConnected] = useState(false);
+  const [linkState, setLinkState] = useState("idle");
+  const [modelPick, setModelPick] = useState<"vLinker" | "OBDLink MX+" | "">("");
+
+  const apiAvailable = hasDesktopApi() || topologyFixtureEnabled();
+  const taskState = headerTaskState({
+    apiAvailable,
+    overviewOk: overview?.ok === true,
+    overviewState: overview?.taskState,
+    localRunning: topoBusy || sessionBusy || engineBusy,
+    commLost,
+  });
 
   const refresh = useCallback(async () => {
     const [p, v, map, sess] = await Promise.all([
@@ -85,6 +128,53 @@ export function ObdPage({ onLocate }: ObdPageProps) {
   useEffect(() => {
     refresh().catch((e) => setError(String(e)));
   }, [refresh]);
+
+  useEffect(() => {
+    let stop = false;
+    let latest = 0;
+    const tick = async () => {
+      const seq = ++latest;
+      const fn = typeof window !== "undefined" ? window.porsche981?.readOnlySession : undefined;
+      if (!fn) {
+        if (!stop && seq === latest) setOverview(null);
+        return;
+      }
+      try {
+        const doc = await fn({ action: "overview" } as never);
+        if (stop || seq !== latest) return;
+        setCommLost(false);
+        if (doc && doc.ok === true) setOverview(doc);
+        else setOverview({ ok: false });
+        const connFn = window.porsche981?.obdConnection || window.__FAKE_CONNECTION__;
+        if (connFn) {
+          const st = await connFn({ action: "status" });
+          if (stop || seq !== latest) return;
+          setConnected(!!st.connected);
+          if (typeof st.linkState === "string") setLinkState(st.linkState);
+          if (typeof st.voltageVolts === "number") {
+            setOverview((o) => ({ ...(o || {}), ok: o?.ok, taskState: o?.taskState, voltageVolts: st.voltageVolts }));
+          } else {
+            setOverview((o) => ({ ...(o || {}), ok: o?.ok, taskState: o?.taskState, voltageVolts: null }));
+          }
+        }
+      } catch {
+        if (stop || seq !== latest) return;
+        setCommLost(true);
+        setConnected(false);
+        setOverview({ ok: false });
+      }
+    };
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const poll = async () => {
+      await tick();
+      if (!stop) timer = setTimeout(() => void poll(), 800);
+    };
+    void poll();
+    return () => {
+      stop = true;
+      if (timer !== undefined) clearTimeout(timer);
+    };
+  }, []);
 
   useEffect(() => {
     if (expandedId == null) {
@@ -181,15 +271,84 @@ export function ObdPage({ onLocate }: ObdPageProps) {
     }
   }
 
+  const tabsLocked = topoBusy || sessionBusy || engineBusy;
+  const sessionLocked = tabsLocked || overview?.taskState === "running";
+  const selectedDev = devices.find((d) => d.id === selectedId);
+  const needsModel = selectedDev?.brand === "unresolved" && !modelPick;
+  const canConnect = Boolean(
+    selectedId && selectedDev?.available && !needsModel && !connBusy && !sessionLocked && linkState !== "connecting" && !connected,
+  );
   const expandedSession = sessions.find((s) => s.id === expandedId) ?? null;
+
+  function applyConn(doc: {
+    ok?: boolean;
+    error?: string | null;
+    devices?: ObdConnectionDevice[];
+    listErrors?: string[];
+    selectedDeviceId?: string | null;
+    connected?: boolean;
+    linkState?: string;
+    voltageVolts?: number | null;
+    guidance?: string;
+  }) {
+    if (doc.devices) setDevices(doc.devices);
+    if (doc.listErrors) setListErrors(doc.listErrors);
+    if ("selectedDeviceId" in doc) setSelectedId(doc.selectedDeviceId ?? null);
+    if (typeof doc.voltageVolts === "number") {
+      setOverview((o) => ({ ...(o || {}), voltageVolts: doc.voltageVolts }));
+    } else if (connected && doc.connected === false) {
+      setOverview((o) => ({ ...(o || {}), voltageVolts: null }));
+    }
+    if ("connected" in doc) setConnected(!!doc.connected);
+    if (typeof doc.linkState === "string") setLinkState(doc.linkState);
+    const hit = (doc.devices || devices).find((d) => d.id === (doc.selectedDeviceId ?? selectedId));
+    const err = doc.error;
+    const note =
+      err === "device_port_unavailable" || err === "busy"
+        ? hit?.guidance || (err === "busy" ? "诊断任务占用链路" : "已配对但没有可用串口")
+        : err || hit?.guidance || null;
+    setConnNote(note);
+  }
+
+  async function connectionCall(req: Parameters<NonNullable<PorscheApi["obdConnection"]>>[0]) {
+    const fn = window.porsche981?.obdConnection || window.__FAKE_CONNECTION__;
+    if (!fn) {
+      applyConn({ ok: false, error: "desktop_required", devices: [], voltageVolts: null, connected: false });
+      return;
+    }
+    setConnBusy(true);
+    try {
+      applyConn(await fn(req));
+    } catch (e) {
+      applyConn({ ok: false, error: String(e), connected: false, voltageVolts: null });
+    } finally {
+      setConnBusy(false);
+    }
+  }
+
+  useEffect(() => {
+    if (tab !== "connection") return;
+    void connectionCall({ action: "list" });
+  }, [tab]);
 
   return (
     <div className="obd-page" data-page="obd">
       <header className="page-head">
-        <p className="muted obd-kicker">诊断</p>
-        <h1>
-          实时 OBD <span className="obd-beta">试运行</span>
-        </h1>
+        <div>
+          <p className="muted obd-kicker">诊断</p>
+          <h1>
+            实时 OBD <span className="obd-beta">试运行</span>
+          </h1>
+        </div>
+        <div className="obd-head-meta">
+          <p className="obd-header-voltage" data-testid="obd-header-voltage">
+            {formatHeaderVoltage(overview?.voltageVolts ?? null)}
+          </p>
+          <p className="obd-task-status" data-testid="obd-task-status" data-state={taskState}>
+            <span className="obd-status-dot" data-state={taskState} aria-hidden />
+            {headerTaskLabel(taskState)}
+          </p>
+        </div>
       </header>
 
       <nav className="obd-tabs chip-row" aria-label="OBD 分区">
@@ -197,7 +356,9 @@ export function ObdPage({ onLocate }: ObdPageProps) {
           <button
             key={t.id}
             type="button"
+            data-obd-tab={t.id}
             className={`chip${tab === t.id ? " active" : ""}`}
+            disabled={tabsLocked && tab !== t.id}
             onClick={() => setTab(t.id)}
           >
             {t.label}
@@ -205,65 +366,151 @@ export function ObdPage({ onLocate }: ObdPageProps) {
         ))}
       </nav>
 
-      {tab !== "coding" ? (
-        <div className="obd-status-bar panel">
-          <span className="obd-status-dot" aria-hidden />
-          <strong>未连接</strong>
-          <span className="muted">ELM327 · 第二阶段适配器</span>
-          <span className="obd-live-poll muted">实时轮询 · 关</span>
-        </div>
-      ) : null}
-
       {error && tab === "faults" ? <p className="error">{error}</p> : null}
 
       {tab === "connection" && (
-        <section className="panel">
-          <h2>连接</h2>
-          <div className="obd-platform callout">
-            <p>
-              <strong>平台支持 · Windows</strong>
+        <section className="panel" data-testid="obd-connection">
+          <h2>连接设置</h2>
+          <p className="muted">
+            选择本机已配对或已连接的 vLinker / OBDLink MX+，点击「连接设备」建立持续适配器连接并自动读电压。
+          </p>
+          {listErrors.length > 0 ? (
+            <p className="muted" data-testid="obd-conn-errors">
+              {listErrors.join("；")}
             </p>
-            <p className="muted">
-              第一阶段：内置码库查码 + 手工会话。第二阶段接 ELM327（USB /
-              蓝牙）只读故障码；不清码、不写 ECU（见 ADR 001）。
+          ) : null}
+          {devices.length === 0 ? (
+            <p className="muted" data-testid="obd-conn-empty">
+              未发现可用适配器。请先在 Windows 中配对 vLinker 或 OBDLink MX+，并确认已出现 SPP 串口。
             </p>
-          </div>
+          ) : (
+            <ul className="plain-list" data-testid="obd-conn-list">
+              {devices.map((d) => (
+                <li key={d.id}>
+                  <label className="obd-conn-item">
+                    <input
+                      type="radio"
+                      name="obd-device"
+                      data-testid={`obd-device-${d.id}`}
+                      checked={selectedId === d.id}
+                      disabled={connBusy || sessionLocked}
+                      onChange={() => {
+                        setSelectedId(d.id);
+                        void connectionCall({
+                          action: "select",
+                          deviceId: d.id,
+                          model: d.brand === "unresolved" && modelPick ? modelPick : undefined,
+                        });
+                      }}
+                    />
+                    <span>
+                      <strong>{d.brand === "unresolved" ? "未识别型号" : d.brand}</strong>
+                      {d.name ? ` · ${d.name}` : ""}
+                      {d.comPort ? ` · ${d.comPort}` : " · 无 COM"}
+                      {d.available ? "" : " · 不可用"}
+                      {d.paired && !d.available ? ` · ${d.guidance || "已配对无串口"}` : ""}
+                    </span>
+                  </label>
+                </li>
+              ))}
+            </ul>
+          )}
+          {devices.some((d) => d.id === selectedId && d.brand === "unresolved") ? (
+            <label className="field">
+              型号（系统名称无法识别）
+              <select
+                data-testid="obd-model-pick"
+                value={modelPick}
+                onChange={(e) => setModelPick(e.target.value as typeof modelPick)}
+              >
+                <option value="">请选择实际型号</option>
+                <option value="vLinker">vLinker</option>
+                <option value="OBDLink MX+">OBDLink MX+</option>
+              </select>
+            </label>
+          ) : null}
           <div className="row">
-            <button type="button" className="chip active" disabled>
-              Web 串口（USB）
+            <button
+              type="button"
+              data-testid="obd-conn-refresh"
+              className="btn"
+              disabled={connBusy}
+              onClick={() => void connectionCall({ action: "list" })}
+            >
+              刷新
             </button>
-            <button type="button" className="chip" disabled>
-              本机桥接
+            <button
+              type="button"
+              data-testid="obd-conn-connect"
+              className="btn"
+              disabled={!canConnect}
+              onClick={() =>
+                void connectionCall({
+                  action: "connect",
+                  deviceId: selectedId || undefined,
+                  model: modelPick || undefined,
+                })
+              }
+            >
+              连接设备
+            </button>
+            <button
+              type="button"
+              className="ghost"
+              data-testid="obd-conn-disconnect"
+              disabled={connBusy || sessionLocked}
+              onClick={() => void connectionCall({ action: "disconnect" })}
+            >
+              断开
+            </button>
+            <button
+              type="button"
+              className="ghost"
+              data-testid="obd-conn-clear"
+              disabled={connBusy || sessionLocked}
+              onClick={() => void connectionCall({ action: "clear" })}
+            >
+              清除选择
             </button>
           </div>
-          <button type="button" className="btn" disabled>
-            连接 USB ELM
-          </button>
+          <p className="muted" data-testid="obd-conn-state">
+            {sessionLocked || linkState === "diagnostic"
+              ? "诊断占用"
+              : linkState === "connecting"
+                ? "连接中"
+                : linkState === "reconnecting"
+                  ? "等待重连"
+                  : connected || linkState === "connected"
+                    ? "已连接"
+                    : "未建立适配器通信"}
+          </p>
+          {connNote ? (
+            <p className="muted" data-testid="obd-conn-note">
+              {connNote}
+            </p>
+          ) : null}
         </section>
       )}
 
-      {tab === "live" && (
-        <section className="panel">
-          <h2>实时数据</h2>
-          <button type="button" disabled>
-            刷新实时数据
-          </button>
-          <p className="muted">连接后可见实时 PID（第三阶段）。</p>
-        </section>
-      )}
+      {tab === "live" ? (
+        <EngineDataPage
+          onBusyChange={setEngineBusy}
+          peerBusy={topoBusy || sessionBusy || (overview?.taskState === "running" && !engineBusy)}
+        />
+      ) : null}
 
       {tab === "faults" && (
         <section className="panel">
           <h2>故障码</h2>
           <p className="muted">
-            输入 OBD-II 故障码查内置说明；可记入手工会话。硬件扫码见第二阶段。
+            输入 OBD-II 故障码查内置说明；可记入手工会话。硬件扫码见「系统拓扑」读取；清故障码请到「系统拓扑」。
           </p>
           <div className="row">
             <button type="button" disabled>
               刷新故障码
             </button>
-            <button type="button" disabled title="ADR 001：不做清码">
-              清除故障码
+            <button type="button" className="ghost" onClick={() => setTab("topology")}>
+              前往系统拓扑清码
             </button>
             <button type="button" disabled>
               保存扫描
@@ -439,7 +686,20 @@ export function ObdPage({ onLocate }: ObdPageProps) {
         </section>
       )}
 
+      <div hidden={tab !== "topology"}>
+        <TopologyPage
+          onBusyChange={setTopoBusy}
+          peerBusy={sessionBusy || engineBusy || (overview?.taskState === "running" && !topoBusy)}
+        />
+      </div>
       {tab === "coding" ? <CodingPage /> : null}
+      {tab === "offline" ? <OfflineDiagnosticsPage /> : null}
+      <div hidden={tab !== "session"}>
+        <ReadOnlySessionPage
+          onBusyChange={setSessionBusy}
+          peerBusy={topoBusy || engineBusy || (overview?.taskState === "running" && !sessionBusy)}
+        />
+      </div>
     </div>
   );
 }

@@ -62,13 +62,13 @@ npm install && npm run dev
 
 ## 它是什么
 
-面向 **2014 Porsche Boxster S（981）PDK** 的本机 Windows Electron 车库：零件浏览、保养、只读 OBD、车辆设置和 3D 定位。
+面向 **2014 Porsche Boxster S（981）PDK** 的本机 Windows Electron 车库：零件浏览、保养、受限 OBD、车辆设置和 3D 定位。
 
 所有数据和数据库均在本机，无云服务、无账号。开发数据库路径是 `.local/garage.db`。
 
 ## 使用边界
 
-- OBD、诊断和车辆设置均为**只读**，不会写入 ECU。
+- OBD 默认只读；唯一例外是已具名 981 DME/Gateway 的受限清故障码流程。它需要用户确认目标 ECU 与 X431 未处于诊断会话，实车验证仍待完成；设码、隐藏功能、刷写、执行器和其他 ECU 写入仍不允许。
 - 仅在本机 Windows + SQLite 运行。
 - macOS 仅提供开发启动路径，不作为车主正式支持平台。
 - 不解析 PETKA `DATA\PO` 或 `.zgd` 文件。
@@ -118,3 +118,7 @@ data/seed/     随仓库提供的种子数据
 本分支基于上游 fork [dmitry-grechko/flat-six](https://github.com/dmitry-grechko/flat-six)（MIT）。本分支原创代码采用 [PolyForm Noncommercial 1.0.0](LICENSE)，仅限非商业用途。
 
 DTC、teile / Design911、X431 导出资料，以及 flat-six、PETKA、游戏和其他第三方 3D 资产，可能各有独立来源与使用条件；它们不因本分支许可证而获得额外授权。
+
+## 2026-09-13 文档交接
+
+已接收来源分支的 OBD 文档与研究资料，入口见 [docs/README.md](docs/README.md)。本次只迁移文档，来源端所述功能、测试结果和旧会话授权不代表本机现状；本机 macOS 开发说明与 ADR 001 只读规则保留。版本冲突与缺项详见本机 `.local/handoff-20260913/IMPORT-REPORT.md`。

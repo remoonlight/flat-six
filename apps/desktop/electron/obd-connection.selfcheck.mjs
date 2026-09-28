@@ -1,0 +1,367 @@
+import assert from "node:assert/strict";
+import { EventEmitter } from "node:events";
+import { PassThrough } from "node:stream";
+import fs from "node:fs";
+import path from "node:path";
+import {
+  attachSessionHandoff,
+  createObdConnectionManager,
+  createTransportGate,
+  nextRetryDelayMs,
+} from "./obd-connection.mjs";
+import { createReadOnlySessionManager } from "./read-only-session.mjs";
+import { acceptMonitorReading, parseVoltageVolts, VOLTAGE_FRESH_MS, RETRY_BACKOFF_MS } from "../src/obd-connection-logic.mjs";
+
+const repoRoot = process.cwd();
+const scratch = path.join(repoRoot, ".local/cursor-coordination/obd-x431-cadence-20260927/scratch");
+fs.mkdirSync(scratch, { recursive: true });
+const device = { id: "bt:0425E85BD4CB", brand: "vLinker", available: true, paired: true };
+let serial = 0;
+function manager(extra = {}) {
+  return createObdConnectionManager({
+    repoRoot,
+    env: { PORSCHE981_CONNECTION_STATE: path.join(scratch, `accept-${Date.now()}-${serial++}.json`) },
+    listFn: async () => ({ devices: [device] }),
+    handshakeMs: extra.handshakeMs ?? 60_000,
+    livenessMs: extra.livenessMs ?? 60_000,
+    ...extra,
+  });
+}
+async function select(m) {
+  await m.handle({ action: "list" });
+  assert.equal((await m.handle({ action: "select", deviceId: device.id })).ok, true);
+}
+function fakeChild() {
+  const child = new EventEmitter();
+  child.stdin = new PassThrough();
+  child.stdout = new PassThrough();
+  child.stderr = new PassThrough();
+  child.kill = () => {
+    child.killed = true;
+    return true;
+  };
+  child.exitCode = null;
+  return child;
+}
+const hs = (volts = 12.6, at = 1000) =>
+  JSON.stringify({
+    ok: true,
+    type: "handshake",
+    volts,
+    voltageSource: "atrv",
+    simulation: false,
+    deviceId: device.id,
+    at,
+  }) + "\n";
+
+assert.equal(acceptMonitorReading({ ok: true, simulation: false, type: "handshake", volts: 12.6, voltageSource: "atrv", deviceId: device.id, at: 1000 }, { deviceId: device.id, now: 1000, freshMs: 6000 }).volts, 12.6);
+assert.equal(acceptMonitorReading({ ok: true, simulation: false, type: "handshake", volts: 12.6, voltageSource: "atrv", deviceId: "bt:000000000000", at: 1000 }, { deviceId: device.id, now: 1000, freshMs: 6000 }).reject, "device_mismatch");
+assert.equal(acceptMonitorReading({ ok: true, type: "handshake", volts: 12.6, voltageSource: "atrv", simulation: true, deviceId: device.id, at: 1000 }, { deviceId: device.id, now: 1000, freshMs: 6000 }).reject, "synthetic");
+assert.equal(acceptMonitorReading({ ok: true, simulation: false, type: "handshake", volts: 12.6, voltageSource: "atrv", deviceId: device.id, at: 9000 }, { deviceId: device.id, now: 1000, freshMs: 6000 }).reject, "stale");
+assert.equal(acceptMonitorReading({ ok: false, type: "error", error: "adapter-identity-mismatch" }, { deviceId: device.id, now: 1000, freshMs: 6000 }).fatal, true);
+
+for (const raw of ["bad12.6V", "1.12.6V", "-12.6V", "12.6V\rERROR", "12.6V\r13.0V"]) assert.equal(parseVoltageVolts(raw), null);
+assert.equal(parseVoltageVolts("ATRV\r12.6V\r>"), 12.6);
+assert.deepEqual([...RETRY_BACKOFF_MS], [5000, 10000, 20000, 30000]);
+assert.equal(nextRetryDelayMs(1), 5000);
+assert.equal(nextRetryDelayMs(4), 30000);
+assert.equal(VOLTAGE_FRESH_MS, 6000);
+
+const gate = createTransportGate();
+const m = manager({ gate });
+await select(m);
+gate.tryAcquire("session");
+for (const action of ["select", "clear", "disconnect", "connect"]) {
+  const req = action === "select" ? { action, deviceId: device.id } : { action };
+  assert.equal((await m.handle(req)).error, "busy");
+}
+gate.release("session");
+await m.shutdown();
+
+let child;
+const processGate = createTransportGate();
+const processManager = manager({
+  gate: processGate,
+  monitorSpawnFn: () => {
+    child = fakeChild();
+    return child;
+  },
+});
+await select(processManager);
+await processManager.handle({ action: "connect" });
+assert.match(String(processGate.owner()), /^monitor:/);
+child.stdout.emit("data", Buffer.alloc(65 * 1024, 65));
+assert.equal(child.killed, true);
+assert.match(String(processGate.owner()), /^monitor:/, "retain lock before child closes");
+child.exitCode = 1;
+child._exited = true;
+child.emit("close", 1);
+assert.equal(processGate.owner(), null);
+await processManager.shutdown();
+
+{
+  const g = createTransportGate();
+  let stuck;
+  const stuckMgr = manager({
+    gate: g,
+    gracefulMs: 20,
+    killWaitMs: 20,
+    monitorSpawnFn: () => {
+      stuck = fakeChild();
+      stuck.kill = () => {
+        stuck.killed = true;
+        return false;
+      };
+      return stuck;
+    },
+  });
+  await select(stuckMgr);
+  await stuckMgr.handle({ action: "connect" });
+  const token = g.owner();
+  assert.match(String(token), /^monitor:/);
+  const t0 = Date.now();
+  const sus = await stuckMgr.suspendForSession();
+  assert.equal(sus.ok, false);
+  assert.equal(sus.error, "monitor_close_timeout");
+  assert.equal(g.owner(), token, "lock retained until actual close");
+  assert.ok(Date.now() - t0 >= 15);
+  stuck.exitCode = 1;
+  stuck._exited = true;
+  stuck.emit("close", 1);
+  assert.equal(g.owner(), null);
+  await stuckMgr.shutdown();
+}
+
+const late = manager({
+  now: () => 1000,
+  monitorSpawnFn: () => {
+    child = fakeChild();
+    return child;
+  },
+});
+await select(late);
+await late.handle({ action: "connect" });
+await late.shutdown();
+child.stdout.emit("data", Buffer.from(hs()));
+assert.equal(late.snapshot().connected, false);
+assert.equal(late.snapshot().voltageVolts, null);
+
+let now = 1_000;
+const fresh = manager({ now: () => now, monitorSpawnFn: () => { child = fakeChild(); return child; } });
+await select(fresh);
+await fresh.handle({ action: "connect" });
+child.stdout.emit("data", Buffer.from(hs(12.6, 1000)));
+assert.equal(fresh.snapshot().voltageVolts, 12.6);
+now += 6001;
+assert.equal(fresh.snapshot().voltageVolts, null);
+await fresh.handle({ action: "disconnect" });
+assert.equal(fresh.snapshot().voltageVolts, null);
+await fresh.shutdown();
+
+const delays = [];
+const timers = [];
+let child2;
+const retryGate = createTransportGate();
+const retryer = manager({
+  gate: retryGate,
+  handshakeMs: 120000,
+  livenessMs: 120000,
+  monitorSpawnFn: () => {
+    child2 = fakeChild();
+    return child2;
+  },
+  setTimeoutFn: (fn, ms) => {
+    delays.push(ms);
+    const id = timers.length;
+    timers.push({ fn, ms });
+    return id;
+  },
+  clearTimeoutFn: () => {},
+});
+await select(retryer);
+await retryer.handle({ action: "connect" });
+child2.exitCode = 1;
+child2._exited = true;
+child2.emit("close", 1);
+assert.equal(retryer.snapshot().linkState, "reconnecting");
+assert.ok(delays.includes(5000));
+const retryFns = timers.filter((t) => t.ms === 5000 || t.ms === 10000 || t.ms === 20000 || t.ms === 30000);
+retryFns[0].fn();
+child2.exitCode = 1;
+child2._exited = true;
+child2.emit("close", 1);
+retryFns[1]?.fn?.();
+child2.exitCode = 1;
+child2._exited = true;
+child2.emit("close", 1);
+retryFns[2]?.fn?.();
+child2.exitCode = 1;
+child2._exited = true;
+child2.emit("close", 1);
+const retryDelays = delays.filter((d) => d === 5000 || d === 10000 || d === 20000 || d === 30000);
+assert.deepEqual(retryDelays.slice(0, 4), [5000, 10000, 20000, 30000]);
+await retryer.handle({ action: "disconnect" });
+assert.equal(retryer.snapshot().linkState, "idle");
+const before = delays.length;
+timers.filter((t) => t.ms === 30000).at(-1)?.fn?.();
+assert.equal(delays.filter((d) => d === 5000).length, delays.filter((d) => d === 5000).length);
+void before;
+await retryer.shutdown();
+
+const syn = manager({ now: () => 1000, monitorSpawnFn: () => { child = fakeChild(); return child; } });
+await select(syn);
+await syn.handle({ action: "connect" });
+const lastAt = syn.snapshot().voltageAt;
+child.stdout.emit("data", Buffer.from(JSON.stringify({ ok: true, volts: 12.6, voltageSource: "atrv", simulation: true, type: "handshake", deviceId: device.id, at: 1000 }) + "\n"));
+assert.equal(syn.snapshot().voltageAt, lastAt);
+child.stdout.emit("data", Buffer.from("not-json\n"));
+assert.equal(syn.snapshot().voltageVolts, null);
+child.stdout.emit("data", Buffer.from(hs(11.9, 1000)));
+assert.equal(syn.snapshot().voltageVolts, 11.9);
+child.stdout.emit("data", Buffer.from(JSON.stringify({ ok: false, type: "error", error: "adapter-identity-mismatch" }) + "\n"));
+assert.equal(syn.snapshot().voltageVolts, null);
+assert.equal(syn._state().wantConnected, false);
+await syn.handle({ action: "disconnect" });
+await syn.shutdown();
+
+{
+  const g = createTransportGate();
+  const silent = manager({
+    gate: g,
+    handshakeMs: 30,
+    monitorSpawnFn: () => {
+      child = fakeChild();
+      child.kill = () => {
+        child.killed = true;
+        return false;
+      };
+      return child;
+    },
+  });
+  await select(silent);
+  await silent.handle({ action: "connect" });
+  await new Promise((r) => setTimeout(r, 50));
+  assert.equal(child.killed, true);
+  assert.match(String(g.owner()), /^monitor:/);
+  child.exitCode = 1;
+  child._exited = true;
+  child.emit("close", 1);
+  await silent.shutdown();
+}
+
+{
+  const g = createTransportGate();
+  const conn = manager({
+    gate: g,
+    now: () => Date.now(),
+    gracefulMs: 20,
+    killWaitMs: 20,
+    monitorSpawnFn: () => {
+      child = fakeChild();
+      child.kill = () => {
+        child.killed = true;
+        return false;
+      };
+      return child;
+    },
+  });
+  await select(conn);
+  await conn.handle({ action: "connect" });
+  child.stdout.emit("data", Buffer.from(hs(12.6, Date.now())));
+  const sess = attachSessionHandoff(
+    conn,
+    createReadOnlySessionManager({
+      repoRoot,
+      gate: g,
+      spawnFn: () => {
+        throw new Error("session must not spawn while monitor alive");
+      },
+    }),
+  );
+  const first = sess.handle({ action: "prepare", profileId: "porsche-981-2014-dme", mode: "simulation" }, { ownerId: 1 });
+  const second = await sess.handle({ action: "prepare", profileId: "porsche-981-2014-dme", mode: "simulation" }, { ownerId: 1 });
+  assert.equal(second.error, "busy");
+  const out = await first;
+  assert.equal(out.ok, false);
+  assert.equal(out.error, "monitor_close_timeout");
+  child.exitCode = 0;
+  child._exited = true;
+  child.emit("close", 0);
+  await conn.shutdown();
+}
+
+{
+  let n = 0;
+  const g = createTransportGate();
+  const fb = manager({
+    gate: g,
+    now: () => 1000,
+    pythonCandidates: [
+      { exe: "missing-a", prefix: [] },
+      { exe: "ok-b", prefix: [] },
+    ],
+    monitorSpawnFn: () => {
+      n += 1;
+      if (n === 1) {
+        const err = new Error("missing");
+        err.code = "ENOENT";
+        throw err;
+      }
+      child = fakeChild();
+      return child;
+    },
+  });
+  await select(fb);
+  await fb.handle({ action: "connect" });
+  child.stdout.emit("data", Buffer.from(hs(12.6, 1000)));
+  assert.equal(n, 2);
+  assert.equal(fb.snapshot().voltageVolts, 12.6);
+  await fb.shutdown();
+}
+
+{
+  const g = createTransportGate();
+  let stuck;
+  const ov = manager({
+    gate: g,
+    gracefulMs: 20,
+    killWaitMs: 20,
+    monitorSpawnFn: () => {
+      stuck = fakeChild();
+      stuck.kill = () => {
+        stuck.killed = true;
+        return false;
+      };
+      return stuck;
+    },
+  });
+  await select(ov);
+  await ov.handle({ action: "connect" });
+  const disc = ov.handle({ action: "disconnect" });
+  const sel = ov.handle({ action: "select", deviceId: device.id });
+  const out = await disc;
+  assert.equal(out.ok, false);
+  assert.equal(out.error, "monitor_close_timeout");
+  assert.equal((await sel).error, undefined);
+  assert.equal(g.owner() != null, true);
+  stuck.exitCode = 0;
+  stuck._exited = true;
+  stuck.emit("close", 0);
+  await ov.shutdown();
+}
+
+{
+  const second = { ...device, id: "bt:AABBCCDDEEFF", brand: "OBDLink MX+" };
+  let opens = 0;
+  const queued = manager({ listFn: async () => ({ devices: [device, second] }), monitorSpawnFn: () => { opens++; return fakeChild(); } });
+  await select(queued);
+  const selecting = queued.handle({ action: "select", deviceId: second.id });
+  const connecting = queued.handle({ action: "connect", deviceId: device.id });
+  assert.equal(queued.reserveDispatch(), false, "pending selection reserves mutations before diagnostic dispatch");
+  assert.equal((await selecting).selectedDeviceId, second.id);
+  assert.equal((await connecting).error, "device_mismatch", "queued explicit connect cannot silently target the next selected device");
+  assert.equal(opens, 0);
+  await queued.shutdown();
+}
+
+console.log("obd-connection selfcheck PASS: close-timeout quarantine, cadence, backoff, ingest, silent child, queued device identity");

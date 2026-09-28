@@ -865,6 +865,13 @@ ul.plain-list {
   margin-bottom: 12px;
 }
 
+.obd-page .page-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .page-head h1 {
   margin-bottom: 4px;
 }
@@ -1115,6 +1122,70 @@ button.chip:disabled {
   width: 8px;
   height: 8px;
   border-radius: 50%;
+  background: #888;
+}
+
+.obd-head-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.obd-header-voltage {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  min-width: 6.5em;
+  text-align: right;
+}
+
+.obd-task-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 650;
+  flex-shrink: 0;
+}
+
+.obd-conn-item {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.obd-conn-item input[type="radio"] {
+  width: auto;
+  min-width: auto;
+  margin: 2px 0 0;
+  flex: 0 0 auto;
+}
+
+[data-testid="obd-conn-list"] {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0;
+}
+
+@media (max-width: 600px) {
+  .obd-page .page-head { flex-wrap: wrap; }
+  .obd-head-meta { flex-wrap: wrap; gap: 8px; }
+}
+
+.obd-status-dot[data-state="idle"] {
+  background: #2e7d32;
+}
+
+.obd-status-dot[data-state="running"] {
+  background: #ef6c00;
+}
+
+.obd-status-dot[data-state="offline"] {
   background: #888;
 }
 

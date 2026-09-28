@@ -61,6 +61,12 @@ contextBridge.exposeInMainWorld("porsche981", {
   modelOemLinksRemove: (kind, ref, sku, assemblyId) =>
     ipcRenderer.invoke("modelOem:remove", { kind, ref, sku, assemblyId }),
   modelOemCatalog: () => ipcRenderer.invoke("modelOem:catalog"),
+  offlineDiagnostics: (request) =>
+    ipcRenderer.invoke("diagnostics:offline", request),
+  readOnlySession: (request) =>
+    ipcRenderer.invoke("diagnostics:session", request),
+  obdConnection: (request) =>
+    ipcRenderer.invoke("diagnostics:connection", request),
   getBridgeStatus: () => ipcRenderer.invoke("db-bridge:status"),
   onBridgeStatus: (cb) => {
     const handler = (_e, status) => cb(status);
