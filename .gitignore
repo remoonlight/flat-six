@@ -24,9 +24,11 @@ packages/*/dist/
 __pycache__/
 *.py[cod]
 
-# PETKA EPC 明文导出（本机权威；体积大、勿提交目录正文）
+# PETKA EPC 明文：CSV/MD 入库；其它导出物仍忽略
 data/seed/petka/plaintext-archive/*
 !data/seed/petka/plaintext-archive/README.md
+!data/seed/petka/plaintext-archive/PETKA_Porsche_981_EPC.csv
+!data/seed/petka/plaintext-archive/PETKA_Porsche_981_EPC.md
 
 # PETKA 人工导出物：zone parts.csv 可入库；截图/PDF 仍本机
 data/petka/**/shots/
