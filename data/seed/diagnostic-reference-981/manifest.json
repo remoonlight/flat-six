@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "publicCandidates": {
+    "path": "data/seed/diagnostic-reference-981/catalog.json",
+    "executable": false,
+    "status": "built"
+  },
+  "observedDefinitionsPath": "data/seed/diagnostics/catalog.v1.json",
+  "observedDefinitions": {
+    "path": "data/seed/diagnostics/catalog.v1.json",
+    "status": "present",
+    "validated": true,
+    "schemaVersion": 1,
+    "profileIdsChecked": [
+      "porsche-981-2014-dme",
+      "porsche-981-2014-gateway"
+    ],
+    "note": "Path/schema/profile identity only. Observed catalog content is not hashed into this index."
+  },
+  "observedLiveEvidence": {
+    "copied": false,
+    "note": "Run hashes stay in the observed catalog. Not copied while that file may still be edited."
+  },
+  "unresolvedIntegrationPath": null
+}

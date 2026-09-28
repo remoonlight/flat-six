@@ -34,27 +34,59 @@ cd flat-six
 git checkout porsche981
 ```
 
+### macOS 开发启动
+
+macOS 仅用于开发和贡献，不是车主正式支持平台。OBD、串口和蓝牙行为以 Windows 为准，Mac 上可能不一致。
+
+使用 Git 时，请切到 `porsche981` 分支：
+
+```zsh
+git clone https://github.com/remoonlight/flat-six.git
+cd flat-six
+git checkout porsche981
+```
+
+随后双击根目录的 **`开始车库.command`**；若中文文件名乱码，双击 **`START.command`**。也可在终端运行：
+
+```zsh
+bash scripts/run-desktop.sh
+```
+
+或直接安装依赖并启动：
+
+```zsh
+npm install && npm run dev
+```
+
+首次被 Gatekeeper 提示无法打开时，在访达中右键该 `.command` 文件，选择“打开”；也可先执行 `chmod +x 开始车库.command START.command`。
+
 ## 它是什么
 
-面向 **2014 Porsche Boxster S（981）PDK** 的本机 Windows Electron 车库：零件浏览、保养、OBD 诊断、车辆设置和 3D 定位。
+面向 **2014 Porsche Boxster S（981）PDK** 的本机 Windows Electron 车库：零件浏览、保养、受限 OBD、车辆设置和 3D 定位。
 
 所有数据和数据库均在本机，无云服务、无账号。开发数据库路径是 `.local/garage.db`。
 
 ## 使用边界
 
-- OBD 以读取为主；明确支持范围内的故障码清除是唯一写操作例外，执行前留证、执行后复读。设码和 X431 页面用于参考与记录，不发送编码或刷写指令。详见 [操作边界](docs/adr/001-no-ecu-write.md)。
+- OBD 默认只读；唯一例外是已具名 981 DME/Gateway 的受限清故障码流程。它需要用户确认目标 ECU 与 X431 未处于诊断会话，实车验证仍待完成；设码、隐藏功能、刷写、执行器和其他 ECU 写入仍不允许。
 - 仅在本机 Windows + SQLite 运行。
+- macOS 仅提供开发启动路径，不作为车主正式支持平台。
 - 不解析 PETKA `DATA\PO` 或 `.zgd` 文件。
 - 界面价格统一折算为 CNY；teile / Design911 价格不等于 PETKA 已核价格。
 - flat-six 与 PETKA 模型 GLB 已随仓库提供；CMS 991 抠模只可保留在本机，产品不使用 991 车身。
 
 ## 给开发者
 
-实时 OBD 的使用方法、当前覆盖和实车待验证项见 [使用说明](docs/obd-live-guide.md)。故障勾选后可进入数据分析；981/982 统一知识库的收录量不代表本车读取支持量。完整文档入口见 [docs/README.md](docs/README.md)。
-
-在仓库根目录运行：
+Windows PowerShell：
 
 ```powershell
+npm install
+npm run dev
+```
+
+macOS / zsh：
+
+```zsh
 npm install
 npm run dev
 ```
@@ -86,3 +118,7 @@ data/seed/     随仓库提供的种子数据
 本分支基于上游 fork [dmitry-grechko/flat-six](https://github.com/dmitry-grechko/flat-six)（MIT）。本分支原创代码采用 [PolyForm Noncommercial 1.0.0](LICENSE)，仅限非商业用途。
 
 DTC、teile / Design911、X431 导出资料，以及 flat-six、PETKA、游戏和其他第三方 3D 资产，可能各有独立来源与使用条件；它们不因本分支许可证而获得额外授权。
+
+## 2026-09-13 文档交接
+
+已接收来源分支的 OBD 文档与研究资料，入口见 [docs/README.md](docs/README.md)。本次只迁移文档，来源端所述功能、测试结果和旧会话授权不代表本机现状；本机 macOS 开发说明与 ADR 001 只读规则保留。版本冲突与缺项详见本机 `.local/handoff-20260913/IMPORT-REPORT.md`。

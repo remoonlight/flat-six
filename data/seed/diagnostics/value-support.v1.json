@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "executionEnabled": false,
+  "liveVerified": false,
+  "writePayload": null,
+  "task": "offline_x431_value_decoder_final_bounds",
+  "variants": 291,
+  "library": ".local/x431-re/2026-09-27-protocol/package/libPORSCHE_CALC.so",
+  "librarySha256": "40a4bf4ebff5da4f5d3093e469287881a1aee876b483416ef0bdc8d9e8edc543",
+  "libraryPresent": true,
+  "librarySha256Match": true,
+  "decodeCounts": {
+    "identity": {
+      "missing_offset": 3920
+    },
+    "measurement": {
+      "supported": 92634
+    },
+    "coding": {
+      "supported": 59863,
+      "malformed_formula": 8
+    },
+    "routine": {
+      "missing_formula": 5385
+    },
+    "dtc": {
+      "missing_formula": 74865
+    }
+  },
+  "previewCounts": {
+    "identity": {
+      "missing_offset": 3920
+    },
+    "measurement": {
+      "preview_inverse_ambiguous": 21479,
+      "supported": 40415,
+      "preview_not_single_byte_texttable": 30579,
+      "preview_range_enum": 161
+    },
+    "coding": {
+      "supported": 40207,
+      "preview_not_single_byte_texttable": 1367,
+      "preview_inverse_ambiguous": 17899,
+      "preview_range_enum": 390,
+      "malformed_formula": 8
+    },
+    "routine": {
+      "missing_formula": 5385
+    },
+    "dtc": {
+      "missing_formula": 74865
+    }
+  },
+  "compucodeNamed": {
+    "Formel21.class": 18,
+    "Formel54.class": 16,
+    "Formel33.class": 5,
+    "Formel119.class": 3,
+    "Formel5.class": 3
+  },
+  "deltaSupportedVsBaseline": {
+    "measurement": 35565,
+    "coding": 2770,
+    "previewMeasurement": 17584,
+    "previewCoding": 7200
+  },
+  "remainingReasonCounts": {
+    "dtc:missing_formula": 1,
+    "routine:missing_formula": 1,
+    "identity:missing_offset": 66,
+    "coding:malformed_formula": 2
+  },
+  "remainingUnique": [
+    {
+      "category": "coding",
+      "reason": "malformed_formula",
+      "n": 6,
+      "kind": "TEXTTABLE",
+      "formulaId": "F0005D93",
+      "profile": "9x1:TUER_VORNE:TUER_VORNE_BaseSys",
+      "at": 8305489,
+      "next": "catalog-syntax-fix",
+      "sourceAvailability": "formula text concatenated two textIds",
+      "formula": "TEXTTABLE:DataType=A_UINT32,[0x00]->0x310007B4xF0002A75;[0x01]->0x310007B4;LengthInfo=Standard,BitLength=1,BitMask=0,HighLow=1;"
+    },
+    {
+      "category": "coding",
+      "reason": "malformed_formula",
+      "n": 2,
+      "kind": "TEXTTABLE",
+      "formulaId": "F0005D94",
+      "profile": "9x1:TUER_VORNE:TUER_VORNE_BaseSys",
+      "at": 8306828,
+      "next": "catalog-syntax-fix",
+      "sourceAvailability": "formula text concatenated two textIds",
+      "formula": "TEXTTABLE:DataType=A_UINT32,[0x00]->0x310007B4x8181003A;[0x01]->0x310007B4;LengthInfo=Standard,BitLength=1,BitMask=0,HighLow=1;"
+    }
+  ],
+  "equations": {
+    "linear": "(x*Xc - Xa)/Xb",
+    "bcdPacked": "MSD-first; each byte hi*10+lo; nibble>9 invalid; BCD-UP unproven",
+    "bitMask": "hex even without 0x; AND after extract; preview rejects rawValue bits outside mask (no silent round)",
+    "crossByte": "nbytes=ceil((bitOff+bitLen)/8); HighLow=0 reverse; BE int >> bitOffset & length mask",
+    "alignedBytes": "same window as crossByte; HighLow=0 reverse then BE",
+    "float32": "4-byte IEEE BE; pack overflow out_of_range; nan/inf -> nan; TAB display f32",
+    "scaleTabIntp": "first matching inclusive Lower..Upper segment, same LINEAR algebra; TAB extra f32 display",
+    "compucode": "EntryPoint=execute and known FormelN; getParaObjectX BE/strtol; Formel54 uxth %d; F21/F119 lo*hi*k; F33 lo/hi*100; F5 (lo-100)*hi*0.1",
+    "texttableTypes": "A_UINT32 / signed numeric / A_BYTEFIELD bitfield only",
+    "preview": "rawValue=unsigned field bits; post-decode raw must match; BCD invalid/reserved/OOB/nan fail",
+    "minmax": "terminator within MaxLength else overlong; missing NUL; MinLength; reject negative/min>max"
+  }
+}

@@ -570,11 +570,185 @@ export type PorscheApi = {
   modelOemCatalog?: () => Promise<ModelOemCatalog>;
   getBridgeStatus?: () => Promise<BridgeStatus>;
   onBridgeStatus?: (cb: (status: BridgeStatus) => void) => () => void;
+  offlineDiagnostics?: (
+    request: OfflineDiagnosticsRequest,
+  ) => Promise<OfflineDiagnosticsResult>;
+  readOnlySession?: (
+    request: ReadOnlySessionRequest,
+  ) => Promise<ReadOnlySessionResult>;
+  obdConnection?: (
+    request: ObdConnectionRequest,
+  ) => Promise<ObdConnectionResult>;
+}
+
+export type OfflineDiagnosticsAction =
+  | "summary"
+  | "plan"
+  | "variants"
+  | "records"
+  | "match"
+  | "decode"
+  | "preview"
+  | "replay";
+
+export type OfflineDiagnosticsRequest = {
+  action: OfflineDiagnosticsAction;
+  generation?: "981" | "982";
+  ecuId?: number;
+  profileId?: string;
+  category?: "identity" | "measurement" | "coding" | "dtc" | "routine";
+  offset?: number;
+  limit?: number;
+  search?: string;
+  recordAt?: number;
+  dataHex?: string;
+  responseMode?: "data" | "pdu";
+  rawValue?: number;
+  identity?: Record<string, unknown>;
 };
+
+export type OfflineDiagnosticsResult = {
+  ok: boolean;
+  error?: string | null;
+  executionEnabled: boolean;
+  liveVerified: boolean;
+  writePayload: null;
+  [key: string]: unknown;
+};
+
+export type ObdConnectionAction =
+  | "list"
+  | "select"
+  | "connect"
+  | "voltage"
+  | "disconnect"
+  | "clear"
+  | "status";
+
+export type ObdConnectionRequest = {
+  action: ObdConnectionAction;
+  deviceId?: string;
+  model?: "vLinker" | "OBDLink MX+";
+};
+
+export type ObdConnectionDevice = {
+  id: string;
+  brand?: string;
+  name?: string | null;
+  comPort?: string | null;
+  available?: boolean;
+  paired?: boolean;
+  osStatus?: string | null;
+  guidance?: string | null;
+};
+
+export type ObdConnectionResult = {
+  ok: boolean;
+  error?: string | null;
+  executionEnabled: boolean;
+  liveVerified: boolean;
+  writePayload: null;
+  selectedDeviceId?: string | null;
+  model?: string | null;
+  connected?: boolean;
+  linkState?: string;
+  pairingOk?: boolean;
+  commOk?: boolean;
+  devices?: ObdConnectionDevice[];
+  listErrors?: string[];
+  voltageVolts?: number | null;
+  voltageSource?: string | null;
+  voltageAt?: number | null;
+  voltageLabel?: string;
+  [key: string]: unknown;
+};
+
+export type ReadOnlySessionAction = "prepare" | "start" | "status" | "cancel" | "overview";
+
+export type ReadOnlySessionRequest = {
+  action: ReadOnlySessionAction;
+  profileId?: "porsche-981-2014-dme" | "porsche-981-2014-gateway";
+  mode?: "simulation" | "live";
+  sessionTask?: "read" | "clear" | "engine";
+  scenario?:
+    | "success"
+    | "identity-mismatch"
+    | "negative"
+    | "pending-timeout"
+    | "disconnect"
+    | "slow";
+  operationIds?: string[];
+  resumeRunId?: string;
+  confirmedReadOnly?: boolean;
+  confirmedClearDtc?: boolean;
+  x431Inactive?: boolean;
+  sampleCycles?: number;
+  intervalMs?: number;
+  jobId?: string;
+};
+
+export type ReadOnlySessionResult = {
+  ok: boolean;
+  error?: string | null;
+  executionEnabled: boolean;
+  liveVerified: boolean;
+  writePayload: null;
+  jobId?: string;
+  state?: string;
+  taskState?: "idle" | "running" | "offline";
+  plan?: unknown;
+  events?: unknown[];
+  latest?: Record<string, unknown> | null;
+  final?: Record<string, unknown> | null;
+  resumed?: boolean;
+  [key: string]: unknown;
+};
+
+export function hasDesktopApi(): boolean {
+  return typeof window !== "undefined" && !!window.porsche981;
+}
+
+export function offlineDiagnosticsFixtureEnabled(): boolean {
+  if (typeof window === "undefined") return false;
+  if (import.meta.env.MODE !== "offline-test") return false;
+  const q = new URLSearchParams(window.location.search);
+  return q.get("offline-diag-fixture") === "1" && !!window.__OFFLINE_DIAG_MOCK__;
+}
+
+export function readOnlySessionFixtureEnabled(): boolean {
+  if (typeof window === "undefined") return false;
+  if (import.meta.env.MODE !== "session-test") return false;
+  return typeof window.porsche981?.readOnlySession === "function";
+}
+
+export function topologyFixtureEnabled(): boolean {
+  if (typeof window === "undefined") return false;
+  if (import.meta.env.MODE !== "topology-test") return false;
+  return typeof window.porsche981?.readOnlySession === "function";
+}
+
+export function engineSessionFixtureEnabled(): boolean {
+  if (typeof window === "undefined") return false;
+  if (import.meta.env.MODE !== "engine-test") return false;
+  return typeof window.porsche981?.readOnlySession === "function";
+}
 
 declare global {
   interface Window {
     porsche981: PorscheApi;
+    __OFFLINE_DIAG_MOCK__?: PorscheApi["offlineDiagnostics"];
+    __ROS_SEED_LIVE_RUN__?: { runId: string; key: string };
+    __TOPOLOGY_EXPORT__?: unknown;
+    __FAKE_SESSION_CALLS__?: unknown[];
+    __TOPO_DELAY_START_MS__?: number;
+    __TOPO_SCENARIO__?: string;
+    __TOPO_CLEAR_RESIDUAL__?: boolean;
+    __TOPO_REQUIRE_CONFIRM__?: boolean;
+    __FAKE_OVERVIEW__?: { ok?: boolean; taskState?: string; voltageVolts?: number | null; voltageLabel?: string };
+    __FAKE_OVERVIEW_THROW__?: boolean;
+    __FAKE_CONNECTION__?: (req: ObdConnectionRequest) => Promise<ObdConnectionResult> | ObdConnectionResult;
+    __OVERVIEW_DELAY_MS__?: number;
+    __ENGINE_SCENARIO__?: string;
   }
 }
 
@@ -583,4 +757,23 @@ export function api(): PorscheApi {
     throw new Error("porsche981 API unavailable — run inside Electron");
   }
   return window.porsche981;
+}
+
+export async function callOfflineDiagnostics(
+  request: OfflineDiagnosticsRequest,
+): Promise<OfflineDiagnosticsResult> {
+  if (offlineDiagnosticsFixtureEnabled() && window.__OFFLINE_DIAG_MOCK__) {
+    return window.__OFFLINE_DIAG_MOCK__(request);
+  }
+  const fn = window.porsche981?.offlineDiagnostics;
+  if (!fn) {
+    return {
+      ok: false,
+      error: "desktop_required",
+      executionEnabled: false,
+      liveVerified: false,
+      writePayload: null,
+    };
+  }
+  return fn(request);
 }

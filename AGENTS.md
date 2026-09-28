@@ -16,13 +16,14 @@ Windows 本地 Electron 车库：**2014 Boxster S（981）PDK**。无云、无�
 ## 常用命令
 
 - `npm run dev` · `npm test` · `npm run accept:all`
+- macOS 开发启动：`bash scripts/run-desktop.sh`（或根目录 `开始车库.command` / `START.command`）
 - PETKA：`status:petka` · `ingest:petka` · `parse:petka-bulk` · `sync:petka-bulk-remote`
 - 3D：`status:mesh-map` · `status:cms-rip` · `accept:ploc2` · `archive:petka-models`
 
 ## 硬边界（详见 ADR）
 
-1. **不设码/刷写 ECU**；2026-09-13 用户明确授权的故障码清除为唯一例外：保存清前证据、限定已支持范围、清后复读，不自动重试不确定写请求 — `docs/adr/001-no-ecu-write.md`
-2. **仅本机 Windows + SQLite** — `docs/adr/002-local-only-windows.md`
+1. **诊断与独立设码按阶段实施**：2026-09-27 用户明确要求逆向故障码、数据定义和隐藏功能，最终由项目经 vLinker 独立通信。允许离线协议/设码定义研究；当前可执行范围为已定义的只读诊断与具名 981 DME/Gateway 的受限清故障码，独立实车验证仍待完成。设码及其他写入逐功能建立身份匹配、原值备份、写入/回读与恢复方案后单独验证；不得猜测或重放未知写指令 — `docs/adr/001-no-ecu-write.md`
+2. **产品仅 Windows + SQLite**；macOS 仅开发运行 — `docs/adr/002-local-only-windows.md`
 3. **PETKA GUI 默认禁止**；仅当用户本会话明示授权 — `docs/adr/003-petka-gui-explicit-only.md`
 4. **CMS 抠模仅本机**；产品不用 991 车身 — `docs/adr/004-cms-rip-local-only.md`
 5. **禁止**解析/入库 PETKA `DATA\PO` / `.zgd`；只收明文导出/剪贴板/inbox
