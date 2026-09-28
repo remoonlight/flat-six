@@ -2,7 +2,7 @@
 
 ## 下载后怎么用
 
-这是源码版，**没有安装器，也没有 electron-builder 安装包**。第一次运行需要 Windows 10/11 和网络，用于安装运行所需的 Node.js、依赖与 Electron。
+这是源码版，**没有安装器，也没有 electron-builder 安装包**。第一次运行需要 Windows 10/11 和网络，用于安装运行所需的 Node.js **22+**、依赖与 Electron。
 
 1. 打开 [GitHub 的 porsche981 分支](https://github.com/remoonlight/flat-six/tree/porsche981)。请确认分支是 **porsche981**，不是 `main`。
 2. 点击绿色 **Code** → **Download ZIP**，解压 ZIP。
@@ -17,10 +17,11 @@
 `开始车库.cmd` 会调用 `scripts\run-desktop.cmd`，并依次：
 
 1. 确认你完整解压了仓库。
-2. 检查 Node.js 是否为 20 或更高；缺失时给出官网 <https://nodejs.org/>，并在可用时使用 `winget` 安装 `OpenJS.NodeJS.LTS`。
+2. 检查 Node.js 是否为 **22 或更高**（`node:sqlite` / db-bridge）；缺失时给出官网 <https://nodejs.org/>，并在可用时使用 `winget` 安装 `OpenJS.NodeJS.LTS`。
 3. 设置 Electron 下载镜像、清理上次残留的开发进程。
 4. 首次从 `data/seed/xray/` 准备姿态和 OEM 关联文件。
 5. 首次安装依赖，然后在**同一个黑色窗口**运行车库。
+6. 每次启动由 db-bridge 把仓库内捆绑目录（保养价、`data/seed/parts/catalog/` 公开快照、PETKA EPC 中英文名）**安全合并**进本机 SQLite：补齐空库或缺字段；不覆盖你改过的价格、币种备注、自定义零件、保养间隔、定位、车辆和服务记录。
 
 可在桌面为解压后文件夹中的 `开始车库.cmd` 建快捷方式；快捷方式的“目标”直接指向该文件即可。
 
@@ -95,6 +96,7 @@ npm run dev
 
 ```powershell
 npm test
+npm run accept:catalog
 npm run accept:all
 ```
 

@@ -37,6 +37,7 @@
     "accept:obd-phase1": "npm run build -w @porsche981/domain && npm run build -w @porsche981/db && node scripts/obd-phase1-accept.mjs",
     "accept:all": "node scripts/accept-all.mjs",
     "accept:bridge": "node scripts/bridge-lifecycle-accept.mjs",
+    "accept:catalog": "npm run build -w @porsche981/domain && npm run build -w @porsche981/db && node scripts/accept-catalog.mjs",
     "ingest:petka-inbox": "node scripts/ingest-petka-inbox.mjs",
     "watch:petka-inbox": "node scripts/watch-petka-inbox.mjs",
     "ingest:locator-inbox": "node scripts/ingest-locator-inbox.mjs",
@@ -85,7 +86,7 @@
     "watch:all-inbox": "node scripts/watch-all-inbox.mjs"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "devDependencies": {
     "playwright": "^1.62.1"

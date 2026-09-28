@@ -4,9 +4,17 @@ import path from "node:path";
 import { ObdStore } from "./obd-store.js";
 import {
   applyMileageSet,
+  catalogPriceNoteLooksSafe,
+  compactOem,
   computeInterval,
+  isOemPlaceholderName,
+  type BundledPart,
   type IntervalResult,
 } from "@porsche981/domain";
+import {
+  BUNDLED_CATALOG_HASH_KEY,
+  loadBundledCatalog,
+} from "./bundled-catalog.js";
 
 export type Vehicle = {
   id: number;
@@ -89,6 +97,60 @@ function serializeAftermarketQuotes(
 ): string | null {
   if (!quotes?.length) return null;
   return JSON.stringify(quotes);
+}
+
+function currencyOfNote(note: string | null | undefined): string | null {
+  const m = /(?:^|;\s*)currency=([A-Za-z]{3})\b/i.exec(note || "");
+  return m ? m[1]!.toUpperCase() : null;
+}
+
+function hasPriceAmounts(p: {
+  oem_price: number | null;
+  aftermarket_price: number | null;
+  aftermarket_quotes: AftermarketQuote[] | null;
+}): boolean {
+  return (
+    p.oem_price != null ||
+    p.aftermarket_price != null ||
+    Boolean(p.aftermarket_quotes?.length)
+  );
+}
+
+function oemIdentityMismatch(existing: Part, bundled: BundledPart): boolean {
+  const a = compactOem(existing.oem_number);
+  const b = compactOem(bundled.oem_number);
+  return Boolean(a && b && a !== b);
+}
+
+function canApplyPriceGroup(existing: Part, bundled: BundledPart): boolean {
+  if (hasPriceAmounts(existing)) return false;
+  const eCur = currencyOfNote(existing.price_note);
+  const bCur = currencyOfNote(bundled.price_note);
+  if (eCur && bCur && eCur !== bCur) return false;
+  if (
+    existing.price_note?.trim() &&
+    !catalogPriceNoteLooksSafe(existing.price_note)
+  ) {
+    return false;
+  }
+  return true;
+}
+
+function canUpgradeNameZh(existing: Part, bundled: BundledPart): boolean {
+  const next = bundled.name_zh?.trim();
+  if (!next) return false;
+  if (existing.name_zh === next) return false;
+  if (isOemPlaceholderName(existing.name_zh, existing.oem_number)) return true;
+  if (bundled.seedNameZh && existing.name_zh === bundled.seedNameZh) return true;
+  return false;
+}
+
+function canUpgradeNameEn(existing: Part, bundled: BundledPart): boolean {
+  const next = bundled.name_en?.trim();
+  if (!next) return false;
+  if ((existing.name_en || "") === next) return false;
+  if (!existing.name_en?.trim()) return true;
+  return isOemPlaceholderName(existing.name_en, existing.oem_number);
 }
 
 /** Cheapest alternate quote — mirrors legacy single `aftermarket_price`. */
@@ -1108,7 +1170,224 @@ export class GarageDb {
       .prepare("SELECT * FROM coding_snapshots ORDER BY recorded_at DESC, id DESC")
       .all() as CodingSnapshot[];
   }
+
+  getMeta(key: string): string | null {
+    const row = this.db
+      .prepare("SELECT value FROM meta WHERE key = ?")
+      .get(key) as { value: string } | undefined;
+    return row?.value ?? null;
+  }
+
+  setMeta(key: string, value: string): void {
+    this.db
+      .prepare(
+        `INSERT INTO meta (key, value) VALUES (?, ?)
+         ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+      )
+      .run(key, value);
+  }
+
+  /**
+   * Safe catalog merge: insert missing SKUs; fill empty prices/names;
+   * never overwrite custom prices, mixed currency notes, intervals, locator,
+   * vehicle, or service rows. Does not delete.
+   */
+  mergeBundledCatalog(
+    rows: BundledPart[],
+    sourceHash: string,
+  ): {
+    inserted: number;
+    updated: number;
+    unchanged: number;
+    hash: string;
+  } {
+    let inserted = 0;
+    let updated = 0;
+    let unchanged = 0;
+    this.db.exec("BEGIN");
+    try {
+      const insert = this.db.prepare(
+        `INSERT INTO parts (
+          sku, name_zh, name_en, oem_number, system, generation,
+          interval_km, interval_months, oem_price, aftermarket_price,
+          aftermarket_quotes, price_note, price_as_of, locator_hotspot, notes,
+          petka_note, pr_label
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      );
+      const updateSql = this.db.prepare(
+        `UPDATE parts SET
+          name_zh = ?, name_en = ?, oem_number = ?, generation = ?,
+          oem_price = ?, aftermarket_price = ?, aftermarket_quotes = ?,
+          price_note = ?, price_as_of = ?, notes = ?,
+          petka_note = ?, pr_label = ?
+         WHERE sku = ?`,
+      );
+      for (const b of rows) {
+        const existing = this.getPartBySku(b.sku);
+        if (!existing) {
+          insert.run(
+            b.sku,
+            b.name_zh,
+            b.name_en,
+            b.oem_number,
+            b.system,
+            b.generation,
+            b.interval_km,
+            b.interval_months,
+            b.oem_price,
+            b.aftermarket_price,
+            serializeAftermarketQuotes(b.aftermarket_quotes),
+            b.price_note,
+            b.price_as_of,
+            b.locator_hotspot,
+            b.notes,
+            b.petka_note,
+            b.pr_label,
+          );
+          inserted++;
+          continue;
+        }
+        if (oemIdentityMismatch(existing, b)) {
+          unchanged++;
+          continue;
+        }
+        let name_zh = existing.name_zh;
+        let name_en = existing.name_en;
+        let oem_number = existing.oem_number;
+        let generation = existing.generation;
+        let oem_price = existing.oem_price;
+        let aftermarket_price = existing.aftermarket_price;
+        let quotes = existing.aftermarket_quotes;
+        let price_note = existing.price_note;
+        let price_as_of = existing.price_as_of;
+        let notes = existing.notes;
+        let petka_note = existing.petka_note;
+        let pr_label = existing.pr_label;
+        let dirty = false;
+
+        if (canUpgradeNameZh(existing, b)) {
+          name_zh = b.name_zh;
+          dirty = true;
+        }
+        if (canUpgradeNameEn(existing, b)) {
+          name_en = b.name_en;
+          dirty = true;
+        }
+        const bundledOem = b.oem_number?.trim() || null;
+        if (bundledOem) {
+          if (!existing.oem_number) {
+            oem_number = bundledOem;
+            dirty = true;
+          } else if (
+            compactOem(existing.oem_number) === compactOem(bundledOem) &&
+            existing.oem_number !== bundledOem
+          ) {
+            oem_number = bundledOem;
+            dirty = true;
+          }
+        }
+        if (!existing.generation && b.generation) {
+          generation = b.generation;
+          dirty = true;
+        }
+        if (canApplyPriceGroup(existing, b)) {
+          oem_price = b.oem_price;
+          aftermarket_price = b.aftermarket_price;
+          quotes = b.aftermarket_quotes;
+          price_note = b.price_note;
+          price_as_of = b.price_as_of;
+          dirty = true;
+        }
+        if (!existing.notes && b.notes) {
+          notes = b.notes;
+          dirty = true;
+        }
+        if (!existing.petka_note && b.petka_note) {
+          petka_note = b.petka_note;
+          dirty = true;
+        }
+        if (!existing.pr_label && b.pr_label) {
+          pr_label = b.pr_label;
+          dirty = true;
+        }
+
+        if (!dirty) {
+          unchanged++;
+          continue;
+        }
+        updateSql.run(
+          name_zh,
+          name_en,
+          oem_number,
+          generation,
+          oem_price,
+          aftermarket_price,
+          serializeAftermarketQuotes(quotes),
+          price_note,
+          price_as_of,
+          notes,
+          petka_note,
+          pr_label,
+          b.sku,
+        );
+        updated++;
+      }
+      this.setMeta(BUNDLED_CATALOG_HASH_KEY, sourceHash);
+      this.db.exec("COMMIT");
+    } catch (e) {
+      this.db.exec("ROLLBACK");
+      throw e;
+    }
+    return { inserted, updated, unchanged, hash: sourceHash };
+  }
+
+  applyLoadedCatalog(loaded: {
+    rows: BundledPart[];
+    sourceHash: string;
+    zoneDrafts?: number;
+    bulkDrafts?: number;
+    epcUnique?: number;
+  }): {
+    skipped: boolean;
+    inserted: number;
+    updated: number;
+    unchanged: number;
+    hash: string;
+    zoneDrafts?: number;
+    bulkDrafts?: number;
+    epcUnique?: number;
+    rowCount: number;
+  } {
+    if (this.getMeta(BUNDLED_CATALOG_HASH_KEY) === loaded.sourceHash) {
+      return {
+        skipped: true,
+        inserted: 0,
+        updated: 0,
+        unchanged: 0,
+        hash: loaded.sourceHash,
+        zoneDrafts: loaded.zoneDrafts,
+        bulkDrafts: loaded.bulkDrafts,
+        epcUnique: loaded.epcUnique,
+        rowCount: loaded.rows.length,
+      };
+    }
+    const merged = this.mergeBundledCatalog(loaded.rows, loaded.sourceHash);
+    return {
+      skipped: false,
+      ...merged,
+      zoneDrafts: loaded.zoneDrafts,
+      bulkDrafts: loaded.bulkDrafts,
+      epcUnique: loaded.epcUnique,
+      rowCount: loaded.rows.length,
+    };
+  }
+
+  applyBundledCatalog(repoRoot: string) {
+    return this.applyLoadedCatalog(loadBundledCatalog(repoRoot));
+  }
 }
+
+export { loadBundledCatalog, BUNDLED_CATALOG_HASH_KEY } from "./bundled-catalog.js";
 
 export function defaultDbPath(): string {
   const appData =

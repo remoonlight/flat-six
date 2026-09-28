@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   DEFAULT_FX_TABLE,
+  convertViaCny,
   formatCny,
   formatMoneyAsCny,
   rateToCny,
@@ -21,6 +22,16 @@ describe("toCny", () => {
     expect(toCny(10, null)).toBeNull();
     expect(toCny(10, "JPY")).toBeNull();
     expect(toCny(null, "GBP")).toBeNull();
+  });
+});
+
+describe("convertViaCny", () => {
+  it("converts GBP aftermarket into declared EUR", () => {
+    expect(convertViaCny(14.95, "GBP", "EUR")).toBe(17.41);
+  });
+
+  it("is identity for same currency", () => {
+    expect(convertViaCny(28.61, "EUR", "EUR")).toBe(28.61);
   });
 });
 

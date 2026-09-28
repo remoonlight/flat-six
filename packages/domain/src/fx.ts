@@ -41,6 +41,24 @@ export function toCny(
   return Math.round(amount * rate * 100) / 100;
 }
 
+/** Convert between source currencies via CNY (committed table). */
+export function convertViaCny(
+  amount: number | null | undefined,
+  from: string | null | undefined,
+  to: string | null | undefined,
+  fx: FxTable = DEFAULT_FX_TABLE,
+): number | null {
+  if (amount == null || !Number.isFinite(amount)) return null;
+  const src = from?.toUpperCase() ?? "";
+  const dst = to?.toUpperCase() ?? "";
+  if (!src || !dst) return null;
+  if (src === dst) return Math.round(amount * 100) / 100;
+  const fromRate = rateToCny(src, fx);
+  const toRate = rateToCny(dst, fx);
+  if (fromRate == null || toRate == null) return null;
+  return Math.round(((amount * fromRate) / toRate) * 100) / 100;
+}
+
 /** e.g. `¥226.14` */
 export function formatCny(amountCny: number | null | undefined): string {
   if (amountCny == null || !Number.isFinite(amountCny)) return "—";

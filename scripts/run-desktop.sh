@@ -36,7 +36,7 @@ ensure_node() {
 }
 
 if ! ensure_node; then
-  echo "[981车库] 还没有安装 Node.js（需要 20 或更高）。"
+  echo "[981车库] 还没有安装 Node.js（需要 22 或更高，db-bridge 使用 node:sqlite）。"
   echo "          这是运行本软件唯一要装的东西，装好一次即可。"
   echo
   echo "  官网：https://nodejs.org/  （选 LTS）"
@@ -60,8 +60,8 @@ fi
 
 NODEVER="$(node -v 2>/dev/null | sed 's/^v//')"
 NODEMAJOR="${NODEVER%%.*}"
-if [[ -z "$NODEMAJOR" || "$NODEMAJOR" -lt 20 ]]; then
-  echo "[981车库] 当前 Node.js 是 v${NODEVER}，需要 20 或更高。请升级：https://nodejs.org/"
+if [[ -z "$NODEMAJOR" || "$NODEMAJOR" -lt 22 ]]; then
+  echo "[981车库] 当前 Node.js 是 v${NODEVER}，需要 22 或更高。请升级：https://nodejs.org/"
   exit 1
 fi
 echo "[981车库] Node.js v${NODEVER}"

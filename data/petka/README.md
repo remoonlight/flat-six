@@ -12,7 +12,7 @@ data/petka/
   chassis/                # 底盘
 ```
 
-全量 981 EPC 明文导出（OEM + 中英文名权威）见 `data/seed/petka/plaintext-archive/`（工作副本 `.local/petka-epc/`），入库 `npm run apply:petka-epc`。
+全量 981 EPC 明文导出（OEM + 中英文名权威）见 `data/seed/petka/plaintext-archive/`。clone 后 **App 启动会自动安全合并**；也可手动 `npm run apply:petka-epc`。公开目录价快照见 `data/seed/parts/catalog/`。
 
 每个 zone 目录约定：
 

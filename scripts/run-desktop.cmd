@@ -24,7 +24,7 @@ if errorlevel 1 (
 )
 where node >nul 2>&1
 if errorlevel 1 (
-  echo [981车库] 还没有安装 Node.js（需要 20 或更高）。
+  echo [981车库] 还没有安装 Node.js（需要 22 或更高，db-bridge 使用 node:sqlite）。
   echo           这是运行本软件唯一要装的东西，装好一次即可。
   echo.
   echo   官网：https://nodejs.org/
@@ -56,8 +56,8 @@ if errorlevel 1 (
 for /f "tokens=1 delims=v" %%a in ('node -v 2^>nul') do set "NODEVER=%%a"
 for /f "tokens=1 delims=." %%a in ("%NODEVER%") do set "NODEMAJOR=%%a"
 if not defined NODEMAJOR set "NODEMAJOR=0"
-if %NODEMAJOR% LSS 20 (
-  echo [981车库] 当前 Node.js 是 v%NODEVER%，需要 20 或更高。请升级：https://nodejs.org/
+if %NODEMAJOR% LSS 22 (
+  echo [981车库] 当前 Node.js 是 v%NODEVER%，需要 22 或更高。请升级：https://nodejs.org/
   pause
   exit /b 1
 )

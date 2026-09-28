@@ -25,6 +25,7 @@ const jobs = [
   { id: "p0", kind: "extra", script: "scripts/p0-accept.mjs" },
   { id: "p123", kind: "extra", script: "scripts/p123-accept.mjs" },
   { id: "bridge", kind: "extra", script: "scripts/bridge-lifecycle-accept.mjs" },
+  { id: "catalog", kind: "extra", script: "scripts/accept-catalog.mjs" },
 ];
 
 function npmRun(args) {

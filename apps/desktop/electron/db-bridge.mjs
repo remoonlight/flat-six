@@ -121,6 +121,7 @@ try {
   });
   garage.seedDtcIfEmpty(dtcSeed.dtcs);
   garage.seedDtcMissing(dtcSeed.dtcs);
+  garage.applyBundledCatalog(repoRoot);
 } catch (e) {
   console.error("seed failed", e);
 }

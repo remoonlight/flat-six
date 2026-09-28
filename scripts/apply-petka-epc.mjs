@@ -10,7 +10,11 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { GarageDb } from "../packages/db/dist/index.js";
-import { formatPetkaPrLabel } from "../packages/domain/dist/index.js";
+import {
+  assertPetkaEpcFixtures,
+  compactOem,
+  parsePetkaEpcCsv,
+} from "../packages/domain/dist/index.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "..");
@@ -21,100 +25,10 @@ const REPORT = path.join(LOCAL_DIR, "apply-last.json");
 
 const dryRun = process.argv.includes("--dry-run");
 
-function compactOem(oem) {
-  return String(oem || "")
-    .replace(/[.\s\-_]/g, "")
-    .toUpperCase();
-}
-
-/** PETKA 空格分组 → 点分，保留原分组（不以 11 位硬切）。 */
-function petkaOemCanonical(raw) {
-  return String(raw || "")
-    .trim()
-    .replace(/\s+/g, ".")
-    .toUpperCase();
-}
-
-function uniqueJoin(vals) {
-  const seen = new Set();
-  const out = [];
-  for (const v of vals) {
-    const t = String(v || "").trim();
-    if (!t || seen.has(t)) continue;
-    seen.add(t);
-    out.push(t);
-  }
-  return out.length ? out.join(" / ") : "";
-}
-
-function hasHan(text) {
-  return /[\u4e00-\u9fff]/.test(String(text || ""));
-}
-
-/** PETKA 常把总成明细/also-use 拼进名称；取冒号前的零件名。 */
-function cleanPetkaName(raw) {
-  let s = String(raw || "").replace(/\s+/g, " ").trim();
-  if (!s) return "";
-  s = s.replace(/\s*(配合使用|also use)\s*:.*$/i, "");
-  s = s.replace(/\s*(由如下组成|comprising)\s*:.*$/i, "");
-  s = s.replace(/\s+/g, " ").trim();
-  return s.replace(/[:：]\s*$/, "").trim();
-}
-
-function namePickScore(text, type, model) {
-  const t = String(text || "").trim();
-  if (!t) return Number.NEGATIVE_INFINITY;
-  let s = 800 - Math.min(t.length, 500);
-  if (type === "part") s += 8;
-  if (model === "981") s += 4;
-  if (hasHan(t)) s += 12;
-  return s;
-}
-
-function parseCsv(text) {
-  const rows = [];
-  let row = [];
-  let cur = "";
-  let q = false;
-  const s = String(text).replace(/^\uFEFF/, "");
-  for (let i = 0; i < s.length; i++) {
-    const c = s[i];
-    if (c === '"') {
-      if (q && s[i + 1] === '"') {
-        cur += '"';
-        i++;
-        continue;
-      }
-      q = !q;
-      continue;
-    }
-    if (!q && c === ",") {
-      row.push(cur);
-      cur = "";
-      continue;
-    }
-    if (!q && (c === "\n" || c === "\r")) {
-      if (c === "\r" && s[i + 1] === "\n") i++;
-      row.push(cur);
-      if (row.some((x) => x.length)) rows.push(row);
-      row = [];
-      cur = "";
-      continue;
-    }
-    cur += c;
-  }
-  if (cur.length || row.length) {
-    row.push(cur);
-    if (row.some((x) => x.length)) rows.push(row);
-  }
-  return rows;
-}
-
 function findCsv() {
   const candidates = [
-    path.join(LOCAL_DIR, CSV_NAME),
     path.join(SEED_DIR, CSV_NAME),
-    path.join(process.env.USERPROFILE || "", "Desktop", CSV_NAME),
+    path.join(LOCAL_DIR, CSV_NAME),
   ];
   for (const p of candidates) {
     if (p && fs.existsSync(p)) return p;
@@ -122,116 +36,16 @@ function findCsv() {
   throw new Error(`missing ${CSV_NAME}`);
 }
 
-function loadPetkaParts(csvPath) {
-  const rows = parseCsv(fs.readFileSync(csvPath, "utf8"));
-  const header = rows[0] || [];
-  const idx = Object.fromEntries(header.map((h, i) => [h.trim(), i]));
-  const need = [
-    "record_type",
-    "part_number",
-    "name_zh",
-    "name_en",
-    "hg",
-    "vehicle_model",
-  ];
-  for (const k of need) {
-    if (idx[k] == null) throw new Error(`csv missing column ${k}`);
-  }
-  /** @type {Map<string, Array<{ oem: string, name_zh: string, name_en: string, hg: string, type: string, model: string, note: string, pr_label: string }>>} */
-  const groups = new Map();
-  let partRows = 0;
-  for (let i = 1; i < rows.length; i++) {
-    const r = rows[i];
-    const type = String(r[idx.record_type] || "").trim();
-    if (type !== "part" && type !== "order_form") continue;
-    const oem = petkaOemCanonical(r[idx.part_number]);
-    const compact = compactOem(oem);
-    if (!compact || compact.length < 5) continue;
-    if (type === "part") partRows++;
-    const rec = {
-      oem,
-      name_zh: cleanPetkaName(r[idx.name_zh]),
-      name_en: cleanPetkaName(r[idx.name_en]),
-      hg: String(r[idx.hg] || "").trim(),
-      type,
-      model: String(r[idx.vehicle_model] || "").trim(),
-      note: idx.note != null ? String(r[idx.note] || "").trim() : "",
-      pr_label:
-        formatPetkaPrLabel(
-          idx.model_codes != null ? r[idx.model_codes] : "",
-          idx.model_meaning != null ? r[idx.model_meaning] : "",
-        ) || "",
-    };
-    const arr = groups.get(compact) || [];
-    arr.push(rec);
-    groups.set(compact, arr);
-  }
-
-  /** @type {Map<string, { oem: string, name_zh: string, name_en: string, hg: string, petka_note: string, pr_label: string }>} */
-  const by = new Map();
-  for (const [compact, arr] of groups) {
-    const bestZh = arr.reduce(
-      (best, cur) =>
-        namePickScore(cur.name_zh, cur.type, cur.model) >
-        namePickScore(best?.name_zh, best?.type, best?.model)
-          ? cur
-          : best,
-      arr[0],
-    );
-    const bestEn = arr.reduce(
-      (best, cur) =>
-        namePickScore(cur.name_en, cur.type, cur.model) >
-        namePickScore(best?.name_en, best?.type, best?.model)
-          ? cur
-          : best,
-      arr[0],
-    );
-    const hgPart = arr.find((x) => x.type === "part" && x.hg);
-    by.set(compact, {
-      oem: (arr.find((x) => x.type === "part") || arr[0]).oem,
-      name_zh: bestZh.name_zh,
-      name_en: bestEn.name_en,
-      hg: (hgPart || arr[0]).hg,
-      petka_note: uniqueJoin(arr.map((x) => x.note)),
-      pr_label: uniqueJoin(arr.map((x) => x.pr_label)),
-    });
-  }
-  return { by, partRows, dataRows: rows.length - 1 };
-}
-
-function selfcheck(by) {
-  const oil = by.get("9A110722400");
-  const seal = by.get("99711110731");
-  const bolt = by.get("WHT008240");
-  const fails = [];
-  if (!oil?.name_zh.includes("机油滤芯") || /配合使用/.test(oil.name_zh)) {
-    fails.push(`oil zh=${oil?.name_zh}`);
-  }
-  if (!/^Oil filter insert$/i.test(oil?.name_en || "")) {
-    fails.push(`oil en=${oil?.name_en}`);
-  }
-  if (seal?.name_zh !== "密封件" || seal?.name_en !== "Seal") {
-    fails.push(`seal ${seal?.name_zh}/${seal?.name_en}`);
-  }
-  if (bolt?.name_zh !== "组合螺栓" || bolt?.name_en !== "Bolt with washer") {
-    fails.push(`bolt ${bolt?.name_zh}/${bolt?.name_en}`);
-  }
-  const withNote = [...by.values()].find((r) => /左侧|右侧/.test(r.petka_note));
-  if (!withNote) fails.push("no directional petka_note");
-  const withPr = [...by.values()].find((r) => r.pr_label);
-  if (!withPr) fails.push("no pr_label");
-  if (fails.length) throw new Error(`selfcheck failed: ${fails.join(" | ")}`);
-}
-
 function main() {
   const csvPath = findCsv();
-  const { by, partRows, dataRows } = loadPetkaParts(csvPath);
-  selfcheck(by);
+  const { byCompact, partRows, dataRows } = parsePetkaEpcCsv(
+    fs.readFileSync(csvPath, "utf8"),
+  );
+  assertPetkaEpcFixtures(byCompact);
   const dbPath = path.join(root, ".local", "garage.db");
   const db = new GarageDb(dbPath);
   const parts = db.listParts();
 
-  /** @type {Map<string, typeof parts>} */
   const dbByCompact = new Map();
   for (const p of parts) {
     const c = compactOem(p.oem_number);
@@ -248,7 +62,7 @@ function main() {
   let skipped982 = 0;
   const samples = [];
 
-  for (const [compact, rec] of by) {
+  for (const [compact, rec] of byCompact) {
     const hits = (dbByCompact.get(compact) || []).filter(
       (p) => p.generation === "981" || p.generation == null,
     );
@@ -331,7 +145,7 @@ function main() {
     dry_run: dryRun,
     csv_data_rows: dataRows,
     csv_part_rows: partRows,
-    unique_oem: by.size,
+    unique_oem: byCompact.size,
     db_parts_before: parts.length,
     db_parts_after: db.listParts().length,
     updated,

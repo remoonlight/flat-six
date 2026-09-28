@@ -472,3 +472,278 @@ describe("OBD session DTCs", () => {
     db.close();
   });
 });
+
+describe("mergeBundledCatalog", () => {
+  const oilBundled = {
+    sku: "oil-filter",
+    name_zh: "机油滤芯",
+    name_en: "Oil filter insert",
+    oem_number: "9A1.107.224.00",
+    system: "发动机",
+    generation: "981",
+    interval_km: 10000,
+    interval_months: 12,
+    oem_price: 28.61,
+    aftermarket_price: 17.41,
+    aftermarket_quotes: [{ brand: "Design911", price: 17.41 }],
+    price_note:
+      "currency=EUR; petka_verified=0; source=teile/Design911; aftermarket_orig=14.95 GBP",
+    price_as_of: "2026-07-31",
+    locator_hotspot: "engine-bay",
+    notes: "teile",
+    petka_note: null,
+    pr_label: null,
+    seedNameZh: "机油滤清器",
+  };
+
+  it("fills bootstrap-only names and prices; second pass is stable", () => {
+    const db = openTempDb();
+    db.seedIfEmpty({
+      parts: [
+        {
+          sku: "oil-filter",
+          name_zh: "机油滤清器",
+          oem_number: "9A1.107.224.00",
+          system: "发动机",
+          interval_km: 10000,
+          interval_months: 12,
+          oem_price: null,
+          aftermarket_price: null,
+          aftermarket_quotes: null,
+          price_note: null,
+          price_as_of: null,
+          locator_hotspot: "engine-bay",
+          notes: "随机油更换",
+          generation: null,
+        },
+      ],
+      faults: [],
+    });
+    db.setMileage(12_345);
+    const first = db.mergeBundledCatalog([oilBundled], "hash-1");
+    expect(first.updated).toBe(1);
+    expect(db.getMeta("bundled_catalog_hash")).toBe("hash-1");
+    const oil = db.getPartBySku("oil-filter")!;
+    expect(oil.name_zh).toBe("机油滤芯");
+    expect(oil.name_en).toBe("Oil filter insert");
+    expect(oil.oem_price).toBe(28.61);
+    expect(oil.aftermarket_price).toBe(17.41);
+    expect(oil.interval_km).toBe(10000);
+    expect(oil.locator_hotspot).toBe("engine-bay");
+    expect(oil.generation).toBe("981");
+    expect(db.getVehicle().current_km).toBe(12_345);
+    const second = db.mergeBundledCatalog([oilBundled], "hash-1");
+    expect(second.updated).toBe(0);
+    expect(db.getPartBySku("oil-filter")!.oem_price).toBe(28.61);
+    db.close();
+  });
+
+  it("preserves custom prices, names, currency notes, and extra rows", () => {
+    const db = openTempDb();
+    db.seedIfEmpty({
+      parts: [
+        {
+          sku: "oil-filter",
+          name_zh: "金装机滤",
+          oem_number: "9A1.107.224.00",
+          system: "发动机",
+          interval_km: 8000,
+          interval_months: 6,
+          oem_price: 99,
+          aftermarket_price: 50,
+          aftermarket_quotes: [{ brand: "Shop", price: 50 }],
+          price_note: "currency=CNY; shop",
+          price_as_of: "2020-01-01",
+          locator_hotspot: "custom-spot",
+          notes: "mine",
+          generation: null,
+        },
+        {
+          sku: "my-custom",
+          name_zh: "自制件",
+          oem_number: null,
+          system: "custom",
+          interval_km: null,
+          interval_months: null,
+          oem_price: 1,
+          aftermarket_price: null,
+          aftermarket_quotes: null,
+          price_note: "currency=CNY",
+          price_as_of: null,
+          locator_hotspot: null,
+          notes: null,
+          generation: null,
+        },
+      ],
+      faults: [],
+    });
+    db.addServiceRecord({
+      title: "换油",
+      replaced_at: "2026-01-01",
+      odometer_km: 1000,
+    });
+    db.mergeBundledCatalog(
+      [
+        oilBundled,
+        {
+          ...oilBundled,
+          sku: "gbp-empty",
+          name_zh: "垫片",
+          seedNameZh: "垫片",
+          oem_price: 3,
+          aftermarket_price: null,
+          price_note: "currency=EUR; petka_verified=0; source=teile",
+        },
+      ],
+      "hash-2",
+    );
+    const oil = db.getPartBySku("oil-filter")!;
+    expect(oil.name_zh).toBe("金装机滤");
+    expect(oil.oem_price).toBe(99);
+    expect(oil.price_note).toMatch(/CNY/);
+    expect(oil.interval_km).toBe(8000);
+    expect(oil.locator_hotspot).toBe("custom-spot");
+    expect(db.getPartBySku("my-custom")?.name_zh).toBe("自制件");
+    expect(db.listServiceRecords()).toHaveLength(1);
+    db.close();
+  });
+
+  it("does not attach EUR amounts to an existing GBP price_note", () => {
+    const db = openTempDb();
+    db.seedIfEmpty({
+      parts: [
+        {
+          sku: "oil-filter",
+          name_zh: "机油滤清器",
+          oem_number: "9A1.107.224.00",
+          system: "发动机",
+          interval_km: 10000,
+          interval_months: 12,
+          oem_price: null,
+          aftermarket_price: null,
+          aftermarket_quotes: null,
+          price_note: "currency=GBP; leftover",
+          price_as_of: null,
+          locator_hotspot: "engine-bay",
+          notes: null,
+          generation: null,
+        },
+      ],
+      faults: [],
+    });
+    db.mergeBundledCatalog([oilBundled], "hash-gbp");
+    const oil = db.getPartBySku("oil-filter")!;
+    expect(oil.oem_price).toBeNull();
+    expect(oil.price_note).toMatch(/currency=GBP/);
+    db.close();
+  });
+
+  it("rolls back and does not store hash when merge fails", () => {
+    const db = openTempDb();
+    const good = {
+      ...oilBundled,
+      sku: "ok-part",
+      seedNameZh: "ok",
+    };
+    const bad = {
+      ...oilBundled,
+      sku: "bad-part",
+      name_zh: null as unknown as string,
+    };
+    expect(() => db.mergeBundledCatalog([good, bad], "hash-fail")).toThrow();
+    expect(db.getMeta("bundled_catalog_hash")).toBeNull();
+    expect(db.getPartBySku("ok-part")).toBeUndefined();
+    db.close();
+  });
+
+  it("preserves custom price_note metadata when amounts are empty", () => {
+    const db = openTempDb();
+    db.seedIfEmpty({
+      parts: [
+        {
+          sku: "oil-filter",
+          name_zh: "机油滤清器",
+          oem_number: "9A1.107.224.00",
+          system: "发动机",
+          interval_km: 10000,
+          interval_months: 12,
+          oem_price: null,
+          aftermarket_price: null,
+          aftermarket_quotes: null,
+          price_note: "currency=EUR; shop=local-stash",
+          price_as_of: "2020-01-01",
+          locator_hotspot: "engine-bay",
+          notes: null,
+          generation: null,
+        },
+      ],
+      faults: [],
+    });
+    db.mergeBundledCatalog([oilBundled], "hash-custom-note");
+    const oil = db.getPartBySku("oil-filter")!;
+    expect(oil.oem_price).toBeNull();
+    expect(oil.price_note).toBe("currency=EUR; shop=local-stash");
+    expect(oil.price_as_of).toBe("2020-01-01");
+    db.close();
+  });
+
+  it("skips bundled enrichment when user changed OEM identity", () => {
+    const db = openTempDb();
+    db.seedIfEmpty({
+      parts: [
+        {
+          sku: "oil-filter",
+          name_zh: "机油滤清器",
+          oem_number: "999.000.000.00",
+          system: "发动机",
+          interval_km: 10000,
+          interval_months: 12,
+          oem_price: null,
+          aftermarket_price: null,
+          aftermarket_quotes: null,
+          price_note: null,
+          price_as_of: null,
+          locator_hotspot: "engine-bay",
+          notes: "mine",
+          generation: null,
+        },
+      ],
+      faults: [],
+    });
+    db.mergeBundledCatalog([oilBundled], "hash-oem-mismatch");
+    const oil = db.getPartBySku("oil-filter")!;
+    expect(oil.name_zh).toBe("机油滤清器");
+    expect(oil.oem_number).toBe("999.000.000.00");
+    expect(oil.oem_price).toBeNull();
+    db.close();
+  });
+
+  it("same-hash apply leaves cleared prices and deleted rows alone", () => {
+    const db = openTempDb();
+    const extra = {
+      ...oilBundled,
+      sku: "981-EXTRA00001",
+      name_zh: "多余件",
+      seedNameZh: "多余件",
+      oem_number: "EXTRA.000.01",
+    };
+    db.mergeBundledCatalog([oilBundled, extra], "hash-stable");
+    const oil = db.getPartBySku("oil-filter")!;
+    db.updatePartPrices(oil.id, null, null, oil.price_note, oil.price_as_of, []);
+    db.db.prepare("DELETE FROM parts WHERE sku = ?").run("981-EXTRA00001");
+    const again = db.applyLoadedCatalog({
+      rows: [oilBundled, extra],
+      sourceHash: "hash-stable",
+    });
+    expect(again.skipped).toBe(true);
+    expect(db.getPartBySku("oil-filter")!.oem_price).toBeNull();
+    expect(db.getPartBySku("981-EXTRA00001")).toBeUndefined();
+    const changed = db.applyLoadedCatalog({
+      rows: [oilBundled, extra],
+      sourceHash: "hash-next",
+    });
+    expect(changed.skipped).toBe(false);
+    expect(db.getPartBySku("981-EXTRA00001")).toBeTruthy();
+    db.close();
+  });
+});

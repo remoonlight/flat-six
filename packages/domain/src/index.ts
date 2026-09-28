@@ -205,6 +205,7 @@ export {
 
 export {
   DEFAULT_FX_TABLE,
+  convertViaCny,
   formatCny,
   formatMoneyAsCny,
   rateToCny,
@@ -306,3 +307,25 @@ export {
 } from "./vehicle-paint.js";
 
 export * from './coding-guide.js';
+export {
+  assertPetkaEpcFixtures,
+  cleanPetkaName,
+  compactOem,
+  parsePetkaEpcCsv,
+  parseQuotedCsv,
+  petkaOemCanonical,
+  type ParsePetkaEpcResult,
+  type PetkaEpcRecord,
+} from "./petka-epc.js";
+export {
+  BUNDLED_CATALOG_ALGO,
+  assembleBundledCatalog,
+  catalogPriceNoteLooksSafe,
+  isShippedCatalogPriceNote,
+  harmonizeZoneDraft,
+  parseExactTeileOemHits,
+  type AssembleBundledCatalogResult,
+  type BundledPart,
+  type CatalogFileSet,
+  type ExactOemHit,
+} from "./bundled-catalog.js";
