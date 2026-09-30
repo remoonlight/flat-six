@@ -179,6 +179,7 @@ const handlers = {
   "obdRuns:list": () => garage.obd.list(),
   "obdRuns:recording": (sessionId) => garage.obd.recording(sessionId),
   "obdProd:op": ({ op, value }) => garage.obd.productionOp(op, value ?? {}),
+  "obdDiag:op": ({ op, value }) => garage.obd.diagOp(String(op || ""), value ?? {}),
   "coding:menu": () => {
     try {
       return loadJson("x431/981-2014-coding-menu.json");

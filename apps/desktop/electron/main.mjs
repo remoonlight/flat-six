@@ -417,6 +417,8 @@ function registerIpc() {
 
     "obdDtcs:list",
 
+    "obdDiag:op",
+
     "coding:menu",
 
     "coding:list",

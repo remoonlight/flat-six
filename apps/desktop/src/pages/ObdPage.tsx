@@ -18,6 +18,8 @@ import { formatHeaderVoltage } from "../obd-connection-logic.mjs";
 import type { LocatorFocus } from "../locator-focus";
 import { CodingPage } from "./CodingPage";
 import { DiagnosticsPage } from "./DiagnosticsPage";
+import { GuidedTroubleshootPanel, type GuideSeed } from "./GuidedTroubleshootPanel";
+import { RepairComparePanel } from "./RepairComparePanel";
 import { OfflineDiagnosticsPage } from "./OfflineDiagnosticsPage";
 import { ReadOnlySessionPage } from "./ReadOnlySessionPage";
 import { TopologyPage } from "./TopologyPage";
@@ -32,6 +34,8 @@ type ObdTab =
   | "connection"
   | "live"
   | "faults"
+  | "guide"
+  | "compare"
   | "monitors"
   | "insights"
   | "vehicle"
@@ -44,6 +48,8 @@ const TABS: { id: ObdTab; label: string }[] = [
   { id: "connection", label: "连接设置" },
   { id: "live", label: "实时数据" },
   { id: "faults", label: "故障码" },
+  { id: "guide", label: "引导排障" },
+  { id: "compare", label: "维修对比" },
   { id: "monitors", label: "就绪监控" },
   { id: "insights", label: "分析洞察" },
   { id: "vehicle", label: "车辆信息" },
@@ -102,6 +108,8 @@ export function ObdPage({ onLocate }: ObdPageProps) {
   const [connected, setConnected] = useState(false);
   const [linkState, setLinkState] = useState("idle");
   const [modelPick, setModelPick] = useState<"vLinker" | "OBDLink MX+" | "">("");
+  const [guideSeed, setGuideSeed] = useState<GuideSeed | null>(null);
+  const [guideEcu, setGuideEcu] = useState<"dme" | "gateway" | "unknown">("unknown");
 
   const apiAvailable = hasDesktopApi() || topologyFixtureEnabled();
   const taskState = headerTaskState({
@@ -529,6 +537,33 @@ export function ObdPage({ onLocate }: ObdPageProps) {
             <button type="button" onClick={() => lookup()}>
               查询
             </button>
+            <label>
+              控制单元语境
+              <select data-testid="obd-guide-ecu" value={guideEcu} onChange={(e) => setGuideEcu(e.target.value as typeof guideEcu)}>
+                <option value="unknown">未声明（不套用 DME 检查）</option>
+                <option value="dme">已知 DME（981 发动机档案）</option>
+                <option value="gateway">已知网关</option>
+              </select>
+            </label>
+            <button
+              type="button"
+              className="ghost"
+              data-testid="obd-fault-open-guide"
+              disabled={!normalized}
+              onClick={() => {
+                if (!normalized) return;
+                setGuideSeed({
+                  code: normalized,
+                  moduleKey: guideEcu === "dme" ? "porsche-981-2014-dme" : guideEcu === "gateway" ? "porsche-981-2014-gateway" : "unknown",
+                  ecuContext: guideEcu,
+                  source: "manual",
+                  identityKind: "unknown",
+                });
+                setTab("guide");
+              }}
+            >
+              引导排障
+            </button>
           </div>
 
           {active && (
@@ -655,11 +690,27 @@ export function ObdPage({ onLocate }: ObdPageProps) {
         </section>
       )}
 
+      <div hidden={tab !== "guide"}>
+        <GuidedTroubleshootPanel
+          seed={guideSeed}
+          vehicleKm={vehicle?.current_km ?? 0}
+          onLocate={onLocate}
+          onOpenEngine={() => setTab("live")}
+        />
+      </div>
+      {tab === "compare" ? <RepairComparePanel vehicleKm={vehicle?.current_km ?? 0} /> : null}
+
       {tab === "insights" && (
         <section className="panel obd-legacy-faults" aria-label="故障台账过渡">
           <h2>分析洞察</h2>
           <p className="muted">故障台账（过渡）；硬件落地前继续用手工记录。</p>
-          <DiagnosticsPage onLocate={onLocate} />
+          <DiagnosticsPage
+            onLocate={onLocate}
+            onOpenGuide={(seed) => {
+              setGuideSeed(seed);
+              setTab("guide");
+            }}
+          />
         </section>
       )}
 
@@ -690,6 +741,15 @@ export function ObdPage({ onLocate }: ObdPageProps) {
         <TopologyPage
           onBusyChange={setTopoBusy}
           peerBusy={sessionBusy || engineBusy || (overview?.taskState === "running" && !topoBusy)}
+          onOpenGuide={(seed) => {
+            setGuideSeed({
+              ...seed,
+              ecuContext:
+                seed.ecuContext ||
+                (seed.moduleKey === "porsche-981-2014-dme" ? "dme" : seed.moduleKey === "porsche-981-2014-gateway" ? "gateway" : "unknown"),
+            });
+            setTab("guide");
+          }}
         />
       </div>
       {tab === "coding" ? <CodingPage /> : null}

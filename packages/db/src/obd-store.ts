@@ -1,5 +1,24 @@
 import type { DatabaseSync } from "node:sqlite";
-import { createObdPlan, decodeObdObservation, OBD_DECODER_VERSION, type ObdObservation, type ObdRecording, type ObdRun } from "@porsche981/domain";
+import {
+  assertGuideStepResult,
+  buildGuideChecklist,
+  buildSymptomChecklist,
+  compareSnapshots,
+  declaredBindingPatch,
+  DIAG_SOURCES,
+  IDENTITY_KINDS,
+  isValidVin,
+  MODULE_COVERAGES,
+  parseJsonBounded,
+  type DiagSnapshot,
+  type SnapshotModule,
+  createObdPlan,
+  decodeObdObservation,
+  OBD_DECODER_VERSION,
+  type ObdObservation,
+  type ObdRecording,
+  type ObdRun,
+} from "@porsche981/domain";
 
 type EcuRow = {
   vehicleKey: string;
@@ -59,6 +78,8 @@ export class ObdStore {
     }
     this.migrateProduction();
     this.migrateVehicleView();
+    this.migrateDiagGuide();
+    this.migrateDiagEventId();
   }
   private migrateProduction() {
     if (this.db.prepare("SELECT version FROM obd_schema_migrations WHERE version = 2").get()) return;
@@ -326,6 +347,384 @@ export class ObdStore {
     if (op === "vehicle:getView") return this.getVehicleView();
     if (op === "vehicle:setView") return this.setVehicleView(v.vehicleKey == null ? null : String(v.vehicleKey));
     throw new Error("obd_unknown_production_op");
+  }
+
+  private migrateDiagGuide() {
+    if (this.db.prepare("SELECT version FROM obd_schema_migrations WHERE version = 4").get()) return;
+    this.db.exec("BEGIN IMMEDIATE");
+    try {
+      this.db.exec(`
+        CREATE TABLE IF NOT EXISTS obd_diag_snapshots (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          at TEXT NOT NULL,
+          source TEXT NOT NULL,
+          identity_kind TEXT NOT NULL,
+          vehicle_key TEXT,
+          identity_label TEXT NOT NULL,
+          completeness TEXT NOT NULL,
+          fingerprint TEXT NOT NULL,
+          payload_json TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS obd_diag_snapshots_fp ON obd_diag_snapshots(fingerprint);
+        CREATE TABLE IF NOT EXISTS obd_guide_cases (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          identity_kind TEXT NOT NULL,
+          vehicle_key TEXT,
+          source TEXT NOT NULL,
+          module_key TEXT NOT NULL,
+          ecu TEXT NOT NULL,
+          code TEXT NOT NULL,
+          open INTEGER NOT NULL DEFAULT 1,
+          fingerprint TEXT NOT NULL,
+          checklist_json TEXT NOT NULL,
+          fault_log_id INTEGER
+        );
+        CREATE TABLE IF NOT EXISTS obd_guide_step_results (
+          case_id INTEGER NOT NULL REFERENCES obd_guide_cases(id),
+          step_id TEXT NOT NULL,
+          result TEXT NOT NULL,
+          note TEXT NOT NULL DEFAULT '',
+          updated_at TEXT NOT NULL,
+          PRIMARY KEY (case_id, step_id)
+        );
+        CREATE TABLE IF NOT EXISTS obd_compare_reports (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          created_at TEXT NOT NULL,
+          before_id INTEGER NOT NULL,
+          after_id INTEGER NOT NULL,
+          note TEXT NOT NULL DEFAULT '',
+          result_json TEXT NOT NULL,
+          fault_log_id INTEGER
+        );
+      `);
+      this.db.prepare("INSERT INTO obd_schema_migrations VALUES (4, ?)").run(new Date().toISOString());
+      this.db.exec("COMMIT");
+    } catch (e) { this.db.exec("ROLLBACK"); throw e; }
+  }
+
+  private migrateDiagEventId() {
+    if (this.db.prepare("SELECT version FROM obd_schema_migrations WHERE version = 5").get()) return;
+    this.db.exec("BEGIN IMMEDIATE");
+    try {
+      const cols = this.db.prepare("PRAGMA table_info(obd_diag_snapshots)").all() as Array<{ name: string }>;
+      if (cols.length && !cols.some((c) => c.name === "capture_event_id")) {
+        this.db.exec("ALTER TABLE obd_diag_snapshots ADD COLUMN capture_event_id TEXT");
+      }
+      this.db.exec("CREATE UNIQUE INDEX IF NOT EXISTS obd_diag_snapshots_event ON obd_diag_snapshots(capture_event_id) WHERE capture_event_id IS NOT NULL AND capture_event_id != ''");
+      this.db.prepare("INSERT INTO obd_schema_migrations VALUES (5, ?)").run(new Date().toISOString());
+      this.db.exec("COMMIT");
+    } catch (e) { this.db.exec("ROLLBACK"); throw e; }
+  }
+
+  private requireId(v: unknown, name: string): number {
+    const n = typeof v === "number" ? v : Number(v);
+    if (!Number.isSafeInteger(n) || n < 1) throw new Error(`obd_invalid_${name}`);
+    return n;
+  }
+
+  private requireEnum<T extends string>(v: unknown, allowed: readonly T[], name: string): T {
+    if (typeof v !== "string" || !(allowed as readonly string[]).includes(v)) throw new Error(`obd_invalid_${name}`);
+    return v as T;
+  }
+
+  captureSnapshot(raw: unknown) {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new Error("obd_invalid_snapshot");
+    const o = raw as Record<string, unknown>;
+    if (Object.prototype.hasOwnProperty.call(o, "__proto__")) throw new Error("obd_invalid_snapshot");
+    const source = this.requireEnum(o.source, DIAG_SOURCES, "source");
+    const identityKind = this.requireEnum(o.identityKind, IDENTITY_KINDS, "identity");
+    const at = String(o.at || "");
+    if (!at || Number.isNaN(Date.parse(at))) throw new Error("obd_invalid_time");
+    const bounded = (value: unknown, max: number): string => {
+      if (value != null && typeof value !== "string") throw new Error("obd_invalid_field");
+      const text = String(value ?? "");
+      if (text.length > max || text.includes("\0")) throw new Error("obd_invalid_field");
+      return text;
+    };
+    const captureEventId = bounded(o.captureEventId, 240);
+    if (!captureEventId) throw new Error("obd_capture_event_required");
+    if (!Array.isArray(o.modules) || o.modules.length > 80) throw new Error("obd_invalid_modules");
+    const moduleKeys = new Set<string>();
+    const modules: SnapshotModule[] = o.modules.map((m) => {
+      if (!m || typeof m !== "object") throw new Error("obd_invalid_module");
+      const row = m as Record<string, unknown>;
+      const coverage = this.requireEnum(row.coverage, MODULE_COVERAGES, "coverage");
+      if (!Array.isArray(row.dtcs)) throw new Error("obd_invalid_dtc");
+      if (row.dtcs.length > 200) throw new Error("obd_too_many_dtcs");
+      const dtcs = row.dtcs.map((d) => {
+        if (!d || typeof d !== "object") throw new Error("obd_invalid_dtc");
+        const x = d as Record<string, unknown>;
+        const dtcHex = bounded(x.dtcHex || x.code, 32).toUpperCase();
+        if (!dtcHex) throw new Error("obd_invalid_dtc");
+        return {
+          code: dtcHex,
+          dtcHex,
+          statusHex: x.statusHex == null ? null : bounded(x.statusHex, 16).toUpperCase(),
+          subtype: x.subtype == null ? null : bounded(x.subtype, 32),
+          status: x.status == null ? null : bounded(x.status, 80),
+          display: x.display == null ? dtcHex : bounded(x.display, 32),
+        };
+      });
+      if (new Set(dtcs.map((d) => d.dtcHex)).size !== dtcs.length) throw new Error("obd_duplicate_dtc");
+      if (coverage === "success-none" && dtcs.length) throw new Error("obd_none_with_dtcs");
+      if (coverage === "success-dtc" && !dtcs.length) throw new Error("obd_dtc_without_codes");
+      const moduleKey = bounded(row.moduleKey, 80);
+      if (!moduleKey) throw new Error("obd_invalid_module");
+      if (moduleKeys.has(moduleKey)) throw new Error("obd_duplicate_module");
+      moduleKeys.add(moduleKey);
+      return {
+        moduleKey,
+        name: bounded(row.name, 80),
+        ecuVariant: row.ecuVariant == null ? null : bounded(row.ecuVariant, 500),
+        coverage,
+        dtcs,
+        rawRef: row.rawRef == null ? null : bounded(row.rawRef, 80),
+      };
+    });
+    const completeness = this.requireEnum(
+      o.completeness || "partial",
+      ["complete", "partial", "failed"] as const,
+      "completeness",
+    );
+    const vehicleKey = o.vehicleKey == null || o.vehicleKey === "" ? null : bounded(o.vehicleKey, 64);
+    if (identityKind === "vin" && !isValidVin(vehicleKey)) throw new Error("obd_invalid_vin");
+    if (identityKind === "user-declared" && (!vehicleKey || !o.boundNote || !o.boundAt)) throw new Error("obd_invalid_binding");
+    if (completeness === "complete" && (!modules.length || modules.some((m) => !["success-dtc", "success-none"].includes(m.coverage)))) throw new Error("obd_invalid_completeness");
+    const identityLabel = String(o.identityLabel || identityKind).slice(0, 160);
+    const payload = {
+      at, source, identityKind, vehicleKey, identityLabel, completeness, modules, captureEventId,
+      boundAt: o.boundAt == null ? null : String(o.boundAt),
+      boundNote: o.boundNote == null ? null : String(o.boundNote).slice(0, 500),
+    };
+    const json = JSON.stringify(payload);
+    if (json.length > 200_000) throw new Error("obd_snapshot_too_large");
+    const existing = this.db.prepare("SELECT id FROM obd_diag_snapshots WHERE capture_event_id = ? LIMIT 1").get(captureEventId) as { id: number } | undefined;
+    if (existing) return this.getSnapshot(existing.id);
+    const info = this.db.prepare(
+      `INSERT INTO obd_diag_snapshots (at, source, identity_kind, vehicle_key, identity_label, completeness, fingerprint, payload_json, capture_event_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ).run(at, source, identityKind, vehicleKey, identityLabel, completeness, `event:${captureEventId}`, json, captureEventId);
+    return this.getSnapshot(Number(info.lastInsertRowid));
+  }
+
+  assignSnapshot(id: unknown, note: unknown, bindingKey?: unknown) {
+    const snap = this.getSnapshot(this.requireId(id, "snapshot_id"));
+    if (!snap) throw new Error("obd_snapshot_not_found");
+    if (snap.identityKind === "vin") throw new Error("obd_observed_vin_cannot_be_reassigned");
+    const patch = declaredBindingPatch(String(note || ""), String(bindingKey || "local:garage-981"));
+    const next = { ...snap, ...patch, fingerprint: `event:${snap.captureEventId}` };
+    const json = JSON.stringify(next);
+    this.db.prepare(
+      "UPDATE obd_diag_snapshots SET identity_kind = ?, vehicle_key = ?, identity_label = ?, payload_json = ? WHERE id = ?",
+    ).run(patch.identityKind, patch.vehicleKey, patch.identityLabel, json, snap.id);
+    return this.getSnapshot(snap.id as number);
+  }
+
+  listSnapshots(): DiagSnapshot[] {
+    return this.db.prepare("SELECT id FROM obd_diag_snapshots ORDER BY id DESC LIMIT 100").all()
+      .map((r) => this.getSnapshot(Number((r as { id: number }).id))!)
+      .filter(Boolean);
+  }
+
+  getSnapshot(id: number): DiagSnapshot | null {
+    const n = this.requireId(id, "snapshot_id");
+    const row = this.db.prepare("SELECT id, payload_json AS json FROM obd_diag_snapshots WHERE id = ?").get(n) as { id: number; json: string } | undefined;
+    if (!row) return null;
+    const payload = parseJsonBounded(row.json) as Omit<DiagSnapshot, "id">;
+    return { ...payload, id: row.id, captureEventId: payload.captureEventId || "" };
+  }
+
+  listLegacyScans(): Array<{ id: number; at: string; vehicleKey: string; source: "legacy-unknown" }> {
+    return this.db.prepare("SELECT id, at, vehicle_key AS vehicleKey FROM obd_scan_events ORDER BY id DESC LIMIT 50").all()
+      .map((r) => ({
+        id: Number((r as { id: number }).id),
+        at: String((r as { at: string }).at),
+        vehicleKey: String((r as { vehicleKey: string }).vehicleKey),
+        source: "legacy-unknown" as const,
+      }));
+  }
+
+  createGuideCase(input: unknown) {
+    if (!input || typeof input !== "object") throw new Error("obd_invalid_guide");
+    const o = input as Record<string, unknown>;
+    const plan = o.symptom && !o.code
+      ? buildSymptomChecklist({ symptom: String(o.symptom), checks: o.checks == null ? null : String(o.checks), sku: o.sku == null ? null : String(o.sku) })
+      : buildGuideChecklist({
+        code: String(o.code || ""),
+        moduleKey: String(o.moduleKey || ""),
+        ecu: o.ecu == null ? undefined : String(o.ecu),
+        ecuContext: o.ecuContext === "dme" || o.ecuContext === "gateway" || o.ecuContext === "unknown" ? o.ecuContext : undefined,
+        observedCodes: Array.isArray(o.observedCodes) ? o.observedCodes as never : undefined,
+      });
+    const snapshotId = o.snapshotId == null || o.snapshotId === "" ? null : this.requireId(o.snapshotId, "snapshot_id");
+    const snapshot = snapshotId ? this.getSnapshot(snapshotId) : null;
+    if (snapshotId && !snapshot) throw new Error("obd_snapshot_not_found");
+    if (snapshot && !snapshot.modules.some((m) => m.moduleKey === plan.moduleKey && m.dtcs.some((d) => d.display === plan.code || d.code === plan.code))) throw new Error("obd_guide_snapshot_mismatch");
+    const source = snapshot?.source ?? this.requireEnum(o.source || "manual", DIAG_SOURCES, "source");
+    const identityKind = snapshot?.identityKind ?? this.requireEnum(o.identityKind || "unknown", IDENTITY_KINDS, "identity");
+    const vehicleKey = snapshot ? snapshot.vehicleKey : (o.vehicleKey == null || o.vehicleKey === "" ? null : String(o.vehicleKey).slice(0, 64));
+    if (source !== "manual" && !snapshot) throw new Error("obd_guide_snapshot_required");
+    const checklist = { ...plan, snapshotId, symptom: o.symptom ? String(o.symptom) : null, sku: o.symptom && o.sku ? String(o.sku) : null };
+    const fingerprint = JSON.stringify(["guide-v2", identityKind, vehicleKey, source, checklist.moduleKey, checklist.code, snapshotId, checklist.ecuContext, checklist.symptom]);
+    const open = this.db.prepare("SELECT id FROM obd_guide_cases WHERE fingerprint = ? AND open = 1 LIMIT 1").get(fingerprint) as { id: number } | undefined;
+    if (open) return this.getGuideCase(open.id);
+    const now = new Date().toISOString();
+    const json = JSON.stringify(checklist);
+    if (json.length > 200_000) throw new Error("obd_guide_too_large");
+    const info = this.db.prepare(
+      `INSERT INTO obd_guide_cases (created_at, updated_at, identity_kind, vehicle_key, source, module_key, ecu, code, open, fingerprint, checklist_json)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
+    ).run(now, now, identityKind, vehicleKey, source, checklist.moduleKey, checklist.ecu, checklist.code, fingerprint, json);
+    return this.getGuideCase(Number(info.lastInsertRowid));
+  }
+
+  listGuideCases() {
+    return this.db.prepare("SELECT id FROM obd_guide_cases ORDER BY id DESC LIMIT 50").all()
+      .map((r) => this.getGuideCase(Number((r as { id: number }).id)));
+  }
+
+  getGuideCase(id: number) {
+    const n = this.requireId(id, "case_id");
+    const row = this.db.prepare(`SELECT * FROM obd_guide_cases WHERE id = ?`).get(n) as Record<string, unknown> | undefined;
+    if (!row) return null;
+    const checklist = parseJsonBounded(String(row.checklist_json)) as { steps: Array<{ id: string }>; snapshotId?: number; symptom?: string; sku?: string; ecuContext?: string };
+    const steps = this.db.prepare(
+      "SELECT step_id AS stepId, result, note, updated_at AS updatedAt FROM obd_guide_step_results WHERE case_id = ?",
+    ).all(n);
+    return {
+      id: n,
+      createdAt: String(row.created_at),
+      updatedAt: String(row.updated_at),
+      identityKind: String(row.identity_kind),
+      vehicleKey: (row.vehicle_key as string | null) ?? null,
+      source: String(row.source),
+      moduleKey: String(row.module_key),
+      ecu: String(row.ecu),
+      code: String(row.code),
+      snapshotId: checklist.snapshotId ?? null,
+      symptom: checklist.symptom ?? null,
+      sku: checklist.sku ?? null,
+      ecuContext: checklist.ecuContext ?? "unknown",
+      open: Number(row.open) === 1,
+      faultLogId: row.fault_log_id == null ? null : Number(row.fault_log_id),
+      checklist,
+      stepResults: steps,
+    };
+  }
+
+  setGuideStep(input: unknown) {
+    if (!input || typeof input !== "object") throw new Error("obd_invalid_step");
+    const o = input as Record<string, unknown>;
+    const caseId = this.requireId(o.caseId, "case_id");
+    const expected = o.updatedAt == null ? null : String(o.updatedAt);
+    const row = this.db.prepare("SELECT updated_at AS u FROM obd_guide_cases WHERE id = ?").get(caseId) as { u: string } | undefined;
+    if (!row) throw new Error("obd_guide_not_found");
+    if (expected && expected !== row.u) throw new Error("obd_guide_stale");
+    const stepId = String(o.stepId || "");
+    if (!stepId || stepId.length > 400) throw new Error("obd_invalid_step_id");
+    const cas = this.getGuideCase(caseId)!;
+    if (!cas.checklist.steps.some((s) => s.id === stepId)) throw new Error("obd_invalid_step_id");
+    const result = assertGuideStepResult(o.result);
+    const note = String(o.note ?? "").slice(0, 2000);
+    const now = new Date(Math.max(Date.now(), Date.parse(row.u) + 1)).toISOString();
+    this.db.exec("BEGIN IMMEDIATE");
+    try {
+      this.db.prepare(
+        `INSERT INTO obd_guide_step_results (case_id, step_id, result, note, updated_at) VALUES (?, ?, ?, ?, ?)
+         ON CONFLICT(case_id, step_id) DO UPDATE SET result=excluded.result, note=excluded.note, updated_at=excluded.updated_at`,
+      ).run(caseId, stepId, result, note, now);
+      this.db.prepare("UPDATE obd_guide_cases SET updated_at = ? WHERE id = ?").run(now, caseId);
+      this.db.exec("COMMIT");
+    } catch (e) { this.db.exec("ROLLBACK"); throw e; }
+    return this.getGuideCase(caseId);
+  }
+
+  linkGuideFaultLog(caseId: number, faultLogId: number) {
+    const c = this.requireId(caseId, "case_id");
+    const f = this.requireId(faultLogId, "fault_log_id");
+    const exists = this.db.prepare("SELECT id FROM fault_logs WHERE id = ?").get(f);
+    if (!exists) throw new Error("obd_fault_log_not_found");
+    const current = this.db.prepare("SELECT fault_log_id AS f FROM obd_guide_cases WHERE id = ?").get(c) as { f: number | null } | undefined;
+    if (!current) throw new Error("obd_guide_not_found");
+    if (current.f && Number(current.f) === f) return this.getGuideCase(c);
+    if (current.f) return this.getGuideCase(c);
+    this.db.prepare("UPDATE obd_guide_cases SET fault_log_id = ?, updated_at = ? WHERE id = ?").run(f, new Date().toISOString(), c);
+    return this.getGuideCase(c);
+  }
+
+  previewCompare(beforeId: unknown, afterId: unknown) {
+    const before = this.getSnapshot(this.requireId(beforeId, "before_id"));
+    const after = this.getSnapshot(this.requireId(afterId, "after_id"));
+    if (!before || !after) throw new Error("obd_snapshot_not_found");
+    return compareSnapshots(before, after);
+  }
+
+  saveCompare(input: unknown) {
+    if (!input || typeof input !== "object") throw new Error("obd_invalid_compare");
+    const o = input as Record<string, unknown>;
+    const result = this.previewCompare(o.beforeId, o.afterId);
+    if (!result.ok) throw new Error(result.error);
+    const note = String(o.note ?? "").slice(0, 2000);
+    const faultLogId = o.faultLogId == null || o.faultLogId === "" ? null : this.requireId(o.faultLogId, "fault_log_id");
+    if (faultLogId && !this.db.prepare("SELECT id FROM fault_logs WHERE id = ?").get(faultLogId)) throw new Error("obd_fault_log_not_found");
+    const fp = `${result.beforeId}:${result.afterId}:${note}`;
+    const dup = this.db.prepare(
+      "SELECT id, fault_log_id AS f FROM obd_compare_reports WHERE before_id = ? AND after_id = ? AND note = ? LIMIT 1",
+    ).get(result.beforeId, result.afterId, note) as { id: number; f: number | null } | undefined;
+    if (dup) {
+      if (faultLogId && !dup.f) {
+        this.db.prepare("UPDATE obd_compare_reports SET fault_log_id = ? WHERE id = ?").run(faultLogId, dup.id);
+      }
+      return this.getCompare(dup.id);
+    }
+    const json = JSON.stringify({ ...result, note });
+    if (json.length > 200_000) throw new Error("obd_report_too_large");
+    const info = this.db.prepare(
+      "INSERT INTO obd_compare_reports (created_at, before_id, after_id, note, result_json, fault_log_id) VALUES (?, ?, ?, ?, ?, ?)",
+    ).run(new Date().toISOString(), result.beforeId, result.afterId, note, json, faultLogId);
+    void fp;
+    return this.getCompare(Number(info.lastInsertRowid));
+  }
+
+  listCompares() {
+    return this.db.prepare("SELECT id FROM obd_compare_reports ORDER BY id DESC LIMIT 50").all()
+      .map((r) => this.getCompare(Number((r as { id: number }).id)));
+  }
+
+  getCompare(id: number) {
+    const n = this.requireId(id, "report_id");
+    const row = this.db.prepare("SELECT * FROM obd_compare_reports WHERE id = ?").get(n) as Record<string, unknown> | undefined;
+    if (!row) return null;
+    return {
+      id: n,
+      createdAt: String(row.created_at),
+      beforeId: Number(row.before_id),
+      afterId: Number(row.after_id),
+      note: String(row.note || ""),
+      faultLogId: row.fault_log_id == null ? null : Number(row.fault_log_id),
+      result: parseJsonBounded(String(row.result_json)),
+    };
+  }
+
+  diagOp(op: string, value: Record<string, unknown> | null) {
+    const v = value ?? {};
+    if (op === "snapshot:capture") return this.captureSnapshot(v);
+    if (op === "snapshot:list") return this.listSnapshots();
+    if (op === "snapshot:get") return this.getSnapshot(this.requireId(v.id, "snapshot_id"));
+    if (op === "snapshot:assign") return this.assignSnapshot(v.id, v.note, v.bindingKey);
+    if (op === "scan:listLegacy") return this.listLegacyScans();
+    if (op === "guide:create") return this.createGuideCase(v);
+    if (op === "guide:list") return this.listGuideCases();
+    if (op === "guide:get") return this.getGuideCase(this.requireId(v.id, "case_id"));
+    if (op === "guide:setStep") return this.setGuideStep(v);
+    if (op === "guide:linkFaultLog") return this.linkGuideFaultLog(this.requireId(v.caseId, "case_id"), this.requireId(v.faultLogId, "fault_log_id"));
+    if (op === "compare:preview") return this.previewCompare(v.beforeId, v.afterId);
+    if (op === "compare:save") return this.saveCompare(v);
+    if (op === "compare:list") return this.listCompares();
+    if (op === "compare:get") return this.getCompare(this.requireId(v.id, "report_id"));
+    throw new Error("obd_unknown_diag_op");
   }
 }
 

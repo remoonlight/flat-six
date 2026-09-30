@@ -91,4 +91,102 @@ describe("offline OBD persistence", () => {
       fs.unlinkSync(file); fs.rmdirSync(dir);
     }
   });
+
+  it("migrates diag snapshots/cases, round-trips, rejects bad input, preserves prior rows", () => {
+    const { dir, file } = tmp();
+    const db = new GarageDb(file);
+    try {
+      const manual = db.createObdSession({ note: "keep" });
+      const payload = {
+        at: "2026-09-30T10:00:00.000Z",
+        source: "simulation",
+        identityKind: "unbound",
+        vehicleKey: null,
+        identityLabel: "unbound",
+        completeness: "complete",
+        captureEventId: "job-a",
+        modules: [{
+          moduleKey: "porsche-981-2014-dme",
+          name: "DME",
+          ecuVariant: null,
+          coverage: "success-dtc",
+          dtcs: [{ code: "C447", dtcHex: "C447", statusHex: "28", status: "28", display: "U0447" }],
+          rawRef: "r1",
+        }],
+      };
+      const a = db.obd.diagOp("snapshot:capture", payload) as { id: number; identityKind: string };
+      const again = db.obd.diagOp("snapshot:capture", payload) as { id: number };
+      expect(again.id).toBe(a.id);
+      const sameContent = db.obd.diagOp("snapshot:capture", { ...payload, captureEventId: "job-b", at: "2026-09-30T10:01:00.000Z" }) as { id: number };
+      expect(sameContent.id).not.toBe(a.id);
+      const unboundCmp = db.obd.diagOp("compare:preview", { beforeId: a.id, afterId: sameContent.id }) as { ok: boolean; reason?: string };
+      expect(unboundCmp.ok).toBe(false);
+      expect(unboundCmp.reason).toBe("identity-unqualified");
+      const boundA = db.obd.diagOp("snapshot:assign", { id: a.id, note: "本车库 981 声明绑定" }) as { identityKind: string; vehicleKey: string };
+      const boundB = db.obd.diagOp("snapshot:assign", { id: sameContent.id, note: "本车库 981 声明绑定" }) as { id: number };
+      const still = db.obd.diagOp("compare:preview", { beforeId: a.id, afterId: boundB.id }) as { ok: boolean; rows: Array<{ kind: string }> };
+      expect(boundA.identityKind).toBe("user-declared");
+      expect(still.ok).toBe(true);
+      expect(still.rows.every((r) => r.kind === "still")).toBe(true);
+      const later = db.obd.diagOp("snapshot:capture", {
+        ...payload,
+        captureEventId: "job-fail",
+        at: "2026-09-30T11:00:00.000Z",
+        completeness: "failed",
+        modules: [{ ...payload.modules[0], coverage: "failed", dtcs: [{ code: "C447", dtcHex: "C447", statusHex: "28", display: "U0447" }] }],
+      }) as { id: number };
+      db.obd.diagOp("snapshot:assign", { id: later.id, note: "本车库 981 声明绑定" });
+      const preview = db.obd.diagOp("compare:preview", { beforeId: a.id, afterId: later.id }) as { ok: boolean; rows: Array<{ kind: string }> };
+      expect(preview.ok).toBe(true);
+      expect(preview.rows.filter((r) => r.kind === "gone")).toHaveLength(0);
+      expect(preview.rows.every((r) => r.kind === "not-comparable")).toBe(true);
+      expect(() => db.obd.diagOp("snapshot:get", { id: 0 })).toThrow();
+      expect(() => db.obd.diagOp("snapshot:capture", { ...payload, captureEventId: "x", source: "nope" })).toThrow();
+      expect(() => db.obd.diagOp("snapshot:capture", { ...payload, captureEventId: "over", modules: [{ ...payload.modules[0], dtcs: Array(201).fill(payload.modules[0].dtcs[0]) }] })).toThrow("too_many");
+
+      const cas = db.obd.diagOp("guide:create", { code: "P0301", moduleKey: "porsche-981-2014-dme", ecuContext: "dme", source: "manual", identityKind: "unknown" }) as { id: number; updatedAt: string; checklist: { steps: Array<{ id: string }> } };
+      const cas2 = db.obd.diagOp("guide:create", { code: "P0301", moduleKey: "porsche-981-2014-dme", ecuContext: "dme", source: "manual", identityKind: "unknown" }) as { id: number };
+      expect(cas2.id).toBe(cas.id);
+      const otherEcu = db.obd.diagOp("guide:create", { code: "P0301", moduleKey: "porsche-981-2014-gateway", ecuContext: "gateway", source: "manual", identityKind: "unknown" }) as { id: number };
+      expect(otherEcu.id).not.toBe(cas.id);
+      const stepId = cas.checklist.steps[0].id;
+      db.obd.diagOp("guide:setStep", { caseId: cas.id, stepId, result: "normal", note: "ok", updatedAt: cas.updatedAt });
+      expect(() => db.obd.diagOp("guide:setStep", { caseId: cas.id, stepId, result: "abnormal", note: "late", updatedAt: cas.updatedAt })).toThrow("stale");
+      const log = db.addFaultLog({ logged_at: "2026-09-30", odometer_km: 1, symptom: "P0301" });
+      db.obd.diagOp("guide:linkFaultLog", { caseId: cas.id, faultLogId: log.id });
+      db.obd.diagOp("guide:linkFaultLog", { caseId: cas.id, faultLogId: log.id });
+      expect((db.obd.diagOp("guide:get", { id: cas.id }) as { faultLogId: number }).faultLogId).toBe(log.id);
+      const symptom = db.obd.diagOp("guide:create", { symptom: "异响", checks: "听音", source: "manual", identityKind: "unknown" }) as { code: string };
+      expect(symptom.code).toBe("");
+      const anotherSymptom = db.obd.diagOp("guide:create", { symptom: "启动困难", checks: "记录启动状态" }) as { id: number };
+      expect(anotherSymptom.id).not.toBe((symptom as unknown as { id: number }).id);
+      const anotherDmeCode = db.obd.diagOp("guide:create", { code: "P0302", moduleKey: "porsche-981-2014-dme" }) as { id: number };
+      expect(anotherDmeCode.id).not.toBe(cas.id);
+      expect(stepId).not.toContain("\0");
+      expect((db.obd.getGuideCase(cas.id)!.stepResults[0] as { stepId: string }).stepId).toBe(stepId);
+      expect(() => db.obd.diagOp("guide:setStep", { caseId: cas.id, stepId: "fake", result: "normal" })).toThrow("invalid_step_id");
+      expect(() => db.obd.diagOp("snapshot:capture", { ...payload, captureEventId: "duplicate", modules: [{ ...payload.modules[0], dtcs: [payload.modules[0].dtcs[0], payload.modules[0].dtcs[0]] }] })).toThrow("duplicate_dtc");
+      expect(() => db.obd.diagOp("snapshot:capture", { ...payload, captureEventId: "oversize-key", modules: [{ ...payload.modules[0], moduleKey: "x".repeat(81) }] })).toThrow("invalid_field");
+      const observed = db.obd.diagOp("snapshot:capture", { ...payload, captureEventId: "vin", identityKind: "vin", vehicleKey: "WP0ZZZ98ZES000001" }) as { id: number };
+      expect(() => db.obd.diagOp("snapshot:assign", { id: observed.id, note: "override" })).toThrow("cannot_be_reassigned");
+      const capturedCase = db.obd.diagOp("guide:create", { snapshotId: a.id, code: "U0447", moduleKey: "porsche-981-2014-dme" }) as { id: number; snapshotId: number; source: string };
+      const laterCase = db.obd.diagOp("guide:create", { snapshotId: boundB.id, code: "U0447", moduleKey: "porsche-981-2014-dme" }) as { id: number };
+      expect(capturedCase.source).toBe("simulation");
+      expect(capturedCase.snapshotId).toBe(a.id);
+      expect(laterCase.id).not.toBe(capturedCase.id);
+      const report = db.obd.diagOp("compare:save", { beforeId: a.id, afterId: boundB.id, note: "review report", faultLogId: log.id }) as { id: number };
+      expect(manual.id).toBeGreaterThan(0);
+
+      db.close();
+      const db2 = new GarageDb(file);
+      expect(db2.listObdSessions().some((s) => s.id === manual.id)).toBe(true);
+      expect((db2.obd.diagOp("snapshot:list", {}) as Array<{ id: number }>).length).toBeGreaterThanOrEqual(2);
+      expect(db2.obd.diagOp("compare:get", { id: report.id })).toMatchObject({ note: "review report", faultLogId: log.id });
+      expect(db2.obd.diagOp("guide:get", { id: cas.id })).toMatchObject({ faultLogId: log.id, stepResults: [{ stepId, note: "ok", result: "normal" }] });
+      db2.close();
+    } finally {
+      try { db.close(); } catch { /* */ }
+      fs.unlinkSync(file); fs.rmdirSync(dir);
+    }
+  });
 });

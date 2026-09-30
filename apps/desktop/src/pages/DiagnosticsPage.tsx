@@ -10,10 +10,12 @@ import {
   type Vehicle,
 } from "../api";
 import type { LocatorFocus } from "../locator-focus";
+import type { GuideSeed } from "./GuidedTroubleshootPanel";
 
 export type DiagnosticsPageProps = {
   /** Jump to Locator tab with zone/hotspot/sku (R5). */
   onLocate?: (focus: LocatorFocus) => void;
+  onOpenGuide?: (seed: GuideSeed) => void;
 };
 
 function codingSnapLabel(s: CodingSnapshot): string {
@@ -24,7 +26,7 @@ function codingSnapLabel(s: CodingSnapshot): string {
   return `#${s.id} · ${s.system} · ${fn} · ${date}`;
 }
 
-export function DiagnosticsPage({ onLocate }: DiagnosticsPageProps = {}) {
+export function DiagnosticsPage({ onLocate, onOpenGuide }: DiagnosticsPageProps = {}) {
   const [faults, setFaults] = useState<FaultEntry[]>([]);
   const [parts, setParts] = useState<Part[]>([]);
   const [locatorMap, setLocatorMap] = useState<LocatorMap | null>(null);
@@ -144,6 +146,23 @@ export function DiagnosticsPage({ onLocate }: DiagnosticsPageProps = {}) {
       <p className="muted">
         上半为只读知识库；下半为长期跟踪记录（与知识库分表）。
       </p>
+      {onOpenGuide ? (
+        <button
+          type="button"
+          className="ghost"
+          data-testid="obd-insights-guide"
+          onClick={() => {
+            if (!active) return;
+            onOpenGuide({
+              symptom: active.symptom,
+              checks: active.checks,
+              sku: active.related_part_sku,
+            });
+          }}
+        >
+          打开引导排障
+        </button>
+      ) : null}
       {error && <p className="error">{error}</p>}
 
       <div

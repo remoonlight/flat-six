@@ -491,6 +491,7 @@ export type PorscheApi = {
     raw_json?: string | null;
   }) => Promise<ObdDtc>;
   listObdDtcs: (sessionId: number) => Promise<ObdDtc[]>;
+  obdDiag?: (request: { op: string; value?: Record<string, unknown> | null }) => Promise<unknown>;
   codingMenu: () => Promise<CodingMenu>;
   listCoding: () => Promise<CodingSnapshot[]>;
   addCoding: (input: {

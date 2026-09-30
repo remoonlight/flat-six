@@ -55,6 +55,7 @@ contextBridge.exposeInMainWorld("porsche981", {
   createObdSession: (input) => ipcRenderer.invoke("obdSessions:create", input),
   addObdDtc: (input) => ipcRenderer.invoke("obdDtcs:add", input),
   listObdDtcs: (sessionId) => ipcRenderer.invoke("obdDtcs:list", sessionId),
+  obdDiag: (request) => ipcRenderer.invoke("obdDiag:op", request),
   codingMenu: () => ipcRenderer.invoke("coding:menu"),
   listCoding: () => ipcRenderer.invoke("coding:list"),
   addCoding: (input) => ipcRenderer.invoke("coding:add", input),

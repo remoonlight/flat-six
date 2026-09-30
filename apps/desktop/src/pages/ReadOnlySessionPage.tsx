@@ -7,6 +7,7 @@ import {
   interpretStatusDoc,
   liveReady,
 } from "../read-only-session-logic.mjs";
+import { persistSessionSnapshot } from "../obd-diag-persist";
 import "../read-only-session.css";
 
 type ProfileId = "porsche-981-2014-dme" | "porsche-981-2014-gateway";
@@ -127,6 +128,14 @@ export function ReadOnlySessionPage({
   const [lastRunKey, setLastRunKey] = useState<string | null>(seed?.key ?? null);
   const [error, setError] = useState<string | null>(null);
   const [busyPlan, setBusyPlan] = useState(false);
+  const persistKeys = useRef(new Set<string>());
+  const persistFail = useRef<{
+    source: Mode;
+    profileId: string;
+    name?: string;
+    final: Record<string, unknown>;
+    jobId: string;
+  } | null>(null);
 
   const running = status?.state === "running" || status?.state === "cancelling" || starting || Boolean(jobId);
   const selKey = `${profileId}:${mode}`;
@@ -181,6 +190,28 @@ export function ReadOnlySessionPage({
         if (runId && interpreted.terminal) {
           setLastRunId(runId);
           setLastRunKey(selKey);
+        }
+        if (interpreted.terminal) {
+          const finalDoc = (interpreted.doc?.final || interpreted.doc) as Record<string, unknown> | undefined;
+          const task = String((finalDoc as { sessionTask?: string } | undefined)?.sessionTask || "");
+          if (task !== "engine" && task !== "clear" && finalDoc) {
+            const key = String(token);
+            try {
+              persistFail.current = {
+                source: mode,
+                profileId,
+                name: PROFILES.find((p) => p.id === profileId)?.label,
+                final: finalDoc,
+                jobId: token,
+              };
+              await persistSessionSnapshot(api(), persistFail.current);
+              persistKeys.current.add(key);
+              persistFail.current = null;
+            } catch (e) {
+              persistKeys.current.delete(key);
+              setError(`诊断快照未保存：${String(e)}`);
+            }
+          }
         }
         if (interpreted.stop) {
           jobIdRef.current = null;
@@ -430,7 +461,31 @@ export function ReadOnlySessionPage({
             </label>
           </div>
         ) : null}
-        {error ? <p className="error">{error}</p> : null}
+        {error ? (
+          <p className="error">
+            {error}
+            {error.startsWith("诊断快照未保存") ? (
+              <button
+                type="button"
+                className="ghost"
+                data-testid="ros-persist-retry"
+                onClick={() => {
+                  const p = persistFail.current;
+                  if (!p) return;
+                  void persistSessionSnapshot(api(), p)
+                    .then(() => {
+                      persistKeys.current.add(p.jobId);
+                      persistFail.current = null;
+                      setError(null);
+                    })
+                    .catch((e) => setError(`诊断快照未保存：${String(e)}`));
+                }}
+              >
+                重试保存快照
+              </button>
+            ) : null}
+          </p>
+        ) : null}
       </section>
 
       <section className="panel">

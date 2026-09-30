@@ -16,6 +16,9 @@ import {
   mergeStatusAfterJob,
   statusText,
 } from "../can-topology-logic.mjs";
+import { persistTopologySnapshot } from "../obd-diag-persist";
+import type { GuideSeed } from "./GuidedTroubleshootPanel";
+import type { DiagSnapshot } from "@porsche981/domain";
 import "../can-topology.css";
 
 type NodeT = {
@@ -55,9 +58,11 @@ function requireConfirm(fixture: boolean) {
 export function TopologyPage({
   onBusyChange,
   peerBusy = false,
+  onOpenGuide,
 }: {
   onBusyChange?: (busy: boolean) => void;
   peerBusy?: boolean;
+  onOpenGuide?: (seed: GuideSeed) => void;
 }) {
   const seed = topologySeed();
   const fixture = topologyFixtureEnabled();
@@ -94,6 +99,11 @@ export function TopologyPage({
   const startLock = useRef(false);
   const mounted = useRef(true);
   const runToken = useRef(0);
+  const persistRetry = useRef<{
+    source: "simulation" | "live";
+    results: Array<{ nodeId: string; classified?: Record<string, unknown>; doc?: { final?: Record<string, unknown> } }>;
+  } | null>(null);
+  const nodeSnapshots = useRef(new Map<string, DiagSnapshot>());
   const statusesRef = useRef(statuses);
   statusesRef.current = statuses;
 
@@ -142,6 +152,7 @@ export function TopologyPage({
       return;
     }
     startLock.current = true;
+    if (task === "read") for (const target of targets) nodeSnapshots.current.delete(target.id);
     const token = ++runToken.current;
     const q = createScanQueue({ invoke });
     queueRef.current = q;
@@ -188,12 +199,43 @@ export function TopologyPage({
       if (out.error === "cancelled") setProgress("已取消");
       else if (out.error === "busy") setError("已有任务在进行");
       else setProgress(completionFeedback({ results: out.results, adaptedQueued: targets.length, totalNodes: nodes.length }));
+      if (out.error !== "busy" && task === "read" && (out.results || []).length) {
+        const rows = (out.results || []) as NonNullable<typeof persistRetry.current>["results"];
+        persistRetry.current = { source: ctx.mode, results: rows };
+        try {
+          const snapshot = await persistTopologySnapshot(api(), {
+            task,
+            source: ctx.mode,
+            results: rows,
+          });
+          for (const result of rows) {
+            nodeSnapshots.current.delete(result.nodeId);
+            if (snapshot) nodeSnapshots.current.set(result.nodeId, snapshot);
+          }
+          persistRetry.current = null;
+        } catch (e) {
+          if (mounted.current && token === runToken.current) setError(`诊断快照未保存：${String(e)}`);
+        }
+      }
     } catch (e) {
       if (mounted.current && token === runToken.current) setError(String(e));
     } finally {
       startLock.current = false;
       if (mounted.current && token === runToken.current) setBusy(false);
       queueRef.current = null;
+    }
+  }
+
+  async function retryPersist() {
+    const p = persistRetry.current;
+    if (!p) return;
+    setError(null);
+    try {
+      const snapshot = await persistTopologySnapshot(api(), { task: "read", source: p.source, results: p.results });
+      if (snapshot) for (const result of p.results) nodeSnapshots.current.set(result.nodeId, snapshot);
+      persistRetry.current = null;
+    } catch (e) {
+      setError(`诊断快照未保存：${String(e)}`);
     }
   }
 
@@ -421,6 +463,11 @@ export function TopologyPage({
             {error ? (
               <p className="error" data-testid="topo-error">
                 {error}
+                {error.startsWith("诊断快照未保存") ? (
+                  <button type="button" className="ghost" data-testid="topo-persist-retry" onClick={() => void retryPersist()}>
+                    重试保存快照
+                  </button>
+                ) : null}
               </p>
             ) : null}
 
@@ -453,7 +500,34 @@ export function TopologyPage({
                         {Array.isArray(stSel.records)
                           ? (stSel.records as Array<Record<string, string>>).map((r, i) => (
                               <div key={i}>
-                                {dtcLabel(r)} {dtcDetail(r)}
+                                {dtcLabel(r)} {dtcDetail(r)}{" "}
+                                {onOpenGuide && selected.profileId ? (
+                                  <button
+                                    type="button"
+                                    className="ghost"
+                                    data-testid="topo-open-guide"
+                                    disabled={!nodeSnapshots.current.has(selected.id) || busy}
+                                    onClick={() =>
+                                      onOpenGuide({
+                                        code: dtcLabel(r),
+                                        moduleKey: selected.profileId as string,
+                                        ecu: selected.short,
+                                        source: nodeSnapshots.current.get(selected.id)?.source,
+                                        identityKind: nodeSnapshots.current.get(selected.id)?.identityKind,
+                                        vehicleKey: nodeSnapshots.current.get(selected.id)?.vehicleKey,
+                                        snapshotId: nodeSnapshots.current.get(selected.id)?.id ?? undefined,
+                                        ecuContext:
+                                          selected.profileId === "porsche-981-2014-dme"
+                                            ? "dme"
+                                            : selected.profileId === "porsche-981-2014-gateway"
+                                              ? "gateway"
+                                              : "unknown",
+                                      })
+                                    }
+                                  >
+                                    引导排障
+                                  </button>
+                                ) : null}
                               </div>
                             ))
                           : null}

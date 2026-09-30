@@ -1,6 +1,8 @@
 export * from "./obd.js";
 export * from "./obd-production.js";
 export * from "./obd-analysis.js";
+export * from "./obd-guide.js";
+export * from "./obd-compare.js";
 export type IntervalStatus = "ok" | "dueSoon" | "overdue" | "no_baseline";
 
 export type IntervalInput = {

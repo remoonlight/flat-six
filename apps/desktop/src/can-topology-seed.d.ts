@@ -1,4 +1,5 @@
 declare module "*can-topology-logic.mjs" {
+  export function classifySessionFinal(final: unknown, extras?: Record<string, unknown>): Record<string, unknown>;
   export function flattenNodes(gen: unknown): Array<Record<string, unknown>>;
   export function branchAppearances(gen: unknown): Array<Record<string, unknown> & { appearances: Array<Record<string, unknown>> }>;
   export function emptyStatusMap(gen: unknown): Record<string, Record<string, unknown>>;
