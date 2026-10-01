@@ -193,9 +193,12 @@ try {
   await page.goto(`http://127.0.0.1:${port}/obd-connection-harness.html?registry=1`, { waitUntil: "networkidle" });
   await page.click("[data-obd-tab='connection']");
   const registry = page.getByTestId("obd-device-registry");
-  await registry.getByText("项目关联设备 · 7", { exact: true }).waitFor();
-  for (const family of ["vLinker", "OBDLink MX+", "VNCI", "PT3G", "X431", "X431-tablet", "Espressif"]) {
+  await registry.getByText("项目关联设备 · 4", { exact: true }).waitFor();
+  for (const family of ["vLinker", "OBDLink MX+", "VNCI", "PT3G"]) {
     await page.getByTestId(`obd-registered-${family}`).waitFor();
+  }
+  for (const family of ["X431", "X431-tablet", "Espressif"]) {
+    if (await page.getByTestId(`obd-registered-${family}`).count()) throw new Error(`hidden connection device shown: ${family}`);
   }
   const pt3g = page.getByTestId("obd-registered-PT3G");
   if (!(await pt3g.textContent()).includes("USB 在线") || (await pt3g.getByRole("button").count())) throw new Error("PT3G falsely offered a vehicle transport");
@@ -207,15 +210,12 @@ try {
   await page.getByTestId("obd-registered-OBDLink MX+").getByRole("button", { name: "广播回放" }).click();
   await page.waitForFunction(() => document.querySelector("[data-obd-tab='broadcast']")?.classList.contains("active"));
   await page.click("[data-obd-tab='connection']");
-  await page.getByTestId("obd-registered-X431").getByRole("button", { name: "设码记录" }).click();
-  await page.waitForFunction(() => document.querySelector("[data-obd-tab='coding']")?.classList.contains("active"));
-  await page.click("[data-obd-tab='connection']");
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: path.join(shotDir, "device-registry-mobile.png"), fullPage: true });
   const overflows = await registry.evaluate((el) => el.scrollWidth > el.clientWidth + 1);
   if (overflows) throw new Error("device registry overflows on mobile");
   if (errors.length) throw new Error(`browser errors: ${errors.join("; ")}`);
-  results.push("seven-device-registry, offline-state, select-without-open, routes, mobile");
+  results.push("four-device-registry, excluded-reference-devices, offline-state, select-without-open, routes, mobile");
   await browser.close();
 } finally {
   vite.kill();

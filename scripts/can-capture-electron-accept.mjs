@@ -49,5 +49,5 @@ try {
   assert.deepEqual(errors, []);
   fs.writeFileSync(path.join(scratch, "can-electron.json"), JSON.stringify({ ok: true, noHardware: true,
     checks: ["real preload/IPC", "live denied before device open", "generated capture hashes and raw replay", "6 synthetic frames / 2 CAN ERROR", "six separate partitions", "no renderer errors"] }, null, 2));
-  console.log("can-capture-electron-accept: PASS real UI, preload/IPC, recorded field replay, quality warnings, live deny; no hardware");
+  console.log("can-capture-electron-accept: PASS real UI, preload/IPC, generated replay, quality warnings, live deny; no hardware");
 } finally { await app?.close(); saved.cleanup(); }

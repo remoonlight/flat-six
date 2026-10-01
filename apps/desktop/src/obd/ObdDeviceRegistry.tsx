@@ -4,6 +4,7 @@ import "./device-registry.css";
 type Route = ObdRegisteredDevice["routes"][number];
 const ROUTES: Record<Route, string> = { session: "只读采集", live: "实时数据", broadcast: "广播记录", offline: "离线工作台", coding: "设码记录" };
 const DEVICE_ROUTES = new Set<Route>(["session", "live", "broadcast"]);
+const HIDDEN_FAMILIES = new Set(["X431", "X431-tablet", "Espressif"]);
 
 export function ObdDeviceRegistry({ devices, busy, selectedId, onSelect, onNavigate }: {
   devices: ObdRegisteredDevice[];
@@ -12,12 +13,13 @@ export function ObdDeviceRegistry({ devices, busy, selectedId, onSelect, onNavig
   onSelect: (id: string) => void;
   onNavigate: (route: Route, deviceId?: string) => void;
 }) {
-  if (!devices.length) return null;
+  const visibleDevices = devices.filter((device) => !HIDDEN_FAMILIES.has(device.family));
+  if (!visibleDevices.length) return null;
   return <section className="obd-device-registry" data-testid="obd-device-registry" aria-label="项目关联设备">
-    <h3>项目关联设备 · {devices.length}</h3>
+    <h3>项目关联设备 · {visibleDevices.length}</h3>
     <p className="muted">设备离线仍保留档案。当前状态由本次刷新得到；功能入口用于选择任务，打开页面不会自动通信。</p>
     <ul className="obd-registry-grid">
-      {devices.map((d) => <li className="obd-registry-card" key={d.id} data-testid={`obd-registered-${d.family}`}>
+      {visibleDevices.map((d) => <li className="obd-registry-card" key={d.id} data-testid={`obd-registered-${d.family}`}>
         <div className="obd-registry-heading"><strong>{d.name}</strong><span className="muted">{d.state}</span></div>
         <p>{d.connection}{d.comPort ? ` · ${d.comPort}` : ""}</p>
         {d.serial || d.mac ? <p className="muted">{d.serial ? `序列号 ${d.serial}` : `蓝牙 ${d.mac}`}</p> : null}
