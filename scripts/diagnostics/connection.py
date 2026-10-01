@@ -14,7 +14,7 @@ from typing import Any
 from . import BAUD, VLIKER_MAC
 from .elm import ElmClient, ElmError
 
-DEVICE_ID_RE = re.compile(r"^bt:[0-9A-F]{12}$")
+DEVICE_ID_RE = re.compile(r"^(?:bt:[0-9A-F]{12}|vnci:[0-9]{1,16})$")
 VOLT_RE = re.compile(r"(\d+(?:\.\d+)?)\s*V", re.I)
 VOLT_MIN = 6.0
 VOLT_MAX = 20.0
@@ -84,7 +84,7 @@ def classify_brand(name: str | None, mac: str | None) -> str:
     n = (name or "").upper()
     if "VLINKER" in n or (mac and mac == KNOWN_VLIKER):
         return "vLinker"
-    if "OBDLINK" in n and "MX" in n:
+    if "OBDLINK" in n and re.search(r"\bMX\s*\+", n):
         return "OBDLink MX+"
     if "OBDLINK" in n:
         return "unresolved"
@@ -212,8 +212,10 @@ def collect_snapshot(
     pyserial=None,
     ps_runner=None,
     errors: list | None = None,
+    vnci_rows=None,
 ) -> dict:
     plat = platform if platform is not None else sys.platform
+    native_discovery = plat == "win32" and all(v is None for v in (serial_rows, bluetooth_rows, pyserial, ps_runner))
     errs = list(errors or [])
     serial = list(serial_rows) if serial_rows is not None else None
     bluetooth = list(bluetooth_rows) if bluetooth_rows is not None else None
@@ -244,7 +246,14 @@ def collect_snapshot(
             serial_ps, e = pyserial_rows(lp)
             if e:
                 errs.append(e)
-    return {"platform": plat, "serial": serial or [], "bluetooth": bluetooth or [], "pyserial": serial_ps or [], "errors": errs}
+    vnci = list(vnci_rows or [])
+    if vnci_rows is None and native_discovery:
+        from .vnci import discover
+        try:
+            vnci = discover()
+        except Exception as e:
+            errs.append("vnci:" + str(e))
+    return {"platform": plat, "serial": serial or [], "bluetooth": bluetooth or [], "pyserial": serial_ps or [], "vnci": vnci, "errors": errs}
 
 
 def enumerate_devices(snapshot: dict | None = None, **collect_kw) -> dict:
@@ -346,6 +355,7 @@ def enumerate_devices(snapshot: dict | None = None, **collect_kw) -> dict:
         rec["identitySource"] = sorted(set(rec["identitySource"]))
         devices.append(rec)
     devices.sort(key=lambda d: d["id"])
+    devices.extend(snap.get("vnci") or [])
     return {
         "ok": True,
         "devices": devices,
@@ -356,7 +366,7 @@ def enumerate_devices(snapshot: dict | None = None, **collect_kw) -> dict:
 
 
 def resolve_port(device_id: str, snapshot: dict | None = None, **collect_kw) -> str:
-    if not valid_device_id(device_id):
+    if not valid_device_id(device_id) or device_id.startswith("vnci:"):
         raise ElmError("device-id-invalid")
     listed = enumerate_devices(snapshot, **collect_kw)
     hits = [d for d in listed["devices"] if d["id"] == device_id]
@@ -532,6 +542,10 @@ def run_voltage_monitor(
         _emit(outf, {"ok": False, "type": "error", "error": "device-id-invalid", **flags})
         return 2
 
+    if device_id.startswith("vnci:"):
+        from .vnci import run_monitor
+        return run_monitor(device_id, stdout=outf, stdin=stdin, stop_event=stop_event, max_samples=max_samples)
+
     own = port is None
     client = None
     opened = None
@@ -645,7 +659,13 @@ def stdio_loop(stdin=None, stdout=None) -> int:
         return 2
     action = req.get("action")
     if action == "list":
-        doc = enumerate_devices()
+        from .host_devices import collect_host_devices
+        from concurrent.futures import ThreadPoolExecutor
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            host = pool.submit(collect_host_devices)
+            doc = enumerate_devices()
+            doc["host"] = host.result()
+        doc["errors"].extend(doc["host"].get("errors") or [])
         outf.write(json.dumps(doc, ensure_ascii=False) + "\n")
         return 0
     if action == "monitor":

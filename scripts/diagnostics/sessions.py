@@ -95,7 +95,7 @@ PROFILE_CLEAR = {
     },
 }
 
-RESTORATION_NOTE = "ATPC is adapter close only; ECU restoration not proven"
+RESTORATION_NOTE = "Adapter close only; ECU restoration not proven"
 
 
 class SessionError(RuntimeError):
@@ -129,6 +129,7 @@ def engine_capability() -> dict:
         "pids": spec["pids"],
         "options": spec["options"],
         "authorizedHex": sorted(spec["authorizedHex"]),
+        "acquisitionRoute": {"protocol": "standard-mode01", "txId": "7DF", "rxId": "7E8", "sessionControl": False, "automaticFallback": False, "retries": 0},
     }
 
 
@@ -343,6 +344,7 @@ def build_plan(
             "evidenceStatus": eng.get("evidenceStatus"),
             "sampleCycles": cycles,
             "intervalMs": interval,
+            "acquisitionRoute": eng.get("acquisitionRoute"),
         },
     }
     return plan
@@ -803,7 +805,7 @@ def run_session(
                     **client.close_restore(),
                     "ecuRestorationProven": False,
                     "note": RESTORATION_NOTE,
-                    "adapterClose": "ATPC",
+                    "adapterClose": "D-PDU disconnect/destruct" if device_id and device_id.startswith("vnci:") else "ATPC",
                 }
             elif own_port and port is not None:
                 try:
@@ -843,7 +845,17 @@ def run_session(
     try:
         dest.mkdir(parents=True, exist_ok=True)
         result["artifactDir"] = str(dest)
-        if port is None:
+        vnci_live = mode == "live" and isinstance(device_id, str) and device_id.startswith("vnci:")
+        if vnci_live:
+            if session_task == "clear":
+                raise ElmError("vnci-clear-not-validated")
+            if session_task == "engine":
+                raise ElmError("vnci-engine-route-not-validated")
+            if port is not None:
+                raise ElmError("vnci-serial-injection-forbidden")
+            from .vnci import DpuClient
+            client = DpuClient(device_id, cancel_event=cancel)
+        elif port is None:
             if simulation:
                 port = SessionSimPort(profile_id, scenario)
             else:
@@ -853,7 +865,8 @@ def run_session(
                     device_id=device_id,
                     discovery=discovery,
                 )
-        client = ElmClient(port, timeout_s=min(8.0, budget_s), cancel_event=cancel)
+        if client is None:
+            client = ElmClient(port, timeout_s=min(8.0, budget_s), cancel_event=cancel)
         end = time.monotonic() + budget_s
         ident_ops = IDENTITY_FIELDS[profile_id]
         dep_ops = plan["dependentOperations"]
@@ -973,6 +986,14 @@ def run_session(
                 error = e.code
                 raise ElmError(error) from e
             auth = spec["authorizedHex"]
+            # Identity is qualified on the named manufacturer route first. Mode
+            # 01 is a separate, fixed functional route: the old 1089/7E0 route
+            # returned 7F0111 on this car. Never retry or guess another session.
+            stage_guard()
+            client.send_at("ATPC", end, require_ok=True)
+            client.configure_standard_engine(end)
+            engine_state["acquisitionRoute"] = plan["engine"]["acquisitionRoute"]
+            persist()
 
             def wait_interval() -> None:
                 until = time.monotonic() + engine_state["intervalMs"] / 1000.0

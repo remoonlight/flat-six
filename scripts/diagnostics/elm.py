@@ -213,6 +213,28 @@ class ElmClient:
         finally:
             self._io_lock.release()
 
+    def configure_standard_engine(self, deadline: float) -> None:
+        """Fixed functional OBD route, filtered to known 7E8, SF-only responses.
+
+        No ECU session-control request and no flow-control transmission. This
+        configuration is used by the confirmed field runner and the bounded
+        engine session after fresh named DME identity qualification.
+        """
+        self._enter_io()
+        try:
+            self._configured = False
+            for cmd in (
+                "ATE0", "ATL0", "ATS1", "ATH1", "ATD0", "ATCAF0",
+                "ATCFC0", "ATTP6", "ATSH 7DF", "ATCRA 7E8", "ATCSM0",
+            ):
+                self._raise_if_blocked(deadline)
+                self._send_at_unlocked(cmd, deadline, require_ok=True)
+            self._tx_id = 0x7DF
+            self._rx_id = 0x7E8
+            self._configured = True
+        finally:
+            self._io_lock.release()
+
     def request(self, req_hex: str, deadline: float) -> dict:
         """One catalog SF. Wait NRC78 in the same prompt. Never retransmit. No user TX."""
         if self._poisoned or self._closed:

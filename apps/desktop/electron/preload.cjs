@@ -100,6 +100,7 @@ contextBridge.exposeInMainWorld("porsche981", {
     ipcRenderer.invoke("diagnostics:session", request),
   obdConnection: (request) =>
     ipcRenderer.invoke("diagnostics:connection", request),
+  canCapture: (request) => ipcRenderer.invoke("diagnostics:can-capture", request),
   getBridgeStatus: () => ipcRenderer.invoke("db-bridge:status"),
   onBridgeStatus: (cb) => {
     const handler = (_e, status) => cb(status);

@@ -8,6 +8,7 @@ import {
   type LocatorMap,
   type ObdDtc,
   type ObdConnectionDevice,
+  type ObdRegisteredDevice,
   type ObdSession,
   type Part,
   type PorscheApi,
@@ -24,6 +25,8 @@ import { OfflineDiagnosticsPage } from "./OfflineDiagnosticsPage";
 import { ReadOnlySessionPage } from "./ReadOnlySessionPage";
 import { TopologyPage } from "./TopologyPage";
 import { EngineDataPage } from "./EngineDataPage";
+import { CanCapturePage } from "./CanCapturePage";
+import { ObdDeviceRegistry } from "../obd/ObdDeviceRegistry";
 
 export type ObdPageProps = {
   onLocate?: (focus: LocatorFocus) => void;
@@ -33,6 +36,7 @@ type ObdTab =
   | "topology"
   | "connection"
   | "live"
+  | "broadcast"
   | "faults"
   | "guide"
   | "compare"
@@ -47,6 +51,7 @@ const TABS: { id: ObdTab; label: string }[] = [
   { id: "topology", label: "系统拓扑" },
   { id: "connection", label: "连接设置" },
   { id: "live", label: "实时数据" },
+  { id: "broadcast", label: "广播记录" },
   { id: "faults", label: "故障码" },
   { id: "guide", label: "引导排障" },
   { id: "compare", label: "维修对比" },
@@ -57,6 +62,15 @@ const TABS: { id: ObdTab; label: string }[] = [
   { id: "offline", label: "离线工作台" },
   { id: "session", label: "只读采集" },
 ];
+
+function vnciConnectionMessage(error: unknown): string | null {
+  if (error === "vnci-obd-unpowered-or-invalid-voltage") return "VNCI 已识别，但 OBD 供电异常。请接入本车 OBD 接口并确认供电后重试。";
+  if (error === "vnci-device-in-use") return "VNCI 被其他软件占用。请退出 ODIS、PIWIS 等诊断软件后重试。";
+  if (error === "vnci-firmware-mismatch-no-auto-update") return "VNCI 固件与已接入的驱动版本不一致，连接已停止。请核对驱动版本；项目不会自动升级诊断头。";
+  if (error === "vnci-firmware-check-failed") return "无法核对 VNCI 固件。请检查 USB 连接后重试。";
+  if (error === "vnci-driver-version-not-qualified") return "VNCI 驱动文件已变化，需重新核对版本后才能连接。";
+  return null;
+}
 
 async function faultLogFromObdDtc(
   session: ObdSession,
@@ -93,6 +107,7 @@ export function ObdPage({ onLocate }: ObdPageProps) {
   const [topoBusy, setTopoBusy] = useState(false);
   const [sessionBusy, setSessionBusy] = useState(false);
   const [engineBusy, setEngineBusy] = useState(false);
+  const [captureBusy, setCaptureBusy] = useState(false);
   const [overview, setOverview] = useState<{
     ok?: boolean;
     taskState?: string;
@@ -101,13 +116,14 @@ export function ObdPage({ onLocate }: ObdPageProps) {
   } | null>(null);
   const [commLost, setCommLost] = useState(false);
   const [devices, setDevices] = useState<ObdConnectionDevice[]>([]);
+  const [deviceRegistry, setDeviceRegistry] = useState<ObdRegisteredDevice[]>([]);
   const [listErrors, setListErrors] = useState<string[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [connBusy, setConnBusy] = useState(false);
   const [connNote, setConnNote] = useState<string | null>(null);
   const [connected, setConnected] = useState(false);
   const [linkState, setLinkState] = useState("idle");
-  const [modelPick, setModelPick] = useState<"vLinker" | "OBDLink MX+" | "">("");
+  const [modelPick, setModelPick] = useState<"vLinker" | "OBDLink MX+" | "VNCI" | "">("");
   const [guideSeed, setGuideSeed] = useState<GuideSeed | null>(null);
   const [guideEcu, setGuideEcu] = useState<"dme" | "gateway" | "unknown">("unknown");
 
@@ -116,7 +132,7 @@ export function ObdPage({ onLocate }: ObdPageProps) {
     apiAvailable,
     overviewOk: overview?.ok === true,
     overviewState: overview?.taskState,
-    localRunning: topoBusy || sessionBusy || engineBusy,
+    localRunning: topoBusy || sessionBusy || engineBusy || captureBusy,
     commLost,
   });
 
@@ -158,6 +174,8 @@ export function ObdPage({ onLocate }: ObdPageProps) {
           const st = await connFn({ action: "status" });
           if (stop || seq !== latest) return;
           setConnected(!!st.connected);
+          const vnciNote = vnciConnectionMessage(st.error || st.connectionError);
+          if (vnciNote) setConnNote(vnciNote);
           if (typeof st.linkState === "string") setLinkState(st.linkState);
           if (typeof st.voltageVolts === "number") {
             setOverview((o) => ({ ...(o || {}), ok: o?.ok, taskState: o?.taskState, voltageVolts: st.voltageVolts }));
@@ -279,7 +297,7 @@ export function ObdPage({ onLocate }: ObdPageProps) {
     }
   }
 
-  const tabsLocked = topoBusy || sessionBusy || engineBusy;
+  const tabsLocked = topoBusy || sessionBusy || engineBusy || captureBusy;
   const sessionLocked = tabsLocked || overview?.taskState === "running";
   const selectedDev = devices.find((d) => d.id === selectedId);
   const needsModel = selectedDev?.brand === "unresolved" && !modelPick;
@@ -292,16 +310,20 @@ export function ObdPage({ onLocate }: ObdPageProps) {
     ok?: boolean;
     error?: string | null;
     devices?: ObdConnectionDevice[];
+    deviceRegistry?: ObdRegisteredDevice[];
     listErrors?: string[];
     selectedDeviceId?: string | null;
+    model?: string | null;
     connected?: boolean;
     linkState?: string;
     voltageVolts?: number | null;
     guidance?: string;
   }) {
     if (doc.devices) setDevices(doc.devices);
+    if (doc.deviceRegistry) setDeviceRegistry(doc.deviceRegistry);
     if (doc.listErrors) setListErrors(doc.listErrors);
     if ("selectedDeviceId" in doc) setSelectedId(doc.selectedDeviceId ?? null);
+    if ("model" in doc) setModelPick(doc.model === "vLinker" || doc.model === "OBDLink MX+" || doc.model === "VNCI" ? doc.model : "");
     if (typeof doc.voltageVolts === "number") {
       setOverview((o) => ({ ...(o || {}), voltageVolts: doc.voltageVolts }));
     } else if (connected && doc.connected === false) {
@@ -312,9 +334,9 @@ export function ObdPage({ onLocate }: ObdPageProps) {
     const hit = (doc.devices || devices).find((d) => d.id === (doc.selectedDeviceId ?? selectedId));
     const err = doc.error;
     const note =
-      err === "device_port_unavailable" || err === "busy"
+      vnciConnectionMessage(err) || (err === "device_port_unavailable" || err === "busy"
         ? hit?.guidance || (err === "busy" ? "诊断任务占用链路" : "已配对但没有可用串口")
-        : err || hit?.guidance || null;
+        : err || hit?.guidance || null);
     setConnNote(note);
   }
 
@@ -326,7 +348,9 @@ export function ObdPage({ onLocate }: ObdPageProps) {
     }
     setConnBusy(true);
     try {
-      applyConn(await fn(req));
+      const result = await fn(req);
+      applyConn(result);
+      return result;
     } catch (e) {
       applyConn({ ok: false, error: String(e), connected: false, voltageVolts: null });
     } finally {
@@ -380,8 +404,28 @@ export function ObdPage({ onLocate }: ObdPageProps) {
         <section className="panel" data-testid="obd-connection">
           <h2>连接设置</h2>
           <p className="muted">
-            选择本机已配对或已连接的 vLinker / OBDLink MX+，点击「连接设备」建立持续适配器连接并自动读电压。
+            选择 vLinker / OBDLink MX+ 蓝牙设备或 VNCI USB 诊断头，点击「连接设备」检查连接与供电电压。
           </p>
+          <details data-testid="obd-mx-pairing">
+            <summary>OBDLink MX+ 蓝牙连接步骤</summary>
+            <ol>
+              <li>保持 MX+ 现有 Drive CAN 分接口接线并通电，按设备配对按钮。</li>
+              <li>在 Windows 蓝牙设置中添加「OBDLink MX+」，按系统提示完成配对。</li>
+              <li>确认已建立 Bluetooth SPP 串口，然后点击「刷新」并选择 MX+。</li>
+              <li>先断开 RaceChrono、OBDwiz 等应用对 MX+ 的连接，再点击「连接设备」。</li>
+            </ol>
+            <p className="muted">Windows 显示「已配对」不代表适配器正在通信；连接成功后本页会显示电压。诊断读取需在相应页面单独启动。</p>
+            <p className="muted">本车 MX+ 接车内 Drive CAN；连接设置检查握手与电压，「广播记录」可采集和回放。已有采集出现 CAN ERROR，信号解码与诊断口读取仍待验证。</p>
+          </details>
+          <details data-testid="obd-vnci-connection">
+            <summary>VNCI USB 连接步骤</summary>
+            <ol>
+              <li>将 VNCI 接入本车 OBD 接口并通电，再用 USB 连接电脑。</li>
+              <li>退出 ODIS、PIWIS、X431 等主动诊断软件，点击「刷新」并按序列号选择 VNCI。</li>
+              <li>点击「连接设备」检查 OBD 供电，再在对应页面启动只读采集。</li>
+            </ol>
+            <p className="muted">当前支持 VAS6154A USB 接口。仅接 USB 时可能没有 OBD 供电；设码需按具体功能完成备份、回读与恢复验证。</p>
+          </details>
           {listErrors.length > 0 ? (
             <p className="muted" data-testid="obd-conn-errors">
               {listErrors.join("；")}
@@ -389,7 +433,7 @@ export function ObdPage({ onLocate }: ObdPageProps) {
           ) : null}
           {devices.length === 0 ? (
             <p className="muted" data-testid="obd-conn-empty">
-              未发现可用适配器。请先在 Windows 中配对 vLinker 或 OBDLink MX+，并确认已出现 SPP 串口。
+              未发现适配器。请检查蓝牙配对或 VNCI USB 连接，确认设备驱动已安装后刷新。
             </p>
           ) : (
             <ul className="plain-list" data-testid="obd-conn-list">
@@ -404,19 +448,19 @@ export function ObdPage({ onLocate }: ObdPageProps) {
                       disabled={connBusy || sessionLocked}
                       onChange={() => {
                         setSelectedId(d.id);
+                        setModelPick("");
                         void connectionCall({
                           action: "select",
                           deviceId: d.id,
-                          model: d.brand === "unresolved" && modelPick ? modelPick : undefined,
                         });
                       }}
                     />
                     <span>
                       <strong>{d.brand === "unresolved" ? "未识别型号" : d.brand}</strong>
                       {d.name ? ` · ${d.name}` : ""}
-                      {d.comPort ? ` · ${d.comPort}` : " · 无 COM"}
+                      {d.transport === "d-pdu-usb" ? ` · 序列号 ${d.serial}` : d.comPort ? ` · ${d.comPort}` : " · 无 COM"}
                       {d.available ? "" : " · 不可用"}
-                      {d.paired && !d.available ? ` · ${d.guidance || "已配对无串口"}` : ""}
+                      {!d.available && d.guidance ? ` · ${d.guidance}` : d.paired && !d.available ? " · 已配对无串口" : ""}
                     </span>
                   </label>
                 </li>
@@ -429,7 +473,12 @@ export function ObdPage({ onLocate }: ObdPageProps) {
               <select
                 data-testid="obd-model-pick"
                 value={modelPick}
-                onChange={(e) => setModelPick(e.target.value as typeof modelPick)}
+                onChange={(e) => {
+                  const model = e.target.value as typeof modelPick;
+                  setModelPick(model);
+                  if (model && selectedId) void connectionCall({ action: "select", deviceId: selectedId, model });
+                }}
+                disabled={connBusy || sessionLocked}
               >
                 <option value="">请选择实际型号</option>
                 <option value="vLinker">vLinker</option>
@@ -438,6 +487,15 @@ export function ObdPage({ onLocate }: ObdPageProps) {
             </label>
           ) : null}
           <div className="row">
+            <button
+              type="button"
+              data-testid="obd-conn-bluetooth"
+              className="ghost"
+              disabled={!window.porsche981?.obdOpenBluetooth}
+              onClick={() => void window.porsche981?.obdOpenBluetooth().catch((e: unknown) => setConnNote(String(e)))}
+            >
+              打开 Windows 蓝牙设置
+            </button>
             <button
               type="button"
               data-testid="obd-conn-refresh"
@@ -456,7 +514,7 @@ export function ObdPage({ onLocate }: ObdPageProps) {
                 void connectionCall({
                   action: "connect",
                   deviceId: selectedId || undefined,
-                  model: modelPick || undefined,
+                  model: selectedDev?.brand === "unresolved" && modelPick ? modelPick : undefined,
                 })
               }
             >
@@ -497,13 +555,19 @@ export function ObdPage({ onLocate }: ObdPageProps) {
               {connNote}
             </p>
           ) : null}
+          <ObdDeviceRegistry devices={deviceRegistry} busy={connBusy || sessionLocked} selectedId={selectedId}
+            onSelect={(deviceId) => void connectionCall({ action: "select", deviceId })}
+            onNavigate={async (route, deviceId) => {
+              if (deviceId && !(await connectionCall({ action: "select", deviceId }))?.ok) return;
+              setTab(route);
+            }} />
         </section>
       )}
 
       {tab === "live" ? (
         <EngineDataPage
           onBusyChange={setEngineBusy}
-          peerBusy={topoBusy || sessionBusy || (overview?.taskState === "running" && !engineBusy)}
+          peerBusy={topoBusy || sessionBusy || captureBusy || (overview?.taskState === "running" && !engineBusy)}
         />
       ) : null}
 
@@ -740,7 +804,7 @@ export function ObdPage({ onLocate }: ObdPageProps) {
       <div hidden={tab !== "topology"}>
         <TopologyPage
           onBusyChange={setTopoBusy}
-          peerBusy={sessionBusy || engineBusy || (overview?.taskState === "running" && !topoBusy)}
+          peerBusy={sessionBusy || engineBusy || captureBusy || (overview?.taskState === "running" && !topoBusy)}
           onOpenGuide={(seed) => {
             setGuideSeed({
               ...seed,
@@ -752,12 +816,15 @@ export function ObdPage({ onLocate }: ObdPageProps) {
           }}
         />
       </div>
+      <div hidden={tab !== "broadcast"}>
+        <CanCapturePage peerBusy={topoBusy || sessionBusy || engineBusy} onBusyChange={setCaptureBusy} />
+      </div>
       {tab === "coding" ? <CodingPage /> : null}
       {tab === "offline" ? <OfflineDiagnosticsPage /> : null}
       <div hidden={tab !== "session"}>
         <ReadOnlySessionPage
           onBusyChange={setSessionBusy}
-          peerBusy={topoBusy || engineBusy || (overview?.taskState === "running" && !sessionBusy)}
+          peerBusy={topoBusy || engineBusy || captureBusy || (overview?.taskState === "running" && !sessionBusy)}
         />
       </div>
     </div>

@@ -330,7 +330,7 @@ export function EngineDataPage({
     <div className="eng" data-page="engine-session">
       <section className="panel">
         <h2>发动机采样</h2>
-        <p className="muted">默认模拟。读取六项发动机参数；定义为通用标准，本车尚未实车验证。清故障码在「系统拓扑」。</p>
+        <p className="muted">默认模拟。核对 DME 身份后，通过标准 OBD 读取六项参数；本车已完成熄火与怠速采集，桌面整合路径待实车验收。清故障码在「系统拓扑」。</p>
         <div className="eng-toolbar">
           <label>
             方式

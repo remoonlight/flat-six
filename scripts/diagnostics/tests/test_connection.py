@@ -10,6 +10,7 @@ from scripts.diagnostics.connection import (
     ATRV_INTERVAL_S,
     DEVICE_ID_RE,
     collect_snapshot,
+    classify_brand,
     enumerate_devices,
     parse_voltage_volts,
     probe_adapter,
@@ -41,6 +42,9 @@ HOST_BT = {
     "instanceId": r"BTHENUM\DEV_0425E85BD4CB\7&25D7CD33&0&BLUETOOTHDEVICE_0425E85BD4CB",
 }
 VLIKER = "bt:0425E85BD4CB"
+MX = "bt:AABBCCDDEEFF"
+MX_SERIAL = {**HOST_SERIAL, "device": "COM12", "pnp": HOST_SERIAL["pnp"].replace("0425E85BD4CB", "AABBCCDDEEFF")}
+MX_BT = {**HOST_BT, "friendlyName": "OBDLink MX+", "instanceId": r"BTHENUM\DEV_AABBCCDDEEFF\x"}
 
 
 def _snap(**kw):
@@ -72,6 +76,32 @@ class TestParseVoltage(unittest.TestCase):
 
 
 class TestEnumerate(unittest.TestCase):
+    def test_mx_plus_and_vlinker_have_independent_bluetooth_identities(self):
+        snap = _snap(serial=[HOST_SERIAL, MX_SERIAL, AMT], bluetooth=[HOST_BT, MX_BT], pyserial=[MX_SERIAL])
+        out = enumerate_devices(snap)
+        mx = next(d for d in out["devices"] if d["id"] == MX)
+        self.assertEqual(mx["brand"], "OBDLink MX+")
+        self.assertTrue(mx["available"])
+        self.assertTrue(mx["paired"])
+        self.assertFalse(out["openedPort"])
+        self.assertEqual(resolve_port(MX, snap), "COM12")
+        self.assertEqual(resolve_port(VLIKER, snap), "COM9")
+        moved = _snap(serial=[{**MX_SERIAL, "device": "COM15"}], bluetooth=[MX_BT])
+        self.assertEqual(resolve_port(MX, moved), "COM15")
+
+    def test_mx_plus_without_spp_cannot_use_another_adapters_port(self):
+        snap = _snap(bluetooth=[HOST_BT, MX_BT])
+        mx = next(d for d in enumerate_devices(snap)["devices"] if d["id"] == MX)
+        self.assertFalse(mx["available"])
+        with self.assertRaisesRegex(ElmError, "device-port-unavailable"):
+            resolve_port(MX, snap)
+
+    def test_model_classification_does_not_label_other_obdlinks_mx_plus(self):
+        self.assertEqual(classify_brand("OBDLink MX+", None), "OBDLink MX+")
+        self.assertEqual(classify_brand("obdlink mx + (COM12)", None), "OBDLink MX+")
+        for name in ("OBDLink MX", "OBDLink LX", "OBDLink CX", "OBDLink"):
+            self.assertEqual(classify_brand(name, None), "unresolved")
+
     def test_ambiguity_stays_rejected_after_duplicate_source_rows(self):
         other_port = {**HOST_SERIAL, "device": "COM10"}
         for rows in ([HOST_SERIAL, other_port], [other_port, HOST_SERIAL]):
@@ -233,8 +263,9 @@ class TestProbeAndSession(unittest.TestCase):
 
 
 class RepeatAtrvPort(FakePort):
-    def __init__(self):
+    def __init__(self, identity="ELM327 v2.3"):
         super().__init__([])
+        self.identity = identity
         self.serial_opens = 1
 
     def write(self, data: bytes) -> int:
@@ -243,7 +274,7 @@ class RepeatAtrvPort(FakePort):
         self.writes.append(bytes(data))
         cmd = data.strip().upper()
         if cmd == b"ATI":
-            self._rx.extend(_ok_prompt("ELM327 v2.3\r\r"))
+            self._rx.extend(_ok_prompt(self.identity + "\r\r"))
         elif cmd == b"ATDPN":
             self._rx.extend(_ok_prompt("A6\r\r"))
         elif cmd == b"ATRV":
@@ -267,6 +298,29 @@ class FakeClock:
 
 
 class TestVoltageMonitor(unittest.TestCase):
+    def test_mx_plus_spp_monitor_and_session_use_selected_com_only(self):
+        from scripts.diagnostics.sessions import _open_live_port
+
+        port = RepeatAtrvPort("STN2100 v5.6.5")
+        serial = mock.Mock()
+        serial.Serial.return_value = port
+        snap = _snap(serial=[HOST_SERIAL, MX_SERIAL], bluetooth=[HOST_BT, MX_BT])
+        self.assertIs(_open_live_port(serial_module=serial, device_id=MX, discovery=snap), port)
+        serial.Serial.assert_called_once_with("COM12", 115200, timeout=0.05, exclusive=True)
+        serial.reset_mock()
+        stdout = io.StringIO()
+        clock = FakeClock()
+        rc = run_voltage_monitor(MX, serial_module=serial, snapshot=snap, stdout=stdout,
+                                 clock=clock.now, sleep_fn=clock.sleep, max_samples=2)
+        self.assertEqual(rc, 0, stdout.getvalue())
+        serial.Serial.assert_called_once_with("COM12", 115200, timeout=0.05, exclusive=True)
+        rows = [json.loads(line) for line in stdout.getvalue().splitlines()]
+        readings = [r for r in rows if r.get("type") in ("handshake", "reading")]
+        self.assertEqual(len(readings), 2)
+        self.assertTrue(all(r["deviceId"] == MX and r["volts"] == 12.6 for r in readings))
+        self.assertTrue(port.closed)
+        self.assertTrue(all(w.strip() in (b"ATI", b"ATDPN", b"ATRV", b"ATPC") for w in port.writes))
+
     def test_one_open_identity_once_then_atrv(self):
         port = RepeatAtrvPort()
 

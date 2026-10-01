@@ -1,0 +1,6 @@
+.obd-device-registry { margin-top: 24px; }
+.obd-registry-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 14px; list-style: none; padding: 0; }
+.obd-registry-card { border: 1px solid var(--border, #ddd); border-radius: 12px; padding: 16px; min-width: 0; overflow-wrap: anywhere; }
+.obd-registry-heading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; }
+.obd-registry-card p { margin: 8px 0; }
+.obd-registry-card .row { flex-wrap: wrap; }

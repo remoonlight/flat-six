@@ -21,6 +21,25 @@ function fixture(overrides = {}, persist = memoryPersist()) {
                 return 'OK\r>'; return defaults[cmd] ?? 'NO DATA\r>'; } }) });
     return { svc, writes, persist, advance: ms => { time += ms; }, async ready() { await svc.selectAdapter(MOCK_ADAPTERS[0]); await svc.connect(); await svc.pollStatus(); } };
 }
+test('MX+ is explicitly selectable and connects through the Bluetooth serial transport', async () => {
+    const f = fixture();
+    const adapters = await f.svc.listAdapters();
+    const mx = adapters.find(a => /OBDLink MX\+/.test(a.friendlyName));
+    assert.equal(mx.occupied, false);
+    assert.equal(mx.preferred, false);
+    await f.svc.selectAdapter(mx);
+    await f.svc.connect();
+    await f.svc.pollStatus();
+    assert.equal(f.svc.snapshot().selected.port, 'COM9');
+    assert.equal(f.svc.snapshot().adapterConnected, true);
+    assert.equal(f.svc.snapshot().header.voltage.volts, 12.5);
+    assert.equal((await f.persist('adapter:get', {})).pnpId, mx.pnpId);
+    assert.ok(!f.writes.includes('04'));
+    await f.svc.disconnect();
+    assert.equal(f.svc.snapshot().adapterConnected, false);
+    assert.equal(f.svc.snapshot().header.voltage, null);
+});
+
 test('serialized queue poisons after timeout including late SAME PID and queued writes', async () => {
     let receive;
     const sent = [];

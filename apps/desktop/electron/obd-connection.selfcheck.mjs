@@ -364,4 +364,56 @@ await syn.shutdown();
   await queued.shutdown();
 }
 
-console.log("obd-connection selfcheck PASS: close-timeout quarantine, cadence, backoff, ingest, silent child, queued device identity");
+{
+  const mx = { ...device, id: "bt:AABBCCDDEEFF", brand: "OBDLink MX+" };
+  const unresolved = { ...device, id: "bt:112233445566", brand: "unresolved" };
+  const stateFile = path.join(scratch, `mx-persist-${Date.now()}.json`);
+  let child;
+  let opens = 0;
+  const monitorRequests = [];
+  const options = {
+    env: { PORSCHE981_CONNECTION_STATE: stateFile },
+    listFn: async () => ({ devices: [device, mx, unresolved] }),
+    now: () => 1000,
+    monitorSpawnFn: () => {
+      opens++;
+      child = fakeChild();
+      child.stdin.on("data", (data) => {
+        monitorRequests.push(JSON.parse(String(data)));
+        if (String(data).includes('"stop"')) {
+          child.exitCode = 0;
+          child.emit("close", 0);
+        }
+      });
+      return child;
+    },
+  };
+  const conn = manager(options);
+  await conn.handle({ action: "list" });
+  const selected = await conn.handle({ action: "select", deviceId: mx.id });
+  assert.equal(selected.model, "OBDLink MX+");
+  await conn.handle({ action: "connect", deviceId: mx.id });
+  assert.equal(monitorRequests[0].deviceId, mx.id);
+  child.stdout.emit("data", Buffer.from(hs().replace(device.id, mx.id)));
+  assert.equal(conn.snapshot().connected, true);
+  assert.equal(conn.snapshot().voltageVolts, 12.6);
+  await conn.handle({ action: "disconnect" });
+  assert.equal(conn.snapshot().voltageVolts, null);
+  await conn.shutdown();
+
+  const restored = manager(options);
+  assert.equal(restored.selectedId(), mx.id);
+  assert.equal(restored.snapshot().model, "OBDLink MX+");
+  assert.equal(restored.snapshot().connected, false, "restart must not open a device automatically");
+  await restored.handle({ action: "list" });
+  const unknown = await restored.handle({ action: "select", deviceId: unresolved.id });
+  assert.equal(unknown.model, null, "new device must not inherit MX+ model");
+  assert.equal((await restored.handle({ action: "connect" })).error, "device_model_required");
+  assert.equal(opens, 1, "unresolved model must not open transport");
+  const connected = await restored.handle({ action: "connect", model: "OBDLink MX+" });
+  assert.equal(connected.model, "OBDLink MX+");
+  assert.equal(JSON.parse(fs.readFileSync(stateFile, "utf8")).model, "OBDLink MX+");
+  await restored.shutdown();
+}
+
+console.log("obd-connection selfcheck PASS: close-timeout quarantine, cadence, backoff, ingest, silent child, queued device identity, MX+ persistence and explicit model");

@@ -110,7 +110,7 @@ export function ObdWorkbench({ tab }: { tab: string }) {
           })}>开始模拟采集</button>
         </div>
         <p className="muted">模拟工况：暖机怠速、停车。优先读取故障与冻结帧，再采实时值，预算内提前预留收尾时间。</p>
-        <details><summary>现场准备状态</summary><ul><li>当前：离线演练与记录回放</li><li>下一步：vLinker 蓝牙/固件验证，再进行短时实车读取</li><li>MX+ 继续用于 RaceChrono；本功能不访问任何硬件</li></ul></details>
+        <details><summary>现场准备状态</summary><ul><li>当前：离线演练与记录回放</li><li>下一步：vLinker / OBDLink MX+ 蓝牙验证，再进行短时实车读取</li><li>使用 MX+ 连接项目时，先断开 RaceChrono 等应用；离线工作台不访问硬件</li></ul></details>
       </section>
       <section className="panel">
         <h2>已保存的模拟会话</h2>

@@ -141,5 +141,5 @@ export function cannedMockScript() {
 
 export const MOCK_ADAPTERS = [
   { port: "COM5", friendlyName: "vLinker FS BT (COM5)", pnpId: "BTHENUM\\VID_MOCK_VLINKER", occupied: false, occupiedReason: null, preferred: true },
-  { port: "COM9", friendlyName: "Standard Serial over Bluetooth link (COM9) | OBDLink MX+", pnpId: "BTHENUM\\VID_MOCK_MX", occupied: true, occupiedReason: "MX+ 由 RaceChrono 占用，不自动选择", preferred: false },
+  { port: "COM9", friendlyName: "Standard Serial over Bluetooth link (COM9) | OBDLink MX+", pnpId: "BTHENUM\\VID_MOCK_MX", occupied: false, occupiedReason: null, preferred: false },
 ];

@@ -460,6 +460,7 @@ try {
       },
     });
     const browser = await chromium.launch({ headless: true, channel: "chrome" });
+    let liveMgr;
     try {
       const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
       await page.exposeFunction("__engBridge", (req) => {
@@ -530,7 +531,7 @@ try {
 
       const liveEnv = { ...process.env };
       delete liveEnv.PORSCHE981_SESSION_DENY_LIVE;
-      const liveMgr = createReadOnlySessionManager({
+      liveMgr = createReadOnlySessionManager({
         repoRoot: root,
         allowInjectedLive: true,
         env: liveEnv,
@@ -603,6 +604,8 @@ try {
       );
     } finally {
       await browser.close();
+      await mgr.shutdown();
+      await liveMgr?.shutdown();
     }
   } finally {
     try {

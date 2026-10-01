@@ -5,6 +5,7 @@
 import { spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { buildDeviceRegistry, readKnownDevices } from "./obd-device-registry.mjs";
 import { resolvePythonCandidates } from "./offline-diagnostics.mjs";
 import { liveBlocked, validateSessionRequest } from "./read-only-session.mjs";
 import {
@@ -35,8 +36,8 @@ export {
 };
 
 const ACTIONS = new Set(["list", "select", "connect", "voltage", "disconnect", "clear", "status"]);
-const DEVICE_RE = /^bt:[0-9A-F]{12}$/;
-const MODELS = new Set(["vLinker", "OBDLink MX+"]);
+const DEVICE_RE = /^(?:bt:[0-9A-F]{12}|vnci:[0-9]{1,16})$/;
+const MODELS = new Set(["vLinker", "OBDLink MX+", "VNCI"]);
 const MAX_JSON = 16 * 1024;
 const LIST_TIMEOUT_MS = 20_000;
 const MONITOR_LINE_CAP = 64 * 1024;
@@ -199,6 +200,9 @@ function acceptMonitorLine(doc, ctx) {
 export function createObdConnectionManager(opts) {
   const envIn = opts.env || process.env;
   const file = persistPath(opts.repoRoot, envIn);
+  const registryFile = file.replace(/\.json$/i, "") + ".devices.json";
+  let knownDevices = readKnownDevices(registryFile);
+  let deviceRegistry = buildDeviceRegistry({ known: knownDevices }).registry;
   const gate = opts.gate || createTransportGate();
   const listFn = opts.listFn;
   const nowFn = opts.now || Date.now;
@@ -235,12 +239,17 @@ export function createObdConnectionManager(opts) {
     return selected.deviceId;
   }
 
+  function modelForSelection(request, hit) {
+    return request.model || (MODELS.has(hit.brand) ? hit.brand : null)
+      || (request.deviceId === selected.deviceId ? selected.model : null);
+  }
+
   function clearReading() {
     reading = null;
   }
 
   function applyReading(volts, source, at) {
-    if (source === "simulation" || source !== "atrv") {
+    if (source !== "atrv" && source !== "d-pdu-vbatt") {
       clearReading();
       return;
     }
@@ -248,7 +257,7 @@ export function createObdConnectionManager(opts) {
       clearReading();
       return;
     }
-    reading = { volts, source: "atrv", at: at ?? nowFn() };
+    reading = { volts, source, at: at ?? nowFn() };
   }
 
   function voltageView() {
@@ -273,7 +282,9 @@ export function createObdConnectionManager(opts) {
       linkState: state,
       pairingOk: lastList.devices.some((d) => d.id === selected.deviceId && d.paired),
       commOk: connected,
+      connectionError: lastFatal,
       devices: lastList.devices,
+      deviceRegistry,
       listErrors: lastList.errors || [],
       voltageLabel: formatHeaderVoltage(v.voltageVolts),
       atrvIntervalMs: ATRV_INTERVAL_MS,
@@ -322,9 +333,10 @@ export function createObdConnectionManager(opts) {
 
   function noteLiveAtrv(adapter, mode) {
     if (mode !== "live") return;
-    const volts = parseVoltageVolts(adapter?.atrv);
+    const source = adapter?.voltageSource === "d-pdu-vbatt" ? "d-pdu-vbatt" : "atrv";
+    const volts = source === "d-pdu-vbatt" ? adapter.volts : parseVoltageVolts(adapter?.atrv);
     if (volts == null) return;
-    applyReading(volts, "atrv");
+    applyReading(volts, source);
   }
 
   async function listDevices() {
@@ -336,6 +348,13 @@ export function createObdConnectionManager(opts) {
           : await spawnPython(spawnOpts, ["-m", "scripts.diagnostics.connection"], JSON.stringify({ action: "list" }) + "\n", LIST_TIMEOUT_MS);
       const devices = Array.isArray(doc.devices) ? doc.devices : [];
       lastList = { devices, errors: Array.isArray(doc.errors) ? doc.errors : doc.error ? [doc.error] : [] };
+      const registered = buildDeviceRegistry({ devices, host: doc.host || {}, known: knownDevices });
+      deviceRegistry = registered.registry;
+      knownDevices = registered.known;
+      try {
+        fs.mkdirSync(path.dirname(registryFile), { recursive: true });
+        fs.writeFileSync(registryFile, JSON.stringify({ version: 1, devices: knownDevices }, null, 2), "utf8");
+      } catch { lastList.errors.push("device-registry-save-failed"); }
       if (!devices.some((d) => d.id === selected.deviceId && d.available) && !wantConnected) {
         connected = false;
         clearReading();
@@ -343,6 +362,7 @@ export function createObdConnectionManager(opts) {
       return snapshot({ ok: true });
     } catch {
       lastList = { devices: [], errors: ["list-failed"] };
+      deviceRegistry = buildDeviceRegistry({ known: knownDevices }).registry;
       if (!wantConnected) clearReading();
       return fail("list_failed", snapshot({ ok: false }));
     }
@@ -448,7 +468,7 @@ export function createObdConnectionManager(opts) {
       }
       return;
     }
-    applyReading(acc.volts, "atrv", acc.at);
+    applyReading(acc.volts, acc.source, acc.at);
     connected = true;
     linkState = "connected";
     retryFails = 0;
@@ -585,11 +605,15 @@ export function createObdConnectionManager(opts) {
     tryOne(0);
   }
 
-  async function beginConnect() {
+  async function beginConnect(model) {
     if (stopped) return fail("connection_closed");
     if (sessionBusy()) return fail("busy");
     const id = selected.deviceId;
     if (!id) return fail("device_not_selected");
+    const resolvedModel = model || selected.model;
+    if (!MODELS.has(resolvedModel)) return fail("device_model_required");
+    selected = { deviceId: id, model: resolvedModel };
+    persist();
     wantConnected = true;
     retryFails = 0;
     cancelRetry();
@@ -658,7 +682,7 @@ export function createObdConnectionManager(opts) {
       clearReading();
       const result = await stopMonitorProcess();
       if (!result.ok) return fail(result.error, snapshot({ ok: false }));
-      selected = { deviceId: request.deviceId, model: request.model || selected.model };
+      selected = { deviceId: request.deviceId, model: modelForSelection(request, hit) };
       persist();
       return fail("device_port_unavailable", snapshot({ ok: false }));
     }
@@ -670,7 +694,7 @@ export function createObdConnectionManager(opts) {
       const result = await stopMonitorProcess();
       if (!result.ok) return fail(result.error, snapshot({ ok: false }));
     }
-    selected = { deviceId: request.deviceId, model: request.model || (hit.brand !== "unresolved" ? hit.brand : selected.model) || null };
+    selected = { deviceId: request.deviceId, model: modelForSelection(request, hit) };
     persist();
     return snapshot();
   }
@@ -694,7 +718,7 @@ export function createObdConnectionManager(opts) {
     if (request.deviceId && request.deviceId !== id) return fail("device_mismatch");
     if (request.action === "connect") return enqueue(() => {
       if (request.deviceId && request.deviceId !== selected.deviceId) return fail("device_mismatch");
-      return beginConnect();
+      return beginConnect(request.model);
     });
     return fail("invalid_action");
   }

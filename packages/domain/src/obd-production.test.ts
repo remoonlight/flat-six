@@ -89,9 +89,11 @@ describe("ecu upsert and VIN isolation", () => {
 });
 
 describe("adapter and capabilities", () => {
-  it("never auto-selects MX+ and marks pending modules unsupported", () => {
+  it("allows explicit MX+ selection without inferring occupancy from its name", () => {
     const mx = classifyAdapter("COM9", "OBDLink MX+ (COM9)", null);
-    expect(mx.occupied).toBe(true);
+    expect(mx.occupied).toBe(false);
+    expect(mx.occupiedReason).toBeNull();
+    expect(classifyAdapter("COM9", "OBDLink MX+ | RaceChrono", null).occupied).toBe(false);
     expect(mx.preferred).toBe(false);
     const vl = classifyAdapter("COM5", "vLinker FS BT (COM5)", "BTHENUM\\x");
     expect(vl.preferred).toBe(true);

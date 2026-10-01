@@ -40,6 +40,7 @@ import {
   createReadOnlySessionManager,
 } from "./read-only-session.mjs";
 import { CONNECTION_CHANNEL, attachSessionHandoff, createObdConnectionManager, createTransportGate } from "./obd-connection.mjs";
+import { CAN_CAPTURE_CHANNEL, createCanCaptureManager } from "./can-capture.mjs";
 
 
 
@@ -79,6 +80,7 @@ function broadcastBridgeStatus(status) {
 
 const transportGate = createTransportGate();
 const connMgr = createObdConnectionManager({ repoRoot, gate: transportGate });
+const canCaptureMgr = createCanCaptureManager({ repoRoot, conn: connMgr, gate: transportGate });
 const sessionMgr = attachSessionHandoff(
   connMgr,
   createReadOnlySessionManager({
@@ -590,6 +592,7 @@ function registerIpc() {
   });
 
   ipcMain.handle(CONNECTION_CHANNEL, (_e, request) => connMgr.handle(request));
+  ipcMain.handle(CAN_CAPTURE_CHANNEL, (e, request) => canCaptureMgr.handle(request, { ownerId: e.sender.id }));
 
   ipcMain.handle("modelOem:catalog", async () => {
     const scene = await listGarageXrayLayers();
@@ -623,6 +626,7 @@ app.whenReady().then(() => {
 app.on("web-contents-created", (_e, contents) => {
   contents.once("destroyed", () => {
     sessionMgr.cancelOwned(contents.id);
+    canCaptureMgr.cancelOwned(contents.id);
   });
 });
 
@@ -631,7 +635,7 @@ app.on("before-quit", (e) => {
   if (sessionQuitting) return;
   e.preventDefault();
   sessionQuitting = true;
-  Promise.allSettled([sessionMgr.shutdown(), connMgr.shutdown()]).finally(() => app.quit());
+  Promise.allSettled([sessionMgr.shutdown(), canCaptureMgr.shutdown(), connMgr.shutdown()]).finally(() => app.quit());
 });
 
 

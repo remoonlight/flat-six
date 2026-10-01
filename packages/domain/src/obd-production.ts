@@ -184,7 +184,6 @@ export const PENDING_UNSUPPORTED: ModuleCapability[] = [
 ];
 
 export const MANUAL_FALLBACK = "未找到该模块的对应手册检查项";
-const MX_RE = /mx\+|racechrono/i;
 const VLINKER_RE = /vlinker/i;
 const OBD_IDS = new Set(["7E8", "7E9", "7EA", "7EB", "7EC", "7ED", "7EE", "7EF"]);
 
@@ -193,14 +192,15 @@ export function isObdResponder(ecu: string): boolean {
 }
 
 export function classifyAdapter(port: string, friendlyName: string, pnpId: string | null): AdapterIdentity {
-  const blob = `${friendlyName}\n${pnpId ?? ""}`;
-  const occupied = MX_RE.test(blob);
+  // PnP metadata identifies a device, not whether another app owns its link.
+  // A busy Bluetooth/COM port is reported by the transport when opened.
+  const occupied = false;
   return {
     port,
     friendlyName,
     pnpId,
     occupied,
-    occupiedReason: occupied ? "MX+ 由 RaceChrono 占用，不自动选择" : null,
+    occupiedReason: null,
     preferred: VLINKER_RE.test(friendlyName) && !occupied,
   };
 }

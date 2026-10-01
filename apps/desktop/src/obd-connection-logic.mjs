@@ -86,12 +86,13 @@ export function acceptMonitorReading(doc, { deviceId, now, freshMs }) {
   }
   if (doc.ok !== true || doc.simulation !== false) return { reject: "malformed" };
   if (doc.type !== "handshake" && doc.type !== "reading") return { reject: "malformed" };
-  if (doc.voltageSource !== "atrv") return { reject: "malformed" };
+  const source = deviceId?.startsWith("vnci:") ? "d-pdu-vbatt" : "atrv";
+  if (doc.voltageSource !== source) return { reject: "malformed" };
   if (doc.deviceId !== deviceId) return { reject: "device_mismatch" };
   if (typeof doc.volts !== "number" || !Number.isFinite(doc.volts) || doc.volts < 6 || doc.volts > 20) {
     return { reject: "malformed" };
   }
   const at = parseSampleAt(doc.at, now);
   if (at == null || at > now || now - at > freshMs) return { reject: "stale" };
-  return { volts: doc.volts, at, source: "atrv" };
+  return { volts: doc.volts, at, source };
 }

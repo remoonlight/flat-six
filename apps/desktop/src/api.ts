@@ -580,7 +580,18 @@ export type PorscheApi = {
   obdConnection?: (
     request: ObdConnectionRequest,
   ) => Promise<ObdConnectionResult>;
+  canCapture?: (request: CanCaptureRequest) => Promise<CanCaptureResult>;
 }
+
+export type CanCaptureRequest = { action: "list" | "start" | "status" | "cancel" | "replay";
+  seconds?: number; confirmedReadOnly?: boolean; x431Inactive?: boolean; jobId?: string; runId?: string };
+export type CanCaptureResult = { ok: boolean; error?: string | null; jobId?: string; state?: string;
+  runs?: { id: string; startedUtc: string; frames: number; qualityOk: boolean; state: string }[];
+  latest?: { state?: string; frame_count?: number }; final?: CanCaptureResult; directory?: string;
+  integrityVerified?: boolean; captureQualityOk?: boolean;
+  capture?: { frame_count: number; state: string; ok: boolean; adapter_notices: Record<string, number>;
+    trailing_partial_bytes: number; partitions: { id_hex: string; extended: boolean; dlc: number; count: number }[];
+    error?: string | null; cleanup_error?: string | null; timestamp_source: string } };
 
 export type OfflineDiagnosticsAction =
   | "summary"
@@ -629,7 +640,7 @@ export type ObdConnectionAction =
 export type ObdConnectionRequest = {
   action: ObdConnectionAction;
   deviceId?: string;
-  model?: "vLinker" | "OBDLink MX+";
+  model?: "vLinker" | "OBDLink MX+" | "VNCI";
 };
 
 export type ObdConnectionDevice = {
@@ -641,11 +652,15 @@ export type ObdConnectionDevice = {
   paired?: boolean;
   osStatus?: string | null;
   guidance?: string | null;
+  transport?: "d-pdu-usb";
+  serial?: string;
+  address?: string | null;
 };
 
 export type ObdConnectionResult = {
   ok: boolean;
   error?: string | null;
+  connectionError?: string | null;
   executionEnabled: boolean;
   liveVerified: boolean;
   writePayload: null;
@@ -656,12 +671,36 @@ export type ObdConnectionResult = {
   pairingOk?: boolean;
   commOk?: boolean;
   devices?: ObdConnectionDevice[];
+  deviceRegistry?: ObdRegisteredDevice[];
   listErrors?: string[];
   voltageVolts?: number | null;
   voltageSource?: string | null;
   voltageAt?: number | null;
   voltageLabel?: string;
   [key: string]: unknown;
+};
+
+export type ObdRegisteredDevice = {
+  id: string;
+  family: string;
+  name: string;
+  serial?: string;
+  mac?: string;
+  firmware?: string;
+  usbInstanceId?: string;
+  connection: string;
+  state: string;
+  present: boolean;
+  connectable: boolean;
+  comPort: string | null;
+  driverInstalled: boolean | null;
+  driverVersion: string | null;
+  serviceState: string | null;
+  features: string[];
+  routes: ("session" | "live" | "broadcast" | "offline" | "coding")[];
+  note: string;
+  lastSeenAt: string | null;
+  checkedAt: string;
 };
 
 export type ReadOnlySessionAction = "prepare" | "start" | "status" | "cancel" | "overview";

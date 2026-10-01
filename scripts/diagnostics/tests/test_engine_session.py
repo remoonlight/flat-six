@@ -72,6 +72,46 @@ class TestBitmapAndFormulas(unittest.TestCase):
 
 
 class TestEngineSession(unittest.TestCase):
+    def test_unvalidated_vnci_route_refused_before_native_constructor(self):
+        with mock.patch("scripts.diagnostics.vnci.DpuClient") as native:
+            out = run_session(profile_id="porsche-981-2014-dme", mode="live", device_id="vnci:6055836",
+                session_task="engine", confirmed_read_only=True, x431_inactive=True, artifact_root=_root())
+            self.assertEqual(out["error"], "vnci-engine-route-not-validated")
+            native.assert_not_called()
+
+    def test_mode01_switches_to_qualified_standard_route(self):
+        class RoutePort(SessionSimPort):
+            route = None
+
+            def write(self, data):
+                command = data.decode("ascii").strip().upper()
+                if command.startswith("ATSH "):
+                    self.route = command.split()[1]
+                if command.startswith("02 01") and self.route != "7DF":
+                    raise AssertionError("Mode01 sent on manufacturer route")
+                return super().write(data)
+
+        port = RoutePort("porsche-981-2014-dme")
+        out, port, root = _engine(port=port)
+        self.assertTrue(out["ok"], out)
+        commands = [b.decode("ascii").strip() for b in port.writes]
+        standard = commands.index("ATSH 7DF")
+        self.assertIn("ATPC", commands[:standard])
+        self.assertIn("ATCFC0", commands[:standard])
+        self.assertIn("ATCRA 7E8", commands[standard:])
+        self.assertEqual(port.ecu_payloads.count("1089"), 1)
+        self.assertEqual(out["engine"]["acquisitionRoute"]["txId"], "7DF")
+        self.assertFalse(out["engine"]["acquisitionRoute"]["automaticFallback"])
+        saved = json.loads((root / out["runId"] / "engine.json").read_text())
+        self.assertEqual(saved["acquisitionRoute"], out["engine"]["acquisitionRoute"])
+
+    def test_identity_failure_does_not_switch_or_query_standard(self):
+        port = SessionSimPort("porsche-981-2014-dme", "identity-mismatch")
+        out, port, _ = _engine(port=port)
+        self.assertEqual(out["error"], "identity-mismatch")
+        self.assertNotIn(b"ATSH 7DF\r", port.writes)
+        self.assertNotIn("0100", port.ecu_payloads)
+
     def test_known_values_on_fake_port(self):
         out, port, root = _engine()
         self.assertTrue(out["ok"], out)

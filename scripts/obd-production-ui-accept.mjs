@@ -39,7 +39,7 @@ try {
 
   await page.getByRole("button", { name: "刷新端口" }).click();
   await page.getByText("vLinker FS BT (COM5)").waitFor();
-  await page.getByText("MX+ 由 RaceChrono 占用").waitFor();
+  await page.getByText("Standard Serial over Bluetooth link (COM9) | OBDLink MX+").waitFor();
   await page.locator('label').filter({ hasText: "vLinker FS BT (COM5)" }).click();
   await page.getByText("已保存选择：").waitFor({ timeout: 10000 });
   await page.getByRole("button", { name: "连接", exact: true }).click();

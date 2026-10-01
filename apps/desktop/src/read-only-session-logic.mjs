@@ -155,7 +155,9 @@ export function enginePlanView(plan) {
   if (names.length) bits.push(`参数：${names.join("、")}`);
   if (sampleCycles != null) bits.push(`采样 ${sampleCycles} 轮`);
   if (intervalMs != null) bits.push(`间隔 ${intervalMs} 毫秒`);
-  bits.push("通用定义，本车尚未实车验证");
+  bits.push(engine.acquisitionRoute?.protocol === "standard-mode01"
+    ? "标准 OBD；本车已有采集，桌面整合待实车验收"
+    : "通用定义，本车尚未实车验证");
   return { loaded: true, names, sampleCycles, intervalMs, text: bits.join(" · ") };
 }
 
