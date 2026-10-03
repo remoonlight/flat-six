@@ -6,7 +6,7 @@ import { EventEmitter } from "node:events";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { fail, runWorkbench, validateRequest } from "./offline-diagnostics.mjs";
+import { fail, runWorkbench, validateRequest, createOfflineOperations } from "./offline-diagnostics.mjs";
 import { createScopeTokens } from "./offline-scope-guard.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -54,6 +54,11 @@ function mockChild({
 }
 
 const bad = validateRequest({ action: "explode" });
+assert(validateRequest({ action: "ready-plan", parameterIds: ["../path"] }).error === "invalid_parameter_selection", "ready path rejected");
+assert(validateRequest({ action: "ready-parameters", groupId: "../../db" }).error === "invalid_group_id", "ready group path rejected");
+assert(validateRequest({ action: "ready-plan", parameterIds: Array(13).fill("a".repeat(64)) }).error === "invalid_parameter_selection", "ready cap");
+assert(validateRequest({ action: "ready-plan", parameterIds: ["a".repeat(64), "a".repeat(64)] }).error === "invalid_parameter_selection", "ready duplicate");
+assert(validateRequest({ action: "ready-parameters", ecuId: 2, profileId: "test", limit: 40 }) === null, "ready listing");
 assert(bad && bad.error === "invalid_action", "invalid_action");
 assert(validateRequest({ action: "summary", send: 1 }).error === "forbidden_field", "send");
 assert(validateRequest({ action: "summary", formula: "x" }).error === "forbidden_field", "formula");
@@ -98,6 +103,22 @@ const timed = await runWorkbench(
   },
 );
 assert(timed.error === "timeout", `timeout got ${timed.error}`);
+
+let cancelledChild;
+const operations = createOfflineOperations({ repoRoot, spawnFn: () => (cancelledChild = mockChild({ hang: true })) });
+const preparation = operations.run({ action: "ready-plan" }, 10, "preparation-1");
+assert(operations.cancel(11, "preparation-1").cancelled === false, "different window cannot cancel");
+assert(cancelledChild.killed === false, "foreign stop leaves job running");
+assert((await operations.run({ action: "ready-plan" }, 10, "preparation-1")).error === "operation_exists", "duplicate operation rejected");
+operations.cancel(10, "preparation-1");
+assert((await preparation).error === "cancelled" && cancelledChild.killed, "stop kills offline worker");
+assert(operations.cancel(10, "preparation-1").cancelled === false, "finished operation removed");
+const closing = operations.run({ action: "ready-plan" }, 10, "preparation-2");
+operations.cancelOwned(10);
+assert((await closing).error === "cancelled", "window close cancels worker");
+const aborted = new AbortController(); aborted.abort();
+assert((await runWorkbench({ action: "summary" }, { repoRoot, signal: aborted.signal,
+  spawnFn: () => { throw new Error("must not spawn"); } })).error === "cancelled", "abort before spawn");
 
 const cap = await runWorkbench(
   { action: "summary" },

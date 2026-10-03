@@ -14,6 +14,7 @@ import {
   canOperate,
   clampEngineOptions,
   ENGINE_PID_META,
+  LIVE_DATA_SELECTION_LIMIT,
   engineFreshness,
   enginePlanView,
   formatEngineValue,
@@ -24,7 +25,10 @@ import {
   pickEngineView,
   sampleCurrency,
 } from "../read-only-session-logic.mjs";
+import { topologySeed } from "../can-topology-data";
+import { combinedGeneration, flattenNodes } from "../can-topology-logic.mjs";
 import "../engine-session.css";
+import { OfflineRealtimePanel } from "./OfflineRealtimePanel";
 
 type Mode = "simulation" | "live";
 type Scenario =
@@ -65,12 +69,49 @@ function latestByPid(samples: Sample[] | undefined) {
   return map;
 }
 
+const CONTROL_UNITS = [...flattenNodes(combinedGeneration(topologySeed())),
+  { id: "ecu-75", short: "TV", label: "电视调谐器" },
+  { id: "ecu-65", short: "AMP", label: "外部放大器" },
+  { id: "ecu-165", short: "ERA", label: "紧急呼叫系统" },
+] as Array<{ id: string; short: string; label: string }>;
+const PID_IDS = Object.keys(ENGINE_PID_META).sort((a, b) => parseInt(a, 16) - parseInt(b, 16));
+type DisplayMode = "text" | "graph" | "both";
+
+function ParameterGraph({ pid, samples, unavailable }: { pid: string; samples: Sample[]; unavailable: boolean }) {
+  const meta = ENGINE_PID_META[pid as keyof typeof ENGINE_PID_META];
+  const points = samples.filter((s) => s.pid === pid && typeof s.value === "number" && Number.isFinite(s.value)
+    && typeof s.elapsedMs === "number" && Number.isFinite(s.elapsedMs)).sort((a, b) => a.elapsedMs! - b.elapsedMs!);
+  if (unavailable || !points.length) return <p className="muted eng-chart-empty">{unavailable ? "曲线已中断" : "等待采样"}</p>;
+  const values = points.map((s) => s.value!);
+  const low = Math.min(...values);
+  const high = Math.max(...values);
+  const padding = high === low ? Math.max(1, Math.abs(high) * .05) : (high - low) * .1;
+  const min = low - padding;
+  const max = high + padding;
+  const start = points[0].elapsedMs!;
+  const duration = (points[points.length - 1].elapsedMs! - start) / 1000;
+  const coords = points.map((s) => ({ x: 76 + (duration ? (s.elapsedMs! - start) / (duration * 1000) * 374 : 0),
+    y: 142 - (s.value! - min) / (max - min) * 120 }));
+  return <svg className="eng-chart" viewBox="0 0 480 180" role="img" aria-label={`${meta.label}随时间变化，单位${meta.unit}`} data-testid={`eng-chart-${pid}`}>
+    {[0, .5, 1].map((fraction) => <g key={fraction}>
+      <line x1="76" x2="450" y1={142 - fraction * 120} y2={142 - fraction * 120} className="eng-chart-grid" />
+      <text x="68" y={146 - fraction * 120} textAnchor="end">{formatEngineValue(min + fraction * (max - min), "")}</text>
+    </g>)}
+    <polyline className="eng-chart-line" points={coords.map((p) => `${p.x},${p.y}`).join(" ")} />
+    {coords.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r="3" className="eng-chart-point"><title>{formatEngineValue(points[i].value, meta.unit)} · {points[i].capturedUtc}</title></circle>)}
+    <text x="76" y="169">0 s</text><text x="450" y="169" textAnchor="end">{duration.toFixed(1)} s</text>
+    <text x="76" y="12">{meta.unit}</text>
+  </svg>;
+}
+
 export function EngineDataPage({
   onBusyChange,
   peerBusy = false,
+  initialSystemId = "",
 }: {
   onBusyChange?: (busy: boolean) => void;
   peerBusy?: boolean;
+  initialSystemId?: string;
 }) {
   const desktop = hasDesktopApi() || engineSessionFixtureEnabled();
   const jobIdRef = useRef<string | null>(null);
@@ -90,11 +131,32 @@ export function EngineDataPage({
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busyPlan, setBusyPlan] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [savedMessage, setSavedMessage] = useState("");
+  const [systemId, setSystemId] = useState(() => CONTROL_UNITS.some((s) => s.id === initialSystemId) ? initialSystemId : "");
+  const [selectedPids, setSelectedPids] = useState<string[]>([]);
+  const [displayMode, setDisplayMode] = useState<DisplayMode>("both");
+  const [dataSource, setDataSource] = useState("standard");
+  const system = CONTROL_UNITS.find((s) => s.id === systemId);
+  const availablePids = systemId === "dme" ? PID_IDS : [];
 
   const running = status?.state === "running" || status?.state === "cancelling" || starting || Boolean(jobId);
-  const locked = running || peerBusy;
+  const locked = running || peerBusy || saving;
   const liveOk = liveReady(x431Off, readOnly);
-  const ops = canOperate(mode, locked, null, null, null, liveOk);
+  const ops = canOperate(mode, locked || busyPlan || systemId !== "dme" || !selectedPids.length, null, null, null, liveOk);
+
+  function resetSelection() {
+    setPlanDoc(null);
+    setStatus(null);
+    setError(null);
+    setSavedMessage("");
+  }
+
+  function selectParameters(pids: string[]) {
+    if (locked || busyPlan || pids.length > LIVE_DATA_SELECTION_LIMIT) return;
+    setSelectedPids(PID_IDS.filter((pid) => pids.includes(pid)));
+    resetSelection();
+  }
 
   useEffect(() => {
     onBusyChange?.(running);
@@ -169,10 +231,11 @@ export function EngineDataPage({
   }, [jobId]);
 
   async function loadPlan() {
+    if (locked || busyPlan || systemId !== "dme" || !selectedPids.length) return;
     setError(null);
     setBusyPlan(true);
     try {
-      const doc = await api().readOnlySession!(buildEnginePrepareRequest({ sampleCycles, intervalMs }));
+      const doc = await api().readOnlySession!(buildEnginePrepareRequest({ sampleCycles, intervalMs, selectedPids }));
       if (!mountedRef.current) return;
       setPlanDoc(doc);
       if (!doc.ok) setError(doc.error || "计划失败");
@@ -184,7 +247,7 @@ export function EngineDataPage({
   }
 
   async function start() {
-    if (startLock.current || jobIdRef.current || peerBusy) return;
+    if (startLock.current || jobIdRef.current || peerBusy || busyPlan || systemId !== "dme" || !selectedPids.length) return;
     startLock.current = true;
     pendingCancelRef.current = false;
     jobModeRef.current = mode;
@@ -206,6 +269,7 @@ export function EngineDataPage({
         x431Inactive: x431Off,
         sampleCycles: opts.sampleCycles,
         intervalMs: opts.intervalMs,
+        selectedPids,
       });
       if ("error" in req && req.error) {
         setError(req.error);
@@ -256,22 +320,26 @@ export function EngineDataPage({
     }
   }
 
-  function exportJson() {
-    const payload = status?.final || status || planDoc;
-    if (!payload) return;
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    const name = typeof status?.final?.runId === "string" ? status.final.runId : "engine-session";
-    a.download = `${name}.json`;
-    a.click();
-    URL.revokeObjectURL(a.href);
+  async function exportJson() {
+    const payload = status?.final;
+    if (!payload || running || saving) return;
+    const saveFile = api().saveDiagnosticRecording;
+    if (!saveFile) { setError("需要桌面端另存为功能。"); return; }
+    setSaving(true); setSavedMessage(""); setError(null);
+    const name = typeof payload.runId === "string" ? payload.runId : "engine-session";
+    try {
+      const result = await saveFile({ fileName: `${name.replace(/[^a-zA-Z0-9_-]/g, "-").slice(0, 120)}.json`, recording: payload });
+      if (!mountedRef.current) return;
+      if (!result.ok) setError(result.error || "保存失败");
+      else if (result.saved) setSavedMessage(`已保存：${result.filePath}`);
+    } catch (e) { if (mountedRef.current) setError(String(e)); }
+    finally { if (mountedRef.current) setSaving(false); }
   }
 
   if (!desktop) {
     return (
       <section className="panel" data-page="engine-session">
-        <h2>发动机采样</h2>
+        <h2>实时数据</h2>
         <p className="callout">需要桌面端。浏览器不会连接车辆。</p>
       </section>
     );
@@ -329,12 +397,44 @@ export function EngineDataPage({
   return (
     <div className="eng" data-page="engine-session">
       <section className="panel">
-        <h2>发动机采样</h2>
-        <p className="muted">默认模拟。核对 DME 身份后，通过标准 OBD 读取六项参数；本车已完成熄火与怠速采集，桌面整合路径待实车验收。清故障码在「系统拓扑」。</p>
+        <label className="eng-unit-select">
+          <select aria-label="控制单元" data-testid="eng-system" value={systemId} disabled={locked || busyPlan} onChange={(e) => {
+            setSystemId(e.target.value); setSelectedPids([]); resetSelection();
+          }}>
+            <option value="">请选择控制单元</option>
+            {CONTROL_UNITS.map((s) => <option key={s.id} value={s.id}>{s.short} · {s.label}</option>)}
+          </select>
+        </label>
+        {!system ? <p className="muted" data-testid="eng-select-unit">先选择控制单元，再选择需要采集的数据。</p> : null}
+        {systemId === "dme" ? <label className="eng-unit-select">数据清单 <select data-testid="eng-data-source" value={dataSource} disabled={locked || busyPlan} onChange={(e) => { setDataSource(e.target.value); resetSelection(); }}><option value="standard">标准 OBD 数据</option><option value="x431">X431 数据清单</option></select></label> : null}
+        {system && (systemId !== "dme" || dataSource === "x431") ? <OfflineRealtimePanel key={systemId} systemId={systemId} locked={locked || busyPlan} /> : null}
+      </section>
+      {availablePids.length > 0 && dataSource === "standard" ? <>
+      <section className="panel">
+        <div className="eng-section-head"><h3>可采集数据</h3><span data-testid="eng-selection-count">已选 {selectedPids.length} 项 · 最多 {LIVE_DATA_SELECTION_LIMIT} 项</span></div>
+        <div className="eng-parameters" data-testid="eng-parameters">
+          {availablePids.map((pid) => {
+            const meta = ENGINE_PID_META[pid as keyof typeof ENGINE_PID_META];
+            return <label key={pid} className="eng-parameter">
+              <input type="checkbox" data-testid={`eng-select-${pid}`} checked={selectedPids.includes(pid)}
+                disabled={locked || busyPlan || (!selectedPids.includes(pid) && selectedPids.length >= LIVE_DATA_SELECTION_LIMIT)}
+                onChange={(e) => selectParameters(e.target.checked ? [...selectedPids, pid] : selectedPids.filter((p) => p !== pid))} />
+              <span>{meta.label}</span><small>{meta.unit}</small>
+            </label>;
+          })}
+        </div>
+        <div className="eng-selection-actions">
+          <button type="button" data-testid="eng-select-all" disabled={locked || busyPlan} onClick={() => selectParameters(availablePids.slice(0, LIVE_DATA_SELECTION_LIMIT))}>全选</button>
+          <button type="button" disabled={locked || busyPlan || !selectedPids.length} onClick={() => selectParameters([])}>取消全选</button>
+        </div>
+        <p className="muted">DME 标准 OBD 参数；车辆支持项在采集时核对。默认模拟，桌面实车采集待验收。</p>
+      </section>
+      {selectedPids.length > 0 ? <>
+      <section className="panel">
         <div className="eng-toolbar">
           <label>
             方式
-            <select data-testid="eng-mode" value={mode} disabled={locked} onChange={(e) => setMode(e.target.value as Mode)}>
+            <select data-testid="eng-mode" value={mode} disabled={locked || busyPlan} onChange={(e) => { setMode(e.target.value as Mode); resetSelection(); }}>
               <option value="simulation">模拟</option>
               <option value="live">实车</option>
             </select>
@@ -345,7 +445,7 @@ export function EngineDataPage({
               <select
                 data-testid="eng-scenario"
                 value={scenario}
-                disabled={locked}
+                disabled={locked || busyPlan}
                 onChange={(e) => setScenario(e.target.value as Scenario)}
               >
                 {SCENARIOS.map((s) => (
@@ -391,17 +491,17 @@ export function EngineDataPage({
             加载计划
           </button>
           <button type="button" data-testid="eng-start" disabled={!ops.start} onClick={() => start()}>
-            {mode === "live" ? "读取实车发动机参数" : "开始模拟"}
+            {mode === "live" ? "开始采集" : "开始模拟"}
           </button>
-          <button type="button" data-testid="eng-cancel" disabled={!jobId && !starting} onClick={() => cancel()}>
-            取消
-          </button>
+          {starting || status ? <button type="button" data-testid="eng-cancel" disabled={!jobId && !starting} onClick={() => cancel()}>
+            停止
+          </button> : null}
           <button type="button" data-testid="eng-restart" disabled={!ops.start || running} onClick={() => start()}>
             重新采样
           </button>
-          <button type="button" data-testid="eng-export" disabled={!status?.final && !planDoc} onClick={() => exportJson()}>
-            导出 JSON
-          </button>
+          {starting || status ? <button type="button" data-testid="eng-export" disabled={running || saving || !status?.final} onClick={() => void exportJson()}>
+            {saving ? "正在保存…" : "保存此次采集"}
+          </button> : null}
         </div>
         {mode === "live" ? (
           <div className="eng-checks">
@@ -422,6 +522,7 @@ export function EngineDataPage({
         ) : null}
         {peerBusy ? <p className="muted" data-testid="eng-peer-busy">已有其它诊断任务在进行</p> : null}
         {error ? <p className="error" data-testid="eng-error">{error}</p> : null}
+        {savedMessage ? <p role="status" data-testid="eng-saved">{savedMessage}</p> : null}
       </section>
 
       <section className="panel">
@@ -442,13 +543,19 @@ export function EngineDataPage({
       </section>
 
       <section className="panel">
-        <h3>PID</h3>
+        <div className="eng-section-head">
+          <h3>{system?.short} · 数据显示</h3>
+          <div className="eng-display-modes" role="group" aria-label="数据显示方式">
+            {([['text', '文字'], ['graph', '图形'], ['both', '文字与图形']] as const).map(([id, label]) =>
+              <button type="button" key={id} data-testid={`eng-display-${id}`} aria-pressed={displayMode === id} onClick={() => setDisplayMode(id)}>{label}</button>)}
+          </div>
+        </div>
         <p className="muted" data-testid="eng-support">
           支持：{(engine?.supportedPids || []).join(", ") || "—"}；不支持：{(engine?.unsupportedPids || []).join(", ") || "—"}
           {engine?.completedCycles != null ? ` · 第 ${engine.completedCycles}/${engine.sampleCycles} 轮` : ""}
         </p>
-        <ul className="eng-pids" data-testid="eng-pids" data-live={liveDisplay ? "1" : "0"}>
-          {Object.keys(ENGINE_PID_META).map((pid) => {
+        <ul className={`eng-pids eng-view-${displayMode}`} data-testid="eng-pids" data-live={liveDisplay ? "1" : "0"}>
+          {selectedPids.map((pid) => {
             const meta = ENGINE_PID_META[pid as keyof typeof ENGINE_PID_META];
             const sample = byPid.get(pid);
             const unsupported = (engine?.unsupportedPids || []).includes(pid);
@@ -478,18 +585,21 @@ export function EngineDataPage({
               >
                 <dl>
                   <dt>{meta.label}</dt>
-                  <dd>{valueText}</dd>
-                  {sample?.capturedUtc && (liveDisplay || freshness === "simulated" || freshness === "historical" || freshness === "sampling-sim") ? (
+                  {displayMode !== "graph" ? <dd>{valueText}</dd> : null}
+                  {displayMode !== "graph" && sample?.capturedUtc && (liveDisplay || freshness === "simulated" || freshness === "historical" || freshness === "sampling-sim") ? (
                     <time dateTime={sample.capturedUtc}>
                       {liveDisplay ? `上次更新 ${age}` : sample.capturedUtc}
                     </time>
                   ) : null}
                 </dl>
+                {displayMode !== "text" ? <ParameterGraph pid={pid} samples={engine?.samples || []} unavailable={freshness === "stale" || freshness === "cancelling"} /> : null}
               </li>
             );
           })}
         </ul>
       </section>
+      </> : <section className="panel"><p className="muted" data-testid="eng-select-data">请勾选需要采集的数据。</p></section>}
+      </> : null}
     </div>
   );
 }

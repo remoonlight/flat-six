@@ -16,6 +16,7 @@ export const ACTIONS = Object.freeze([
   "decode",
   "preview",
   "replay",
+  "ready-units", "ready-parameters", "ready-plan", "ready-replay",
 ]);
 
 const ACTION_SET = new Set(ACTIONS);
@@ -66,6 +67,10 @@ export function validateRequest(req) {
   const bad = Object.keys(req).filter((k) => FORBIDDEN.has(k));
   if (bad.length) return fail("forbidden_field", { fields: bad });
   if (!ACTION_SET.has(req.action)) return fail("invalid_action", { action: req.action });
+  if (req.groupId != null && (typeof req.groupId !== "string" || !/^(?:[0-9A-F]{8}|ungrouped)$/.test(req.groupId))) return fail("invalid_group_id");
+  if (req.parameterIds != null && (!Array.isArray(req.parameterIds) || req.parameterIds.length > 12
+    || req.parameterIds.some((id) => typeof id !== "string" || !/^[a-f0-9]{64}$/.test(id))
+    || new Set(req.parameterIds).size !== req.parameterIds.length)) return fail("invalid_parameter_selection");
   if (req.generation != null && req.generation !== "981" && req.generation !== "982") {
     return fail("wrong_generation", { generation: req.generation });
   }
@@ -180,9 +185,15 @@ export function runWorkbench(request, opts) {
   return new Promise((resolve) => {
     let idx = 0;
     let promiseSettled = false;
+    let cancelAttempt = null;
+    const onAbort = () => {
+      if (cancelAttempt) cancelAttempt();
+      else settle(fail("cancelled"));
+    };
     const settle = (result) => {
       if (promiseSettled) return;
       promiseSettled = true;
+      opts.signal?.removeEventListener("abort", onAbort);
       resolve(result);
     };
 
@@ -242,6 +253,7 @@ export function runWorkbench(request, opts) {
         killChild(child);
         watchdog = setTimeout(() => finishAttempt(fail("timeout")), 250);
       }, timeoutMs);
+      cancelAttempt = () => finishAttempt(fail("cancelled"));
 
       child.on("error", (err) => {
         if (attempt.abandoned || attempt.finished) return;
@@ -320,10 +332,38 @@ export function runWorkbench(request, opts) {
         finishAttempt(fail("stdin_closed"));
       }
     };
-    tryOne();
+    opts.signal?.addEventListener("abort", onAbort, { once: true });
+    if (opts.signal?.aborted) onAbort(); else tryOne();
   });
 }
 
 export async function handleOfflineDiagnostics(request, opts) {
   return runWorkbench(request, opts);
+}
+
+/** Cancellation is scoped to the originating window and a single preparation. */
+export function createOfflineOperations(opts) {
+  const operations = new Map();
+  const validId = (id) => typeof id === "string" && /^[a-zA-Z0-9-]{1,80}$/.test(id);
+  return {
+    async run(request, ownerId, operationId) {
+      if (operationId == null) return handleOfflineDiagnostics(request, opts);
+      if (!validId(operationId) || request?.action !== "ready-plan") return fail("invalid_operation");
+      const key = `${ownerId}:${operationId}`;
+      if (operations.has(key)) return fail("operation_exists");
+      const controller = new AbortController();
+      operations.set(key, controller);
+      try { return await handleOfflineDiagnostics(request, { ...opts, signal: controller.signal }); }
+      finally { operations.delete(key); }
+    },
+    cancel(ownerId, operationId) {
+      if (!validId(operationId)) return fail("invalid_operation");
+      const controller = operations.get(`${ownerId}:${operationId}`);
+      if (controller) controller.abort();
+      return { ok: true, cancelled: Boolean(controller), ...FLAGS };
+    },
+    cancelOwned(ownerId) {
+      for (const [key, controller] of operations) if (key.startsWith(`${ownerId}:`)) controller.abort();
+    },
+  };
 }

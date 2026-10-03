@@ -61,13 +61,20 @@ def parse_coding_suffix8(suf: bytes) -> dict:
 
 
 def parse_identity_suffix7(suf: bytes) -> dict:
+    """VERF GetOdxXmlVesInfoEx stores u16/u8/u32 at +58/+5a/+5c.
+
+    PorscheVerInfo 0x129c6..0x129f2 passes the first two as the
+    byte/bit arguments to PorscheVerCalcOdx. Static proof, not live approval.
+    """
     if len(suf) != 7:
         return {"ok": False, "error": f"suffix_len_{len(suf)}"}
     formula_id = struct.unpack_from("<I", suf, 3)[0]
     return {
         "ok": True,
         "head_hex": suf[:3].hex(),
-        "head_status": "unresolved_identity_suffix_head",
+        "head_status": "native_layout_confirmed",
+        "byteOffset": struct.unpack_from("<H", suf, 0)[0],
+        "bitOffset": suf[2],
         "formula_id": formula_id,
         "formula_id_hex": f"{formula_id:08X}",
     }

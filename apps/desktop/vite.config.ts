@@ -26,12 +26,6 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       input: {
         main: path.resolve(__dirname, "index.html"),
-        ...(mode === "offline-test"
-          ? { offlineHarness: path.resolve(__dirname, "offline-diagnostics-harness.html") }
-          : {}),
-        ...(mode === "session-test"
-          ? { sessionHarness: path.resolve(__dirname, "read-only-session-harness.html") }
-          : {}),
         ...(mode === "topology-test"
           ? { topologyHarness: path.resolve(__dirname, "topology-harness.html") }
           : {}),

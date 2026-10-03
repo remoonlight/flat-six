@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { api, hasDesktopApi, topologyFixtureEnabled } from "../api";
 import { topologySeed } from "../can-topology-data";
 import {
@@ -12,13 +12,13 @@ import {
   dtcLabel,
   emptyStatusMap,
   flattenNodes,
+  failureReasonZh,
   isAdaptedProfile,
   mergeStatusAfterJob,
   statusText,
 } from "../can-topology-logic.mjs";
+import { topologyCapability } from "../can-topology-capabilities.mjs";
 import { persistTopologySnapshot } from "../obd-diag-persist";
-import type { GuideSeed } from "./GuidedTroubleshootPanel";
-import type { DiagSnapshot } from "@porsche981/domain";
 import "../can-topology.css";
 
 type NodeT = {
@@ -33,16 +33,15 @@ type NodeT = {
   connectionType?: string;
   sourcePages?: number[];
   notes?: string;
+  sourceGenerations?: string[];
   secondary?: boolean;
   additionalBranches?: Array<{ branchId: string; sourcePages?: number[]; notes?: string }>;
   gatewayPins?: { high?: string | null; low?: string | null };
 };
 
-type Pending = { task: "read" | "clear"; nodes: NodeT[] };
-
-function pinText(high?: string | null, low?: string | null) {
-  if (!high && !low) return "未在种子中给出";
-  return `H ${high || "—"} / L ${low || "—"}`;
+function readTime(value: unknown) {
+  const date = new Date(String(value));
+  return Number.isNaN(date.getTime()) ? "时间未确认" : date.toLocaleString("zh-CN", { hour12: false });
 }
 
 function harnessScenario() {
@@ -50,19 +49,16 @@ function harnessScenario() {
   return window.__TOPO_SCENARIO__ || "success";
 }
 
-function requireConfirm(fixture: boolean) {
-  if (!fixture) return true;
-  return typeof window !== "undefined" && window.__TOPO_REQUIRE_CONFIRM__ === true;
-}
-
 export function TopologyPage({
   onBusyChange,
   peerBusy = false,
-  onOpenGuide,
+  adapterModel,
+  onNavigate,
 }: {
   onBusyChange?: (busy: boolean) => void;
   peerBusy?: boolean;
-  onOpenGuide?: (seed: GuideSeed) => void;
+  adapterModel?: string | null;
+  onNavigate?: (tab: "connection" | "live" | "coding", systemId?: string) => void;
 }) {
   const seed = topologySeed();
   const fixture = topologyFixtureEnabled();
@@ -94,16 +90,10 @@ export function TopologyPage({
   const [progress, setProgress] = useState<string | null>(null);
   const [statuses, setStatuses] = useState<Record<string, Record<string, unknown>>>(() => emptyStatusMap(gen));
   const [busy, setBusy] = useState(false);
-  const [pending, setPending] = useState<Pending | null>(null);
   const queueRef = useRef<ReturnType<typeof createScanQueue> | null>(null);
   const startLock = useRef(false);
   const mounted = useRef(true);
   const runToken = useRef(0);
-  const persistRetry = useRef<{
-    source: "simulation" | "live";
-    results: Array<{ nodeId: string; classified?: Record<string, unknown>; doc?: { final?: Record<string, unknown> } }>;
-  } | null>(null);
-  const nodeSnapshots = useRef(new Map<string, DiagSnapshot>());
   const statusesRef = useRef(statuses);
   statusesRef.current = statuses;
 
@@ -112,9 +102,11 @@ export function TopologyPage({
     () => branchAppearances(gen) as Array<{ id: string; label: string; color: string; appearances: NodeT[] }>,
     [gen],
   );
-  const selected = selectedId === "obd" ? null : nodes.find((n) => n.id === selectedId) || nodes[0];
+  const selected = nodes.find((n) => n.id === selectedId) || nodes[0];
   const stSel = selected ? statuses[selected.id] : null;
   const locked = busy || peerBusy;
+  const supported = nodes.filter(canTransmit);
+  const capability = topologyCapability(selected, adapterModel);
 
   useEffect(() => {
     mounted.current = true;
@@ -142,7 +134,7 @@ export function TopologyPage({
   ) {
     if (!lockedStart && (startLock.current || busy || peerBusy)) return;
     const targets = list.filter((n) => canTransmit(n));
-    if (!list.length) {
+    if (!list.length || targets.length !== list.length || (task === "clear" && list.some((n) => !topologyCapability(n, adapterModel).clearable))) {
       if (lockedStart) startLock.current = false;
       return;
     }
@@ -152,34 +144,18 @@ export function TopologyPage({
       return;
     }
     startLock.current = true;
-    if (task === "read") for (const target of targets) nodeSnapshots.current.delete(target.id);
     const token = ++runToken.current;
     const q = createScanQueue({ invoke });
     queueRef.current = q;
     setBusy(true);
     setError(null);
     setProgress(task === "clear" ? "清除中…" : "读取中…");
-    const attachFlags = !fixture || requireConfirm(fixture);
-    const ctx = fixture
-      ? {
-          mode: "simulation" as const,
-          sessionTask: task,
-          scenario: harnessScenario(),
-          ...(attachFlags
-            ? {
-                x431Inactive: liveFlags.x431Inactive,
-                confirmedReadOnly: liveFlags.confirmedReadOnly,
-                confirmedClearDtc: liveFlags.confirmedClearDtc,
-              }
-            : {}),
-        }
-      : {
-          mode: "live" as const,
-          sessionTask: task,
-          x431Inactive: liveFlags.x431Inactive,
-          confirmedReadOnly: liveFlags.confirmedReadOnly,
-          confirmedClearDtc: liveFlags.confirmedClearDtc,
-        };
+    const ctx = {
+      mode: fixture ? "simulation" as const : "live" as const,
+      sessionTask: task,
+      ...(fixture ? { scenario: harnessScenario() } : {}),
+      ...liveFlags,
+    };
     try {
       const out = await q.run({
         nodes: targets,
@@ -200,77 +176,42 @@ export function TopologyPage({
       else if (out.error === "busy") setError("已有任务在进行");
       else setProgress(completionFeedback({ results: out.results, adaptedQueued: targets.length, totalNodes: nodes.length }));
       if (out.error !== "busy" && task === "read" && (out.results || []).length) {
-        const rows = (out.results || []) as NonNullable<typeof persistRetry.current>["results"];
-        persistRetry.current = { source: ctx.mode, results: rows };
         try {
-          const snapshot = await persistTopologySnapshot(api(), {
+          await persistTopologySnapshot(api(), {
             task,
             source: ctx.mode,
-            results: rows,
+            results: (out.results || []) as Parameters<typeof persistTopologySnapshot>[1]["results"],
           });
-          for (const result of rows) {
-            nodeSnapshots.current.delete(result.nodeId);
-            if (snapshot) nodeSnapshots.current.set(result.nodeId, snapshot);
-          }
-          persistRetry.current = null;
         } catch (e) {
-          if (mounted.current && token === runToken.current) setError(`诊断快照未保存：${String(e)}`);
+          console.warn("Topology snapshot persistence failed", e);
         }
       }
     } catch (e) {
       if (mounted.current && token === runToken.current) setError(String(e));
     } finally {
       startLock.current = false;
-      if (mounted.current && token === runToken.current) setBusy(false);
+      if (mounted.current && token === runToken.current) {
+        setBusy(false);
+      }
       queueRef.current = null;
     }
   }
 
-  async function retryPersist() {
-    const p = persistRetry.current;
-    if (!p) return;
-    setError(null);
-    try {
-      const snapshot = await persistTopologySnapshot(api(), { task: "read", source: p.source, results: p.results });
-      if (snapshot) for (const result of p.results) nodeSnapshots.current.set(result.nodeId, snapshot);
-      persistRetry.current = null;
-    } catch (e) {
-      setError(`诊断快照未保存：${String(e)}`);
-    }
-  }
-
   function requestTask(task: "read" | "clear", list: NodeT[]) {
-    if (startLock.current || busy || peerBusy || pending) return;
-    if (!list.length) return;
-    if (!requireConfirm(fixture)) {
-      startLock.current = true;
-      void runTask(task, list, { x431Inactive: true, confirmedReadOnly: true, confirmedClearDtc: true }, true);
-      return;
-    }
-    setPending({ task, nodes: list });
-  }
-
-  function confirmPending() {
-    const p = pending;
-    setPending(null);
-    if (!p || startLock.current || busy || peerBusy) return;
+    if (startLock.current || busy || peerBusy) return;
+    if (!list.length || list.some((n) => !canTransmit(n)) || (task === "clear" && list.some((n) => !topologyCapability(n, adapterModel).clearable))) return;
     startLock.current = true;
-    void runTask(
-      p.task,
-      p.nodes,
-      {
-        x431Inactive: true,
-        confirmedReadOnly: p.task === "read" ? true : undefined,
-        confirmedClearDtc: p.task === "clear" ? true : undefined,
-      },
-      true,
-    );
+    void runTask(task, list, {
+      x431Inactive: true,
+      confirmedReadOnly: task === "read" ? true : undefined,
+      confirmedClearDtc: task === "clear" ? true : undefined,
+    }, true);
   }
 
   const selectedAdapted = selected && isAdaptedProfile(selected.profileId);
-  const obdSelected = selectedId === "obd";
   const actionsOff = locked || !canHardware;
   const selectedOff = actionsOff || !selectedAdapted;
+  const canClearAll = supported.length > 0 && supported.every((n) => topologyCapability(n, adapterModel).clearable);
 
   function chip(n: NodeT, key: string, index: number) {
     const st = statuses[n.id] || { kind: "unscanned", simulated: false };
@@ -281,12 +222,19 @@ export function TopologyPage({
         key={key}
         type="button"
         className="topo-chip"
-        style={{ gridColumn: Math.floor(index / 2) + 1, gridRow: index % 2 === 0 ? 1 : 3 }}
-        title={`${n.label} · ${statusText(st)}`}
+        style={{
+          "--node-column": Math.floor(index / 2) + 1,
+          "--node-row": index % 2 === 0 ? 1 : 3,
+          "--compact-column": Math.floor((index % 4) / 2) + 1,
+          "--compact-row": Math.floor(index / 4) * 4 + (index % 2 === 0 ? 1 : 3),
+        } as CSSProperties}
+        title={`${n.label} · ${topologyCapability(n, adapterModel).diagnostic} · ${statusText(st)}`}
         data-testid={`topo-node-${n.id}`}
         data-kind={kind}
         data-stale={st.stale ? "1" : undefined}
         data-secondary={n.secondary ? "1" : undefined}
+        data-supported={canTransmit(n) ? "1" : "0"}
+        data-reference={topologyCapability(n).referenceOnly ? "1" : undefined}
         aria-pressed={selectedId === n.id}
         aria-label={`${n.short} ${n.label} ${statusText(st)}`}
         onClick={() => setSelectedId(n.id)}
@@ -327,13 +275,23 @@ export function TopologyPage({
     <div className="topo" data-page="topology">
       <div className="topo-layout">
         <section className="panel topo-map-panel">
+          <div className="topo-map-heading">
+            <h3>控制单元网络</h3>
+            <div className="topo-legend" aria-label="节点说明">
+              <span><i data-legend="supported" />诊断已接入</span>
+              <span><i data-legend="dtc" />有故障码</span>
+              <span><i data-legend="no-dtc" />无故障码</span>
+              <span><i data-legend="failed" />读取未完成</span>
+            </div>
+          </div>
           {view === "list" ? (
             <table className="topo-list" data-testid="topo-list">
               <thead>
                 <tr>
                   <th>模块</th>
                   <th>网络</th>
-                  <th>状态</th>
+                  <th>诊断能力</th>
+                  <th>读取结果</th>
                 </tr>
               </thead>
               <tbody>
@@ -343,11 +301,12 @@ export function TopologyPage({
                   return (
                     <tr key={n.id} data-selected={selectedId === n.id ? "1" : undefined}>
                       <td>
-                        <button type="button" className="btn" onClick={() => setSelectedId(n.id)}>
+                        <button type="button" className="btn" aria-pressed={selectedId === n.id} onClick={() => setSelectedId(n.id)}>
                           {n.short} {n.label}
                         </button>
                       </td>
                       <td>{n.branchLabel}</td>
+                      <td>{topologyCapability(n).diagnostic}</td>
                       <td>
                         {statusText(st)}
                         {badge != null ? ` · ${badge}` : ""}
@@ -360,17 +319,6 @@ export function TopologyPage({
           ) : (
             <div className="topo-map" data-testid="topo-diagram">
               <div className="topo-spine">
-                <button
-                  type="button"
-                  className="topo-chip topo-obd"
-                  data-testid="topo-obd"
-                  aria-pressed={obdSelected}
-                  onClick={() => setSelectedId("obd")}
-                >
-                  OBD
-                  <span className="sub">诊断</span>
-                </button>
-                <div className="topo-spine-v" aria-hidden />
                 {nodes
                   .filter((n) => n.isGateway)
                   .map((n) => (
@@ -381,6 +329,7 @@ export function TopologyPage({
                       data-testid={`topo-node-${n.id}`}
                       data-kind={String((statuses[n.id] || {}).kind || "unscanned")}
                       data-stale={statuses[n.id]?.stale ? "1" : undefined}
+                      data-supported={canTransmit(n) ? "1" : "0"}
                       aria-pressed={selectedId === n.id}
                       onClick={() => setSelectedId(n.id)}
                     >
@@ -405,7 +354,10 @@ export function TopologyPage({
                       <div
                         className="topo-bus-track"
                         data-testid={`topo-rail-${b.id}`}
-                        style={{ gridTemplateColumns: `repeat(${Math.max(1, Math.ceil(kids.length / 2))}, minmax(0, 1fr))` }}
+                        style={{
+                          "--node-columns": Math.max(1, Math.ceil(kids.length / 2)),
+                          "--compact-groups": Math.max(1, Math.ceil(kids.length / 4)),
+                        } as CSSProperties}
                       >
                         {kids.map((n, i) => chip(n, `${n.id}-${b.id}`, i))}
                       </div>
@@ -420,68 +372,27 @@ export function TopologyPage({
         <div className="topo-detail-col" data-testid="topo-detail-col">
           {switchEl}
           <aside className="panel topo-detail" data-testid="topo-detail">
-            <div className="topo-primary">
-              <button
-                type="button"
-                className="btn"
-                data-testid="topo-read-all"
-                disabled={actionsOff}
-                onClick={() => requestTask("read", nodes)}
-              >
-                读所有系统
-              </button>
-              <button
-                type="button"
-                className="btn"
-                data-testid="topo-clear-all"
-                disabled={actionsOff}
-                onClick={() => requestTask("clear", nodes)}
-              >
-                清故障码
-              </button>
-            </div>
-            {pending ? (
-              <div className="topo-confirm" data-testid="topo-confirm">
-                <p>
-                  {pending.task === "clear"
-                    ? `将清除 ${pending.nodes.filter(canTransmit).map((n) => n.short).join("、")} 的故障码。请确认 X431 已退出诊断会话。`
-                    : `将读取 ${pending.nodes.filter(canTransmit).map((n) => n.short).join("、")} 的身份与故障码。请确认 X431 已退出诊断会话。`}
-                </p>
-                <button type="button" className="btn" data-testid="topo-confirm-go" onClick={() => confirmPending()}>
-                  确认
-                </button>
-                <button type="button" className="btn" data-testid="topo-confirm-cancel" onClick={() => setPending(null)}>
-                  取消
-                </button>
-              </div>
-            ) : null}
             {progress ? (
-              <p className="muted" data-testid="topo-progress">
+              <p className="muted" data-testid="topo-progress" role="status">
                 {progress}
               </p>
             ) : null}
             {error ? (
-              <p className="error" data-testid="topo-error">
+              <p className="error" data-testid="topo-error" role="alert">
                 {error}
-                {error.startsWith("诊断快照未保存") ? (
-                  <button type="button" className="ghost" data-testid="topo-persist-retry" onClick={() => void retryPersist()}>
-                    重试保存快照
-                  </button>
-                ) : null}
               </p>
             ) : null}
 
-            {obdSelected ? (
-              <dl>
-                <dt>节点</dt>
-                <dd>OBD 诊断插座</dd>
-                <dt>诊断 CAN</dt>
-                <dd>{gen?.diagnostic?.label}</dd>
-                <dt>插座针脚</dt>
-                <dd>{pinText(gen?.diagnostic?.high, gen?.diagnostic?.low)}（X001，不到五路主 CAN）</dd>
-                <dt>网关诊断针脚</dt>
-                <dd>{pinText(gen?.diagnostic?.gatewayHigh, gen?.diagnostic?.gatewayLow)}</dd>
-              </dl>
+            {selected?.isGateway ? (
+              <>
+                <h3>{selected.short} · {selected.label}</h3>
+                <div className="topo-secondary">
+                  <button type="button" className="btn" data-testid="topo-read-all" disabled={actionsOff || !supported.length}
+                    onClick={() => requestTask("read", supported)}>读取所有单元故障码</button>
+                  <button type="button" className="btn" data-testid="topo-clear-all" disabled={actionsOff || !canClearAll}
+                    onClick={() => requestTask("clear", supported)}>清除所有单元故障码</button>
+                </div>
+              </>
             ) : selected ? (
               <>
                 <dl>
@@ -490,8 +401,9 @@ export function TopologyPage({
                     {selected.short} {selected.label}
                     {selected.secondary ? "（该网上为交叉接口）" : ""}
                   </dd>
-                  <dt>状态</dt>
-                  <dd>{stSel ? statusText(stSel) : "—"}</dd>
+                  {stSel?.error ? <><dt>未完成原因</dt><dd>{failureReasonZh(stSel.error)}</dd></> : null}
+                  {stSel?.capturedUtc ? <><dt>{stSel.stale ? "上次读取时间" : "读取时间"}</dt><dd>{readTime(stSel.capturedUtc)}</dd></> : null}
+                  {typeof stSel?.dtcCount === "number" ? <><dt>结果来源</dt><dd>{(stSel.dtcSimulated ?? stSel.simulated) ? "模拟数据" : "车辆读取"}{stSel.stale ? " · 上次读取，当前结果未确认" : ""}</dd></> : null}
                   {typeof stSel?.dtcCount === "number" && stSel.kind !== "unscanned" && stSel.kind !== "pending-adapt" ? (
                     <>
                       <dt>故障码</dt>
@@ -501,76 +413,15 @@ export function TopologyPage({
                           ? (stSel.records as Array<Record<string, string>>).map((r, i) => (
                               <div key={i}>
                                 {dtcLabel(r)} {dtcDetail(r)}{" "}
-                                {onOpenGuide && selected.profileId ? (
-                                  <button
-                                    type="button"
-                                    className="ghost"
-                                    data-testid="topo-open-guide"
-                                    disabled={!nodeSnapshots.current.has(selected.id) || busy}
-                                    onClick={() =>
-                                      onOpenGuide({
-                                        code: dtcLabel(r),
-                                        moduleKey: selected.profileId as string,
-                                        ecu: selected.short,
-                                        source: nodeSnapshots.current.get(selected.id)?.source,
-                                        identityKind: nodeSnapshots.current.get(selected.id)?.identityKind,
-                                        vehicleKey: nodeSnapshots.current.get(selected.id)?.vehicleKey,
-                                        snapshotId: nodeSnapshots.current.get(selected.id)?.id ?? undefined,
-                                        ecuContext:
-                                          selected.profileId === "porsche-981-2014-dme"
-                                            ? "dme"
-                                            : selected.profileId === "porsche-981-2014-gateway"
-                                              ? "gateway"
-                                              : "unknown",
-                                      })
-                                    }
-                                  >
-                                    引导排障
-                                  </button>
-                                ) : null}
                               </div>
                             ))
                           : null}
                       </dd>
                     </>
                   ) : null}
-                  <dt>网络</dt>
-                  <dd>
-                    {selected.branchLabel} · {selected.connectionType || (selected.isGateway ? "Gateway" : "CAN")}
-                  </dd>
-                  {selected.additionalBranches?.length ? (
-                    <>
-                      <dt>全部接口</dt>
-                      <dd>
-                        主：{selected.branchLabel} {pinText(selected.gatewayPins?.high, selected.gatewayPins?.low)}
-                        {(selected.additionalBranches || []).map((a) => {
-                          const br = gen?.branches?.find((x) => x.id === a.branchId);
-                          return (
-                            <div key={a.branchId}>
-                              另：{br?.label || a.branchId} {pinText(br?.gatewayPins?.high, br?.gatewayPins?.low)}
-                            </div>
-                          );
-                        })}
-                      </dd>
-                    </>
-                  ) : (
-                    <>
-                      <dt>{selected.isGateway ? "网关诊断针脚" : "网关针脚"}</dt>
-                      <dd>
-                        {selected.isGateway
-                          ? pinText(gen?.diagnostic?.gatewayHigh, gen?.diagnostic?.gatewayLow)
-                          : pinText(selected.gatewayPins?.high, selected.gatewayPins?.low)}
-                      </dd>
-                    </>
-                  )}
-                  {!selected.profileId ? (
-                    <>
-                      <dt>能力</dt>
-                      <dd>待适配</dd>
-                    </>
-                  ) : null}
                 </dl>
                 <div className="topo-secondary">
+                  {onNavigate ? <button type="button" className="ghost" data-testid="topo-open-live" disabled={locked} onClick={() => onNavigate("live", selected.id)}>实时数据</button> : null}
                   <button
                     type="button"
                     className="btn"
@@ -584,12 +435,13 @@ export function TopologyPage({
                     type="button"
                     className="btn"
                     data-testid="topo-clear-selected"
-                    disabled={selectedOff}
+                    disabled={selectedOff || !capability.clearable}
                     onClick={() => selected && requestTask("clear", [selected])}
                   >
-                    清除此系统故障码
+                    清除故障码
                   </button>
                 </div>
+                {selectedAdapted ? <p className="muted topo-note" data-testid="topo-clear-scope">{capability.clearable ? "受限清码仅用于当前 DME / Gateway，实车清码与复读待验收。" : "当前设备未开放清故障码；仍可进行具名只读诊断。"}</p> : null}
               </>
             ) : (
               <p className="muted">选择模块</p>

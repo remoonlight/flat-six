@@ -121,6 +121,7 @@ function waitHttp(url, tries = 80) {
 
 function engineBlob(extra = {}) {
   return {
+    selectedPids: ["04", "05", "0C", "0D", "0F", "11"],
     supportedPids: ["04", "05", "0C", "0D", "0F"],
     unsupportedPids: ["11"],
     samples: [
@@ -224,6 +225,8 @@ try {
     await page.waitForSelector("[data-page='obd']");
     await page.click("[data-obd-tab='live']");
     await page.waitForSelector("[data-page='engine-session']", { timeout: 60_000 });
+    await page.selectOption("[data-testid='eng-system']", "dme");
+    await page.click("[data-testid='eng-select-all']");
 
     const liveDenied = await page.evaluate(() =>
       window.porsche981.readOnlySession({
@@ -320,6 +323,8 @@ try {
     await page.click("[data-obd-tab='connection']");
     await page.click("[data-obd-tab='live']");
     await page.waitForSelector("[data-page='engine-session']");
+    await page.selectOption("[data-testid='eng-system']", "dme");
+    await page.click("[data-testid='eng-select-all']");
     const afterRemount = await page.locator("[data-testid='eng-kind']").getAttribute("data-freshness");
     if (afterRemount !== "idle") throw new Error(`remount stale ${afterRemount}`);
 
@@ -341,7 +346,7 @@ try {
     await page.selectOption("[data-testid='eng-scenario']", "slow");
     await page.click("[data-testid='eng-start']");
     await page.waitForFunction(
-      () => document.querySelector("[data-obd-tab='session']")?.disabled === true,
+      () => document.querySelector("[data-obd-tab='connection']")?.disabled === true,
       null,
       { timeout: 20_000 },
     );
@@ -497,6 +502,8 @@ try {
       });
       await page.goto(`http://127.0.0.1:${port}/engine-session-harness.html`, { waitUntil: "domcontentloaded" });
       await page.waitForSelector("[data-page='engine-session']", { timeout: 30_000 });
+      await page.selectOption("[data-testid='eng-system']", "dme");
+      await page.click("[data-testid='eng-select-all']");
       await page.fill("[data-testid='eng-cycles']", "3");
       await page.fill("[data-testid='eng-interval']", "800");
       await page.click("[data-testid='eng-prepare']");
@@ -588,6 +595,8 @@ try {
         window.porsche981 = { readOnlySession: (req) => window.__engBridge(req) };
       });
       await livePage.goto(`http://127.0.0.1:${port}/engine-session-harness.html`, { waitUntil: "domcontentloaded" });
+      await livePage.selectOption("[data-testid='eng-system']", "dme");
+      await livePage.click("[data-testid='eng-select-all']");
       await livePage.selectOption("[data-testid='eng-mode']", "live");
       await livePage.check("[data-testid='eng-x431']");
       await livePage.check("[data-testid='eng-readonly']");

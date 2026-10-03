@@ -17,7 +17,7 @@ from .allowlist import blocked_reason, clear_transaction_blocked, engine_transac
 from .catalog import DEFAULT_CATALOG, catalog_cli_json, live_allowed_hex, load_catalog, operation, profile_by_id
 from .decode import decode_payload
 from .elm import ElmClient, ElmError
-from .engine_obd import ENGINE_PROFILE, EngineSpecError, decode_mode01, load_engine_spec, parse_0100, split_support
+from .engine_obd import ENGINE_PROFILE, EngineSpecError, decode_mode01, load_engine_spec, parse_0100, select_pids, split_support
 from .hashutil import sha256_file
 from .qualification import qualify_identity
 from .session_simulator import SCENARIOS, SessionSimPort
@@ -40,6 +40,7 @@ ALLOWED_KEYS = frozenset(
         "confirmedClearDtc",
         "sampleCycles",
         "intervalMs",
+        "selectedPids",
         "deviceId",
     }
 )
@@ -265,6 +266,7 @@ def build_plan(
     session_task: str = "read",
     sample_cycles=None,
     interval_ms=None,
+    selected_pids=None,
 ) -> dict:
     if session_task not in ("read", "clear", "engine"):
         raise SessionError("invalid-session-task")
@@ -272,12 +274,16 @@ def build_plan(
     profile = _profile(catalog, profile_id)
     sess, pos = SESSION_BY_PROFILE[profile_id]
     ident = [{"field": f, "operationId": oid} for f, oid in IDENTITY_FIELDS[profile_id]]
-    if session_task != "engine" and (sample_cycles is not None or interval_ms is not None):
+    if session_task != "engine" and (sample_cycles is not None or interval_ms is not None or selected_pids is not None):
         raise SessionError("engine-options-without-task")
     if session_task == "engine":
         if operation_ids is not None:
             raise SessionError("engine-operationIds-forbidden")
         eng = engine_auth_for(profile_id)
+        try:
+            definitions = select_pids(eng, selected_pids)
+        except EngineSpecError as e:
+            raise SessionError(e.code) from e
         opts = eng["options"]
         cycles = _bounded_int("sampleCycles", sample_cycles, opts["sampleCycles"]["min"], opts["sampleCycles"]["max"], opts["sampleCycles"]["default"])
         interval = _bounded_int("intervalMs", interval_ms, opts["intervalMs"]["min"], opts["intervalMs"]["max"], opts["intervalMs"]["default"])
@@ -339,7 +345,8 @@ def build_plan(
         "engineCapability": eng,
         "engineAuthorization": eng if session_task == "engine" else None,
         "engine": {
-            "definitions": (eng.get("pids") if eng.get("available") else None),
+            "definitions": (definitions if session_task == "engine" else eng.get("pids") if eng.get("available") else None),
+            "selectedPids": ([row["pid"] for row in definitions] if session_task == "engine" else None),
             "options": (eng.get("options") if eng.get("available") else None),
             "evidenceStatus": eng.get("evidenceStatus"),
             "sampleCycles": cycles,
@@ -516,7 +523,7 @@ def _pipe_available(stream) -> int | None:
     return json.loads(p.read_text(encoding="utf-8"))
 
 
-def prepare(profile_id: str, operation_ids=None, *, session_task: str = "read", sample_cycles=None, interval_ms=None) -> dict:
+def prepare(profile_id: str, operation_ids=None, *, session_task: str = "read", sample_cycles=None, interval_ms=None, selected_pids=None) -> dict:
     try:
         plan = build_plan(
             profile_id,
@@ -524,6 +531,7 @@ def prepare(profile_id: str, operation_ids=None, *, session_task: str = "read", 
             session_task=session_task,
             sample_cycles=sample_cycles,
             interval_ms=interval_ms,
+            selected_pids=selected_pids,
         )
         return {"type": "plan", "ok": True, "plan": plan, "error": None}
     except SessionError as e:
@@ -594,6 +602,7 @@ def run_session(
     confirmed_clear_dtc: bool = False,
     sample_cycles=None,
     interval_ms=None,
+    selected_pids=None,
     port=None,
     budget_s: float = 60.0,
     artifact_root: Path | None = None,
@@ -687,7 +696,7 @@ def run_session(
         if mode == "live" and not (confirmed_read_only is True and x431_inactive is True):
             result["error"] = "live-confirmations-required"
             return result
-    elif sample_cycles is not None or interval_ms is not None:
+    elif sample_cycles is not None or interval_ms is not None or selected_pids is not None:
         result["error"] = "engine-options-without-task"
         return result
     if mode == "live" and session_task == "read" and not (confirmed_read_only is True and x431_inactive is True):
@@ -704,6 +713,7 @@ def run_session(
             session_task=session_task,
             sample_cycles=sample_cycles,
             interval_ms=interval_ms,
+            selected_pids=selected_pids,
         )
     except SessionError as e:
         result["error"] = e.code
@@ -756,6 +766,7 @@ def run_session(
     engine_state = None
     if session_task == "engine":
         engine_state = {
+            "selectedPids": plan["engine"]["selectedPids"],
             "supportedPids": [],
             "unsupportedPids": [],
             "samples": [],
@@ -872,7 +883,7 @@ def run_session(
         dep_ops = plan["dependentOperations"]
         extra = (1 + len(dep_ops)) if session_task == "clear" else 0
         if session_task == "engine":
-            extra = 1 + int(engine_state["sampleCycles"] or 0) * 6
+            extra = 1 + int(engine_state["sampleCycles"] or 0) * len(engine_state["selectedPids"])
         total = 1 + len(ident_ops) + len(dep_ops) + extra
         completed = 0
         t0 = time.monotonic()
@@ -982,6 +993,8 @@ def run_session(
         if session_task == "engine":
             try:
                 spec = load_engine_spec()
+                spec["pids"] = select_pids(spec, plan["engine"]["selectedPids"])
+                spec["authorizedHex"] = frozenset(["0100"] + [row["requestHex"] for row in spec["pids"]])
             except EngineSpecError as e:
                 error = e.code
                 raise ElmError(error) from e
@@ -1404,6 +1417,15 @@ def _parse_request(raw: str) -> dict:
         if not isinstance(obj["sessionTask"], str) or obj["sessionTask"] not in ("read", "clear", "engine"):
             raise SessionError("invalid-session-task")
     task = obj.get("sessionTask") or "read"
+    if "selectedPids" in obj:
+        if task != "engine":
+            raise SessionError("engine-options-without-task")
+        try:
+            if obj["selectedPids"] is None:
+                raise EngineSpecError("invalid-selected-pids")
+            select_pids(load_engine_spec(), obj["selectedPids"])
+        except EngineSpecError as e:
+            raise SessionError(e.code) from e
     for opt in ("sampleCycles", "intervalMs"):
         if opt not in obj:
             continue
@@ -1467,6 +1489,7 @@ def stdio_loop(stdin=None, stdout=None, *, artifact_root: Path | None = None) ->
             session_task=req.get("sessionTask") or "read",
             sample_cycles=req.get("sampleCycles"),
             interval_ms=req.get("intervalMs"),
+            selected_pids=req.get("selectedPids"),
         )
         _print_ndjson(plan, outf)
         return 0 if plan.get("ok") else 2
@@ -1525,6 +1548,7 @@ def stdio_loop(stdin=None, stdout=None, *, artifact_root: Path | None = None) ->
             confirmed_clear_dtc=req["confirmedClearDtc"] if "confirmedClearDtc" in req else False,
             sample_cycles=req.get("sampleCycles"),
             interval_ms=req.get("intervalMs"),
+            selected_pids=req.get("selectedPids"),
             cancel_event=cancel,
             progress_sink=sink,
             artifact_root=artifact_root,

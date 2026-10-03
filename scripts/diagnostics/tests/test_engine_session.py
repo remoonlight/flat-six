@@ -72,6 +72,34 @@ class TestBitmapAndFormulas(unittest.TestCase):
 
 
 class TestEngineSession(unittest.TestCase):
+    def test_selection_limits_actual_requests_and_saved_samples(self):
+        out, port, root = _engine(selected_pids=["11", "0C"], sample_cycles=2)
+        self.assertTrue(out["ok"], out)
+        self.assertEqual(out["engine"]["selectedPids"], ["0C", "11"])
+        self.assertEqual(out["engine"]["supportedPids"], ["0C", "11"])
+        self.assertEqual([p for p in port.ecu_payloads if p.startswith("01")], ["0100", "010C", "0111", "010C", "0111"])
+        saved = json.loads((root / out["runId"] / "engine.json").read_text())
+        self.assertEqual({s["pid"] for s in saved["samples"]}, {"0C", "11"})
+        plan = prepare("porsche-981-2014-dme", session_task="engine", selected_pids=["0C"])
+        self.assertEqual([r["pid"] for r in plan["plan"]["engine"]["definitions"]], ["0C"])
+
+    def test_bad_selection_rejected_before_port_open(self):
+        for selection in ([], ["0C", "0C"], ["20"], ["0c"], "0C", [False], ["0C"] * 13):
+            with self.subTest(selection=selection):
+                port = SessionSimPort("porsche-981-2014-dme")
+                out, port, _ = _engine(selected_pids=selection, port=port)
+                self.assertEqual(out["error"], "invalid-selected-pids")
+                self.assertEqual(port.writes, [])
+        self.assertEqual(prepare("porsche-981-2014-dme", selected_pids=["0C"])["error"], "engine-options-without-task")
+        self.assertEqual(prepare("porsche-981-2014-gateway", session_task="engine", selected_pids=["0C"])["error"], "engine-profile-unsupported")
+
+    def test_selected_unsupported_items_not_sent(self):
+        port = SessionSimPort("porsche-981-2014-dme", engine_mask=bytes.fromhex("10000000"))
+        out, port, _ = _engine(port=port, selected_pids=["04", "0C"])
+        self.assertTrue(out["ok"], out)
+        self.assertEqual(out["engine"]["unsupportedPids"], ["0C"])
+        self.assertEqual([p for p in port.ecu_payloads if p.startswith("01")], ["0100", "0104"])
+
     def test_unvalidated_vnci_route_refused_before_native_constructor(self):
         with mock.patch("scripts.diagnostics.vnci.DpuClient") as native:
             out = run_session(profile_id="porsche-981-2014-dme", mode="live", device_id="vnci:6055836",

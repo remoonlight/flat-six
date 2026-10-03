@@ -34,19 +34,23 @@ import {
   removeModelOemLink,
   upsertModelOemLink,
 } from "./model-oem-links.mjs";
-import { handleOfflineDiagnostics } from "./offline-diagnostics.mjs";
+import { createOfflineOperations } from "./offline-diagnostics.mjs";
+import { saveRecordingFile } from "./recording-files.mjs";
 import {
   SESSION_CHANNEL,
   createReadOnlySessionManager,
 } from "./read-only-session.mjs";
 import { CONNECTION_CHANNEL, attachSessionHandoff, createObdConnectionManager, createTransportGate } from "./obd-connection.mjs";
 import { CAN_CAPTURE_CHANNEL, createCanCaptureManager } from "./can-capture.mjs";
+import { readWorkshopFlashIndex, prepareWorkshopExport } from "./piwis-workshop.mjs";
 
 
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const repoRoot = path.resolve(__dirname, "../../..");
+const offlineOperations = createOfflineOperations({ repoRoot,
+  variantsPath: process.env.PORSCHE981_VARIANTS || undefined });
 
 
 
@@ -575,12 +579,27 @@ function registerIpc() {
       payload?.assemblyId,
     ),
   );
-  ipcMain.handle("diagnostics:offline", (_e, request) =>
-    handleOfflineDiagnostics(request, {
-      repoRoot,
-      variantsPath: process.env.PORSCHE981_VARIANTS || undefined,
-    }),
-  );
+  ipcMain.handle("diagnostics:offline", (e, request, operationId) =>
+    offlineOperations.run(request, e.sender.id, operationId));
+  ipcMain.handle("diagnostics:offlineCancel", (e, operationId) =>
+    offlineOperations.cancel(e.sender.id, operationId));
+  ipcMain.handle("diagnostics:saveRecording", (e, input) => saveRecordingFile(input, {
+    dialog, writeFile: fs.promises.writeFile, window: BrowserWindow.fromWebContents(e.sender),
+  }));
+
+  const workshopIndexPath = path.join(app.isPackaged ? app.getPath("userData") : path.join(repoRoot, ".local"), "diagnostics", "piwis-workshop", "flash-index.json");
+  ipcMain.handle("workshop:flashIndex", () => readWorkshopFlashIndex(workshopIndexPath));
+  ipcMain.handle("workshop:exportPreview", async (_e, input) => {
+    const preview = await prepareWorkshopExport(input, workshopIndexPath);
+    const result = await dialog.showSaveDialog({
+      title: "保存维护与编程准备清单",
+      defaultPath: `workshop-${preview.generation}-${preview.functionId}.json`,
+      filters: [{ name: "JSON 准备清单", extensions: ["json"] }],
+    });
+    if (result.canceled || !result.filePath) return { saved: false };
+    await fs.promises.writeFile(result.filePath, JSON.stringify(preview, null, 2) + "\n", "utf8");
+    return { saved: true };
+  });
 
   ipcMain.handle(SESSION_CHANNEL, async (e, request) => {
     const out = await sessionMgr.handle(request, { ownerId: e.sender.id });
@@ -625,6 +644,7 @@ app.whenReady().then(() => {
 
 app.on("web-contents-created", (_e, contents) => {
   contents.once("destroyed", () => {
+    offlineOperations.cancelOwned(contents.id);
     sessionMgr.cancelOwned(contents.id);
     canCaptureMgr.cancelOwned(contents.id);
   });

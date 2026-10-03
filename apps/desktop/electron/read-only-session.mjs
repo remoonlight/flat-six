@@ -19,6 +19,7 @@ const MODES = new Set(["simulation", "live"]);
 const SESSION_TASKS = new Set(["read", "clear", "engine"]);
 const ENGINE_PROFILE = "porsche-981-2014-dme";
 const PID_RE = /^[0-9A-F]{2}$/;
+const ENGINE_PIDS = Object.freeze(["04", "05", "0C", "0D", "0F", "11"]);
 const ENGINE_SAMPLE_CYCLES_MIN = 1;
 const ENGINE_SAMPLE_CYCLES_MAX = 10;
 const ENGINE_SAMPLE_CYCLES_DEFAULT = 5;
@@ -49,6 +50,7 @@ const PREPARE_START_KEYS = Object.freeze([
   "confirmedClearDtc",
   "sampleCycles",
   "intervalMs",
+  "selectedPids",
 ]);
 const JOB_KEYS = Object.freeze(["action", "jobId"]);
 const OVERVIEW_KEYS = Object.freeze(["action"]);
@@ -151,10 +153,14 @@ export function validateSessionRequest(req) {
   if (req.sessionTask != null && !SESSION_TASKS.has(req.sessionTask)) {
     return fail("invalid_session_task");
   }
-  if (sessionTask !== "engine" && (req.sampleCycles != null || req.intervalMs != null)) {
+  if (sessionTask !== "engine" && (req.sampleCycles != null || req.intervalMs != null || "selectedPids" in req)) {
     return fail("engine_fields_without_task");
   }
   if (sessionTask === "engine") {
+    if ("selectedPids" in req && (!Array.isArray(req.selectedPids) || req.selectedPids.length < 1 || req.selectedPids.length > 12
+      || req.selectedPids.some((pid) => !ENGINE_PIDS.includes(pid)) || new Set(req.selectedPids).size !== req.selectedPids.length)) {
+      return fail("invalid_selected_pids");
+    }
     if (req.profileId !== ENGINE_PROFILE) return fail("invalid_profile_id");
     if (req.resumeRunId != null) return fail("engine_resume_forbidden");
     if (req.operationIds != null) return fail("engine_operation_ids_forbidden");
@@ -199,6 +205,7 @@ function toBackend(req, extra = {}) {
     body.sessionTask = "engine";
     body.sampleCycles = req.sampleCycles == null ? ENGINE_SAMPLE_CYCLES_DEFAULT : req.sampleCycles;
     body.intervalMs = req.intervalMs == null ? ENGINE_INTERVAL_MS_DEFAULT : req.intervalMs;
+    body.selectedPids = ENGINE_PIDS.filter((pid) => (req.selectedPids || ENGINE_PIDS).includes(pid));
   }
   if (mode === "simulation") body.scenario = req.scenario || "success";
   if (req.operationIds) body.operationIds = req.operationIds;
@@ -238,6 +245,11 @@ function checkEnginePayload(engine, backend) {
   if (!Array.isArray(engine.samples)) return "protocol_error";
   for (const s of engine.samples) {
     if (!engineSampleOk(s)) return "protocol_error";
+  }
+  if (backend.selectedPids) {
+    if (JSON.stringify(engine.selectedPids) !== JSON.stringify(backend.selectedPids)) return "protocol_error";
+    if ([...engine.supportedPids, ...engine.unsupportedPids, ...engine.samples.map((s) => s.pid)]
+      .some((pid) => !backend.selectedPids.includes(pid))) return "protocol_error";
   }
   if (!Number.isInteger(engine.completedCycles) || engine.completedCycles < 0) return "protocol_error";
   if (!Number.isInteger(engine.sampleCycles) || !Number.isInteger(engine.intervalMs)) return "protocol_error";

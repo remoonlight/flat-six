@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { topologyAdapterProgress, topologyCapability } from "./can-topology-capabilities.mjs";
 import {
   ADAPTED_PROFILES,
   KIND,
@@ -569,4 +570,31 @@ assert.equal(headerTaskState({ apiAvailable: true, overviewOk: false, overviewSt
   assert.equal(starts.length, 0);
 }
 
-console.log(`can-topology-logic.selfcheck ok ${ADAPTED_PROFILES.length} profiles`);
+{
+  const combined = combinedGeneration(seed);
+  const combinedNodes = flattenNodes(combined);
+  const dme = combinedNodes.find((n) => n.id === "dme");
+  const shaker = combinedNodes.find((n) => n.id === "shaker");
+  assert.deepEqual(dme.sourceGenerations, ["981", "982"]);
+  assert.deepEqual(shaker.sourceGenerations, ["982"]);
+  assert.equal(topologyCapability(shaker).referenceOnly, true);
+  assert.equal(topologyCapability(shaker).readable, false);
+  assert.equal(topologyCapability(shaker).clearable, false);
+  assert.equal(topologyCapability(dme, "vLinker").clearable, true);
+  assert.equal(topologyCapability(dme, "VNCI").readable, true);
+  assert.equal(topologyCapability(dme, "VNCI").clearable, false);
+  assert.equal(topologyCapability(dme, "PT3G").clearable, false);
+  assert.equal(topologyCapability({ id: "dme" }).engine, false);
+  assert.equal(topologyCapability({ id: "pdk" }, "vLinker").clearable, false);
+  assert.match(topologyCapability({ id: "bcm-rear" }).codingDetail, /2 项重名/);
+  assert.match(topologyAdapterProgress("VNCI"), /暂不支持清码/);
+  const prior = { kind: KIND.dtc, dtcCount: 2, records: [{ displayCode: "U0447" }],
+    simulated: true, capturedUtc: "2026-10-01T09:00:00Z" };
+  const stale = mergeStatusAfterJob(prior, { kind: KIND.commFail, simulated: false, error: "disconnect" }, "read");
+  assert.equal(stale.capturedUtc, prior.capturedUtc);
+  assert.equal(stale.dtcSimulated, true, "a failed live attempt must not relabel the retained simulation as vehicle data");
+  const fresh = mergeStatusAfterJob(stale, { kind: KIND.noDtc, dtcCount: 0, records: [], simulated: false }, "read");
+  assert.equal(fresh.dtcSimulated, undefined);
+}
+
+console.log(`can-topology-logic.selfcheck ok ${ADAPTED_PROFILES.length} profiles; capability, transport and retained-source gates`);

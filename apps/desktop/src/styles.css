@@ -1202,10 +1202,14 @@ button.chip:disabled {
   margin-left: auto;
 }
 
+.obd-header-device,
 .obd-header-voltage {
   margin: 0;
   font-size: 13px;
   font-weight: 650;
+}
+
+.obd-header-voltage {
   font-variant-numeric: tabular-nums;
   min-width: 6.5em;
   text-align: right;

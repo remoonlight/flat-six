@@ -11,14 +11,15 @@
     "dev": "npm run build -w @porsche981/domain && npm run build -w @porsche981/db && npm run dev -w @porsche981/desktop",
     "build": "npm run build -w @porsche981/domain && npm run build -w @porsche981/db && npm run build -w @porsche981/desktop",
     "test": "npm run build -w @porsche981/domain && npm run test -w @porsche981/domain && npm run test -w @porsche981/db && npm run test -w @porsche981/obd",
+    "prepare:obd-realtime": "python -m scripts.diagnostics.realtime_preparation",
+    "accept:obd-realtime-offline": "python -m unittest scripts.diagnostics.tests.test_realtime_preparation scripts.diagnostics.tests.test_workbench scripts.diagnostics.tests.test_offline_match scripts.diagnostics.tests.test_response_values scripts.diagnostics.tests.test_x431_values && python -m scripts.diagnostics.realtime_preparation_accept && node apps/desktop/electron/offline-diagnostics.selfcheck.mjs && node apps/desktop/electron/recording-files.selfcheck.mjs && npm run build -w @porsche981/desktop && node scripts/realtime-preparation-ui-accept.mjs",
     "status:vnci": "python -m scripts.diagnostics.vnci",
     "accept:vnci": "python -m unittest scripts.diagnostics.tests.test_vnci && node scripts/vnci-connection.selfcheck.mjs",
     "accept:obd-transports": "node apps/desktop/electron/obd-connection.selfcheck.mjs && node scripts/obd-device-registry.selfcheck.mjs && node scripts/vnci-connection.selfcheck.mjs && node scripts/can-capture.selfcheck.mjs",
     "accept:can-capture": "npm run build && node scripts/can-capture.selfcheck.mjs && node scripts/can-capture-electron-accept.mjs",
     "accept:obd-offline": "npm run build -w @porsche981/domain && npm run build -w @porsche981/db && node scripts/obd-offline-accept.mjs",
-    "accept:obd-ui": "npm run build && node scripts/obd-ui-accept.mjs",
+    "accept:obd-ui": "npm run accept:obd-production-ui",
     "accept:obd-production-ui": "npm run build && node scripts/obd-production-ui-accept.mjs",
-    "accept:obd-analysis-ui": "npm run build && node scripts/obd-analysis-ui-accept.mjs",
     "accept:p0": "node scripts/p0-accept.mjs",
     "accept:interval": "npm run build -w @porsche981/domain && npm run build -w @porsche981/db && node scripts/interval-accept.mjs",
     "accept:fault": "npm run build -w @porsche981/domain && npm run build -w @porsche981/db && node scripts/fault-accept.mjs",
@@ -37,6 +38,7 @@
     "accept:wiring": "node scripts/wiring-accept.mjs",
     "accept:coding": "npm run build -w @porsche981/db && node scripts/coding-accept.mjs",
     "accept:coding-guide-ui": "npm run build && node scripts/coding-guide-ui-accept.mjs",
+    "accept:coding-workspace-ui": "npm run build && node scripts/coding-workspace-ui-accept.mjs && node scripts/coding-guide-ui-accept.mjs && node scripts/piwis-workshop-ui-accept.mjs",
     "ingest:coding-guide": "node scripts/import-981-coding-guide.mjs",
     "accept:obd-phase1": "npm run build -w @porsche981/domain && npm run build -w @porsche981/db && node scripts/obd-phase1-accept.mjs",
     "accept:all": "node scripts/accept-all.mjs",
@@ -87,7 +89,10 @@
     "mirror:202-000-part0": "node scripts/mirror-petka-parts.mjs --id pm-202-000 --parts tripo_part_0",
     "mirror:107-010-part2": "node scripts/mirror-petka-parts.mjs --id pm-107-010 --parts tripo_part_2",
     "mirror:105-020-part0": "node scripts/mirror-petka-parts.mjs --id pm-105-020 --parts tripo_part_0",
-    "watch:all-inbox": "node scripts/watch-all-inbox.mjs"
+    "watch:all-inbox": "node scripts/watch-all-inbox.mjs",
+    "accept:obd-workspace": "npm run build && node scripts/obd-production-ui-accept.mjs && node scripts/coding-workspace-ui-accept.mjs && node scripts/coding-guide-ui-accept.mjs && node scripts/piwis-workshop-ui-accept.mjs",
+    "accept:obd-tools": "npm run build -w @porsche981/domain && npm run build -w @porsche981/db && node scripts/diagnostic-records-accept.mjs && node apps/desktop/electron/offline-diagnostics.selfcheck.mjs && node apps/desktop/electron/read-only-session.selfcheck.mjs",
+    "accept:docs": "node scripts/docs-accept.mjs"
   },
   "engines": {
     "node": ">=22"

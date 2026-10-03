@@ -10,13 +10,14 @@ from .decode import redact_vin
 from .offline import DEFAULT_COVERAGE, DEFAULT_REGISTRY, DEFAULT_VARIANTS, build_plan, load_json, match_identity, summary_doc
 from .response_values import decode_application_response
 from .x431_values import preview_coding
+from .realtime_preparation import READY_ACTIONS, handle_ready
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 PROTOCOL_SEED = REPO_ROOT / "data" / "seed" / "diagnostics" / "protocol-inventory.v1.json"
 VALUE_SEED = REPO_ROOT / "data" / "seed" / "diagnostics" / "value-support.v1.json"
 MANUAL_SEED = REPO_ROOT / "data" / "seed" / "diagnostics" / "manual-evidence.v1.json"
 INDEX_NAME = "workbench-index.v1.json"
-ACTIONS = frozenset({"summary", "plan", "variants", "records", "match", "decode", "preview", "replay"})
+ACTIONS = frozenset({"summary", "plan", "variants", "records", "match", "decode", "preview", "replay"}) | READY_ACTIONS
 CATEGORIES = frozenset({"identity", "measurement", "coding", "dtc", "routine"})
 FORBIDDEN = frozenset(
     {
@@ -292,6 +293,11 @@ def _validate(req) -> dict | None:
     action = req.get("action")
     if action not in ACTIONS:
         return _err("invalid_action", action=action)
+    ids = req.get("parameterIds")
+    if ids is not None and (not isinstance(ids, list) or len(ids) > 12
+        or any(not isinstance(k, str) or len(k) != 64 or any(c not in '0123456789abcdef' for c in k) for k in ids)
+        or len(set(ids)) != len(ids)):
+        return _err("invalid_parameter_selection")
     gen = req.get("generation")
     if gen is not None and gen not in ("981", "982"):
         return _err("wrong_generation", generation=gen)
@@ -304,6 +310,9 @@ def _validate(req) -> dict | None:
     cat = req.get("category")
     if cat is not None and cat not in CATEGORIES:
         return _err("invalid_category", category=cat)
+    group = req.get("groupId")
+    if group is not None and (not isinstance(group, str) or (group != 'ungrouped' and (len(group) != 8 or any(c not in '0123456789ABCDEF' for c in group)))):
+        return _err("invalid_group_id")
     for key, lo, hi in (("offset", 0, MAX_OFFSET), ("limit", 1, MAX_LIMIT), ("recordAt", 0, 2**31 - 1)):
         val = req.get(key)
         if val is None:
@@ -674,6 +683,8 @@ def handle(req: dict) -> dict:
     if err:
         return err
     action = req["action"]
+    if action in READY_ACTIONS:
+        return handle_ready(req)
     variants = _variants_path()
     if action == "summary":
         try:

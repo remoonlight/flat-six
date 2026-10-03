@@ -145,8 +145,6 @@ try {
   for (const scenario of ["mx=1", "mx=1&unresolved=1"]) {
     await page.goto(`http://127.0.0.1:${port}/obd-connection-harness.html?${scenario}`, { waitUntil: "networkidle" });
     await page.click("[data-obd-tab='connection']");
-    await page.locator("[data-testid='obd-mx-pairing'] summary").click();
-    await page.getByText("先断开 RaceChrono、OBDwiz 等应用对 MX+ 的连接").waitFor();
     await page.click("[data-testid='obd-device-bt:000000000000']");
     if (scenario.includes("unresolved")) {
       await page.waitForFunction(() => document.querySelector("[data-testid='obd-conn-connect']")?.disabled === true);
@@ -161,8 +159,7 @@ try {
     await page.screenshot({ path: path.join(shotDir, scenario.includes("unresolved") ? "mx-manual-model.png" : "mx-connected.png") });
     await page.click("[data-testid='obd-conn-disconnect']");
     await page.waitForFunction(() => (document.querySelector("[data-testid='obd-header-voltage']")?.textContent || "").includes("--"));
-    await page.click("[data-testid='obd-conn-clear']");
-    await page.waitForFunction(() => !document.querySelector("input[name='obd-device']:checked"));
+    if (!(await page.isChecked("[data-testid='obd-device-bt:000000000000']"))) throw new Error("disconnect lost device selection");
     results.push(scenario.includes("unresolved") ? "mx-manual-model" : "mx-bluetooth");
   }
   if (errors.length) throw new Error(`browser errors: ${errors.join("; ")}`);
@@ -170,7 +167,6 @@ try {
   for (const unpowered of [false, true]) {
     await page.goto(`http://127.0.0.1:${port}/obd-connection-harness.html?vnci=1${unpowered ? "&unpowered=1" : ""}`, { waitUntil: "networkidle" });
     await page.click("[data-obd-tab='connection']");
-    await page.locator("[data-testid='obd-vnci-connection'] summary").click();
     await page.locator("[data-testid='obd-device-vnci:10001']").click();
     const list = await page.textContent("[data-testid='obd-conn-list']");
     if (!list.includes("序列号 10001") || list.includes("无 COM")) throw new Error("VNCI USB displayed as Bluetooth COM");
@@ -193,7 +189,10 @@ try {
   await page.goto(`http://127.0.0.1:${port}/obd-connection-harness.html?registry=1`, { waitUntil: "networkidle" });
   await page.click("[data-obd-tab='connection']");
   const registry = page.getByTestId("obd-device-registry");
-  await registry.getByText("项目关联设备 · 4", { exact: true }).waitFor();
+  await registry.waitFor();
+  if (await page.locator("[data-testid='obd-conn-list'] > li").count() !== 4) throw new Error("associated devices must be deduplicated");
+  const buttons = await page.getByTestId("obd-connection").getByRole("button").allTextContents();
+  if (JSON.stringify(buttons) !== JSON.stringify(["刷新", "连接设备", "断开设备"])) throw new Error("unexpected connection controls " + buttons);
   for (const family of ["vLinker", "OBDLink MX+", "VNCI", "PT3G"]) {
     await page.getByTestId(`obd-registered-${family}`).waitFor();
   }
@@ -203,19 +202,17 @@ try {
   const pt3g = page.getByTestId("obd-registered-PT3G");
   if (!(await pt3g.textContent()).includes("USB 在线") || (await pt3g.getByRole("button").count())) throw new Error("PT3G falsely offered a vehicle transport");
   const offlineVnci = page.getByTestId("obd-registered-VNCI");
-  if ((await offlineVnci.getByRole("button", { name: "选择此设备" }).count()) || !(await offlineVnci.textContent()).includes("本次未发现")) throw new Error("offline VNCI can be selected as online");
-  await page.getByTestId("obd-registered-vLinker").getByRole("button", { name: "选择此设备" }).click();
+  if (!(await offlineVnci.getByRole("radio").isDisabled()) || !(await offlineVnci.textContent()).includes("本次未发现")) throw new Error("offline VNCI can be selected as online");
+  await page.getByTestId("obd-registered-vLinker").getByRole("radio").check();
   await page.waitForFunction(() => document.querySelector("input[name='obd-device']")?.checked);
   if (!(await page.getByTestId("obd-header-voltage").textContent()).includes("--")) throw new Error("selecting a registry device started hardware");
-  await page.getByTestId("obd-registered-OBDLink MX+").getByRole("button", { name: "广播回放" }).click();
-  await page.waitForFunction(() => document.querySelector("[data-obd-tab='broadcast']")?.classList.contains("active"));
-  await page.click("[data-obd-tab='connection']");
+  if (await page.getByTestId("obd-registered-OBDLink MX+").getByRole("button", { name: "广播回放" }).count()) throw new Error("removed broadcast route shown");
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: path.join(shotDir, "device-registry-mobile.png"), fullPage: true });
   const overflows = await registry.evaluate((el) => el.scrollWidth > el.clientWidth + 1);
   if (overflows) throw new Error("device registry overflows on mobile");
   if (errors.length) throw new Error(`browser errors: ${errors.join("; ")}`);
-  results.push("four-device-registry, excluded-reference-devices, offline-state, select-without-open, routes, mobile");
+  results.push("compact-deduplicated-devices, three-controls, excluded-reference-devices, offline-state, select-without-open, mobile");
   await browser.close();
 } finally {
   vite.kill();

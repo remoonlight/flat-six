@@ -1,0 +1,25 @@
+.coding-system-workspace { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 20px; align-items: start; margin-top: 20px; }
+.coding-systems { margin: 0; padding: 16px; }
+.coding-systems h3, .coding-selected-system h3 { margin: 0 0 8px; }
+.coding-systems label, .coding-function-search, .workshop-preparation-family { display: grid; gap: 8px; font-size: 13px; }
+.coding-systems input, .coding-function-search input, .workshop-preparation-family select { width: 100%; min-width: 0; }
+.coding-system-list { max-height: 680px; overflow-y: auto; margin-top: 14px; }
+.coding-system, .coding-function { display: grid; gap: 6px; width: 100%; border: 0; border-bottom: 1px solid var(--line); background: transparent; padding: 13px 10px; text-align: left; line-height: 1.5; border-radius: 5px; }
+.coding-system strong, .coding-function strong { font-size: 13px; }
+.coding-system span, .coding-function span, .coding-function small { color: var(--muted); font-size: 11px; }
+.coding-system.active, .coding-function.active { background: #f5eeeb; box-shadow: inset 3px 0 var(--accent); }
+.coding-supplement-label { padding-top: 12px; border-top: 1px solid var(--line); font-size: 12px; }
+.coding-system-content, .coding-function-detail { min-width: 0; }
+.coding-system-empty { margin: 0; padding: 40px 24px; }
+.coding-function-search { margin: 18px 0; }
+.coding-functions-layout { display: grid; grid-template-columns: minmax(180px, .65fr) minmax(0, 1.35fr); gap: 18px; align-items: start; }
+.coding-functions-layout .panel { margin: 0; }
+.coding-function-list { max-height: 720px; overflow-y: auto; padding: 10px; }
+.coding-function-detail .coding-guide-panel, .coding-function-detail .workshop { margin-top: 0; }
+.coding-function-detail .workshop-status { margin-top: 0; }
+.coding-function-detail details { margin-top: 18px; }
+.coding-function-detail details p { overflow-wrap: anywhere; }
+.workshop-preparation-family { margin: 18px 0; }
+.coding-function-detail [hidden] { display: none; }
+@media (max-width: 1250px) { .coding-functions-layout { grid-template-columns: 1fr; } .coding-function-list { max-height: 290px; } }
+@media (max-width: 850px) { .coding-system-workspace { grid-template-columns: 1fr; } .coding-system-list { max-height: 240px; } .coding-record-fields { grid-template-columns: 1fr; } }

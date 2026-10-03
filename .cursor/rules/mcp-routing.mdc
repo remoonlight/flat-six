@@ -22,7 +22,7 @@ alwaysApply: true
 - 同一 server 本会话 `GetMcpTools` **只调一次**：已知 server 就按 server 直取 schema，禁止无 server 空探全量目录。
 - server 没出现在当前会话（例如 `ssh-mcp-petka` 未挂上）→ 直接走 CLI，不重挂、不换别的 MCP：
   `ssh -i %USERPROFILE%\.ssh\id_ed25519 %PORSCHE981_PETKA_SSH% "<cmd>"`
-- 并行子 agent ≤2（用户规则 Agent load cap）；3D / Electron / CMS rip 场景更严，见 `no-hang-3d`。
+- Codex 直接执行；禁止 Cursor CLI / Grok，默认不派其他 worker。仅用户为当前任务明确要求委派时使用允许的 Codex worker；共享状态操作串行，见 `no-hang-3d`。
 
 ## 默认禁用
 
@@ -30,5 +30,5 @@ alwaysApply: true
 
 ## 红线复述
 
-- **No ECU write**（ADR 001）。X431 / 远程诊断只做只读与资料整理。
+- 当前车辆操作边界只引用 ADR 001：已定义只读及具名受限清码；清码当次单独确认、实车验收待完成。X431 / 远程资料整理不自动授权车辆操作或未知写入。
 - Schema/data mutations 走 `packages/db` + ingest，不用 MCP 即席写。

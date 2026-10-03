@@ -112,8 +112,7 @@
   gap: 6px;
 }
 
-.topo-legend,
-.topo-counts {
+.topo-legend {
   display: flex;
   flex-wrap: wrap;
   gap: 6px 12px;
@@ -131,7 +130,7 @@
 
 .topo-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(15rem, 18rem);
+  grid-template-columns: minmax(0, 1fr) minmax(16rem, 18rem);
   gap: 10px;
   align-items: start;
 }
@@ -142,12 +141,12 @@
   }
 }
 
-/* Two fixed node rows keep every stub attached to its own CAN rail. */
-.topo-map-panel { overflow-x: auto; }
+/* Each pair of node rows stays attached to its own CAN rail. */
+.topo-map-panel { min-width: 0; container-type: inline-size; }
 .topo-map {
   display: grid;
-  grid-template-columns: 130px 2px minmax(0, 1fr);
-  min-width: 640px;
+  grid-template-columns: 64px 2px minmax(0, 1fr);
+  min-width: 0;
   padding: 8px 8px 8px 0;
   align-items: stretch;
 }
@@ -174,8 +173,10 @@
 .topo-bus-name span { display: inline-block; background: var(--panel, #fff); padding: 3px; }
 .topo-bus-track {
   position: relative; display: grid; grid-template-rows: 38px 24px 38px;
+  grid-template-columns: repeat(var(--node-columns), minmax(0, 1fr));
   column-gap: 12px; padding: 0 7px; min-width: 0;
 }
+.topo-bus-track > .topo-chip { grid-column: var(--node-column); grid-row: var(--node-row); }
 .topo-chip {
   position: relative; z-index: 1; width: 100%; min-width: 0; height: 38px;
   max-width: 100px; justify-self: center;
@@ -271,7 +272,6 @@
   border-color: #d4a017;
 }
 
-.topo-obd,
 .topo-gw {
   width: 47px;
   flex: 0 0 47px;
@@ -279,7 +279,6 @@
   min-height: 38px;
 }
 
-.topo-obd::after,
 .topo-gw::after {
   display: none;
 }
@@ -324,3 +323,40 @@
 .topo-adv { margin-top: 10px; }
 .topo-layout .panel { margin: 0; }
 .topo-detail dd { overflow-wrap: anywhere; }
+
+.topo-map-heading { padding: 0 0 16px; }
+.topo-map-heading h3 { margin: 0 0 10px; font-size: 14px; }
+.topo-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.topo-legend i { width: 8px; height: 8px; border-radius: 2px; background: #d8d4ce; }
+.topo-legend i[data-legend="supported"] { background: var(--accent); }
+.topo-legend i[data-legend="dtc"] { background: #c62828; }
+.topo-legend i[data-legend="no-dtc"] { background: #2e7d32; }
+.topo-legend i[data-legend="failed"] { background: #ef6c00; }
+.topo-chip[data-supported="1"]:is([data-kind="unscanned"]) { background: var(--panel); border: 2px solid var(--accent); }
+.topo-detail dl { margin-top: 12px; }
+.topo-secondary { margin-top: 16px; }
+.topo-list tr[data-selected="1"] { background: color-mix(in srgb, var(--accent) 6%, var(--panel)); }
+.topo-list td { overflow-wrap: anywhere; }
+.topo-confirm { background: color-mix(in srgb, var(--accent) 5%, var(--panel)); }
+.topo-confirm p { line-height: 1.6; }
+@container (max-width: 430px) {
+  .topo-map { grid-template-columns: 48px 2px minmax(0, 1fr); }
+  .topo-spine-v { width: 6px; }
+  .topo-gw { width: 42px; flex-basis: 42px; }
+  .topo-bus { grid-template-columns: 58px minmax(0, 1fr); align-items: start; }
+  .topo-bus-name { margin-top: 36px; padding: 0 2px; font-size: 10px; }
+  .topo-bus-track {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(var(--compact-groups), 38px 24px 38px 12px);
+    column-gap: 8px;
+    background: repeating-linear-gradient(to bottom, transparent 0 49px, var(--bus) 49px 51px, transparent 51px 112px);
+  }
+  .topo-bus-track::before {
+    content: ""; position: absolute; left: 0; top: 50px; bottom: 62px;
+    width: 2px; background: var(--bus); pointer-events: none;
+  }
+  .topo-bus-track > .topo-chip { grid-column: var(--compact-column); grid-row: var(--compact-row); }
+  .topo-list { table-layout: fixed; }
+  .topo-list th, .topo-list td { padding: 6px 3px; overflow-wrap: anywhere; }
+  .topo-list button { max-width: 100%; white-space: normal; }
+}

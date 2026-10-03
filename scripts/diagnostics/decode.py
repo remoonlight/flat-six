@@ -65,7 +65,15 @@ def decode_payload(payload_hex: str, spec: dict) -> dict:
         if not text:
             return _fail(kind, "empty-ascii", hex=chunk.hex().upper())
         if kind == "vin-ascii":
-            return {"type": kind, "ok": True, "text": redact_vin(text), "hex": None}
+            # A VIN is exactly 17 ASCII characters; trimming can hide bad wire
+            # bytes and invalid text must not be saved as a vehicle identity.
+            try:
+                vin = chunk.decode("ascii")
+            except UnicodeDecodeError:
+                return _fail(kind, "invalid-vin")
+            if _VIN_RE.fullmatch(vin) is None:
+                return _fail(kind, "invalid-vin")
+            return {"type": kind, "ok": True, "text": redact_vin(vin), "hex": None}
         return {"type": kind, "ok": True, "text": text, "hex": chunk.hex().upper()}
     if kind == "kwp-dtc-18":
         if len(payload) < 2:

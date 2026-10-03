@@ -1,0 +1,33 @@
+.workshop { margin-top: 20px; }
+.workshop-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; }
+.workshop-heading h2 { margin: 4px 0 10px; font-size: 26px; }
+.workshop label { display: grid; gap: 8px; font-size: 13px; }
+.workshop input, .workshop select { width: 100%; min-width: 0; }
+.workshop-heading > label { width: 250px; flex-shrink: 0; }
+.workshop-status { padding: 12px 16px; border: 1px solid var(--line); border-radius: 8px; background: #f5f1ea; font-size: 13px; }
+.workshop-search { max-width: 540px; margin: 18px 0; }
+.workshop-layout { display: grid; grid-template-columns: minmax(240px, .7fr) minmax(0, 1.6fr); align-items: start; gap: 20px; }
+.workshop-layout .panel { margin: 0; }
+.workshop-catalog { padding: 12px; }
+.workshop-function { display: grid; gap: 6px; width: 100%; text-align: left; padding: 13px 12px; border: 0; border-top: 1px solid var(--line); border-radius: 4px; background: transparent; }
+.workshop-function.active { background: #f5eeeb; box-shadow: inset 3px 0 var(--accent); }
+.workshop-function span { color: var(--muted); font-size: 12px; }
+.workshop-detail h3 { margin: 12px 0; font-size: 22px; }
+.workshop-detail h4 { margin: 24px 0 10px; font-size: 15px; }
+.workshop-detail li, .workshop-preview li { margin: 10px 0; line-height: 1.65; }
+.workshop-module { font-size: 12px; background: #eeeae5; border-radius: 5px; padding: 4px 8px; }
+.workshop-roller, .workshop-dependencies, .workshop-flash { padding: 16px; margin: 18px 0; border: 1px solid var(--line); border-radius: 8px; }
+.workshop-dependencies { background: #faf5e9; }
+.workshop-flash > h4 { margin-top: 0; }
+.workshop-flash label { margin-top: 16px; }
+.workshop-flash dl > div { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 10px; margin: 10px 0; }
+.workshop-flash dt { color: var(--muted); font-size: 13px; }
+.workshop-flash dd { margin: 0; overflow-wrap: anywhere; }
+.workshop-source { margin-top: 20px; color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+.workshop-preview { margin-top: 22px; }
+@media (max-width: 900px) {
+  .workshop-layout { grid-template-columns: 1fr; }
+  .workshop-heading { flex-direction: column; }
+  .workshop-heading > label { width: 100%; }
+  .workshop-flash dl > div { grid-template-columns: 1fr; gap: 4px; }
+}

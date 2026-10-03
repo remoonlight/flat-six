@@ -1,6 +1,8 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("porsche981", {
+  workshopFlashIndex: () => ipcRenderer.invoke("workshop:flashIndex"),
+  workshopExportPreview: (input) => ipcRenderer.invoke("workshop:exportPreview", input),
   obdGetState: () => ipcRenderer.invoke("obd:getState"),
   obdStartSimulation: (input) => ipcRenderer.invoke("obd:startSimulation", input),
   obdStop: () => ipcRenderer.invoke("obd:stop"),
@@ -94,8 +96,10 @@ contextBridge.exposeInMainWorld("porsche981", {
   modelOemLinksRemove: (kind, ref, sku, assemblyId) =>
     ipcRenderer.invoke("modelOem:remove", { kind, ref, sku, assemblyId }),
   modelOemCatalog: () => ipcRenderer.invoke("modelOem:catalog"),
-  offlineDiagnostics: (request) =>
-    ipcRenderer.invoke("diagnostics:offline", request),
+  offlineDiagnostics: (request, operationId) =>
+    ipcRenderer.invoke("diagnostics:offline", request, operationId),
+  cancelOfflineDiagnostics: (operationId) => ipcRenderer.invoke("diagnostics:offlineCancel", operationId),
+  saveDiagnosticRecording: (input) => ipcRenderer.invoke("diagnostics:saveRecording", input),
   readOnlySession: (request) =>
     ipcRenderer.invoke("diagnostics:session", request),
   obdConnection: (request) =>

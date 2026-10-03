@@ -633,6 +633,13 @@ assert(
   "eng handler gate",
 );
 assert(buildEngineStartRequest({ mode: "simulation", scenario: "success" }).sessionTask === "engine", "eng sim start");
+for (const selectedPids of [[], null, "0C", ["20"], ["0c"], ["0C", "0C"], [false], Array(13).fill("0C")]) {
+  assert(validateSessionRequest({ action: "start", profileId: DME, sessionTask: "engine", selectedPids }).error === "invalid_selected_pids", "selection boundary");
+}
+assert(validateSessionRequest({ action: "prepare", profileId: DME, selectedPids: ["0C"] }).error === "engine_fields_without_task", "selection requires engine");
+assert(validateSessionRequest({ action: "start", profileId: DME, sessionTask: "engine", selectedPids: ["0C"] }) === null, "known selection accepted");
+assert(buildEngineStartRequest({ mode: "simulation", selectedPids: ["0C"] }).selectedPids[0] === "0C", "start forwards selection");
+assert(buildEnginePrepareRequest({ selectedPids: ["0C"] }).selectedPids[0] === "0C", "plan forwards selection");
 assert(buildEnginePrepareRequest({ sampleCycles: 3, intervalMs: 800 }).sampleCycles === 3, "eng prepare cycles");
 assert(buildEnginePrepareRequest({ sampleCycles: 3, intervalMs: 800 }).intervalMs === 800, "eng prepare interval");
 assert(engineFreshness("running", null, null, "live") === "sampling", "fresh live sampling");
@@ -682,6 +689,7 @@ assert(
 
 function engineBlob(extra = {}) {
   return {
+    selectedPids: ["04", "05", "0C", "0D", "0F", "11"],
     supportedPids: ["04", "05", "0C", "0D", "0F", "11"],
     unsupportedPids: [],
     samples: [
@@ -764,6 +772,11 @@ const engineOk = await waitJob(
 assert(engineOk.state === "completed", `engine final ${engineOk.state} ${engineOk.error}`);
 assert(engineOk.final?.sessionTask === "engine" && engineOk.final?.engine?.samples?.length === 1, "engine metadata");
 assert(engineOk.final?.liveVerified === false && engineOk.final?.writePayload === null, "engine flags");
+const engineForeignMgr = createReadOnlySessionManager({ repoRoot,
+  spawnFn: () => mockChild({ lines: [okEngineResult({ engine: engineBlob({ selectedPids: ["0C"] }) })], code: 0 }) });
+const foreignStart = await engineForeignMgr.handle({ action: "start", profileId: DME, sessionTask: "engine", selectedPids: ["0C"] }, { ownerId: 1 });
+const foreignResult = await waitJob(engineForeignMgr, foreignStart.jobId, 1);
+assert(foreignResult.state === "failed" && foreignResult.error === "protocol_error", "unselected PID result refused");
 
 let engineWritten = "";
 const engineProbe = createReadOnlySessionManager({

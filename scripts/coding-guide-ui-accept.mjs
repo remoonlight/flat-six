@@ -11,6 +11,8 @@ const env = {
   ...process.env,
   PORSCHE981_DB: path.join(dir, "ui.db"),
   PORSCHE981_OBD_SMOKE: "1",
+  PORSCHE981_HEADLESS: "1",
+  PORSCHE981_SESSION_DENY_LIVE: "1",
 };
 delete env.ELECTRON_RUN_AS_NODE;
 delete env.VITE_DEV_SERVER_URL;
@@ -25,8 +27,8 @@ const errors = [];
 async function enter(page) {
   page.on("pageerror", (e) => errors.push(e.message));
   await page.locator('nav.side button[data-tab="obd"]').click();
-  await page.getByRole("button", { name: "设码", exact: true }).click();
-  await page.getByRole("heading", { name: "设码与隐藏功能" }).waitFor();
+  await page.locator('[data-obd-tab="coding"]').click();
+  await page.locator('[data-page="coding"]').waitFor();
 }
 try {
   const seed = JSON.parse(
@@ -47,44 +49,21 @@ try {
   app = await launch();
   let page = await app.firstWindow();
   await enter(page);
-  assert.equal(await page.locator(".coding-feature").count(), 63);
+  await page.getByRole("heading", { name: "请选择系统", exact: true }).waitFor();
+  assert.equal(await page.locator('[data-coding-category]').count(), 0);
+  await page.locator('[data-coding-system="cluster"]').click();
+  await page.locator('[data-coding-category="coding"]').click();
+  await page.locator('[data-coding-function="guide-2"]').click();
   assert.equal(await page.locator(".coding-steps li").count(), 8);
+  assert.deepEqual((await page.locator('[aria-label="系统功能类别"] button').allTextContents()).map((x) => x.split("（")[0]), ["维护", "设码", "特殊功能", "编程"]);
   await page.screenshot({ path: path.join(output, "catalog.png") });
-  await page.getByLabel("搜索功能").fill("涡轮");
-  assert.equal(await page.locator(".coding-feature").count(), 0);
-  await page.getByLabel("显示不适用条目").check();
-  assert.equal(
-    await page
-      .getByRole("checkbox", { name: "选择 涡轮压力显示范围", exact: true })
-      .isDisabled(),
-    true,
-  );
-  await page.getByLabel("搜索功能").fill("Sport Chrono直刷");
-  await page.getByRole("checkbox", { name: /选择 Sport Chrono直刷/ }).check();
-  await page.getByRole("button", { name: "查看功能方案", exact: true }).click();
-  assert.equal(await page.locator(".coding-plan-step").count(), 7);
-  assert.equal(await page.locator(".coding-plan-group").count(), 3);
-  assert.equal(await page.getByText(/Joker Sport Plus/).count(), 0);
-  await page.screenshot({ path: path.join(output, "plan.png") });
-  await page.getByRole("button", { name: "清空方案", exact: true }).click();
-  await page.getByRole("button", { name: "981 功能库", exact: true }).click();
-  await page.getByLabel("搜索功能").fill("后加装运排");
-  await page.getByRole("checkbox", { name: /选择 后加装运排/ }).check();
-  await page.getByRole("button", { name: "查看功能方案", exact: true }).click();
-  await page.getByText("请先补齐方案", { exact: true }).waitFor();
-  assert.equal(
-    await page.getByRole("button", { name: "复制完整方案" }).count(),
-    0,
-  );
-  await page.getByLabel("运排按键方案").selectOption("B");
-  assert.equal(await page.locator(".coding-plan-step").count(), 4);
-  assert.equal(await page.getByText(/\[Plan A\]/).count(), 0);
-  await page.getByRole("button", { name: "复制完整方案" }).click();
-  await page.getByRole("status").filter({ hasText: "方案已复制" }).waitFor();
-  const clipboard = await app.evaluate(({ clipboard }) => clipboard.readText());
-  assert.ok(clipboard.includes("[Plan B]") && !clipboard.includes("[Plan A]"));
-  await page.getByRole("button", { name: "981 功能库", exact: true }).click();
-  await page.getByLabel("搜索功能").fill("显示真实水温");
+  assert.equal(await page.locator('[data-coding-view]').count(), 0);
+  assert.equal(await page.getByLabel("搜索功能").count(), 0);
+  const excluded = seed.items.find((item) => item.name.includes("涡轮"));
+  await page.locator(`[data-coding-function="guide-${excluded.id}"]`).click();
+  assert.equal(await page.getByRole("button", { name: "记录此步骤", exact: true }).count(), 0);
+  const water = seed.items.find((item) => item.name.includes("显示真实水温"));
+  await page.locator(`[data-coding-function="guide-${water.id}"]`).click();
   await page
     .getByRole("button", { name: "记录此步骤", exact: true })
     .first()
@@ -103,41 +82,18 @@ try {
   await page.getByLabel("ECU 型号或软件版本").fill("test-only");
   await page.getByRole("button", { name: "保存实测记录" }).click();
   await page.getByText("X431 实测记录已保存。", { exact: true }).waitFor();
-  await page
-    .getByRole("button", { name: "X431 原始菜单", exact: true })
-    .click();
-  await page.getByRole("heading", { name: "X431 原始菜单与快照" }).waitFor();
-  assert.ok(
-    (await page.locator('[data-page="x431-archive"] select option').count()) >
-      0,
-  );
-  assert.ok(
-    (await page.locator('[data-page="x431-archive"]').innerText()).includes(
-      "UI acceptance sample",
-    ),
-  );
-  await page.screenshot({ path: path.join(output, "x431.png") });
+  assert.equal(await page.locator('[data-page="x431-archive"]').count(), 0);
+  const saved = await page.evaluate(() => window.porsche981.listCoding());
+  assert.ok(saved.some((item) => item.after_value.includes("UI acceptance sample")));
   await app.close();
   app = await launch();
   page = await app.firstWindow();
   await enter(page);
-  await page.getByRole("button", { name: "操作记录", exact: true }).click();
-  await page.locator(".coding-snapshot").first().waitFor();
-  await page.locator(".coding-snapshot summary").first().click();
-  assert.ok(
-    (await page.locator(".coding-snapshot").innerText()).includes(
-      "UI acceptance sample",
-    ),
-  );
-  assert.ok(
-    (await page.locator(".coding-snapshot").innerText()).includes(
-      seed.source.revision,
-    ),
-  );
-  await page.screenshot({ path: path.join(output, "records.png") });
+  const restored = await page.evaluate(() => window.porsche981.listCoding());
+  assert.ok(restored.some((item) => item.after_value.includes("UI acceptance sample") && item.note.includes(seed.source.revision)));
   assert.deepEqual(errors, []);
   console.log(
-    "PASS coding UI: 981 filtering, multi-module plan, alternatives, clipboard, blank measured values, legacy X431 and SQLite restart persistence",
+    "PASS coding UI: direct system functions, four categories, excluded guide, blank manual values, inline record saving and SQLite restart persistence",
   );
 } finally {
   await app?.close();

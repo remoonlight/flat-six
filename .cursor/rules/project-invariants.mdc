@@ -7,7 +7,7 @@ alwaysApply: true
 
 Skim `AGENTS.md` + relevant `docs/adr/` before large changes. Do not re-litigate `docs/requirements.md` §0.
 
-- **No ECU write** — OBD/coding read-only (ADR 001).
+- **Staged vehicle operations** — current ADR 001 controls: defined read-only diagnostics plus separately confirmed named 981 DME/Gateway clear-DTC only. Clear vehicle acceptance remains open; unknown writes, coding, flashing and actuators remain disabled.
 - **Local Windows + SQLite** — `packages/db` + Electron; no cloud/auth (ADR 002).
 - **PETKA GUI** — passive inbox/TSV default; GUI automate only if user allows **this session** (ADR 003). Never invent auth.
 - **No PETKA binaries** — no parse/commit `DATA\PO` / `.zgd`.

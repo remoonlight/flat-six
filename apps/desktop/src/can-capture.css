@@ -1,8 +1,0 @@
-.can-capture-controls { display: flex; align-items: end; gap: 12px; flex-wrap: wrap; }
-.can-capture-controls label { display: grid; gap: 4px; }
-.can-capture-controls input[type="number"] { width: 100px; }
-.can-capture-confirm { display: flex; flex-direction: row; align-items: center; gap: 8px; margin: 14px 0; }
-.can-capture-confirm input { width: auto; margin: 0; }
-.can-capture-result { margin: 20px 0; overflow-x: auto; }
-.can-capture-result table { width: 100%; border-collapse: collapse; }
-.can-capture-result th, .can-capture-result td { text-align: left; padding: 8px; border-bottom: 1px solid #ddd; }

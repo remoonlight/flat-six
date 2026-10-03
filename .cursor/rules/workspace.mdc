@@ -19,7 +19,7 @@ MCP 选路见常驻规则 `mcp-routing`（本文件不再重复 MCP 表）。
 ## Data & ingest
 
 - **SKU**: maintenance subset keeps sku; bulk `{generation}-{oemNormalized}` (`981`|`982`). Don't blindly bulk-overwrite maintenance.
-- **CSV**: `data/petka/*/parts.csv` local authority; Git = templates/bootstrap.
+- **CSV**: `data/petka/*/parts.csv` local authority; templates/bootstrap and explicitly allowed price tables follow existing tracking/ignore rules. Do not publish runtime/private data automatically.
 - **Path**: npm scripts (`ingest:petka`, `parse:petka-bulk`, `sync:petka-bulk-remote`, …) over ad-hoc SQL.
 - **PETKA bulk**: txt → `.local/petka-bulk/` → `parse:petka-bulk`; 远程主机用 env `PORSCHE981_PETKA_SSH`（勿把内网地址写进仓库）。
 - **Public prices**: teile/Design911 非PETKA; `petka_verified` false. Domain → `packages/domain`; schema → `packages/db`.

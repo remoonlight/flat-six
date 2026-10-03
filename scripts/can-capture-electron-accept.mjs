@@ -1,4 +1,4 @@
-/** Real preload + IPC + generated replay. Isolated DB; live explicitly denied. */
+/** Backend replay remains available through IPC; its product menu has been removed. */
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
@@ -25,18 +25,16 @@ try {
   const page = await app.firstWindow();
   const errors = []; page.on("pageerror", (error) => errors.push(error.message));
   await page.locator('nav.side button[data-tab="obd"]').click();
-  await page.locator('[data-obd-tab="broadcast"]').click();
-  const section = page.locator('[data-page="can-capture"]');
-  await section.getByText(saved.runId, { exact: false }).waitFor();
   const denied = await page.evaluate(() => window.porsche981.canCapture({ action: "start", seconds: 20,
     confirmedReadOnly: true, x431Inactive: true }));
   assert.equal(denied.error, "live_not_enabled");
-  await section.locator("li").filter({ hasText: saved.runId }).getByRole("button").click();
-  await section.getByText("本地回放，文件完整性已核对", { exact: true }).waitFor();
-  await section.getByText(/CAN ERROR × 2/).waitFor();
-  assert.equal(await section.locator("tbody tr").count(), 6);
-  assert.match(await section.innerText(), /6 帧/);
-  assert.match(await section.innerText(), /记录存在异常/);
+  assert.equal(await page.locator('[data-obd-tab="broadcast"]').count(), 0);
+  assert.equal(await page.locator('[data-page="can-capture"]').count(), 0);
+  const replay = await page.evaluate((runId) => window.porsche981.canCapture({ action: "replay", runId }), saved.runId);
+  assert.equal(replay.ok, true); assert.equal(replay.integrityVerified, true);
+  assert.equal(replay.captureQualityOk, false); assert.equal(replay.capture.frame_count, 6);
+  assert.equal(replay.capture.adapter_notices["CAN ERROR"], 2);
+  assert.equal(replay.capture.partitions.length, 6);
   const snapshot = await app.evaluate(async ({ BrowserWindow }) => {
     const contents = BrowserWindow.getAllWindows()[0].webContents;
     contents.setBackgroundThrottling(false);
@@ -48,6 +46,6 @@ try {
   fs.writeFileSync(path.join(scratch, "can-replay.png"), Buffer.from(snapshot, "base64"));
   assert.deepEqual(errors, []);
   fs.writeFileSync(path.join(scratch, "can-electron.json"), JSON.stringify({ ok: true, noHardware: true,
-    checks: ["real preload/IPC", "live denied before device open", "generated capture hashes and raw replay", "6 synthetic frames / 2 CAN ERROR", "six separate partitions", "no renderer errors"] }, null, 2));
-  console.log("can-capture-electron-accept: PASS real UI, preload/IPC, generated replay, quality warnings, live deny; no hardware");
+    checks: ["broadcast menu removed", "real preload/IPC", "live denied before device open", "generated capture hashes and raw replay", "6 synthetic frames / 2 CAN ERROR", "six separate partitions", "no renderer errors"] }, null, 2));
+  console.log("can-capture-electron-accept: PASS removed menu, preserved preload/IPC replay, integrity and quality, live deny; no hardware");
 } finally { await app?.close(); saved.cleanup(); }

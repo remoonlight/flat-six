@@ -18,11 +18,13 @@ export async function persistTopologySnapshot(
   input: {
     task: "read" | "clear";
     source: DiagSource;
-    results: Array<{ nodeId: string; classified?: Record<string, unknown>; doc?: { final?: Record<string, unknown> } }>;
+    results: Array<{ nodeId: string; classified?: Record<string, unknown>; doc?: { jobId?: string; final?: Record<string, unknown> } }>;
   },
 ) {
   if (input.task !== "read" || !api.obdDiag) return null;
   if (!input.results.length) return null;
+  // A rejected start has no capture to persist; do not invent a capture event ID.
+  if (!input.results.some((row) => row.doc?.jobId || row.doc?.final?.runId || row.classified?.runId)) return null;
   const gen = topologySeed();
   const nodes = flattenNodes(combinedGeneration(gen)) as Array<{ id: string; label?: string; profileId?: string }>;
   const snap = normalizeTopologyCapture({

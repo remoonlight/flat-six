@@ -309,6 +309,7 @@ export {
 } from "./vehicle-paint.js";
 
 export * from './coding-guide.js';
+export * from './piwis-workshop.js';
 export {
   assertPetkaEpcFixtures,
   cleanPetkaName,

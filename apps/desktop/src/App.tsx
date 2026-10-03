@@ -125,7 +125,7 @@ export function App() {
         )}
         {tab === "parts" && <PartsBrowserPage />}
         {tab === "maintenance" && <GaragePage />}
-        {tab === "obd" && <ObdPage onLocate={openLocator} />}
+        {tab === "obd" && <ObdPage />}
         {tab === "settings" && <VehicleSettingsPage />}
         {tab === "locator" && (
           <LocatorPage

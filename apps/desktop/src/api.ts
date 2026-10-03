@@ -11,6 +11,8 @@ import type {
   ObdRun,
   ObdScenario,
   ScanSnapshot,
+  WorkshopFlashResult,
+  WorkshopPreviewInput,
 } from "@porsche981/domain";
 export type Vehicle = {
   id: number;
@@ -403,6 +405,8 @@ export type ObdLiveSnapshot = {
 };
 
 export type PorscheApi = {
+  workshopFlashIndex?: () => Promise<WorkshopFlashResult>;
+  workshopExportPreview?: (input: WorkshopPreviewInput) => Promise<{ saved: boolean }>;
   obdGetState: () => Promise<ObdRuntimeState>;
   obdStartSimulation: (input: { scenario: ObdScenario; budgetMs: number }) => Promise<ObdRuntimeState>;
   obdStop: () => Promise<ObdRuntimeState>;
@@ -573,7 +577,11 @@ export type PorscheApi = {
   onBridgeStatus?: (cb: (status: BridgeStatus) => void) => () => void;
   offlineDiagnostics?: (
     request: OfflineDiagnosticsRequest,
+    operationId?: string,
   ) => Promise<OfflineDiagnosticsResult>;
+  cancelOfflineDiagnostics?: (operationId: string) => Promise<OfflineDiagnosticsResult>;
+  saveDiagnosticRecording?: (input: { fileName: string; recording: object }) =>
+    Promise<{ ok: boolean; saved: boolean; canceled?: boolean; filePath?: string; error?: string }>;
   readOnlySession?: (
     request: ReadOnlySessionRequest,
   ) => Promise<ReadOnlySessionResult>;
@@ -601,7 +609,8 @@ export type OfflineDiagnosticsAction =
   | "match"
   | "decode"
   | "preview"
-  | "replay";
+  | "replay"
+  | "ready-units" | "ready-parameters" | "ready-plan" | "ready-replay";
 
 export type OfflineDiagnosticsRequest = {
   action: OfflineDiagnosticsAction;
@@ -617,6 +626,8 @@ export type OfflineDiagnosticsRequest = {
   responseMode?: "data" | "pdu";
   rawValue?: number;
   identity?: Record<string, unknown>;
+  parameterIds?: string[];
+  groupId?: string;
 };
 
 export type OfflineDiagnosticsResult = {
@@ -724,6 +735,7 @@ export type ReadOnlySessionRequest = {
   x431Inactive?: boolean;
   sampleCycles?: number;
   intervalMs?: number;
+  selectedPids?: string[];
   jobId?: string;
 };
 
@@ -801,6 +813,7 @@ export function api(): PorscheApi {
 
 export async function callOfflineDiagnostics(
   request: OfflineDiagnosticsRequest,
+  operationId?: string,
 ): Promise<OfflineDiagnosticsResult> {
   if (offlineDiagnosticsFixtureEnabled() && window.__OFFLINE_DIAG_MOCK__) {
     return window.__OFFLINE_DIAG_MOCK__(request);
@@ -815,5 +828,5 @@ export async function callOfflineDiagnostics(
       writePayload: null,
     };
   }
-  return fn(request);
+  return fn(request, operationId);
 }

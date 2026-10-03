@@ -137,6 +137,18 @@ def decode_mode01(pid_row: dict, payload_hex: str) -> float:
     raise EngineSpecError("engine-spec-invalid")
 
 
+def select_pids(spec: dict, selected_pids=None) -> list[dict]:
+    """Only select known definitions; omission preserves the legacy six-PID API."""
+    if selected_pids is None:
+        return spec["pids"]
+    known = {row["pid"] for row in spec["pids"]}
+    if (not isinstance(selected_pids, list) or not 1 <= len(selected_pids) <= 12
+            or any(not isinstance(pid, str) or pid not in known for pid in selected_pids)
+            or len(set(selected_pids)) != len(selected_pids)):
+        raise EngineSpecError("invalid-selected-pids")
+    return [row for row in spec["pids"] if row["pid"] in selected_pids]
+
+
 def split_support(spec: dict, mask: bytes) -> tuple[list[dict], list[str]]:
     supported = []
     unsupported = []

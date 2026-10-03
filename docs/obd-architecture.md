@@ -1,5 +1,7 @@
 # 实时 OBD 与独立设码架构
 
+> 历史/设计资料（2026-10-02 标注）：架构与 2026-09-13 实现快照；“硬件未接”、旧 Mode 04 范围和菜单不是当前状态。 当前状态见 [progress.md](progress.md) 与 [OBD_STATUS.md](../OBD_STATUS.md)，操作边界见 [ADR 001](adr/001-no-ecu-write.md)。
+
 日期：2026-09-12；2026-09-13 补充短时接车约束、离线第一版，以及随后的生产读码/清码/数据分析软件。状态：总体架构 + 部分已实现，**实车/硬件未验证**。车型：2014 Boxster S（981）PDK。
 
 本文是设计依据，不是第二份产品需求，也不是 当前进度记录。权威需求：[requirements.md](requirements.md) §R5.1。当前菜单与离线验收：[实时 OBD 说明](obd-live-guide.md)。模拟演练：[离线演练说明](obd-offline-guide.md)。公开资料与设备可行性：[研究方案](research/can-code/981-live-obd-and-coding-roadmap.md)。

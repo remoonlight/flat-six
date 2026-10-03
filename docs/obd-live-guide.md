@@ -1,5 +1,7 @@
 # 实时 OBD：设备匹配、故障读取与数据分析
 
+> 历史/设计资料（2026-10-02 标注）：2026-09-13 使用说明；其中菜单、标准 Mode 04 与测试计数属于旧阶段，不作为当前操作步骤。 当前状态见 [progress.md](progress.md) 与 [OBD_STATUS.md](../OBD_STATUS.md)，操作边界见 [ADR 001](adr/001-no-ecu-write.md)。
+
 2026-09-13。权威需求：[requirements.md](requirements.md) §R5.1 / §R6、[ADR 001](adr/001-no-ecu-write.md)。交互规则：[故障与数据分析需求](obd-fault-data-analysis-requirements.md)。模拟演练：[离线演练说明](obd-offline-guide.md)。设计稿：[架构](obd-architecture.md)。资料：[data/seed/obd/README.md](../data/seed/obd/README.md)。
 
 设备连接、读码、清码、保存、复读和故障关联数据分析**已实现并通过离线测试**。本次没有连接真实设备或车辆，没有执行实车清码。

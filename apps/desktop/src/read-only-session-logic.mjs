@@ -13,6 +13,9 @@ export function canOperate(mode, locked, lastRunId, lastRunKey, selKey, liveOk) 
 }
 
 export const ENGINE_PROFILE_ID = "porsche-981-2014-dme";
+// X431 IMMO Pro manual p.44: up to 12 individual graph panels (4 when combined).
+// This is our display/selection budget, not a claim about every X431 vehicle menu.
+export const LIVE_DATA_SELECTION_LIMIT = 12;
 
 export const ENGINE_PID_META = Object.freeze({
   "04": { label: "发动机负荷", unit: "%" },
@@ -33,7 +36,7 @@ export function clampEngineOptions(sampleCycles, intervalMs) {
   return { sampleCycles: cycles, intervalMs: interval };
 }
 
-export function buildEnginePrepareRequest({ sampleCycles, intervalMs }) {
+export function buildEnginePrepareRequest({ sampleCycles, intervalMs, selectedPids }) {
   const opts = clampEngineOptions(sampleCycles, intervalMs);
   return {
     action: "prepare",
@@ -42,6 +45,7 @@ export function buildEnginePrepareRequest({ sampleCycles, intervalMs }) {
     sessionTask: "engine",
     sampleCycles: opts.sampleCycles,
     intervalMs: opts.intervalMs,
+    ...(selectedPids === undefined ? {} : { selectedPids }),
   };
 }
 
@@ -59,6 +63,7 @@ export function buildEngineStartRequest({
   x431Inactive,
   sampleCycles,
   intervalMs,
+  selectedPids,
 }) {
   const opts = clampEngineOptions(sampleCycles, intervalMs);
   if (mode === "live") {
@@ -74,6 +79,7 @@ export function buildEngineStartRequest({
       x431Inactive: true,
       sampleCycles: opts.sampleCycles,
       intervalMs: opts.intervalMs,
+      ...(selectedPids === undefined ? {} : { selectedPids }),
     };
   }
   return {
@@ -84,6 +90,7 @@ export function buildEngineStartRequest({
     scenario,
     sampleCycles: opts.sampleCycles,
     intervalMs: opts.intervalMs,
+    ...(selectedPids === undefined ? {} : { selectedPids }),
   };
 }
 

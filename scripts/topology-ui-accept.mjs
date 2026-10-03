@@ -45,6 +45,19 @@ function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+  async function assertMapFits(surface, tag) {
+    await surface.evaluate((label) => {
+      const panel = document.querySelector(".topo-map-panel");
+      const map = document.querySelector("[data-testid='topo-diagram']");
+      if (panel.scrollWidth > panel.clientWidth + 1 || map.scrollWidth > map.clientWidth + 1) throw new Error(label + " horizontal map overflow");
+      const bounds = panel.getBoundingClientRect();
+      for (const chip of map.querySelectorAll(".topo-chip")) {
+        const b = chip.getBoundingClientRect();
+        if (b.left < bounds.left || b.right > bounds.right || chip.scrollWidth > chip.clientWidth + 1) throw new Error(label + " clipped node " + chip.textContent);
+      }
+    }, tag);
+  }
+
 function waitHttp(url, tries = 80) {
   return new Promise(async (resolve, reject) => {
     for (let i = 0; i < tries; i++) {
@@ -116,6 +129,7 @@ try {
   if (await page.locator("[data-testid='topo-mode']").count()) throw new Error("mode visible");
   if (await page.locator("[data-testid='topo-scenario']").count()) throw new Error("scenario visible");
   if (await page.locator("[data-testid='topo-scan-adapted']").count()) throw new Error("old scan visible");
+  if (await page.locator("[data-testid='topo-overview']").count()) throw new Error("removed vehicle heading visible");
   if ((await page.textContent("body")).includes("未连接")) throw new Error("hard-coded unconnected");
 
   const headerIdle = await page.textContent("[data-testid='obd-task-status']");
@@ -143,14 +157,28 @@ try {
     }, tag);
   }
   await assertSwitchAboveDetail("wide");
+  await assertMapFits(page, "wide");
   await page.screenshot({ path: path.join(shotDir, "topology-diagram.png"), fullPage: true });
   await page.setViewportSize({ width: 900, height: 1000 });
   await sleep(200);
   await assertSwitchAboveDetail("narrow");
+  await assertMapFits(page, "narrow");
   await page.screenshot({ path: path.join(shotDir, "topology-diagram-narrow.png"), fullPage: true });
+  for (const width of [1100, 800, 700, 600]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await assertMapFits(page, `width ${width}`);
+  }
   await page.setViewportSize({ width: 1440, height: 1000 });
 
   const dmeKind = await page.getAttribute("[data-testid='topo-node-dme']", "data-kind");
+  const gwActions = await page.locator("[data-testid='topo-detail'] button").allTextContents();
+  if (JSON.stringify(gwActions) !== JSON.stringify(["读取所有单元故障码", "清除所有单元故障码"])) throw new Error(`GW actions ${gwActions}`);
+  if (await page.locator("[data-testid='topo-detail'] dl").count()) throw new Error("GW detail fields still visible");
+  if (!(await page.textContent("[data-testid='topo-detail'] h3")).includes("GW")) throw new Error("GW module name missing");
+  const removedNotes = ["仅读取 GW、DME 的身份与故障码；其他系统跳过。", "此模块尚未接入车辆诊断，可先查看离线资料。"];
+  const documentBody = await page.textContent("body");
+  if (removedNotes.some((note) => (documentBody || "").includes(note))) throw new Error("removed topology note visible");
+  if ((await page.getAttribute("[data-testid='topo-node-shaker']", "data-reference")) !== "1") throw new Error("982 reference missing");
   if (dmeKind !== "unscanned") throw new Error(`dme default ${dmeKind}`);
   const pdkText = await page.locator("[data-testid='topo-node-pdk'] .sub").first().textContent();
   if (!pdkText.includes("待适配")) throw new Error(`pdk ${pdkText}`);
@@ -158,12 +186,10 @@ try {
   const startsBeforeVisit = await page.evaluate(
     () => (window.__FAKE_SESSION_CALLS__ || []).filter((c) => c && c.action === "start").length,
   );
-  await page.click("[data-testid='topo-obd']");
-  const obdDetail = await page.textContent("[data-testid='topo-detail']");
-  if (!obdDetail.includes("X001") || !obdDetail.includes("A010")) throw new Error(`obd detail ${obdDetail}`);
+  if (await page.locator("[data-testid='topo-obd']").count()) throw new Error("removed OBD node still visible");
   await page.locator("[data-testid='topo-node-dme']").first().click();
   const detail = await page.textContent("[data-testid='topo-detail']");
-  if (!detail.includes("读取故障码") || !detail.includes("清除此系统故障码") || !detail.includes("DME")) {
+  if (!detail.includes("实时数据") || !detail.includes("读取故障码") || !detail.includes("清除故障码") || !detail.includes("DME")) {
     throw new Error(`detail ${detail}`);
   }
   if (detail.includes("porsche-981-2014-dme") || detail.includes("981.pdf") || detail.includes("会话档案")) {
@@ -183,25 +209,17 @@ try {
   await page.click("[data-testid='topo-view-diagram']");
   await page.waitForSelector("[data-testid='topo-diagram']");
 
-  await page.evaluate(() => {
-    window.__TOPO_REQUIRE_CONFIRM__ = true;
-  });
-  const startsBeforeConfirm = await page.evaluate(
+  const startsBeforeRead = await page.evaluate(
     () => (window.__FAKE_SESSION_CALLS__ || []).filter((c) => c && c.action === "start").length,
   );
+  await page.click("[data-testid='topo-read-selected']");
+  if (await page.locator("[data-testid='topo-confirm']").count() || await page.locator("[data-testid='topo-cancel']").count()) throw new Error("read confirmation/cancel still visible");
+  await page.waitForFunction(() => document.querySelector("[data-testid='topo-node-dme']")?.getAttribute("data-kind") === "dtc-present");
+  await page.waitForFunction(() => !document.querySelector("[data-testid='topo-read-selected']").disabled);
+  const startsAfterRead = await page.evaluate(() => window.__FAKE_SESSION_CALLS__.filter((c) => c.action === "start").length);
+  if (startsAfterRead - startsBeforeRead !== 1) throw new Error("single click did not execute exactly one read");
+  await page.locator("[data-testid='topo-node-gateway']").first().click();
   await page.click("[data-testid='topo-read-all']");
-  await page.waitForSelector("[data-testid='topo-confirm']");
-  let starts = await page.evaluate(
-    () => (window.__FAKE_SESSION_CALLS__ || []).filter((c) => c && c.action === "start").length,
-  );
-  if (starts !== startsBeforeConfirm) throw new Error("start before confirm");
-  await page.click("[data-testid='topo-confirm-cancel']");
-  starts = await page.evaluate(
-    () => (window.__FAKE_SESSION_CALLS__ || []).filter((c) => c && c.action === "start").length,
-  );
-  if (starts !== startsBeforeConfirm) throw new Error("confirm cancel started");
-  await page.click("[data-testid='topo-read-all']");
-  await page.click("[data-testid='topo-confirm-go']");
   await page.waitForFunction(() => {
     const dme = document.querySelector("[data-testid='topo-node-dme']");
     const gw = document.querySelector("[data-testid='topo-node-gateway']");
@@ -213,26 +231,36 @@ try {
   if (!readReq || readReq.confirmedReadOnly !== true || readReq.x431Inactive !== true || readReq.confirmedClearDtc === true) {
     throw new Error(`read flags ${JSON.stringify(readReq)}`);
   }
+  await page.waitForFunction(() => !document.querySelector("[data-testid='topo-read-all']").disabled);
+  const batchCalls = () => page.evaluate(() => window.__FAKE_SESSION_CALLS__.filter((c) => c.action === "start"));
+  const beforeBatchClear = await batchCalls();
+  await page.click("[data-testid='topo-clear-all']");
+  if (await page.locator("[data-testid='topo-confirm']").count() || await page.locator("[data-testid='topo-cancel']").count()) throw new Error("clear confirmation/cancel still visible");
+  await page.waitForFunction(() => !document.querySelector("[data-testid='topo-clear-all']").disabled && document.querySelector("[data-testid='topo-progress']")?.textContent.includes("成功 2"));
+  const batchClear = (await batchCalls()).slice(beforeBatchClear.length);
+  if (batchClear.length !== 2 || batchClear[0].profileId !== "porsche-981-2014-gateway" || batchClear[1].profileId !== "porsche-981-2014-dme" || batchClear.some((c) => c.sessionTask !== "clear" || c.confirmedClearDtc !== true || c.confirmedReadOnly === true || c.x431Inactive !== true)) throw new Error(`batch clear sequence/flags ${JSON.stringify(batchClear)}`);
+  await page.evaluate(() => { window.__TOPO_SCENARIO__ = "disconnect"; });
+  const beforeBatchFailure = (await batchCalls()).length;
+  await page.click("[data-testid='topo-clear-all']");
+  await page.waitForFunction(() => !document.querySelector("[data-testid='topo-clear-all']").disabled && document.querySelector("[data-testid='topo-progress']")?.textContent.includes("失败 1"));
+  if ((await batchCalls()).length - beforeBatchFailure !== 1 || !(await page.textContent("[data-testid='topo-progress']")).includes("未处理 1")) throw new Error("failed batch continued to next ECU");
+  await page.evaluate(() => { window.__TOPO_SCENARIO__ = "success"; });
+  await page.click("[data-testid='topo-read-all']");
+  await page.waitForFunction(() => !document.querySelector("[data-testid='topo-read-all']").disabled);
   await page.locator("[data-testid='topo-node-dme']").first().click();
+  const clearCountBeforeRequest = (await batchCalls()).filter((c) => c.sessionTask === "clear").length;
   await page.click("[data-testid='topo-clear-selected']");
-  await page.waitForSelector("[data-testid='topo-confirm']");
-  const beforeClear = await page.evaluate(
-    () => (window.__FAKE_SESSION_CALLS__ || []).filter((c) => c && c.action === "start" && c.sessionTask === "clear").length,
-  );
-  if (beforeClear !== 0) throw new Error("clear start before confirm");
-  await page.click("[data-testid='topo-confirm-go']");
+  if (await page.locator("[data-testid='topo-confirm']").count()) throw new Error("single clear confirmation still visible");
   await page.waitForFunction(() => document.querySelector("[data-testid='topo-node-dme']")?.getAttribute("data-kind") === "no-dtc");
+  if ((await batchCalls()).filter((c) => c.sessionTask === "clear").length - clearCountBeforeRequest !== 1) throw new Error("single clear did not execute exactly once");
   const clearFlag = await page.evaluate(
     () => (window.__FAKE_SESSION_CALLS__ || []).find((c) => c && c.action === "start" && c.sessionTask === "clear"),
   );
   if (!clearFlag || clearFlag.confirmedClearDtc !== true || clearFlag.confirmedReadOnly === true || clearFlag.x431Inactive !== true) {
     throw new Error(`clear flags ${JSON.stringify(clearFlag)}`);
   }
-  await page.evaluate(() => {
-    window.__TOPO_REQUIRE_CONFIRM__ = false;
-  });
 
-  await page.click("[data-testid='topo-read-all']");
+  await page.click("[data-testid='topo-read-selected']");
   await page.waitForFunction(() => {
     const dme = document.querySelector("[data-testid='topo-node-dme']");
     const gw = document.querySelector("[data-testid='topo-node-gateway']");
@@ -251,7 +279,7 @@ try {
   const readStarts = await page.evaluate(
     () => (window.__FAKE_SESSION_CALLS__ || []).filter((c) => c && c.action === "start" && c.sessionTask !== "clear").length,
   );
-  if (readStarts < 4) throw new Error(`read starts ${readStarts}`);
+  if (readStarts < 3) throw new Error(`read starts ${readStarts}`);
 
   await page.evaluate(() => {
     window.__TOPO_SCENARIO__ = "disconnect";
@@ -270,14 +298,16 @@ try {
     window.__TOPO_SCENARIO__ = "success";
   });
 
-  await page.click("[data-obd-tab='faults']");
+  await page.click("[data-obd-tab='live']");
   const headerOther = await page.textContent("[data-testid='obd-task-status']");
   if (!headerOther.includes("空闲") && !headerOther.includes("运行中") && !headerOther.includes("离线")) {
     throw new Error(`header other tab ${headerOther}`);
   }
   await page.click("[data-obd-tab='topology']");
 
-  await page.click("[data-testid='topo-clear-all']");
+  if (await page.locator("[data-testid='topo-clear-all']").count()) throw new Error("batch clear visible outside GW");
+  await page.locator("[data-testid='topo-node-dme']").first().click();
+  await page.click("[data-testid='topo-clear-selected']");
   await page.waitForFunction(() => {
     const dme = document.querySelector("[data-testid='topo-node-dme']");
     return dme?.getAttribute("data-kind") === "no-dtc";
@@ -293,7 +323,7 @@ try {
 
   await page.locator("[data-testid='topo-node-pdk']").first().click();
   const pdkDetail = await page.textContent("[data-testid='topo-detail']");
-  if (!pdkDetail.includes("待适配")) throw new Error(`pdk detail ${pdkDetail}`);
+  if (!pdkDetail.includes("PDK") || !(await page.isDisabled("[data-testid='topo-read-selected']"))) throw new Error(`pdk detail/actions ${pdkDetail}`);
   const pdkCalls = await page.evaluate(
     () => (window.__FAKE_SESSION_CALLS__ || []).filter((c) => c && c.action === "start").length,
   );
@@ -302,6 +332,33 @@ try {
     () => (window.__FAKE_SESSION_CALLS__ || []).filter((c) => c && c.action === "start").length,
   );
   if (pdkCallsAfter !== pdkCalls) throw new Error("unsupported node sent");
+
+  await page.evaluate(() => {
+    window.porsche981.obdConnection = async () => ({ ok: true, model: "VNCI", connected: false,
+      executionEnabled: false, liveVerified: false, writePayload: null });
+  });
+  await page.locator("[data-testid='topo-node-dme']").first().click();
+  await page.waitForFunction(() => document.querySelector("[data-testid='topo-clear-selected']")?.disabled);
+  if (!(await page.isDisabled("[data-testid='topo-clear-selected']"))) throw new Error("VNCI clear enabled");
+  if (await page.isDisabled("[data-testid='topo-read-selected']")) throw new Error("VNCI named read disabled");
+  await page.locator("[data-testid='topo-node-gateway']").first().click();
+  if (!(await page.isDisabled("[data-testid='topo-clear-all']")) || await page.isDisabled("[data-testid='topo-read-all']")) throw new Error("VNCI batch gate incorrect");
+  await page.locator("[data-testid='topo-node-dme']").first().click();
+  await page.evaluate(() => {
+    window.porsche981.obdConnection = async () => ({ ok: true, model: "vLinker", connected: false,
+      executionEnabled: false, liveVerified: false, writePayload: null });
+  });
+  await page.waitForFunction(() => !document.querySelector("[data-testid='topo-clear-selected']").disabled);
+
+  await page.evaluate(() => { window.__TOPO_SCENARIO__ = "slow"; window.__TOPO_DELAY_START_MS__ = 1800; });
+  const beforeBatchRead = await page.evaluate(() => window.__FAKE_SESSION_CALLS__.filter((c) => c.action === "start").length);
+  await page.locator("[data-testid='topo-node-gateway']").first().click();
+  await page.click("[data-testid='topo-read-all']");
+  await page.waitForFunction(() => document.querySelector("[data-testid='topo-read-all']")?.disabled);
+  if (await page.locator("[data-testid='topo-confirm']").count() || await page.locator("[data-testid='topo-cancel']").count()) throw new Error("batch read confirmation/cancel still visible");
+  await page.waitForFunction(() => !document.querySelector("[data-testid='topo-read-all']").disabled);
+  const afterBatchRead = await page.evaluate(() => window.__FAKE_SESSION_CALLS__.filter((c) => c.action === "start").length);
+  if (afterBatchRead - beforeBatchRead !== 2 || !(await page.textContent("[data-testid='topo-progress']")).includes("成功 2")) throw new Error("batch read did not finish both units");
 
   await page.evaluate(() => {
     window.__TOPO_SCENARIO__ = "slow";
@@ -318,7 +375,7 @@ try {
     () => (window.__FAKE_SESSION_CALLS__ || []).filter((c) => c && c.action === "start").length,
   );
   if (startsDuring - startsBeforeDup !== 1) throw new Error(`duplicate-click starts ${startsDuring - startsBeforeDup}`);
-  await page.click("[data-obd-tab='session']");
+  if (!(await page.isDisabled("[data-obd-tab='connection']"))) throw new Error("connection tab enabled during topology capture");
   const runningAcross = await page.getAttribute("[data-testid='obd-task-status']", "data-state");
   if (runningAcross !== "running") throw new Error(`running lost across tabs ${runningAcross}`);
   await page.click("[data-obd-tab='topology']");
@@ -426,8 +483,16 @@ try {
       if (!fs.statSync(path.join(shotDir, name)).size) throw new Error("empty screenshot " + name);
     }
     await shot("topology-electron.png");
+    await assertMapFits(win, "electron wide");
     await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setSize(900, 1000));
     await shot("topology-electron-narrow.png");
+    await assertMapFits(win, "electron narrow");
+    for (const width of [1100, 800, 700, 600]) {
+      await app.evaluate(({ BrowserWindow }, w) => BrowserWindow.getAllWindows()[0].setSize(w, 1000), width);
+      await win.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+      await assertMapFits(win, `electron width ${width}`);
+    }
+    await shot("topology-electron-compact.png");
     await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setSize(1440, 1200));
     const header = await win.textContent("[data-testid='obd-task-status']");
     if (!header || !/空闲|运行中|离线/.test(header)) throw new Error(`electron header ${header}`);

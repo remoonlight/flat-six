@@ -1,4 +1,4 @@
-/** Topology node status + sequential read-only scan. No ECU write. */
+/** Topology status and qualified read / separately confirmed clear queues. */
 
 export const ADAPTED_PROFILES = Object.freeze([
   "porsche-981-2014-gateway",
@@ -76,13 +76,21 @@ export function combinedGeneration(seed) {
     const byId = new Map();
     for (const n of bb?.nodes || []) byId.set(n.id, n);
     for (const n of ba?.nodes || []) byId.set(n.id, pickNode(n, byId.get(n.id)));
+    for (const [nodeId, n] of byId) {
+      byId.set(nodeId, { ...n, sourceGenerations: [
+        ...(ba?.nodes?.some((x) => x.id === nodeId) ? ["981"] : []),
+        ...(bb?.nodes?.some((x) => x.id === nodeId) ? ["982"] : []),
+      ] });
+    }
     const base = ba || bb;
     return { ...base, id, nodes: [...byId.values()] };
   });
   return {
     id: "combined",
     diagnostic: a.diagnostic || b.diagnostic,
-    gateway: a.gateway || b.gateway,
+    gateway: a.gateway || b.gateway ? { ...(a.gateway || b.gateway), sourceGenerations: [
+      ...(a.gateway ? ["981"] : []), ...(b.gateway ? ["982"] : []),
+    ] } : null,
     branches,
   };
 }
@@ -346,8 +354,8 @@ export function dtcBadgeCount(entry) {
 function countSnapshot(entry) {
   if (!entry || typeof entry.dtcCount !== "number") return null;
   if (entry.dtcCount === 0 && entry.kind !== KIND.noDtc && !entry.stale) return null;
-  if (entry.kind === KIND.noDtc && !entry.stale) return { dtcCount: 0, records: entry.records || [] };
-  return { dtcCount: entry.dtcCount, records: entry.records };
+  return { dtcCount: entry.dtcCount, records: entry.records || [], capturedUtc: entry.capturedUtc,
+    dtcSimulated: entry.dtcSimulated ?? entry.simulated };
 }
 
 export function preClearSnapshot(final) {
@@ -369,6 +377,8 @@ function asStale(next, snap) {
     ...next,
     dtcCount: snap.dtcCount,
     records: snap.records,
+    capturedUtc: snap.capturedUtc,
+    dtcSimulated: snap.dtcSimulated,
     stale: true,
     retainedDtc: true,
     dtcSource: "上次读取",

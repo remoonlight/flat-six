@@ -1,5 +1,7 @@
 # 实时 OBD：统一故障库与数据分析需求
 
+> 历史/设计资料（2026-10-02 标注）：旧阶段交互细则；与当前菜单冲突的条目保留作沿革，当前需求以 requirements 的更新条目为准。 当前状态见 [progress.md](progress.md) 与 [OBD_STATUS.md](../OBD_STATUS.md)，操作边界见 [ADR 001](adr/001-no-ecu-write.md)。
+
 更新：2026-09-13。权威需求：[requirements.md](requirements.md) §R5.1。当前实现与验收：[实时 OBD 说明](obd-live-guide.md)。资料种子：[data/seed/obd/README.md](../data/seed/obd/README.md)。
 
 本文是页面与资料整理的**确认规则**，不是第二份 当前进度记录。软件完成度、测试计数以 live guide 为准。原始维修手册位于 `Z:\porsche\981`。

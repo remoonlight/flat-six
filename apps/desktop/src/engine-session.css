@@ -31,7 +31,7 @@
 
 .eng-pids {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
   gap: 8px;
   margin: 0;
   padding: 0;
@@ -39,6 +39,7 @@
 }
 
 .eng-pid {
+  min-width: 0;
   border: 1px solid var(--line, #333);
   border-radius: 8px;
   padding: 8px 10px;
@@ -56,6 +57,7 @@
 }
 
 .eng-pid time {
+  overflow-wrap: anywhere;
   display: block;
   font-size: 11px;
   color: var(--muted, #888);
@@ -92,3 +94,44 @@
 .eng-pid[data-stale="1"] dd {
   color: var(--muted, #5c5c5c);
 }
+
+.eng-unit-select { max-width: 460px; }
+.eng-unit-select select { width: 100%; min-width: 0; }
+.eng-section-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.eng-section-head h3 { margin: 0; }
+.eng-section-head > span { color: var(--muted); font-size: 13px; }
+.eng-parameters { display: flex; flex-direction: column; gap: 0; }
+.eng label.eng-parameter { flex-direction: row; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; min-height: 36px; }
+.eng-parameter > span { min-width: 0; flex: 1; }
+.eng-parameter small { margin-left: auto; color: var(--muted); }
+.eng-parameter:has(input:checked) { background: var(--bg); }
+.eng-parameter input[type="checkbox"] { width: 16px; min-width: 0; height: 16px; padding: 0; margin: 0; flex: 0 0 16px; }
+.eng-selection-actions, .eng-display-modes { display: flex; flex-wrap: wrap; gap: 8px; }
+.eng-selection-actions { margin-top: 12px; }
+.eng-display-modes button[aria-pressed="true"] { color: var(--accent, #6b1c1c); border-color: currentColor; }
+.eng-pid dl { margin: 0; }
+.eng-view-text { grid-template-columns: 1fr; }
+.eng-view-text .eng-pid dl { display: grid; grid-template-columns: minmax(0, 1fr) minmax(100px, 1fr); align-items: center; gap: 4px 12px; }
+.eng-view-text .eng-pid dd { margin: 0; }
+.eng-view-text .eng-pid time { grid-column: 1 / -1; }
+.eng-chart { width: 100%; display: block; margin-top: 12px; overflow: visible; }
+.eng-chart text { fill: var(--muted, #666); font-size: 11px; }
+.eng-chart-grid { stroke: var(--line, #ddd); stroke-width: 1; }
+.eng-chart-line { fill: none; stroke: #2877bc; stroke-width: 2; }
+.eng-chart-point { fill: #2877bc; }
+.eng-chart-empty { padding: 32px 0; text-align: center; }
+.eng .offline-realtime label.eng-parameter { display: grid; grid-template-columns: 16px minmax(0, 1fr) 42px 78px; gap: 10px; padding: 8px 10px; min-height: 36px; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; color: var(--ink); }
+.offline-realtime { margin-top: 16px; }
+.offline-realtime .offline-parameter-name { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.offline-realtime .eng-parameter > small { margin-left: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.offline-realtime .offline-parameter-unit { text-align: right; }
+.offline-realtime .eng-parameters { display: flex; flex-direction: column; gap: 0; max-height: 360px; overflow-y: auto; overscroll-behavior: contain; border: 1px solid var(--line); border-radius: 6px; }
+.offline-realtime .eng-parameter:last-child { border-bottom: 0; }
+.offline-filter-row { margin-top: 12px; }
+.offline-filter-row label { min-width: 0; flex: 1 1 160px; }
+.offline-filter-row select, .offline-filter-row input { min-width: 0; max-width: 100%; }
+@media (max-width: 620px) { .eng .offline-realtime label.eng-parameter { grid-template-columns: 16px minmax(0, 1fr) 30px 68px; gap: 6px; padding: 8px 6px; font-size: 12px; } }
+.offline-selected { display: flex; gap: 6px; flex-wrap: wrap; margin: 12px 0; }
+.offline-selected button { max-width: 100%; overflow-wrap: anywhere; text-align: left; }
+.offline-realtime .eng-unit-select select { max-width: 100%; }
+.offline-realtime .eng-section-head { flex-wrap: wrap; gap: 12px; }

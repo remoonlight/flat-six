@@ -111,16 +111,15 @@ data/seed/     随仓库提供的种子数据
 
 ## 文档
 
-- [需求说明](docs/requirements.md)
-- [架构决策记录](docs/adr/)
+- [文档总入口与职责](docs/README.md)
+- [当前交付状态](docs/progress.md) · [OBD 结果与剩余验收](OBD_STATUS.md)
+- [收敛审查与质疑](docs/convergence-review.md)
 - [许可证](LICENSE)
+
+`docs/` 的需求、ADR、当前进度和使用说明按白名单纳入版本管理；私人设备记录、原始资料与历史日志继续本地保存。历史迁入记录从文档总入口查阅。
 
 ## 许可证与第三方材料
 
 本分支基于上游 fork [dmitry-grechko/flat-six](https://github.com/dmitry-grechko/flat-six)（MIT）。本分支原创代码采用 [PolyForm Noncommercial 1.0.0](LICENSE)，仅限非商业用途。
 
 DTC、teile / Design911、X431 导出资料，以及 flat-six、PETKA、游戏和其他第三方 3D 资产，可能各有独立来源与使用条件；它们不因本分支许可证而获得额外授权。
-
-## 2026-09-13 文档交接
-
-已接收来源分支的 OBD 文档与研究资料，入口见 [docs/README.md](docs/README.md)。本次只迁移文档，来源端所述功能、测试结果和旧会话授权不代表本机现状；本机 macOS 开发说明与 ADR 001 只读规则保留。版本冲突与缺项详见本机 `.local/handoff-20260913/IMPORT-REPORT.md`。

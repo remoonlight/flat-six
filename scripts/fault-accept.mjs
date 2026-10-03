@@ -80,7 +80,7 @@ console.log(
   `mapped ${withSku} sku→hotspot; ${locateOk} resolvable onto locator map`,
 );
 
-// Manual logic self-check (mirrors DiagnosticsPage enable rule)
+// Manual fault-ledger validation: the retired page is no longer an entrypoint
 const selfChecks = [
   ["coil-pack", true],
   ["brake-fluid", true],
