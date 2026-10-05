@@ -1,5 +1,6 @@
 """Synthetic native events; no vendor DLL, USB, network or ECU access."""
 import io
+import hashlib
 import json
 import tempfile
 import threading
@@ -13,7 +14,7 @@ from scripts.diagnostics.connection import enumerate_devices, resolve_port, vali
 from scripts.diagnostics.elm import ElmError, parse_ath1_response
 from scripts.diagnostics.session_simulator import catalog_success_map
 from scripts.diagnostics.sessions import run_session
-from scripts.diagnostics.vnci import DpuClient, UNDEF, discover, module_device, require_matching_firmware, run_monitor
+from scripts.diagnostics.vnci import DpuClient, NativeDpu, UNDEF, discover, module_device, require_matching_firmware, run_monitor, vendor_root, verify_vendor_files
 
 ID = "vnci:10001"
 MODULE = {"type": 14, "handle": 123, "status": 0x8063,
@@ -70,6 +71,42 @@ def configured(native=None):
 
 
 class VnciTests(unittest.TestCase):
+    def test_incomplete_or_drifted_support_stops_before_native_library_load(self):
+        with tempfile.TemporaryDirectory() as scratch:
+            root = Path(scratch)
+            dll = root / 'PDUAPI_VW.dll'
+            dll.write_bytes(b'qualified-library-fixture')
+            expected = hashlib.sha256(dll.read_bytes()).hexdigest()
+            support = root / 'VAS6154' / 'config.para'
+            support.parent.mkdir()
+            original = b'qualified-support-fixture'
+            manifest = {'VAS6154/config.para': hashlib.sha256(original).hexdigest()}
+            with patch('scripts.diagnostics.vnci.LIBRARY_SHA256', expected), \
+                    patch('scripts.diagnostics.vnci.SUPPORT_SHA256', manifest), \
+                    patch('scripts.diagnostics.vnci.sys.platform', 'win32'), \
+                    patch('scripts.diagnostics.vnci.c.WinDLL', create=True) as loader:
+                with self.assertRaisesRegex(ElmError, 'driver-support-missing'):
+                    NativeDpu(root)
+                support.write_bytes(b'wrong-version')
+                with self.assertRaisesRegex(ElmError, 'driver-support-not-qualified'):
+                    NativeDpu(root)
+                loader.assert_not_called()
+                support.write_bytes(original)
+                verify_vendor_files(root)
+                dll.write_bytes(b'wrong-library')
+                with self.assertRaisesRegex(ElmError, 'driver-version-not-qualified'):
+                    verify_vendor_files(root)
+
+    def test_vendor_root_follows_installed_library_or_explicit_host_configuration(self):
+        relative = Path('.local/vnci-support/vendor/VW_PDUAPI_OS')
+        self.assertEqual(vendor_root({}), Path(__file__).resolve().parents[3] / relative)
+        with tempfile.TemporaryDirectory() as scratch:
+            library = Path(scratch) / 'user data' / 'diagnostic-library'
+            explicit = Path(scratch) / 'private driver'
+            self.assertEqual(vendor_root({'PORSCHE981_DEFINITION_ROOT': str(library)}), library / relative)
+            self.assertEqual(vendor_root({'PORSCHE981_DEFINITION_ROOT': str(library),
+                                         'PORSCHE981_VNCI_ROOT': str(explicit)}), explicit.resolve())
+
     def test_discovery_reports_cleanup_failure(self):
         native = FakeNative()
         native.close_errors = ['destruct failed']
@@ -80,6 +117,16 @@ class VnciTests(unittest.TestCase):
                 discover()
         self.assertEqual(native.closed, 1)
         self.assertEqual(native.connected, [])
+        self.assertEqual(native.sent, [])
+
+    def test_zero_voltage_retains_native_reading_without_claiming_vehicle_power(self):
+        native = FakeNative(voltage=0)
+        client = DpuClient(ID, native=native)
+        self.assertIsNone(client.validate_adapter()['volts'])
+        self.assertEqual(client.raw_log[-1]['reportedVolts'], 0)
+        self.assertIsNone(client.raw_log[-1]['volts'])
+        client.close_restore()
+        self.assertEqual(native.connected, [123])
         self.assertEqual(native.sent, [])
 
     def test_firmware_check_rejects_version_drift_and_external_addresses(self):
@@ -138,12 +185,62 @@ class VnciTests(unittest.TestCase):
         out = io.StringIO()
         rc = run_monitor(ID, stdout=out, max_samples=1,
                          client_factory=lambda did, **kw: DpuClient(did, native=native, **kw))
-        self.assertEqual(rc, 1)
+        self.assertEqual(rc, 0)
         events = [json.loads(line) for line in out.getvalue().splitlines()]
-        self.assertEqual(events[0]['error'], 'vnci-obd-unpowered-or-invalid-voltage')
+        self.assertEqual(events[0]['type'], 'handshake')
+        self.assertIsNone(events[0]['volts'])
+        self.assertTrue(events[0]['commOk'])
         self.assertEqual(native.links, [])
         self.assertEqual(native.sent, [])
         self.assertEqual(native.closed, 1)
+
+    def test_voltage_loss_and_return_do_not_disconnect_adapter(self):
+        native = FakeNative()
+        samples = iter((12.6, 0, 12.7))
+        native.voltage = lambda: next(samples)
+        stop = threading.Event()
+        out = io.StringIO()
+        with patch.object(stop, 'wait', return_value=False):
+            rc = run_monitor(ID, stdout=out, max_samples=3, stop_event=stop,
+                             client_factory=lambda did, **kw: DpuClient(did, native=native, **kw))
+        events = [json.loads(line) for line in out.getvalue().splitlines()]
+        self.assertEqual(rc, 0)
+        self.assertEqual([event['volts'] for event in events[:-1]], [12.6, None, 12.7])
+        self.assertTrue(all(event['commOk'] for event in events[:-1]))
+        self.assertEqual(native.connected, [123])
+        self.assertEqual(native.sent, [])
+        self.assertEqual(native.links, [])
+        self.assertEqual(native.closed, 1)
+
+    def test_invalid_voltage_never_becomes_a_numeric_sample(self):
+        for volts in (None, -1, 5.9, 20.1, float('nan'), float('inf'), True):
+            with self.subTest(volts=volts):
+                native = FakeNative(voltage=volts)
+                client = DpuClient(ID, native=native)
+                adapter = client.validate_adapter()
+                self.assertIsNone(adapter['volts'])
+                self.assertTrue(adapter['commOk'])
+                json.dumps(client.raw_log, allow_nan=False)
+                client.close_restore()
+
+    def test_native_voltage_io_failure_still_stops_and_releases(self):
+        native = FakeNative()
+        readings = iter((12.6, ElmError('d-pdu:PDUIoCtl:disconnected')))
+        def voltage():
+            value = next(readings)
+            if isinstance(value, Exception): raise value
+            return value
+        native.voltage = voltage
+        stop = threading.Event()
+        out = io.StringIO()
+        with patch.object(stop, 'wait', return_value=False):
+            rc = run_monitor(ID, stdout=out, max_samples=3, stop_event=stop,
+                             client_factory=lambda did, **kw: DpuClient(did, native=native, **kw))
+        events = [json.loads(line) for line in out.getvalue().splitlines()]
+        self.assertEqual(rc, 1)
+        self.assertEqual(events[1]['error'], 'd-pdu:PDUIoCtl:disconnected')
+        self.assertEqual(native.closed, 1)
+        self.assertEqual(native.sent, [])
 
     def test_no_coding_security_clear_or_unknown_pids_are_sent(self):
         client, native = configured()

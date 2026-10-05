@@ -11,6 +11,7 @@ import ctypes as c
 import hashlib
 import json
 import ipaddress
+import math
 import os
 import re
 import sys
@@ -29,11 +30,50 @@ PTR = c.c_void_p
 UNDEF = 0xFFFFFFFF
 ID_UNDEF = 0xFFFFFFFE
 DEVICE_RE = re.compile(r"^vnci:([0-9]{1,16})$")
-VENDOR_ROOT = Path(__file__).resolve().parents[2] / ".local/vnci-support/vendor/VW_PDUAPI_OS"
 ENGINE_READS = frozenset({"0100", "0104", "0105", "010C", "010D", "010F", "0111"})
 DRIVER_VERSION = "29.0.0"
 FIRMWARE_IMAGE = "29.0r00-14769-2964"
 LIBRARY_SHA256 = "d4cfdd2c2a8238d1a925be7425624ed916e791f26e237d1455908183984a326f"
+SUPPORT_SHA256 = {
+    'CDF_VW.xml': 'd2f8c936ff49e127a90ae6692e0240506d0af9cea24e10287cd2687ffd6eee4c',
+    'MDF_VW.xml': 'ce340ac78973fa59c866978acb7ab1e6bea63a1911bbdbaef4104ba1b240cd29',
+    'PDUAPI_VW.ini': 'd6928bd11e879282fa26b8ac2ceec697d0b562b52d85208b4ce18b4a01d574fa',
+    'RDFSetup.dll': 'd3d7147b215d9ed32ba61d81590ecfaa5875b77aa7fcd150a261532061d05385',
+    'VAS6154Locate_64.dll': '1a0ef0debcbdf5f6ca7ebaf65733c3f06b94dc8a5cd8c6453e5ff6e58d4ccf75',
+    'VAS6154/VAS6154-D-PDU_API-29.0.0.para': '8b32594e666457af91f7764d08bad74756e50e7125eb0361249bbe2a3591b33f',
+    'VAS6154/VAS6154-D-PDU_API-29.0.0.tgz': '31760389d887eabe1eb0351cff9a9fd5a3e984609b6e2c95f498e5969cda4696',
+    'VAS6154/VAS6154_29.0r00-14769-2964-20230801': 'baa1792fe84ba909e6cc1011b14962f9daa66406b15e0dfa1f869d346421bb68',
+}
+
+
+def vendor_root(env=None):
+    env = os.environ if env is None else env
+    if env.get('PORSCHE981_VNCI_ROOT'):
+        return Path(env['PORSCHE981_VNCI_ROOT']).expanduser().resolve()
+    base = Path(env.get('PORSCHE981_DEFINITION_ROOT') or Path(__file__).resolve().parents[2])
+    return base / '.local/vnci-support/vendor/VW_PDUAPI_OS'
+
+
+def verify_vendor_files(root):
+    # Local qualification pins the support files too: missing metadata can
+    # silently hide devices; drift must not let the vendor attempt an update.
+    for name, expected in {'PDUAPI_VW.dll': LIBRARY_SHA256, **SUPPORT_SHA256}.items():
+        try:
+            with (Path(root) / name).open('rb') as source:
+                actual = hashlib.file_digest(source, 'sha256').hexdigest()
+        except OSError:
+            raise ElmError('vnci-driver-missing' if name == 'PDUAPI_VW.dll'
+                           else 'vnci-driver-support-missing:' + name) from None
+        if actual != expected:
+            raise ElmError('vnci-driver-version-not-qualified' if name == 'PDUAPI_VW.dll'
+                           else 'vnci-driver-support-not-qualified:' + name)
+
+
+def _display_voltage(volts):
+    # A completed native response proves adapter communication independently
+    # of whether its OBD battery input has a usable voltage reading.
+    return volts if (isinstance(volts, (int, float)) and not isinstance(volts, bool)
+                     and math.isfinite(volts) and 6 <= volts <= 20) else None
 
 
 class Module(c.Structure):
@@ -146,14 +186,11 @@ def require_matching_firmware(address, *, fetch=None):
 
 class NativeDpu:
     """Small stdcall binding. Calls run in the existing bounded Python worker."""
-    def __init__(self, root=VENDOR_ROOT):
+    def __init__(self, root=None):
         if sys.platform != "win32" or c.sizeof(PTR) != 8:
             raise ElmError("vnci-requires-windows-x64-python")
-        root = Path(root).resolve()
-        if not (root / "PDUAPI_VW.dll").is_file():
-            raise ElmError("vnci-driver-missing")
-        if hashlib.sha256((root / "PDUAPI_VW.dll").read_bytes()).hexdigest() != LIBRARY_SHA256:
-            raise ElmError("vnci-driver-version-not-qualified")
+        root = Path(root if root is not None else vendor_root()).resolve()
+        verify_vendor_files(root)
         self._directory = os.add_dll_directory(str(root))
         self.dll = c.WinDLL(str(root / "PDUAPI_VW.dll"))
         self.module = None
@@ -362,7 +399,7 @@ class NativeDpu:
 
 
 def discover():
-    if sys.platform != "win32" or not (VENDOR_ROOT / "PDUAPI_VW.dll").is_file():
+    if sys.platform != "win32" or not (vendor_root() / "PDUAPI_VW.dll").is_file():
         return []
     native = NativeDpu()
     try:
@@ -408,11 +445,12 @@ class DpuClient:
         self.native.connect_module(row["handle"])
         self.identity = device
         volts = self.native.voltage()
-        self.raw_log.append({"kind": "adapter-voltage", "volts": volts, "source": "d-pdu-vbatt"})
-        if not 6 <= volts <= 20:
-            raise ElmError("vnci-obd-unpowered-or-invalid-voltage")
+        self.raw_log.append({"kind": "adapter-voltage", "volts": _display_voltage(volts),
+                             "reportedVolts": volts if isinstance(volts, (int, float))
+                             and not isinstance(volts, bool) and math.isfinite(volts) else None,
+                             "source": "d-pdu-vbatt", "commOk": True})
         return {"ati": "VNCI VAS6154A " + device["serial"], "atdpn": None,
-                "atrv": None, "volts": volts, "voltageSource": "d-pdu-vbatt",
+                "atrv": None, "volts": _display_voltage(volts), "voltageSource": "d-pdu-vbatt", "commOk": True,
                 "deviceId": self.device_id, "transport": "d-pdu-usb"}
 
     def configure_pair(self, tx_hex, rx_hex, deadline):
@@ -532,9 +570,8 @@ def run_monitor(device_id, *, stdout, stdin=None, stop_event=None, max_samples=N
             if stop.wait(2):
                 break
             volts = client.native.voltage()
-            if not 6 <= volts <= 20:
-                raise ElmError("vnci-obd-unpowered-or-invalid-voltage")
-            _emit(stdout, {**base, "ok": True, "type": "reading", "volts": volts, "at": _utc()})
+            _emit(stdout, {**base, "ok": True, "type": "reading", "volts": _display_voltage(volts),
+                           "commOk": True, "at": _utc()})
             count += 1
     except Exception as e:
         _emit(stdout, {**base, "ok": False, "type": "error", "error": str(e)})

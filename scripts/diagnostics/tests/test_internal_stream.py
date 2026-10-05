@@ -26,6 +26,8 @@ class TestInternalStream(unittest.TestCase):
         self.assertEqual(port.writes.count(b"\r"), 1)
         self.assertTrue(all(write == b"\r" or write.decode().strip() in ALLOWED for write in port.writes))
         self.assertTrue(all(doc.get("physicalSilenceVerified") is False and doc.get("ecuRequestsSent") == 0 for doc in docs))
+        self.assertTrue(all(type(doc["at"]) is int for doc in docs if doc.get("type") in ("handshake", "reading")),
+                        "millisecond stamps cannot lie fractionally ahead of JS Date.now in the same millisecond")
 
     def test_missing_adas_definition_never_opens_or_sends(self):
         output = io.StringIO()

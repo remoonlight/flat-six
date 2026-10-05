@@ -189,7 +189,6 @@ try {
   const exported = path.join(temp, "engine.json");
   await app.evaluate(({ dialog }, filename) => { dialog.showSaveDialog = async () => ({ canceled: false, filePath: filename }); }, exported);
   await page.getByTestId("eng-export").click();
-  await page.waitForFunction(async () => { await new Promise((r) => setTimeout(r, 100)); return true; });
   const deadline = Date.now() + 5000;
   while (!fs.existsSync(exported) && Date.now() < deadline) await new Promise((resolve) => setTimeout(resolve, 50));
   const saved = JSON.parse(fs.readFileSync(exported, "utf8"));

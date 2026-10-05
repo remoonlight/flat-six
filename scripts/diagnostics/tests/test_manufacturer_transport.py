@@ -3,7 +3,7 @@ import hashlib
 import threading
 import unittest
 
-from scripts.diagnostics.manufacturer_transport import transport_rehearsal, CATALOG_PROFILE
+from scripts.diagnostics.manufacturer_transport import transport_rehearsal, prepared_read_contract, CATALOG_PROFILE
 from scripts.diagnostics.session_simulator import SessionSimPort, ath1_prompt, isotp_ath1_lines
 from scripts.diagnostics.tests.test_manufacturer_acquisition import profile
 
@@ -21,6 +21,34 @@ def fixtures():
 
 
 class TransportTests(unittest.TestCase):
+    def test_contract_contains_explicit_session_identity_and_selected_groups(self):
+        p, _, _ = fixtures()
+        contract = prepared_read_contract(p, ['a' * 64, 'b' * 64])
+        self.assertEqual((contract['txId'], contract['rxId']), (0x7E0, 0x7E8))
+        self.assertEqual(contract['session']['requestHex'], '1089')
+        self.assertEqual(len(contract['groups']), 1)
+        self.assertEqual(len(contract['identityRequests']), 5)
+        self.assertFalse(contract['executionEnabled']); self.assertFalse(contract['liveVerified'])
+        self.assertEqual(contract, prepared_read_contract(p, ['a' * 64, 'b' * 64]))
+
+    def test_all_requests_and_spans_checked_before_open(self):
+        p, groups, _ = fixtures()
+        def forbidden(): raise AssertionError('port opened')
+        for hx in ('22F10000', '21A400', '2EF100', ''):
+            invalid = deepcopy(p); invalid['parameters'][1]['requestHex'] = hx
+            out = transport_rehearsal(invalid, ['a' * 64, 'b' * 64], groups, port_factory=forbidden)
+            self.assertFalse(out['ok']); self.assertEqual(out['samples'], [])
+        invalid = deepcopy(p); invalid['parameters'][1]['dataSpan']['dataMin'] = 100
+        out = transport_rehearsal(invalid, ['a' * 64, 'b' * 64], groups, port_factory=forbidden)
+        self.assertEqual(out['error'], 'manufacturer-field-span-mismatch')
+
+    def test_invalid_budget_never_opens_and_returns_structured_failure(self):
+        p, groups, _ = fixtures()
+        def forbidden(): raise AssertionError('port opened')
+        for budget in (float('nan'), float('inf'), True, 0, -1, 61, 'bad'):
+            out = transport_rehearsal(p, ['a' * 64], groups, budget_s=budget, port_factory=forbidden)
+            self.assertFalse(out['ok']); self.assertEqual(out['samples'], [])
+
     def run_case(self, modify=lambda _: None, **kwargs):
         p, groups, raw = fixtures()
         ports = []

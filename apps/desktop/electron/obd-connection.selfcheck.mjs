@@ -505,3 +505,61 @@ console.log("obd-connection selfcheck PASS: close-timeout quarantine, cadence, b
   await conn.shutdown();
 }
 console.log("obd-connection convergence checks PASS: settings, current devices, unknown voltage, truthful close, session disconnect");
+
+// Pipe reads can coalesce many valid JSON lines beyond the per-line bound.
+// Do not turn healthy buffered output into a timeout/reconnect.
+{
+  let child;
+  const events = [];
+  const conn = manager({ now: () => 1000, onMonitorEvent: (event) => events.push(event),
+    monitorSpawnFn: () => {
+      child = fakeChild();
+      child.stdin.on("data", (data) => {
+        if (String(data).includes('"stop"')) {
+          child.stdout.emit("data", Buffer.from('{"type":"stopped"}\n'));
+          child.exitCode = 0; child.emit("close", 0);
+        }
+      });
+      return child;
+    } });
+  await select(conn);
+  for (let cycle = 0; cycle < 14; cycle++) {
+    await conn.handle({ action: "connect" });
+    const burst = Buffer.from(hs().repeat(600));
+    assert.ok(burst.length > 65536);
+    child.stdout.emit("data", burst);
+    assert.equal(conn.snapshot().connected, true);
+    assert.equal(child.killed, undefined);
+    child.stderr.write(Buffer.alloc(100000, 120));
+    await conn.handle({ action: "disconnect" });
+    const closed = conn.snapshot().monitorDiagnostics.events.at(-1);
+    assert.equal(closed.type, "closed"); assert.equal(closed.stopReported, true);
+    assert.equal(closed.stderrBytes, 100000);
+    assert.equal(closed.lastAcceptedAt, 1000);
+    assert.equal(conn.gate.owner(), null);
+  }
+  assert.equal(conn.snapshot().monitorDiagnostics.starts, 14);
+  assert.equal(conn.snapshot().monitorDiagnostics.events.length, 32);
+  assert.ok(conn.snapshot().monitorDiagnostics.omittedEvents > 0);
+  assert.ok(events.length > 32, "optional audit receives every lifecycle event");
+  assert.equal(events.some((event) => event.type === "forced-kill"), false);
+  await conn.shutdown();
+}
+{
+  let child;
+  const conn = manager({ now: () => 1000, gracefulMs: 1, killWaitMs: 1,
+    monitorSpawnFn: () => { child = fakeChild(); return child; } });
+  await select(conn); await conn.handle({ action: "connect" });
+  child.stdout.emit("data", Buffer.from(hs()));
+  // A genuinely oversized UTF-8 line must still fail and retain the port lock.
+  child.stdout.emit("data", Buffer.from(JSON.stringify({ note: "测".repeat(25000) }) + "\n"));
+  assert.equal(conn.snapshot().connectionError, "output_cap");
+  assert.equal(conn.snapshot().connected, false);
+  assert.equal(child.killed, true); assert.ok(conn.gate.owner());
+  child.stdout.emit("data", Buffer.from(hs()));
+  assert.equal(conn.snapshot().connected, false, "late output cannot revive failed worker");
+  await conn.handle({ action: "disconnect" });
+  child.exitCode = 0; child.emit("close", 0);
+  await conn.shutdown();
+}
+console.log("obd-connection stream checks PASS: coalesced lines, UTF-8 byte cap, stderr drain, bounded lifecycle evidence");

@@ -12,7 +12,7 @@ from contextlib import redirect_stdout
 from pathlib import Path
 from unittest import mock
 
-from scripts.diagnostics.workbench import DEFAULT_VARIANTS, FLAGS, handle, main
+from scripts.diagnostics.workbench import DEFAULT_VARIANTS, FLAGS, handle, main, load_or_build_index
 from scripts.diagnostics.catalog import load_catalog, profile_by_id
 
 REPO = Path(__file__).resolve().parents[3]
@@ -81,6 +81,18 @@ def _with_fixture(fn):
 def _flags(d):
     for k, v in FLAGS.items():
         unittest.TestCase().assertEqual(d[k], v)
+
+
+class TestIndexProvenance(unittest.TestCase):
+    def test_changed_menu_mapping_invalidates_cache_without_variant_changes(self):
+        with tempfile.TemporaryDirectory() as temp:
+            variants = _fixture(Path(temp))
+            first = {'menu_ecus': [{'ecu_id': 1, 'dsn_modules': ['DME_BDE_Continental', 'DME_BDE_Continental']}]}
+            before = load_or_build_index(variants, first)
+            self.assertEqual(before['rows'][0]['ecuIds'], [1])
+            after = load_or_build_index(variants, {'menu_ecus': [{'ecu_id': 9, 'dsn_modules': ['DME_BDE_Continental']}]})
+            self.assertEqual(after['rows'][0]['ecuIds'], [9])
+            self.assertNotEqual(before['coverageSha256'], after['coverageSha256'])
 
 
 class TestNoSerial(unittest.TestCase):

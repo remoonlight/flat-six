@@ -552,6 +552,13 @@ def handle_ready(req, root=None):
             verify_source(groups_path, expected)
             return transport_rehearsal(profile, req.get('parameterIds'), load(groups_path))
         if req['action'] == 'ready-plan':
+            from .manufacturer_transport import DME_PROFILE, prepared_read_contract
+            if profile.get('profileId') == DME_PROFILE:
+                try:
+                    plan['preparedTransport'] = prepared_read_contract(profile, req.get('parameterIds'))
+                except ValueError as error:
+                    plan['preparedTransport'] = {'executionEnabled': False, 'liveVerified': False,
+                        'error': str(error)}
             return result(plan=plan)
         if req['action'] == 'ready-replay':
             selected = set(req['parameterIds'])

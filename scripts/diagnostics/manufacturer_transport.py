@@ -9,17 +9,58 @@ from __future__ import annotations
 import threading
 import time
 import json
+import hashlib
+import math
 
 from .catalog import load_catalog, operation, profile_by_id
 from .decode import decode_payload
 from .elm import ElmClient, ElmError
 from .manufacturer_acquisition import DME_PROFILE, acquire_cycle, historical_fixtures
 from .qualification import qualify_identity
-from .realtime_preparation import plan_for
+from .realtime_preparation import plan_for, record_from_parameter
+from .response_values import request_from_record, data_span
 from .session_simulator import SessionSimPort, ath1_prompt, isotp_ath1_lines
 from .sessions import IDENTITY_FIELDS, SESSION_BY_PROFILE
 
 CATALOG_PROFILE = 'porsche-981-2014-dme'
+
+
+def prepared_read_contract(profile, selected, catalog=None):
+    """Server-owned request/identity contract; does not grant hardware access."""
+    if (profile.get('profileId') != DME_PROFILE or profile.get('generation') != '981'
+            or profile.get('ecuIds') != [1] or profile.get('status') != 'identity-matched'):
+        raise ValueError('manufacturer-profile-unqualified')
+    plan = plan_for(profile, selected)
+    if plan['blocked']:
+        raise ValueError('manufacturer-definition-incomplete')
+    params = {p['id']: p for p in profile['parameters']}
+    for key in selected:
+        parameter = params[key]
+        record = parameter.get('record') or record_from_parameter(parameter)
+        parsed = request_from_record(record)
+        if (not parsed.get('ok') or parsed['sid'] not in (0x21, 0x22)
+                or parsed['request'].hex().upper() != parameter['requestHex']):
+            raise ValueError('manufacturer-request-unqualified')
+        span = data_span(record)
+        if not span or span != parameter.get('dataSpan'):
+            raise ValueError('manufacturer-field-span-mismatch')
+    named = profile_by_id(catalog or load_catalog(), CATALOG_PROFILE)
+    hx, positive = SESSION_BY_PROFILE[CATALOG_PROFILE]
+    identity = [dict(field=field, **operation(named, oid))
+                for field, oid in IDENTITY_FIELDS[CATALOG_PROFILE]]
+    contract = {'schemaVersion': 1, 'kind': 'prepared-manufacturer-read',
+        'profileId': profile['profileId'], 'catalogProfileId': CATALOG_PROFILE,
+        'generation': '981', 'ecuId': 1, 'txId': int(named['txId'], 16), 'rxId': int(named['rxId'], 16),
+        'session': {'requestHex': hx, 'positivePrefixHex': positive},
+        'identityRequests': identity, 'identityConstraints': named['identityConstraints'],
+        'groups': plan['groups'], 'selectionLimit': 12, 'intervalClaim': None,
+        'transportKind': 'elm-iso-tp', 'reconnectAttemptsPerInterruption': 3,
+        'qualificationRequired': ['independent-adapter/session', 'fresh-complete-identity',
+                                  'request-response-and-field-agreement', 'observed-cadence'],
+        'executionEnabled': False, 'liveVerified': False, 'writePayload': None}
+    contract['sha256'] = hashlib.sha256(json.dumps(contract, sort_keys=True,
+        ensure_ascii=False).encode()).hexdigest()
+    return contract
 
 
 def transport_rehearsal(profile, selected, groups, *, mode='simulation',
@@ -34,20 +75,15 @@ def transport_rehearsal(profile, selected, groups, *, mode='simulation',
         return out
     cancel = cancel_event or threading.Event()
     client = None
-    deadline = time.monotonic() + min(max(float(budget_s), 0.01), 60)
     try:
-        if (profile.get('profileId') != DME_PROFILE or profile.get('generation') != '981'
-                or profile.get('ecuIds') != [1] or profile.get('status') != 'identity-matched'):
-            raise ValueError('manufacturer-profile-unqualified')
-        plan = plan_for(profile, selected)
-        if plan['blocked']:
-            raise ValueError('manufacturer-definition-incomplete')
-        authorized = frozenset(g['requestHex'] for g in plan['groups'])
-        if any(not 2 <= len(bytes.fromhex(hx)) <= 7 or bytes.fromhex(hx)[0] not in (0x21, 0x22)
-               for hx in authorized):
-            raise ValueError('manufacturer-request-unqualified')
-        fixtures = historical_fixtures(profile, selected, groups)
+        if isinstance(budget_s, bool) or not math.isfinite(float(budget_s)) or not 0 < float(budget_s) <= 60:
+            raise ValueError('manufacturer-budget-invalid')
+        deadline = time.monotonic() + float(budget_s)
         catalog = load_catalog()
+        contract = prepared_read_contract(profile, selected, catalog)
+        out['readContract'] = contract
+        authorized = frozenset(g['requestHex'] for g in contract['groups'])
+        fixtures = historical_fixtures(profile, selected, groups)
         named = profile_by_id(catalog, CATALOG_PROFILE)
         def factory():
             port = SessionSimPort(CATALOG_PROFILE)

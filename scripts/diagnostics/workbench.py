@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 import sys
 from pathlib import Path
@@ -220,11 +221,13 @@ def load_or_build_index(variants: Path, coverage: dict) -> dict:
     if not variants.is_file():
         return {"present": False, "path": str(variants), "rows": []}
     want = _stat(variants)
+    coverage_sha = hashlib.sha256(json.dumps(coverage, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
     ip = _index_path(variants)
     if ip.is_file():
         try:
             cached = json.loads(ip.read_text(encoding="utf-8"))
-            if cached.get("stat") == want and isinstance(cached.get("rows"), list):
+            if (cached.get("stat") == want and cached.get("coverageSha256") == coverage_sha
+                    and isinstance(cached.get("rows"), list)):
                 cached["present"] = True
                 return cached
         except (OSError, json.JSONDecodeError):
@@ -253,13 +256,13 @@ def load_or_build_index(variants: Path, coverage: dict) -> dict:
                     "onTargetMenu": bool(o.get("on_target_menu")),
                     "observedCapture": bool(o.get("observedcapture")),
                     "accepted": bool(o.get("accepted")),
-                    "ecuIds": list(mods.get(module, [])),
+                    "ecuIds": sorted(set(mods.get(module, []))),
                     "poolCounts": {
                         k: (v.get("count") if isinstance(v, dict) else None) for k, v in pools.items()
                     },
                 }
             )
-    doc = {"present": True, "path": str(variants), "stat": want, "rows": rows}
+    doc = {"present": True, "path": str(variants), "stat": want, "coverageSha256": coverage_sha, "rows": rows}
     ip.write_text(json.dumps(doc, ensure_ascii=False) + "\n", encoding="utf-8")
     return doc
 

@@ -91,7 +91,7 @@ def run_internal_monitor(device_id, network, *, stdout, stdin=None, port=None, s
         identity = monitor.start("all")
         monitor.deadline = None
         receiver.enabled = True
-        emit({"type": "handshake", "ok": True, "commOk": True, "at": time.time() * 1000,
+        emit({"type": "handshake", "ok": True, "commOk": True, "at": time.time_ns() // 1_000_000,
             "volts": parse_voltage_volts(identity.get("ATRV")), "voltageSource": "atrv", "identity": identity})
         reads = 0
         next_heartbeat = clock() + 1
@@ -104,7 +104,7 @@ def run_internal_monitor(device_id, network, *, stdout, stdin=None, port=None, s
                 monitor.prompt_ready = True
                 raise RuntimeError("internal-monitor-ended")
             if clock() >= next_heartbeat:
-                emit({"type": "reading", "ok": True, "commOk": True, "at": time.time() * 1000,
+                emit({"type": "reading", "ok": True, "commOk": True, "at": time.time_ns() // 1_000_000,
                     "volts": None, "voltageSource": "atrv", "frameCount": receiver.count,
                     "invalidLines": receiver.invalid})
                 next_heartbeat = clock() + 1

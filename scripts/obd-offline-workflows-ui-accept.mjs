@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { waitForIpc } from "./obd-accept-helpers.mjs";
 const root = path.resolve(import.meta.dirname, "..");
 const scratch = path.join(root, ".local/obd-offline-implementation-20261005");
 await fs.mkdir(scratch, { recursive: true });
@@ -119,6 +120,10 @@ try {
   const before = await page.evaluate(async () => (await window.porsche981.obdConnection({ action: "status" })).internal.frameCount);
   await page.getByTestId("internal-record-start").click();
   await page.locator('[data-obd-tab="coding"]').click();
+  // Wait for actual receive progress while the receiver's page is unmounted.
+  // Fast page switches may finish before the next injected 100 ms frame.
+  await waitForIpc(page, async (count) =>
+    (await window.porsche981.obdConnection({ action: "status" })).internal.frameCount > count, before);
   await page.locator('[data-obd-tab="live"]').click();
   await page.waitForFunction(() => document.querySelector('[data-testid="internal-record-state"]').textContent.includes("正在记录"));
   const after = await page.evaluate(async () => (await window.porsche981.obdConnection({ action: "status" })).internal.frameCount);

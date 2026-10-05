@@ -6,6 +6,7 @@ import { createCanFrameBatch, createCanPcapWriter } from "./internal-can-data.mj
 import { spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { StringDecoder } from "node:string_decoder";
 import { buildDeviceRegistry, readKnownDevices } from "./obd-device-registry.mjs";
 import { resolvePythonCandidates } from "./offline-diagnostics.mjs";
 import { liveBlocked, validateSessionRequest } from "./read-only-session.mjs";
@@ -238,6 +239,8 @@ export function createObdConnectionManager(opts) {
   let opChain = Promise.resolve();
   let pendingMutations = 0;
   let stopSession = null;
+  let monitorStarts = 0, omittedMonitorEvents = 0;
+  const monitorEvents = [];
   let frameBatch = createCanFrameBatch();
   let recorder = null;
   let recordingGaps = [], omittedRecordingGaps = 0;
@@ -246,6 +249,14 @@ export function createObdConnectionManager(opts) {
   const livenessMs = opts.livenessMs ?? MONITOR_LIVENESS_MS;
   const gracefulMs = opts.gracefulMs ?? MONITOR_GRACEFUL_MS;
   const killWaitMs = opts.killWaitMs ?? MONITOR_KILL_WAIT_MS;
+
+  function monitorEvent(type, details = {}) {
+    const event = { type, at: nowFn(), ...details };
+    monitorEvents.push(event);
+    if (monitorEvents.length > 32) { monitorEvents.shift(); omittedMonitorEvents++; }
+    // Optional local acceptance observer. Ordinary sessions do not persist logs.
+    try { opts.onMonitorEvent?.(event); } catch { /* logging cannot break ownership */ }
+  }
 
   function selectedId() {
     return selected.deviceId;
@@ -305,6 +316,7 @@ export function createObdConnectionManager(opts) {
       pairingOk: lastList.devices.some((d) => d.id === selected.deviceId && d.paired),
       commOk: connected,
       connectionError: lastFatal,
+      monitorDiagnostics: { starts: monitorStarts, events: monitorEvents.slice(), omittedEvents: omittedMonitorEvents },
       devices: lastList.devices,
       deviceRegistry,
       listErrors: lastList.errors || [],
@@ -416,6 +428,7 @@ export function createObdConnectionManager(opts) {
   async function stopMonitorProcess() {
     const child = monitorChild;
     if (!child) return { ok: true };
+    monitorEvent("stop-requested", { generation: child._monitorGeneration, pid: child.pid ?? null });
     ingestGen += 1;
     clearWatch();
     try {
@@ -425,11 +438,13 @@ export function createObdConnectionManager(opts) {
     }
     if (await waitUntilClosed(child, gracefulMs)) return { ok: true };
     try {
+      monitorEvent("forced-kill", { generation: child._monitorGeneration, reason: "graceful-close-timeout" });
       child.kill();
     } catch {
       /* */
     }
     if (await waitUntilClosed(child, killWaitMs)) return { ok: true };
+    monitorEvent("close-timeout", { generation: child._monitorGeneration });
     return { ok: false, error: "monitor_close_timeout" };
   }
 
@@ -438,6 +453,8 @@ export function createObdConnectionManager(opts) {
     watchTimer = setT(() => {
       watchTimer = null;
       if (stopped || !monitorChild) return;
+      monitorEvent("watchdog", { generation: monitorChild._monitorGeneration, reason,
+        lastAcceptedAt: monitorChild._lastAcceptedAt ?? null });
       lastFatal = reason;
       connected = false;
       clearReading();
@@ -463,6 +480,7 @@ export function createObdConnectionManager(opts) {
     linkState = "reconnecting";
     retryFails += 1;
     const delay = opts.retryDelayMs ? opts.retryDelayMs(retryFails) : nextRetryDelayMs(retryFails);
+    monitorEvent("retry-scheduled", { reason: String(error).slice(0, 160), delayMs: delay });
     cancelRetry();
     retryTimer = setT(() => {
       retryTimer = null;
@@ -472,6 +490,7 @@ export function createObdConnectionManager(opts) {
   }
 
   function ingestLine(doc, gen, child) {
+    if (doc?.type === "stopped") child._stopReported = true;
     if (stopped || gen !== ingestGen) return;
     if (doc?.type === "frames") {
       if (selected.purpose !== "internal" || doc.deviceId !== selected.deviceId || doc.canNetwork !== selected.canNetwork || doc.simulation !== false) return;
@@ -482,6 +501,7 @@ export function createObdConnectionManager(opts) {
           catch (error) { finishRecording("recording-write-failed"); recordingResult.error = String(error.code || error.message || error); }
         }
         armWatch(livenessMs, "timeout");
+        child._lastAcceptedAt = nowFn();
       } catch (error) {
         lastFatal = String(error.message || error); wantConnected = false; connected = false;
         finishRecording("recording-or-stream-failed");
@@ -491,8 +511,14 @@ export function createObdConnectionManager(opts) {
     }
     const acc = acceptMonitorLine(doc, { deviceId: selected.deviceId, now: nowFn(), freshMs });
     if (acc.ignore) return;
-    if (acc.reject) return;
+    if (acc.reject) {
+      if (child._lastReject !== acc.reject) monitorEvent("reading-rejected", { generation: gen, reason: acc.reject,
+        sampleAt: typeof doc.at === "string" ? doc.at.slice(0, 64) : typeof doc.at === "number" && Number.isFinite(doc.at) ? doc.at : null });
+      child._lastReject = acc.reject;
+      return;
+    }
     if (acc.fatal) {
+      monitorEvent("reported-error", { generation: gen, reason: acc.error.slice(0, 160) });
       lastFatal = acc.error;
       connected = false;
       clearReading();
@@ -508,6 +534,7 @@ export function createObdConnectionManager(opts) {
       return;
     }
     applyReading(acc.volts, acc.source, acc.at);
+    child._lastAcceptedAt = nowFn();
     connected = true;
     linkState = "connected";
     retryFails = 0;
@@ -519,26 +546,26 @@ export function createObdConnectionManager(opts) {
     monitorChild = child;
     monitorToken = token;
     children.add(child);
+    child._monitorGeneration = gen;
+    monitorStarts++;
+    monitorEvent("started", { generation: gen, pid: child.pid ?? null });
     lastFatal = null;
     let buf = "";
+    let outputFailed = false, stderrBytes = 0;
+    const decoder = new StringDecoder("utf8");
+    const overflow = () => {
+      buf = ""; outputFailed = true;
+      lastFatal = "output_cap"; connected = false; clearReading();
+      monitorEvent("output-limit", { generation: gen });
+      try { child.kill(); } catch { /* retain lock until close */ }
+    };
     child.stdout?.on("data", (c) => {
-      if (gen !== ingestGen) return;
-      buf += c.toString("utf8");
-      if (buf.length > MONITOR_LINE_CAP) {
-        buf = "";
-        lastFatal = "output_cap";
-        connected = false;
-        clearReading();
-        try {
-          child.kill();
-        } catch {
-          /* retain lock until close */
-        }
-        return;
-      }
+      if (outputFailed) return;
+      buf += decoder.write(c);
       const parts = buf.split("\n");
       buf = parts.pop() || "";
       for (const line of parts) {
+        if (Buffer.byteLength(line, "utf8") > MONITOR_LINE_CAP) { overflow(); return; }
         if (!line.trim()) continue;
         try {
           ingestLine(JSON.parse(line), gen, child);
@@ -546,7 +573,10 @@ export function createObdConnectionManager(opts) {
           /* reject malformed */
         }
       }
+      if (Buffer.byteLength(buf, "utf8") > MONITOR_LINE_CAP) overflow();
     });
+    // Always drain stderr: an unread pipe can block an otherwise healthy worker.
+    child.stderr?.on("data", (c) => { stderrBytes += c.length; });
     child.on("error", (err) => {
       if (child._fallback || gen !== ingestGen) return;
       if (err && (err.code === "ENOENT" || err.code === "EINVAL")) return;
@@ -559,7 +589,10 @@ export function createObdConnectionManager(opts) {
         /* */
       }
     });
-    child.on("close", () => {
+    child.on("close", (code, signal) => {
+      monitorEvent("closed", { generation: gen, pid: child.pid ?? null, code: code ?? null,
+        signal: signal ?? null, reason: lastFatal, stopReported: child._stopReported === true,
+        lastAcceptedAt: child._lastAcceptedAt ?? null, stderrBytes });
       child._exited = true;
       children.delete(child);
       if (child._fallback) return;
@@ -736,7 +769,7 @@ export function createObdConnectionManager(opts) {
     const filePath = await opts.chooseRecordingFile();
     if (!filePath) return snapshot({ cancelled: true });
     if (!connected || !monitorChild || selected.purpose !== "internal") return fail("not_connected", snapshot({ ok: false }));
-    try { recorder = createCanPcapWriter(filePath, selected.canNetwork); recordingResult = null; recordingGaps = []; omittedRecordingGaps = 0; }
+    try { recorder = (opts.createRecordingWriter || createCanPcapWriter)(filePath, selected.canNetwork); recordingResult = null; recordingGaps = []; omittedRecordingGaps = 0; }
     catch (error) { return fail(`recording_open_failed:${error.code || error.message}`, snapshot({ ok: false })); }
     return snapshot();
   }

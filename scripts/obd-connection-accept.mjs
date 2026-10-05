@@ -100,7 +100,7 @@ try {
   await page.goto(`http://127.0.0.1:${port}/obd-connection-harness.html?nocom=1`, { waitUntil: "networkidle" });
   await page.click("[data-obd-tab='connection']");
   await page.waitForSelector("[data-testid='obd-conn-empty']");
-  if (await page.getByRole("radio").count()) throw new Error("paired device without transport shown");
+  if (await page.locator("input[name='obd-device']").count()) throw new Error("paired device without transport shown");
   await page.screenshot({ path: path.join(shotDir, "no-com.png") });
   results.push("no-com");
 
@@ -170,16 +170,18 @@ try {
     const list = await page.textContent("[data-testid='obd-conn-list']");
     if (!list.includes("序列号 10001") || list.includes("无 COM")) throw new Error("VNCI USB displayed as Bluetooth COM");
     await page.click("[data-testid='obd-conn-connect']");
+    await page.waitForFunction(() => (document.querySelector("[data-testid='obd-conn-state']")?.textContent || "").includes("已连接"));
     if (unpowered) {
-      await page.getByTestId("obd-conn-note").getByText("VNCI 已识别，但 OBD 供电异常。", { exact: false }).waitFor();
       if (!(await page.textContent("[data-testid='obd-header-voltage']")).includes("--")) throw new Error("unpowered VNCI displayed a voltage");
     } else {
       await page.waitForFunction(() => (document.querySelector("[data-testid='obd-header-voltage']")?.textContent || "").includes("12.6"));
       await page.click("[data-testid='obd-conn-refresh']");
       if (!(await page.isChecked("[data-testid='obd-device-vnci:10001']"))) throw new Error("VNCI selection lost after refresh");
-      await page.click("[data-testid='obd-conn-disconnect']");
-      await page.waitForFunction(() => (document.querySelector("[data-testid='obd-header-voltage']")?.textContent || "").includes("--"));
     }
+    await page.screenshot({ path: path.join(shotDir, unpowered ? "vnci-usb-only-connected.png" : "vnci-powered-connected.png") });
+    await page.click("[data-testid='obd-conn-disconnect']");
+    await page.waitForFunction(() => !(document.querySelector("[data-testid='obd-conn-state']")?.textContent || "").includes("已连接"));
+    await page.waitForFunction(() => (document.querySelector("[data-testid='obd-header-voltage']")?.textContent || "").includes("--"));
     await page.screenshot({ path: path.join(shotDir, unpowered ? "vnci-unpowered.png" : "vnci-disconnected.png") });
     results.push(unpowered ? "vnci-unpowered" : "vnci-usb");
   }

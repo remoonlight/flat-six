@@ -1,0 +1,10 @@
+import assert from "node:assert/strict";
+import { waitForIpc } from "./obd-accept-helpers.mjs";
+let calls = 0;
+const page = { evaluate: async (predicate, argument) => predicate(argument) };
+await waitForIpc(page, async (target) => { await new Promise((resolve) => setTimeout(resolve, 5)); return ++calls === target; }, 3, 1000);
+assert.equal(calls, 3, "an async false result must be polled again, not treated as a truthy Promise");
+await assert.rejects(waitForIpc(page, async () => false, undefined, 20), /IPC condition not met/);
+await assert.rejects(waitForIpc(page, () => new Promise(() => {}), undefined, 20), /IPC condition not met/);
+await assert.rejects(waitForIpc(page, () => { throw new Error("IPC failed"); }), /IPC failed/);
+console.log("OBD acceptance helper PASS: await async conditions, bounded false/hung IPC, propagate failures");

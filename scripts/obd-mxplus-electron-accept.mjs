@@ -5,6 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { createRequire } from "node:module";
 import { _electron as electron } from "playwright";
+import { waitForIpc } from "./obd-accept-helpers.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
 const scratch = path.join(root, ".local", "mxplus-support", "scratch");
@@ -36,6 +37,7 @@ const env = {
   PORSCHE981_CONNECTION_FIXTURE: fixture,
   PORSCHE981_SESSION_DENY_LIVE: "1",
   PORSCHE981_HEADLESS: "1",
+  PORSCHE981_OBD_SMOKE: "1",
   PORSCHE981_DEVTOOLS: "",
 };
 delete env.ELECTRON_RUN_AS_NODE;
@@ -58,8 +60,10 @@ try {
   assert.equal(linked.deviceRegistry.length, 7);
   assert.equal(linked.deviceRegistry.find((d) => d.family === "PT3G").state, "USB 在线");
   assert.equal(linked.deviceRegistry.find((d) => d.family === "PT3G").connectable, false);
-  for (const family of ["vLinker", "OBDLink MX+", "VNCI", "PT3G", "X431", "X431-tablet", "Espressif"])
-    await page.getByTestId(`obd-registered-${family}`).waitFor();
+  assert.equal(await page.locator('input[name="obd-device"]').count(), 2);
+  for (const family of ["OBDLink MX+", "unresolved"]) await page.getByTestId(`obd-registered-${family}`).waitFor();
+  for (const family of ["vLinker", "VNCI", "PT3G", "X431", "X431-tablet", "Espressif"])
+    assert.equal(await page.getByTestId(`obd-registered-${family}`).count(), 0, "remembered/unsupported heads stay out of current selectable list");
   await page.locator(`[data-testid="obd-device-${mx.id}"]`).check();
   await page.waitForFunction(() => !document.querySelector('[data-testid="obd-conn-connect"]').disabled);
   const selection = await page.evaluate(() => window.porsche981.obdConnection({ action: "status" }));
@@ -67,15 +71,19 @@ try {
   assert.equal(selection.model, "OBDLink MX+");
   assert.equal(selection.connected, false);
   assert.equal(JSON.parse(fs.readFileSync(state, "utf8")).model, "OBDLink MX+");
-  assert.equal(await page.locator('[data-testid="obd-conn-bluetooth"]').isEnabled(), true);
+  assert.equal(await page.getByTestId("obd-conn-bluetooth").count(), 0);
   const forbidden = await page.evaluate(() => window.porsche981.obdConnection({ action: "connect", port: "COM12" }));
   assert.equal(forbidden.error, "forbidden_field");
   await page.locator(`[data-testid="obd-device-${unknown.id}"]`).check();
   await page.locator('[data-testid="obd-model-pick"]').selectOption("OBDLink MX+");
-  await page.waitForFunction(async () => (await window.porsche981.obdConnection({ action: "status" })).model === "OBDLink MX+");
+  await waitForIpc(page, async (id) => {
+    const status = await window.porsche981.obdConnection({ action: "status" });
+    return status.model === "OBDLink MX+" && status.selectedDeviceId === id;
+  }, unknown.id);
   await app.close();
   app = null;
   page = await launch();
+  await page.waitForFunction((id) => document.querySelector(`[data-testid="obd-device-${id}"]`)?.checked, unknown.id);
   assert.equal(await page.locator(`[data-testid="obd-device-${unknown.id}"]`).isChecked(), true);
   assert.equal(await page.locator('[data-testid="obd-model-pick"]').inputValue(), "OBDLink MX+");
   const restored = await page.evaluate(() => window.porsche981.obdConnection({ action: "status" }));
@@ -83,11 +91,13 @@ try {
   assert.equal(restored.voltageVolts, null);
   assert.equal(restored.deviceRegistry.length, 7);
   assert.equal(restored.deviceRegistry.find((d) => d.family === "VNCI").present, false);
-  await page.locator('[data-testid="obd-conn-clear"]').click();
-  await page.waitForFunction(async () => (await window.porsche981.obdConnection({ action: "status" })).selectedDeviceId === null);
+  assert.equal(await page.getByTestId("obd-conn-clear").count(), 0);
+  const cleared = await page.evaluate(() => window.porsche981.obdConnection({ action: "clear" }));
+  assert.equal(cleared.ok, true);
+  await waitForIpc(page, async () => (await window.porsche981.obdConnection({ action: "status" })).selectedDeviceId === null);
   assert.equal(JSON.parse(fs.readFileSync(state, "utf8")).model, null);
   assert.deepEqual(errors, []);
-  console.log("obd-mxplus-electron-accept: PASS real preload/IPC, explicit MX+ selection, manual model, restart, clear, forbidden COM input; no hardware");
+  console.log("obd-mxplus-electron-accept: PASS real preload/IPC, current available devices, explicit MX+ selection, manual model, restart, backend clear, forbidden COM input; no hardware");
 } finally {
   await app?.close();
 }

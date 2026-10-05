@@ -10,7 +10,11 @@ const root = path.resolve(import.meta.dirname, "..");
 const delivery = path.resolve(process.argv[2] || "");
 const bundle = path.resolve(process.argv[3] || "");
 if (!process.argv[2] || !process.argv[3] || !fs.existsSync(bundle)) throw new Error("Supply delivery directory and private definitions ZIP");
-const output = fs.mkdtempSync(path.join(root, ".local/obd-precar-software-20261005/installed-ui-"));
+const outputBase = path.resolve(process.argv[4] || path.join(root, ".local/obd-precar-software-20261005"));
+const relativeOutput = path.relative(path.join(root, ".local"), outputBase);
+if (relativeOutput.startsWith("..") || path.isAbsolute(relativeOutput)) throw new Error("Private output directory required");
+fs.mkdirSync(outputBase, { recursive: true });
+const output = fs.mkdtempSync(path.join(outputBase, "installed-ui-"));
 const userData = path.join(output, "empty-user-data"); fs.mkdirSync(userData);
 const devices = path.join(output, "devices.json"); fs.writeFileSync(devices, JSON.stringify({ devices: [], errors: [] }));
 const env = { ...process.env, PATH: path.join(process.env.SystemRoot, "System32"), PYTHONPATH: "",

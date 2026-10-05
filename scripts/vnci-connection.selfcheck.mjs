@@ -18,6 +18,8 @@ assert.equal(acceptMonitorReading(handshake, context).source, "d-pdu-vbatt");
 assert.equal(acceptMonitorReading({ ...handshake, voltageSource: "atrv" }, context).reject, "malformed");
 assert.equal(acceptMonitorReading({ ...handshake, deviceId: "vnci:99999" }, context).reject, "device_mismatch");
 assert.equal(acceptMonitorReading({ ...handshake, volts: 0 }, context).reject, "malformed");
+assert.equal(acceptMonitorReading({ ...handshake, volts: null }, context).reject, "malformed");
+assert.equal(acceptMonitorReading({ ...handshake, volts: null, commOk: true }, context).volts, null);
 assert.equal(acceptMonitorReading({ ...handshake, simulation: true }, context).reject, "synthetic");
 assert.equal(acceptMonitorReading({ ...handshake, at: -9999 }, context).reject, "stale");
 
@@ -41,6 +43,13 @@ try {
   assert.equal(manager.snapshot().connected, true);
   assert.equal(manager.snapshot().voltageSource, "d-pdu-vbatt");
   assert.equal(manager.snapshot().voltageVolts, 12.6);
+  child.stdout.write(JSON.stringify({ ...handshake, type: "reading", volts: null, commOk: true }) + "\n");
+  assert.equal(manager.snapshot().connected, true);
+  assert.equal(manager.snapshot().voltageVolts, null);
+  assert.equal(manager.snapshot().voltageLabel, "电压 -- V");
+  child.stdout.write(JSON.stringify({ ...handshake, type: "reading", volts: 12.7, commOk: true }) + "\n");
+  assert.equal(manager.snapshot().connected, true);
+  assert.equal(manager.snapshot().voltageVolts, 12.7);
   assert.equal(opened, 1);
   assert.equal((await manager.suspendForSession()).ok, true);
   assert.equal(manager.snapshot().connected, false);

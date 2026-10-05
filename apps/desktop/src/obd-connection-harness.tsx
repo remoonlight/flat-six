@@ -141,10 +141,9 @@ function installFake() {
         selected = req.deviceId || selected;
         model = req.model || model;
         if (!model) return { ok: false, error: "device_model_required", ...FLAGS };
-        if (vnci && unpowered) return { ok: false, error: "vnci-obd-unpowered-or-invalid-voltage", ...FLAGS, devices, selectedDeviceId: selected, model, connected: false, voltageVolts: null, linkState: "idle" };
         connected = true;
-        volts = 12.6;
-        return { ok: true, ...FLAGS, devices, selectedDeviceId: selected, model, connected, voltageVolts: 12.6, voltageSource: vnci ? "d-pdu-vbatt" : "atrv", linkState: "connected" };
+        volts = vnci && unpowered ? null : 12.6;
+        return { ok: true, ...FLAGS, devices, selectedDeviceId: selected, model, connected, voltageVolts: volts, voltageSource: vnci ? "d-pdu-vbatt" : "atrv", linkState: "connected" };
       }
       if (req.action === "disconnect" || req.action === "clear") {
         connected = false;

@@ -49,10 +49,11 @@ function vnciConnectionMessage(error: unknown): string | null {
     session_close_timeout: "诊断任务关闭未完成，正在等待端口释放。请勿重复连接。",
   };
   if (typeof error === "string" && messages[error]) return messages[error];
-  if (error === "vnci-obd-unpowered-or-invalid-voltage") return "VNCI 已识别，但 OBD 供电异常。请接入本车 OBD 接口并确认供电后重试。";
   if (error === "vnci-device-in-use") return "VNCI 被其他软件占用。请退出 ODIS、PIWIS 等诊断软件后重试。";
   if (error === "vnci-firmware-mismatch-no-auto-update") return "VNCI 固件与已接入的驱动版本不一致，连接已停止。请核对驱动版本；项目不会自动升级诊断头。";
   if (error === "vnci-firmware-check-failed") return "无法核对 VNCI 固件。请检查 USB 连接后重试。";
+  if (typeof error === "string" && error.startsWith("vnci-driver-support-missing:")) return "VNCI 驱动配套资料缺失。请补齐与当前版本匹配的完整驱动目录后重试。";
+  if (typeof error === "string" && error.startsWith("vnci-driver-support-not-qualified:")) return "VNCI 驱动配套资料与已核对版本不一致，连接已停止。请核对完整驱动目录。";
   if (error === "vnci-driver-version-not-qualified") return "VNCI 驱动文件已变化，需重新核对版本后才能连接。";
   return null;
 }
