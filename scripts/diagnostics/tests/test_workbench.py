@@ -225,6 +225,29 @@ class TestFixturePools(unittest.TestCase):
         badp = handle({"action": "preview", "generation": "981", "profileId": EU5, "category": "measurement", "recordAt": 4047899, "dataHex": "A5", "rawValue": 0})
         self.assertEqual(badp["error"], "preview_coding_only")
 
+    @_with_fixture
+    def test_coding_options_are_defined_labels_with_preserved_bits(self, _p):
+        doc = handle({"action": "coding-options", "generation": "981", "profileId": EU5,
+            "category": "coding", "recordAt": 4047899, "dataHex": "A5"})
+        self.assertTrue(doc["ok"], doc)
+        self.assertEqual(doc["options"], [{"rawValue": 0, "label": "否"}, {"rawValue": 1, "label": "是"}])
+        self.assertEqual(doc["decoded"]["text"], "是")
+        self.assertFalse(doc["executionEnabled"])
+
+    @_with_fixture
+    def test_full_catalogue_has_no_invented_match_or_vehicle_response(self, _p):
+        units = handle({"action": "catalog-units", "generation": "981"})
+        self.assertTrue(units["ok"], units)
+        dme = next(unit for unit in units["units"] if unit["ecuId"] == 1)
+        self.assertEqual(dme["variants"][0]["status"], "catalog-unqualified")
+        doc = handle({"action": "catalog-parameters", "generation": "981", "ecuId": 1, "profileId": EU5})
+        self.assertTrue(doc["ok"], doc)
+        self.assertEqual(doc["total"], 1)
+        self.assertEqual(doc["items"][0]["decodedSampleCount"], 0)
+        self.assertFalse(doc["items"][0]["decoderReady"], "unresolved wire definition remains disabled")
+        other = handle({"action": "catalog-units", "generation": "982"})
+        self.assertEqual(other["units"], [])
+
     def test_cli_and_no_vin_in_stdout(self):
         stdin = io.StringIO(json.dumps({"action": "summary"}))
         buf = io.StringIO()

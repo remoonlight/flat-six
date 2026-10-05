@@ -13,8 +13,7 @@ export function canOperate(mode, locked, lastRunId, lastRunKey, selKey, liveOk) 
 }
 
 export const ENGINE_PROFILE_ID = "porsche-981-2014-dme";
-// X431 IMMO Pro manual p.44: up to 12 individual graph panels (4 when combined).
-// This is our display/selection budget, not a claim about every X431 vehicle menu.
+// User-selected provisional limit. X431 per-vehicle menu/transport capacity is unverified.
 export const LIVE_DATA_SELECTION_LIMIT = 12;
 
 export const ENGINE_PID_META = Object.freeze({

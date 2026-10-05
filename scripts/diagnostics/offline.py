@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from collections import defaultdict
 from pathlib import Path
@@ -15,8 +16,9 @@ from .x431_formula import formula_from_record
 from . import x431_values
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_COVERAGE = REPO_ROOT / "data" / "seed" / "diagnostics" / "coverage-981-982.v1.json"
-DEFAULT_REGISTRY = REPO_ROOT / "data" / "seed" / "diagnostics" / "workshop-registry.v1.json"
+DATA_ROOT = Path(os.environ.get('PORSCHE981_DEFINITION_ROOT') or REPO_ROOT)
+DEFAULT_COVERAGE = DATA_ROOT / "data" / "seed" / "diagnostics" / "coverage-981-982.v1.json"
+DEFAULT_REGISTRY = DATA_ROOT / "data" / "seed" / "diagnostics" / "workshop-registry.v1.json"
 DEFAULT_VARIANTS = REPO_ROOT / ".local" / "x431-re" / "2026-09-27-981982" / "expansion" / "variants.jsonl"
 SCHEMA = 1
 FLAGS = {

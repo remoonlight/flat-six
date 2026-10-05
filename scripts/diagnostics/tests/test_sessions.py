@@ -667,6 +667,33 @@ class TestClearDtc(unittest.TestCase):
         self.assertNotIn("14FF00", port.ecu_payloads)
         self.assertTrue(port.closed)
 
+    def test_preclear_fsync_failure_prevents_clear_send(self):
+        import scripts.diagnostics.sessions as sess
+
+        port = SessionSimPort("porsche-981-2014-dme", "success", clear_behavior="positive")
+        original_write = sess._atomic_write
+        fsync_calls = []
+
+        def checked_write(path, value):
+            if path.name != "pre-clear.json":
+                return original_write(path, value)
+
+            def fail_fsync(fd):
+                self.assertEqual(port.clear_tx_count, 0)
+                fsync_calls.append(fd)
+                raise OSError("fsync failed")
+
+            with mock.patch.object(sess.os, "fsync", side_effect=fail_fsync):
+                return original_write(path, value)
+
+        with mock.patch.object(sess, "_atomic_write", side_effect=checked_write):
+            out = run_session(profile_id="porsche-981-2014-dme", mode="simulation",
+                session_task="clear", port=port, artifact_root=_root())
+        self.assertTrue(fsync_calls, "actual pre-clear writer must fsync before sending")
+        self.assertFalse(out["ok"])
+        self.assertEqual(port.clear_tx_count, 0)
+        self.assertTrue(port.closed)
+
     def test_preclear_snapshot_visible_inside_clear_write(self):
         root = _root()
         port = SessionSimPort("porsche-981-2014-dme", "success", clear_behavior="positive")
@@ -949,7 +976,121 @@ class TestStdio(unittest.TestCase):
         lines = [json.loads(ln) for ln in stdout.splitlines() if ln]
         self.assertEqual(lines[-1]["type"], "result")
         self.assertTrue(lines[-1]["ok"])
+        for pipe in (proc.stdin, proc.stdout, proc.stderr):
+            if pipe is not None:
+                pipe.close()
+
+
+
+class TestDesktopReadLifecycle(unittest.TestCase):
+    PROFILE = "porsche-981-2014-dme"
+
+    def test_transient_read_never_writes_result_files(self):
+        root = _root()
+        with mock.patch("scripts.diagnostics.sessions._atomic_write", side_effect=AssertionError("unexpected save")):
+            out = run_session(profile_id=self.PROFILE, artifact_root=root, retain_artifacts=False)
+        self.assertTrue(out["ok"], out)
+        self.assertIsNone(out["artifactDir"])
+        self.assertEqual(list(root.iterdir()), [])
+
+    def test_clear_cannot_bypass_required_backup_with_transient_flag(self):
+        out = run_session(profile_id=self.PROFILE, session_task="clear", retain_artifacts=False)
+        self.assertEqual(out["error"], "transient-task-not-allowed")
+
+    def live(self, ports, **kwargs):
+        # Injected byte ports are synthetic tests of the live lifecycle, not vehicle evidence.
+        with mock.patch("scripts.diagnostics.sessions._open_live_port", side_effect=ports) as opener:
+            out = run_session(profile_id=self.PROFILE, mode="live", confirmed_read_only=True,
+                x431_inactive=True, device_id="bt:0425E85BD4CB", artifact_root=_root(), retain_artifacts=False, **kwargs)
+        return out, opener
+
+    def breaking_port(self, request="1800FF00"):
+        from scripts.diagnostics.session_simulator import _sf_payload
+        class Broken(SessionSimPort):
+            def write(inner, data):
+                text = data.decode("ascii").strip().upper()
+                if not text.startswith("AT") and _sf_payload(text) == request:
+                    raise ConnectionError("wire disconnected")
+                return super().write(data)
+        return Broken(self.PROFILE)
+
+    def test_reopen_same_head_requalifies_before_retrying_unfinished_read(self):
+        first = self.breaking_port()
+        recovered = SessionSimPort(self.PROFILE)
+        out, opener = self.live([first, recovered])
+        self.assertTrue(out["ok"], out)
+        self.assertEqual(opener.call_count, 2)
+        self.assertTrue(first.closed and recovered.closed)
+        self.assertEqual(out["recovery"][0]["unfinishedRequestHex"], "1800FF00")
+        self.assertEqual(len(out["recovery"][0]["attempts"]), 1)
+        self.assertEqual(recovered.ecu_payloads[0], "1089")
+        self.assertEqual(recovered.ecu_payloads[-1], "1800FF00")
+        self.assertGreater(len(recovered.ecu_payloads), 2)
+        self.assertEqual(recovered.clear_tx_count, 0)
+        self.assertTrue(all(call.kwargs["device_id"] == "bt:0425E85BD4CB" for call in opener.call_args_list))
+
+    def test_three_failed_reopens_end_task(self):
+        first = self.breaking_port()
+        out, opener = self.live([first, OSError("head missing"), OSError("head missing"), OSError("head missing")])
+        self.assertEqual(out["error"], "recovery-exhausted", out)
+        self.assertEqual(opener.call_count, 4)  # initial open + three recovery attempts
+        self.assertEqual(len(out["recovery"][0]["attempts"]), 3)
+
+    def test_engine_recovery_rechecks_route_and_new_episode_has_new_budget(self):
+        first = self.breaking_port("010C")
+        second = self.breaking_port("010D")
+        recovered = SessionSimPort(self.PROFILE)
+        out, opener = self.live([first, second, recovered], session_task="engine", sample_cycles=1,
+            selected_pids=["0C", "0D"], interval_ms=500)
+        self.assertTrue(out["ok"], out)
+        self.assertEqual(opener.call_count, 3)
+        self.assertEqual([len(episode["attempts"]) for episode in out["recovery"]], [1, 1])
+        self.assertEqual([sample["pid"] for sample in out["engine"]["samples"]], ["0C", "0D"])
+        self.assertEqual(recovered.ecu_payloads[-2:], ["0100", "010D"])
+        self.assertNotIn("010C", recovered.ecu_payloads, "completed PID is not reread after a later interruption")
+        self.assertEqual(recovered.clear_tx_count, 0)
+        self.assertTrue(out["receivedCanFrames"])
+        self.assertTrue(all(frame["timestampUs"] > 1_000_000 and frame["timestampSource"] == "host-chunk-arrival" for frame in out["receivedCanFrames"]))
+
+    def test_identity_conflict_blocks_retry(self):
+        first = self.breaking_port()
+        wrong = SessionSimPort(self.PROFILE, "identity-mismatch")
+        out, opener = self.live([first, wrong])
+        self.assertEqual(out["error"], "identity-mismatch", out)
+        self.assertEqual(opener.call_count, 2)
+        self.assertNotIn("1800FF00", wrong.ecu_payloads)
+
+    def test_terminal_no_data_has_independent_link_evidence(self):
+        port = SessionSimPort(self.PROFILE)
+        port.ecu_map["1089"] = b"NO DATA\r\r>"
+        out = run_session(profile_id=self.PROFILE, port=port, artifact_root=_root(), retain_artifacts=False)
+        self.assertEqual(out["candidateFailure"], "no-response", out)
+        self.assertEqual(out["linkHealth"], "verified")
+        self.assertEqual(out["restoration"]["errors"], [])
+        self.assertEqual(port.ecu_payloads, ["1089"])
 
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestRawCanStreaming(unittest.TestCase):
+    def test_only_received_complete_frames_stream_with_host_time(self):
+        from scripts.diagnostics.elm import ElmClient
+        class Port:
+            def __init__(self):
+                self.parts = iter([b"ELM327\r7E8 03 41", b" 0C 1F 40\r", b"X" * 4100 + b"7E8 01 00\r", b"OK\r>"])
+            def read(self, _size):
+                return next(self.parts, b"")
+            def write(self, data):
+                return len(data)
+            def close(self):
+                pass
+        frames = []
+        client = ElmClient(Port(), frame_sink=frames.append)
+        client.send_at("ATI")
+        self.assertEqual(len(frames), 1)
+        self.assertEqual(frames[0]["dataHex"], "03410C1F40")
+        self.assertEqual(frames[0]["canId"], 0x7E8)
+        self.assertEqual(frames[0]["timestampSource"], "host-chunk-arrival")
+        self.assertGreater(frames[0]["timestampUs"], 0)

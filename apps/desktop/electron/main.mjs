@@ -34,8 +34,12 @@ import {
   removeModelOemLink,
   upsertModelOemLink,
 } from "./model-oem-links.mjs";
-import { createOfflineOperations } from "./offline-diagnostics.mjs";
+import { createOfflineOperations, runWorkbench } from "./offline-diagnostics.mjs";
+import { createDiagnosticPreparation } from "./diagnostic-preparation.mjs";
+import { runDefinitionBundle } from "./definition-bundle.mjs";
+import { createDiagnosticCanRecorder } from "./diagnostic-can-recording.mjs";
 import { saveRecordingFile } from "./recording-files.mjs";
+import { installedRuntime } from "./installed-runtime.mjs";
 import {
   SESSION_CHANNEL,
   createReadOnlySessionManager,
@@ -49,6 +53,9 @@ import { readWorkshopFlashIndex, prepareWorkshopExport } from "./piwis-workshop.
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const repoRoot = path.resolve(__dirname, "../../..");
+if (process.env.PORSCHE981_USER_DATA) app.setPath("userData", process.env.PORSCHE981_USER_DATA);
+const runtime = installedRuntime({ packaged: app.isPackaged, repoRoot, userData: app.getPath("userData") });
+Object.assign(process.env, runtime.env);
 const offlineOperations = createOfflineOperations({ repoRoot,
   variantsPath: process.env.PORSCHE981_VARIANTS || undefined });
 
@@ -83,14 +90,32 @@ function broadcastBridgeStatus(status) {
 
 
 const transportGate = createTransportGate();
-const connMgr = createObdConnectionManager({ repoRoot, gate: transportGate });
+const connMgr = createObdConnectionManager({ repoRoot, gate: transportGate,
+  chooseRecordingFile: async () => {
+    const result = await dialog.showSaveDialog({ title: "记录原始 CAN 报文", defaultPath: "can-recording.pcapng",
+      filters: [{ name: "Wireshark 捕获", extensions: ["pcapng"] }] });
+    return result.canceled ? null : result.filePath;
+  },
+  saveResult: async (recording) => saveRecordingFile({ fileName: "internal-can-result.json", recording }, {
+    dialog, writeFile: fs.promises.writeFile, window: BrowserWindow.getFocusedWindow(),
+  }),
+});
 const canCaptureMgr = createCanCaptureManager({ repoRoot, conn: connMgr, gate: transportGate });
+const diagnosticCanRecorder = createDiagnosticCanRecorder({
+  isLiveReady: () => { const status = connMgr.snapshot(); return status.purpose === "diagnostic"
+    && ["vLinker", "OBDLink MX+"].includes(status.model) && (status.connected || status.linkState === "diagnostic"); },
+  chooseFile: async (simulation) => {
+    const chosen = await dialog.showSaveDialog({ title: "开始记录诊断头实际报告的接收 CAN 帧", defaultPath: `${simulation ? "simulated-" : ""}diagnostic-rx-${Date.now()}.pcapng`, filters: [{ name: "PCAPNG", extensions: ["pcapng"] }] });
+    return chosen.canceled ? null : chosen.filePath;
+  },
+});
 const sessionMgr = attachSessionHandoff(
   connMgr,
   createReadOnlySessionManager({
     repoRoot,
     gate: transportGate,
     getLiveDeviceId: () => connMgr.selectedId(),
+    onCanFrame: (event) => diagnosticCanRecorder.onFrame(event),
     onSessionEnded: () => {
       void connMgr.resumeAfterSession();
     },
@@ -586,8 +611,38 @@ function registerIpc() {
   ipcMain.handle("diagnostics:saveRecording", (e, input) => saveRecordingFile(input, {
     dialog, writeFile: fs.promises.writeFile, window: BrowserWindow.fromWebContents(e.sender),
   }));
+  ipcMain.handle("diagnostics:canRecording", (_e, request) => diagnosticCanRecorder.handle(request));
 
-  const workshopIndexPath = path.join(app.isPackaged ? app.getPath("userData") : path.join(repoRoot, ".local"), "diagnostics", "piwis-workshop", "flash-index.json");
+  const preparation = createDiagnosticPreparation({
+    directory: path.join(app.isPackaged ? app.getPath("userData") : path.join(repoRoot, ".local"), "diagnostics", "coding-backups"),
+    connectionStatus: () => connMgr.snapshot(),
+    previewField: (request) => runWorkbench(request, { repoRoot, variantsPath: process.env.PORSCHE981_VARIANTS || undefined }),
+    chooseOpenFile: async (kind) => {
+      const options = { title: kind === "backup" ? "导入并保存当前控制单元的完整码值备份" : kind === "manifest" ? "选择原厂固件匹配清单" : "选择原厂控制单元固件文件",
+        properties: ["openFile"], ...(kind === "firmware" ? {} : { filters: [{ name: "JSON", extensions: ["json"] }] }) };
+      const selected = await dialog.showOpenDialog(options);
+      return selected.canceled ? null : selected.filePaths[0];
+    },
+    saveFile: (fileName, recording) => saveRecordingFile({ fileName, recording }, { dialog, writeFile: fs.promises.writeFile }),
+  });
+  ipcMain.handle("diagnostics:preparation", (_e, request) => preparation.handle(request));
+  let bundleBusy = false;
+  ipcMain.handle("diagnostics:definitionBundle", async (_e, request) => {
+    if (!request || Object.keys(request).length !== 1 || !["export", "import"].includes(request.action)) return { ok: false, error: "bundle-request-invalid" };
+    if (bundleBusy || !sessionMgr.isIdle() || connMgr.snapshot().linkState !== "idle" || transportGate.owner()) return { ok: false, error: "bundle-busy-disconnect-first" };
+    bundleBusy = true;
+    try {
+      const result = request.action === "export" ? await dialog.showSaveDialog({ title: "导出诊断资料（含离线派生样本及来源信息）", defaultPath: "diagnostic-definitions.zip", filters: [{ name: "ZIP", extensions: ["zip"] }] })
+        : await dialog.showOpenDialog({ title: "导入诊断资料：已有不同内容不会覆盖", properties: ["openFile"], filters: [{ name: "ZIP", extensions: ["zip"] }] });
+      if (result.canceled) return { ok: true, canceled: true };
+      const file = request.action === "export" ? result.filePath : result.filePaths[0];
+      if (!file) return { ok: true, canceled: true };
+      if (!sessionMgr.isIdle() || connMgr.snapshot().linkState !== "idle" || transportGate.owner()) return { ok: false, error: "bundle-busy-disconnect-first" };
+      return await runDefinitionBundle({ action: request.action, file }, { repoRoot });
+    } finally { bundleBusy = false; }
+  });
+
+  const workshopIndexPath = path.join(runtime.definitionsRoot, ".local", "diagnostics", "piwis-workshop", "flash-index.json");
   ipcMain.handle("workshop:flashIndex", () => readWorkshopFlashIndex(workshopIndexPath));
   ipcMain.handle("workshop:exportPreview", async (_e, input) => {
     const preview = await prepareWorkshopExport(input, workshopIndexPath);
@@ -602,6 +657,7 @@ function registerIpc() {
   });
 
   ipcMain.handle(SESSION_CHANNEL, async (e, request) => {
+    if (bundleBusy && ["start", "prepare"].includes(request?.action)) return { ok: false, error: "definition-bundle-busy" };
     const out = await sessionMgr.handle(request, { ownerId: e.sender.id });
     if (request?.action === "overview" && out?.ok) {
       const v = connMgr.voltageView();
@@ -610,7 +666,12 @@ function registerIpc() {
     return out;
   });
 
-  ipcMain.handle(CONNECTION_CHANNEL, (_e, request) => connMgr.handle(request));
+  ipcMain.handle(CONNECTION_CHANNEL, async (_e, request) => {
+    if (bundleBusy && !["status", "list", "disconnect"].includes(request?.action)) return { ok: false, error: "definition-bundle-busy" };
+    const out = await connMgr.handle(request);
+    if (out.ok && ["select", "configure", "disconnect", "clear"].includes(request?.action)) diagnosticCanRecorder.stop("connection-settings-changed");
+    return out;
+  });
   ipcMain.handle(CAN_CAPTURE_CHANNEL, (e, request) => canCaptureMgr.handle(request, { ownerId: e.sender.id }));
 
   ipcMain.handle("modelOem:catalog", async () => {
@@ -652,6 +713,7 @@ app.on("web-contents-created", (_e, contents) => {
 
 let sessionQuitting = false;
 app.on("before-quit", (e) => {
+  diagnosticCanRecorder.shutdown();
   if (sessionQuitting) return;
   e.preventDefault();
   sessionQuitting = true;

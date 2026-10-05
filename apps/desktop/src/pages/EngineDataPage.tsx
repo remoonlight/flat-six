@@ -29,6 +29,8 @@ import { topologySeed } from "../can-topology-data";
 import { combinedGeneration, flattenNodes } from "../can-topology-logic.mjs";
 import "../engine-session.css";
 import { OfflineRealtimePanel } from "./OfflineRealtimePanel";
+import { createEngineAcquisition } from "../engine-acquisition.mjs";
+import { DiagnosticCanRecordingControls } from "../obd/DiagnosticCanRecordingControls";
 
 type Mode = "simulation" | "live";
 type Scenario =
@@ -118,6 +120,11 @@ export function EngineDataPage({
   const startLock = useRef(false);
   const mountedRef = useRef(true);
   const pendingCancelRef = useRef(false);
+  const continuousRef = useRef(false);
+  const acquisition = useRef(createEngineAcquisition());
+  const [continuous, setContinuous] = useState(true);
+  const [continuousActive, setContinuousActive] = useState(false);
+  const [collected, setCollected] = useState<Sample[]>([]);
   const jobModeRef = useRef<Mode>("simulation");
   const [mode, setMode] = useState<Mode>("simulation");
   const [scenario, setScenario] = useState<Scenario>("success");
@@ -137,15 +144,17 @@ export function EngineDataPage({
   const [selectedPids, setSelectedPids] = useState<string[]>([]);
   const [displayMode, setDisplayMode] = useState<DisplayMode>("both");
   const [dataSource, setDataSource] = useState("standard");
+  const [manufacturerBusy, setManufacturerBusy] = useState(false);
   const system = CONTROL_UNITS.find((s) => s.id === systemId);
   const availablePids = systemId === "dme" ? PID_IDS : [];
 
-  const running = status?.state === "running" || status?.state === "cancelling" || starting || Boolean(jobId);
-  const locked = running || peerBusy || saving;
+  const running = continuousActive || status?.state === "running" || status?.state === "cancelling" || starting || Boolean(jobId);
+  const locked = running || peerBusy || saving || manufacturerBusy;
   const liveOk = liveReady(x431Off, readOnly);
   const ops = canOperate(mode, locked || busyPlan || systemId !== "dme" || !selectedPids.length, null, null, null, liveOk);
 
   function resetSelection() {
+    acquisition.current = createEngineAcquisition(); setCollected([]);
     setPlanDoc(null);
     setStatus(null);
     setError(null);
@@ -159,13 +168,14 @@ export function EngineDataPage({
   }
 
   useEffect(() => {
-    onBusyChange?.(running);
-  }, [running, onBusyChange]);
+    onBusyChange?.(running || manufacturerBusy);
+  }, [running, manufacturerBusy, onBusyChange]);
 
   useEffect(() => {
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
+      continuousRef.current = false;
       const id = jobIdRef.current;
       if (id) void api().readOnlySession?.({ action: "cancel", jobId: id }).catch(() => {});
     };
@@ -198,11 +208,23 @@ export function EngineDataPage({
         setStatus(interpreted.doc || doc);
         if (interpreted.error) setError(interpreted.error);
         if (interpreted.stop) {
+          const final = interpreted.doc?.final || doc.final;
+          if (final) {
+            acquisition.current.append(final);
+            setCollected([...acquisition.current.samples]);
+          }
           jobIdRef.current = null;
           pendingCancelRef.current = false;
           setJobId(null);
           startLock.current = false;
           setStarting(false);
+          const fitsNext = acquisition.current.canFit(selectedPids.length * clampEngineOptions(sampleCycles, intervalMs).sampleCycles);
+          if (continuousRef.current && !pendingCancelRef.current && (interpreted.doc?.state || doc.state) === "completed" && final?.ok && fitsNext) {
+            setTimeout(() => { if (mountedRef.current && continuousRef.current) void start(true); }, 100);
+          } else {
+            continuousRef.current = false; setContinuousActive(false);
+            if (!fitsNext) setSavedMessage(`本批已保留 ${acquisition.current.count} 条样本；样本数或文件大小上限不足以容纳下一完整小批次，已停止。可保存结果，再开始下一批。`);
+          }
           return;
         }
       } catch (e) {
@@ -214,6 +236,7 @@ export function EngineDataPage({
           return;
         }
         setError(String(e));
+        continuousRef.current = false; setContinuousActive(false);
         jobIdRef.current = null;
         pendingCancelRef.current = false;
         setJobId(null);
@@ -246,9 +269,11 @@ export function EngineDataPage({
     }
   }
 
-  async function start() {
+  async function start(continuation = false) {
     if (startLock.current || jobIdRef.current || peerBusy || busyPlan || systemId !== "dme" || !selectedPids.length) return;
     startLock.current = true;
+    if (!continuation) { acquisition.current = createEngineAcquisition(); setCollected([]); continuousRef.current = continuous; }
+    setContinuousActive(continuousRef.current);
     pendingCancelRef.current = false;
     jobModeRef.current = mode;
     setStarting(true);
@@ -258,6 +283,7 @@ export function EngineDataPage({
     if (!fn) {
       startLock.current = false;
       setStarting(false);
+      continuousRef.current = false; setContinuousActive(false);
       return;
     }
     try {
@@ -275,6 +301,7 @@ export function EngineDataPage({
         setError(req.error);
         startLock.current = false;
         setStarting(false);
+        continuousRef.current = false; setContinuousActive(false);
         return;
       }
       const doc = await fn(req as ReadOnlySessionRequest);
@@ -284,6 +311,7 @@ export function EngineDataPage({
           setError(doc.error || "无法开始");
           startLock.current = false;
           setStarting(false);
+          continuousRef.current = false; setContinuousActive(false);
         }
         return;
       }
@@ -305,11 +333,13 @@ export function EngineDataPage({
         setError(String(e));
         startLock.current = false;
         setStarting(false);
+        continuousRef.current = false; setContinuousActive(false);
       }
     }
   }
 
   async function cancel() {
+    continuousRef.current = false; setContinuousActive(false);
     pendingCancelRef.current = true;
     const id = jobIdRef.current;
     if (!id) return;
@@ -321,12 +351,12 @@ export function EngineDataPage({
   }
 
   async function exportJson() {
-    const payload = status?.final;
+    const payload = acquisition.current.count ? acquisition.current.export() : status?.final;
     if (!payload || running || saving) return;
     const saveFile = api().saveDiagnosticRecording;
     if (!saveFile) { setError("需要桌面端另存为功能。"); return; }
     setSaving(true); setSavedMessage(""); setError(null);
-    const name = typeof payload.runId === "string" ? payload.runId : "engine-session";
+    const name = "runId" in payload && typeof payload.runId === "string" ? payload.runId : "engine-session";
     try {
       const result = await saveFile({ fileName: `${name.replace(/[^a-zA-Z0-9_-]/g, "-").slice(0, 120)}.json`, recording: payload });
       if (!mountedRef.current) return;
@@ -346,7 +376,7 @@ export function EngineDataPage({
   }
 
   const view = pickEngineView(status);
-  const engine = view.engine as {
+  const currentEngine = view.engine as {
     supportedPids?: string[];
     unsupportedPids?: string[];
     samples?: Sample[];
@@ -354,6 +384,11 @@ export function EngineDataPage({
     sampleCycles?: number;
     intervalMs?: number;
   } | null;
+  const offset = collected.length ? Math.max(...collected.map((sample) => sample.cycle || 0)) : 0;
+  const firstTime = collected.length ? Date.parse(collected[0].capturedUtc || "") : null;
+  const currentSamples = acquisition.current.hasRun(status?.final?.runId) ? [] : (currentEngine?.samples || []).map((sample) => ({ ...sample,
+    cycle: (sample.cycle || 0) + offset, elapsedMs: firstTime !== null ? Date.parse(sample.capturedUtc || "") - firstTime : sample.elapsedMs }));
+  const engine = currentEngine ? { ...currentEngine, samples: [...collected, ...currentSamples] } : collected.length ? { samples: collected, completedCycles: undefined, sampleCycles: undefined, supportedPids: undefined, unsupportedPids: undefined } : null;
   const freshness = engineFreshness(status?.state, status?.final, status?.error || error, jobModeRef.current);
   const liveDisplay = freshness === "sampling";
   const byPid = latestByPid(engine?.samples);
@@ -407,7 +442,7 @@ export function EngineDataPage({
         </label>
         {!system ? <p className="muted" data-testid="eng-select-unit">先选择控制单元，再选择需要采集的数据。</p> : null}
         {systemId === "dme" ? <label className="eng-unit-select">数据清单 <select data-testid="eng-data-source" value={dataSource} disabled={locked || busyPlan} onChange={(e) => { setDataSource(e.target.value); resetSelection(); }}><option value="standard">标准 OBD 数据</option><option value="x431">X431 数据清单</option></select></label> : null}
-        {system && (systemId !== "dme" || dataSource === "x431") ? <OfflineRealtimePanel key={systemId} systemId={systemId} locked={locked || busyPlan} /> : null}
+        {system && (systemId !== "dme" || dataSource === "x431") ? <OfflineRealtimePanel key={systemId} systemId={systemId} locked={running || peerBusy || saving || busyPlan} onBusyChange={setManufacturerBusy} /> : null}
       </section>
       {availablePids.length > 0 && dataSource === "standard" ? <>
       <section className="panel">
@@ -432,6 +467,8 @@ export function EngineDataPage({
       {selectedPids.length > 0 ? <>
       <section className="panel">
         <div className="eng-toolbar">
+          <label><input data-testid="eng-continuous" type="checkbox" checked={continuous} disabled={locked || busyPlan}
+            onChange={(event) => { setContinuous(event.target.checked); resetSelection(); }} />持续采集，直到停止或本批样本满 3000 条</label>
           <label>
             方式
             <select data-testid="eng-mode" value={mode} disabled={locked || busyPlan} onChange={(e) => { setMode(e.target.value as Mode); resetSelection(); }}>
@@ -446,7 +483,7 @@ export function EngineDataPage({
                 data-testid="eng-scenario"
                 value={scenario}
                 disabled={locked || busyPlan}
-                onChange={(e) => setScenario(e.target.value as Scenario)}
+                onChange={(e) => { setScenario(e.target.value as Scenario); resetSelection(); }}
               >
                 {SCENARIOS.map((s) => (
                   <option key={s.id} value={s.id}>
@@ -467,7 +504,7 @@ export function EngineDataPage({
               disabled={locked || busyPlan}
               onChange={(e) => {
                 setSampleCycles(Number(e.target.value));
-                setPlanDoc(null);
+                resetSelection();
               }}
             />
           </label>
@@ -483,7 +520,7 @@ export function EngineDataPage({
               disabled={locked || busyPlan}
               onChange={(e) => {
                 setIntervalMs(Number(e.target.value));
-                setPlanDoc(null);
+                resetSelection();
               }}
             />
           </label>
@@ -493,16 +530,17 @@ export function EngineDataPage({
           <button type="button" data-testid="eng-start" disabled={!ops.start} onClick={() => start()}>
             {mode === "live" ? "开始采集" : "开始模拟"}
           </button>
-          {starting || status ? <button type="button" data-testid="eng-cancel" disabled={!jobId && !starting} onClick={() => cancel()}>
+          {starting || status ? <button type="button" data-testid="eng-cancel" disabled={!jobId && !starting && !continuousActive} onClick={() => cancel()}>
             停止
           </button> : null}
           <button type="button" data-testid="eng-restart" disabled={!ops.start || running} onClick={() => start()}>
             重新采样
           </button>
-          {starting || status ? <button type="button" data-testid="eng-export" disabled={running || saving || !status?.final} onClick={() => void exportJson()}>
+          {starting || status || collected.length ? <button type="button" data-testid="eng-export" disabled={running || saving || (!status?.final && !collected.length)} onClick={() => void exportJson()}>
             {saving ? "正在保存…" : "保存此次采集"}
           </button> : null}
         </div>
+        <DiagnosticCanRecordingControls simulation={mode === "simulation"} />
         {mode === "live" ? (
           <div className="eng-checks">
             <label>
@@ -537,6 +575,7 @@ export function EngineDataPage({
         <p className="eng-progress" data-testid="eng-progress">
           {progressText}
         </p>
+        <p className="muted" data-testid="eng-batch-count">本批保留 {engine?.samples?.length || 0} 条实际返回的样本；上限 3000 条。{mode === "simulation" ? "当前为模拟数据。" : ""}</p>
         <p className="eng-kind" data-testid="eng-kind" data-freshness={freshness}>
           {kindText}
         </p>

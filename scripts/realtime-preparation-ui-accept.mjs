@@ -39,7 +39,7 @@ try {
   assert.equal(await page.getByTestId("offline-variant").count(), 0);
   assert.equal(await page.getByTestId("offline-stop").count(), 0);
   assert.equal(await page.getByTestId("offline-save").count(), 0);
-  assert.equal(await page.getByTestId("offline-replay").count(), 0);
+  assert.equal(await page.getByTestId("offline-replay").count(), 1);
   assert.equal(await page.getByRole("button", { name: "导出离线结果", exact: true }).count(), 0);
   assert.ok(await page.getByTestId("eng-system").evaluate((el) =>
     el.closest(".panel") === document.querySelector('[data-testid="offline-parameters"]')?.closest(".panel")));
@@ -54,6 +54,9 @@ try {
   assert.equal(await page.getByTestId("offline-stop").isDisabled(), true);
   assert.equal(await page.getByTestId("offline-save").isEnabled(), true);
   assert.match(await page.getByTestId("offline-capture-state").innerText(), /尚未采集实车数据/);
+  await page.getByTestId("offline-replay").click();
+  await page.getByTestId("offline-replay-result").waitFor();
+  assert.match(await page.getByTestId("offline-replay-result").innerText(), /历史数据回放，不是当前车辆实时更新/);
   const filename = path.join(temp, "chosen-recording.json");
   await app.evaluate(({ dialog }, filePath) => { dialog.showSaveDialog = async (_window, options) => {
     if (options.title !== "保存此次采集") throw new Error("wrong dialog");
@@ -71,6 +74,37 @@ try {
   await page.waitForFunction(() => !document.querySelector('[data-testid="offline-save"]').disabled);
   assert.equal(await page.getByTestId("offline-saved").count(), 0);
   assert.equal(await page.getByTestId("offline-plan-result").count(), 1, "cancel Save As retains result");
+  // Executable grouped manufacturer rehearsal through real IPC/Python. It
+  // never imports a serial transport or grants a manufacturer live route.
+  await page.getByTestId("manufacturer-start").click();
+  await page.waitForFunction(() => {
+    const text = document.querySelector('[data-testid="manufacturer-state"]')?.textContent || "";
+    return /[2-9] 轮/.test(text);
+  });
+  assert.equal(await page.getByTestId("eng-system").isDisabled(), true);
+  assert.equal(await page.getByTestId("offline-category").isDisabled(), true);
+  await page.getByTestId("manufacturer-stop").click();
+  await page.waitForFunction(() => !document.querySelector('[data-testid="manufacturer-save"]').disabled);
+  assert.match(await page.getByTestId("manufacturer-state").innerText(), /已停止/);
+  assert.equal(await page.getByTestId("eng-system").isEnabled(), true);
+  await app.evaluate(({ dialog }, filePath) => { dialog.showSaveDialog = async () => ({ canceled: false, filePath }); }, temp);
+  await page.getByTestId("manufacturer-save").click();
+  await page.getByTestId("manufacturer-error").waitFor();
+  assert.match(await page.getByTestId("manufacturer-error").innerText(), /文件夹|允许|权限/);
+  const rehearsalFile = path.join(temp, "manufacturer.json");
+  await app.evaluate(({ dialog }, filePath) => { dialog.showSaveDialog = async () => ({ canceled: false, filePath }); }, rehearsalFile);
+  await page.getByTestId("manufacturer-save").click();
+  await page.getByTestId("manufacturer-saved").waitFor();
+  const rehearsal = JSON.parse(fs.readFileSync(rehearsalFile, "utf8"));
+  assert.equal(rehearsal.kind, "manufacturer-acquisition-rehearsal");
+  assert.equal(rehearsal.vehicleDataCollected, false); assert.equal(rehearsal.simulation, true);
+  assert.ok(rehearsal.cycles.length >= 2); assert.equal(rehearsal.samples.length, rehearsal.cycles.length * 2);
+  assert.ok(rehearsal.cycles.every((cycle) => cycle.transactions.length === 1 && cycle.completedCycles === 1));
+  assert.ok(rehearsal.samples.every((sample) => sample.synthetic && sample.processedUtc && sample.pduSha256));
+  const forbiddenRehearsal = await page.evaluate((parameterIds) => window.porsche981.offlineDiagnostics({
+    action: "ready-acquire", ecuId: 1, profileId: "9x1:DME_BDE_Continental:SDI9_1_981_3_4L_EU5",
+    parameterIds, mode: "live" }), recording.parameters.map((p) => p.id));
+  assert.equal(forbiddenRehearsal.error, "forbidden_field");
   // Real worker cancellation through the window-owned IPC, without any device calls.
   const cancelled = await page.evaluate(async ({ profileId, parameterIds }) => {
     const id = crypto.randomUUID();
@@ -82,12 +116,13 @@ try {
   const secondGroup = await page.getByTestId("offline-category").locator("option").nth(1).getAttribute("value");
   await page.getByTestId("offline-category").selectOption(secondGroup);
   await page.waitForFunction(() => document.querySelector('[data-testid="offline-parameters"]')?.getAttribute("aria-busy") === "false");
-  assert.match(await page.getByTestId("offline-selection-count").innerText(), /已选 2/);
+  assert.match(await page.getByTestId("offline-selection-count").innerText(), /已选 0/);
+  assert.match(await page.getByTestId("manufacturer-state").innerText(), /0 轮/);
   await page.getByTestId("offline-category").selectOption("");
   await page.waitForFunction(() => document.querySelector('[data-testid="offline-selection-count"]')?.textContent.includes("共 365 项"));
   await page.getByRole("button", { name: "下一页", exact: true }).click();
   await page.waitForFunction(() => document.querySelector('[data-testid="offline-parameters"]')?.getAttribute("aria-busy") === "false");
-  assert.match(await page.getByTestId("offline-selection-count").innerText(), /已选 2/);
+  assert.match(await page.getByTestId("offline-selection-count").innerText(), /已选 0/);
   await page.getByRole("button", { name: "上一页", exact: true }).click();
   await page.waitForFunction(() => document.querySelector('[data-testid="offline-parameters"]')?.getAttribute("aria-busy") === "false");
   inputs = page.getByTestId("offline-parameters").locator('input[type="checkbox"]');
@@ -107,10 +142,29 @@ try {
   assert.match(await page.getByTestId("offline-selection-count").innerText(), /已选 0/);
   assert.equal(await page.getByTestId("offline-plan-result").count(), 0);
   const bad = await page.evaluate(() => window.porsche981.offlineDiagnostics({ action: "ready-plan", ecuId: 1, profileId: "x", parameterIds: ["a".repeat(64)], serialPort: "COM999" }));
-  assert.equal(bad.error, "forbidden_field"); assert.deepEqual(errors, []);
+  assert.equal(bad.error, "forbidden_field");
+  for (const generation of ["981", "982"]) {
+    await page.getByTestId("offline-catalogue").selectOption(generation);
+    await page.getByTestId("eng-system").selectOption("dme");
+    await page.waitForFunction(() => document.querySelector('[data-testid="offline-profile"]')?.options.length > 1);
+    const profile = await page.getByTestId("offline-profile").locator("option").nth(1).getAttribute("value");
+    await page.getByTestId("offline-profile").selectOption(profile);
+    await page.waitForFunction(() => document.querySelector('[data-testid="offline-parameters"]')?.getAttribute("aria-busy") === "false");
+    assert.ok(await page.getByTestId("offline-parameters").locator("label").count() > 0);
+    assert.match(await page.getByTestId("offline-realtime").innerText(), /尚未与本车身份匹配|历史身份已匹配/);
+    assert.equal(await page.getByTestId("offline-plan-result").count(), 0, "catalogue change discards old result");
+  }
+  assert.deepEqual(errors, []);
   fs.writeFileSync(path.join(output, "result.json"), JSON.stringify({ ok: true, noHardware: true,
-    checks: ["automatic verified version", "candidate exclusion", "no version selector", "one panel", "12 cap", "categories/pages retain selection", "native Save As", "save canceled retains result", "real worker stop IPC", "no replay/export buttons", "narrow layout"], errors }, null, 2));
-  console.log("PASS realtime controls: matched versions, selection, stopped worker, native Save As/cancel, provenance, no replay/export buttons, no vehicle I/O");
+    checks: ["automatic verified version", "candidate exclusion", "manual full-directory version is not qualification", "one panel", "12 cap", "category resets selection, pagination retains it", "native Save As", "save canceled retains result", "real worker stop IPC", "historical replay and full 981/982 catalogues", "grouped continuous manufacturer rehearsal", "stop releases controls", "save failure retains complete batch", "manufacturer live request rejected", "narrow layout"], errors }, null, 2));
+  console.log("PASS realtime controls: matched versions, selection, stopped worker, native Save As/cancel, provenance, historical replay/full catalogues, no vehicle I/O");
+} catch (error) {
+  if (app) {
+    const page = await app.firstWindow();
+    console.error(JSON.stringify({ rendererErrors: errors, panelError: await page.getByTestId("offline-error").allTextContents(),
+      panelTail: (await page.locator("body").innerText()).slice(-1200) }));
+  }
+  throw error;
 } finally {
   await app?.close();
   fs.rmSync(temp, { recursive: true, force: true });

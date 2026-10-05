@@ -25,17 +25,18 @@ from scripts.x431_re.gag_lib import GgpLanguage, compact_text
 
 DEFAULT_MATCH = ROOT / '.local/vehicle-analysis/981-offline-match-20261003-all-units'
 DEFAULT_OUTPUT = ROOT / '.local/diagnostics/realtime-preparation'
-READY_ACTIONS = frozenset({'ready-units', 'ready-parameters', 'ready-plan', 'ready-replay'})
-SELECTION_LIMIT = 12  # X431 individual graph reference; not a claimed ECU request limit.
+READY_ACTIONS = frozenset({'ready-units', 'ready-parameters', 'ready-plan', 'ready-replay', 'ready-acquire',
+    'catalog-units', 'catalog-parameters', 'catalog-plan', 'catalog-replay', 'catalog-coding-plan'})
+SELECTION_LIMIT = 12  # User-selected provisional display/acquisition limit; X431 capacity unverified.
 POINT_LIMIT = 240
-GGP_PATH = ROOT / '.local/x431-re/2026-09-27-protocol/package/PORSCHE_CN.GGP'
+GGP_PATH = Path(os.environ.get('PORSCHE981_LANGUAGE') or ROOT / '.local/x431-re/2026-09-27-protocol/package/PORSCHE_CN.GGP')
 NODE_ECU = {'gateway': 9, 'dme': 1, 'pdk': 2, 'selector': 68, 'airbag': 4,
     'psm': 5, 'pasm': 19, 'eps': 69, 'epb': 50, 'bcm-front': 32, 'bcm-rear': 35,
     'steering-column': 54, 'door-driver': 30, 'door-passenger': 31, 'seat-driver': 76,
     'seat-passenger': 78, 'roof': 39, 'rdk': 55, 'hvac': 7, 'pcm': 70, 'cluster': 8,
     'clock': 29, 'parking': 18, 'headlamp-left': 47, 'headlamp-right': 48,
     'shaker': 87, 'reverse-camera': 81, 'headlamp-sg': 88, 'acc': 64,
-    'front-camera': 74, 'swa-left': 96, 'swa-right': 95}
+    'front-camera': 74, 'swa-left': 96, 'swa-right': 95, 'ecu-75': 75, 'ecu-65': 65, 'ecu-165': 165}
 PRIORITY = {'identity-matched': 0, 'selector-candidate': 1, 'system-selector-candidate': 2}
 
 
@@ -228,7 +229,7 @@ def plan_for(profile, selected):
         'identityGroups': [{'requestHex': hx, 'fields': fields, **FLAGS} for hx, fields in identities.items()],
         'addressCandidates': profile.get('addressCandidates', []),
         'checklist': profile['checklist'], 'parameters': [slim_parameter(params[k]) for k in selected],
-        'intervalClaim': None, 'selectionLimitBasis': 'X431 individual graph reference, not ECU transport capacity',
+        'intervalClaim': None, 'selectionLimitBasis': 'user-provisional-12; X431 transport capacity unverified',
         **FLAGS}
 
 
@@ -371,12 +372,108 @@ def compile_bundle(match_dir, output, variants_path=DEFAULT_VARIANTS, hci_path=S
     # Check sources at the end too, before publishing the ready index.
     for item in inputs:
         verify_source(Path(item['path']), item['sha256'])
+    # Derived application PDUs are explicitly private rehearsal material. The
+    # original capture stays outside the distributable definition directories.
+    dump(output / 'rehearsal-fixtures.json', [g for g in groups.values() if
+        g['txId'] == 0x7E0 and g['rxId'] == 0x7E8 and g['adapterStream'] == [2, 2]
+        and g['capturePhase'] == 'before-coding'])
     code = [verify_source(Path(__file__)), *[verify_source(ROOT / 'scripts' / file) for file in (
         'x431_re/request_fields.py', 'x431_re/gag_lib.py', 'x431_re/gag_codec.py', 'x431_re/ggp_index.py',
-        'diagnostics/response_values.py', 'diagnostics/x431_values.py', 'diagnostics/x431_formula.py')]]
-    dump(output / 'manifest.json', {'schemaVersion': 1, 'inputs': inputs, 'code': code,
-        'outputs': [verify_source(p) for p in sorted(output.rglob('*')) if p.is_file()], **FLAGS})
+        'diagnostics/response_values.py', 'diagnostics/x431_values.py', 'diagnostics/x431_formula.py',
+        'diagnostics/manufacturer_acquisition.py', 'diagnostics/manufacturer_transport.py',
+        'diagnostics/elm.py', 'diagnostics/sessions.py', 'diagnostics/catalog.py',
+        'diagnostics/qualification.py', 'diagnostics/session_simulator.py')]]
+    outputs = [verify_source(p) for p in sorted(output.rglob('*')) if p.is_file()]
+    dump(output / 'manifest.json', {'schemaVersion': 2, 'inputs': inputs,
+        'inputsAreProvenanceOnlyAtRuntime': True,
+        'code': [{**item, 'path': Path(item['path']).relative_to(ROOT).as_posix()} for item in code],
+        'outputs': [{**item, 'path': Path(item['path']).relative_to(output.resolve()).as_posix()} for item in outputs], **FLAGS})
     return {**stats, 'units': len(unit_index), 'sourceMeasurements': total, 'output': str(output.resolve()), **FLAGS}
+
+
+def handle_catalog(req):
+    # Full 981/982 catalogue needs no capture, hardware or historical identity.
+    # It deliberately does not manufacture vehicle matching or replay points.
+    from .workbench import (_variants_path, load_or_build_index, _load_variant,
+        _matches_generation, _profile_guard)
+    from .offline import DEFAULT_COVERAGE
+    variants = _variants_path()
+    generation = req.get('generation')
+    if generation not in ('981', '982'):
+        raise ValueError('wrong-generation')
+    index = load_or_build_index(variants, load(DEFAULT_COVERAGE))
+    reverse = {ecu: system for system, ecu in NODE_ECU.items()}
+    def result(**values):
+        return {'ok': True, **values, **FLAGS}
+    if req['action'] == 'catalog-units':
+        units = {}
+        for row in index.get('rows', []):
+            if not _matches_generation(row, generation):
+                continue
+            for ecu in row.get('ecuIds', []):
+                if ecu not in reverse:
+                    continue
+                unit = units.setdefault(ecu, {'systemId': reverse[ecu], 'ecuId': ecu, 'label': reverse[ecu], 'variants': []})
+                unit['variants'].append({'profileId': row['profileId'], 'name': row['name'], 'status': 'catalog-unqualified',
+                    'parameterCount': row['poolCounts'].get('measurement') or 0, 'replayParameterCount': 0,
+                    'identityCount': row['poolCounts'].get('identity') or 0, 'identityDecoderCount': 0})
+        return result(present=index.get('present', False), units=list(units.values()), counts={}, selectionLimit=SELECTION_LIMIT)
+    row = next((r for r in index.get('rows', []) if r['profileId'] == req.get('profileId')), None)
+    if row is None:
+        raise ValueError('unknown-profile')
+    guarded = _profile_guard(req, row)
+    if guarded:
+        return guarded
+    variant = _load_variant(variants, row)
+    if req['action'] == 'catalog-coding-plan':
+        if set(req) - {'action', 'generation', 'ecuId', 'profileId'}:
+            raise ValueError('coding-read-forbidden-field')
+        if type(req.get('ecuId')) is not int or req['ecuId'] not in row.get('ecuIds', []):
+            raise ValueError('profile-ecu-mismatch')
+        from .coding_read_plan import coding_read_plan
+        return result(plan=coding_read_plan(variant, generation))
+    records = variant.get('pool_records', {}).get('measurement', {}).get('records', [])
+    language = GgpLanguage(GGP_PATH) if GGP_PATH.is_file() and any(str(record.get('name', '')).startswith('SubIndexNum=') for record in records) else None
+    def lookup_name(key):
+        return compact_text(language.lookup_id('DSTREAM_CN.GAG', key)) if language else None
+    parameters = []
+    for position, record in enumerate(records):
+        request = request_from_record(record)
+        _text, parsed = formula_from_record(record)
+        classified = classify_decode(parsed, record.get('byteOffset'), record.get('bitOffset'))
+        candidate = request['request'].hex().upper() if request.get('ok') else None
+        name, name_resolved = display_name({**record, 'requestHex': candidate}, lookup_name if language else None)
+        key = hashlib.sha256(json.dumps([row['profileId'], position, record], sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+        group = record.get('groupIdHex')
+        if not isinstance(group, str) or not re.fullmatch(r'[0-9A-F]{8}', group):
+            group = 'ungrouped'
+        parameters.append({**record, 'id': key, 'name': name, 'nameResolved': name_resolved,
+            'requestHex': candidate, 'decoderReady': bool(classified.get('ok') and candidate),
+            'decoderIssue': classified.get('reason') if not classified.get('ok') else request.get('reason'),
+            'dataSpan': data_span(record), 'status': 'catalog-unqualified', 'decodedSampleCount': 0,
+            'categories': [{'id': group, 'label': f'分组 {group}' if group != 'ungrouped' else '未分组'}], 'replay': []})
+    profile = {'profileId': row['profileId'], 'parameters': parameters, 'identity': [], 'addressCandidates': [],
+        'checklist': ['目录版本是手动选择，未与本车身份匹配', '缺少本次身份、会话与路由核实', '该目录没有实车响应，无法生成车辆数值']}
+    if req['action'] == 'catalog-parameters':
+        visible = [p for p in parameters if not zero_definition(p)]
+        categories = {}
+        for parameter in visible:
+            category = parameter['categories'][0]
+            categories.setdefault(category['id'], {**category, 'count': 0})['count'] += 1
+        query = req.get('search', '').casefold(); group = req.get('groupId')
+        if group is not None and group not in categories:
+            raise ValueError('unknown-category')
+        filtered = [p for p in visible if (not query or query in (p['name'] + ' ' + (p['requestHex'] or '')).casefold())
+            and (group is None or p['categories'][0]['id'] == group)]
+        offset, limit = req.get('offset', 0), req.get('limit', 40)
+        if type(offset) is not int or offset < 0 or type(limit) is not int or not 1 <= limit <= 100:
+            raise ValueError('page-limit')
+        return result(items=[slim_parameter(p) for p in filtered[offset:offset + limit]], total=len(filtered), categories=list(categories.values()), checklist=profile['checklist'])
+    plan = plan_for(profile, req.get('parameterIds'))
+    if req['action'] == 'catalog-plan':
+        return result(plan=plan)
+    selected = set(req['parameterIds'])
+    return result(source='definition-only-no-vehicle-response', parameters=[{**slim_parameter(p), 'series': [], 'missingResponse': True} for p in parameters if p['id'] in selected])
 
 
 def handle_ready(req, root=None):
@@ -384,6 +481,8 @@ def handle_ready(req, root=None):
     def result(**value):
         return {'ok': True, 'liveVerified': False, **value, **FLAGS}
     try:
+        if req['action'].startswith('catalog-'):
+            return handle_catalog(req)
         if req.get('generation', '981') != '981':
             raise ValueError('wrong-generation')
         if not (root / 'manifest.json').is_file():
@@ -427,6 +526,31 @@ def handle_ready(req, root=None):
                 total=len(params), offset=offset, categories=list(categories.values()),
                 checklist=profile['checklist'], identityReplay=profile.get('identityReplay', []))
         plan = plan_for(profile, req.get('parameterIds'))
+        if req['action'] == 'ready-acquire':
+            if set(req) - {'action', 'generation', 'ecuId', 'profileId', 'parameterIds'}:
+                raise ValueError('manufacturer-forbidden-field')
+            # Production ELM framing runs against a private fixture BytePort.
+            # Stale code or changed evidence fails before opening that fixture.
+            from .manufacturer_transport import transport_rehearsal
+            for item in manifest['code']:
+                file = Path(item['path'])
+                if manifest.get('schemaVersion') == 2:
+                    if file.is_absolute() or '..' in file.parts or not item['path'].startswith('scripts/'):
+                        raise ValueError('manufacturer-code-path-invalid')
+                    file = ROOT / file
+                verify_source(file, item['sha256'])
+            if manifest.get('schemaVersion') == 2:
+                groups_path = root / 'rehearsal-fixtures.json'
+                expected = next((item['sha256'] for item in manifest['outputs']
+                                if item['path'] == 'rehearsal-fixtures.json'), None)
+            else:
+                groups_path = DEFAULT_MATCH / 'request-groups.json'
+                expected = next((item['sha256'] for item in manifest['inputs']
+                                if Path(item['path']).resolve() == groups_path.resolve()), None)
+            if not expected:
+                raise ValueError('manufacturer-response-source-missing')
+            verify_source(groups_path, expected)
+            return transport_rehearsal(profile, req.get('parameterIds'), load(groups_path))
         if req['action'] == 'ready-plan':
             return result(plan=plan)
         if req['action'] == 'ready-replay':

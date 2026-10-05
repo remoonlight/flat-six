@@ -28,6 +28,8 @@ function installFake() {
   const registryMode = q.get("registry") === "1";
   let selected: string | null = null;
   let model: ObdConnectionRequest["model"] | null = null;
+  let purpose: "diagnostic" | "internal" = "diagnostic";
+  let canNetwork: "drive" | "adas" | null = null;
   let connected = false;
   let volts: number | null = null;
   let busy = false;
@@ -109,12 +111,18 @@ function installFake() {
           ...FLAGS,
           devices,
           deviceRegistry,
+          purpose, canNetwork,
           selectedDeviceId: selected,
           model,
           connected,
           linkState: connected ? "connected" : "idle",
           voltageVolts: volts,
         };
+      }
+      if (req.action === "configure") {
+        purpose = req.purpose || purpose;
+        canNetwork = req.canNetwork || canNetwork;
+        return { ok: true, ...FLAGS, purpose, canNetwork, connected, linkState: "idle" };
       }
       if (req.action === "select") {
         selected = req.deviceId || null;
@@ -128,6 +136,7 @@ function installFake() {
         return { ok: true, ...FLAGS, devices, selectedDeviceId: selected, model, connected, linkState: "idle", voltageVolts: null };
       }
       if (req.action === "connect") {
+        if (purpose === "internal") return { ok: false, error: "internal_receive_not_integrated", ...FLAGS, connected: false, linkState: "idle" };
         if (busy) return { ok: false, error: "busy", ...FLAGS, devices, selectedDeviceId: selected, connected, voltageVolts: volts, linkState: "diagnostic" };
         selected = req.deviceId || selected;
         model = req.model || model;

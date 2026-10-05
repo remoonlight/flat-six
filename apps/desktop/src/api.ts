@@ -579,6 +579,10 @@ export type PorscheApi = {
     request: OfflineDiagnosticsRequest,
     operationId?: string,
   ) => Promise<OfflineDiagnosticsResult>;
+  diagnosticPreparation?: (request: { action: string; ecu: string; id?: string; did?: string; recordAt?: number; rawValue?: number; scenario?: string }) => Promise<DiagnosticPreparationResult>;
+  diagnosticDefinitionBundle?: (request: { action: "export" | "import" }) => Promise<{ ok: boolean; error?: string; canceled?: boolean; files?: number; imported?: number }>;
+  diagnosticCanRecording?: (request: { action: "status" | "start" | "stop"; simulation?: boolean }) => Promise<{ ok: boolean; error?: string; canceled?: boolean;
+    recording?: { active: boolean; simulation: boolean; frameCount: number; file: string; error?: string; reason?: string } | null }>;
   cancelOfflineDiagnostics?: (operationId: string) => Promise<OfflineDiagnosticsResult>;
   saveDiagnosticRecording?: (input: { fileName: string; recording: object }) =>
     Promise<{ ok: boolean; saved: boolean; canceled?: boolean; filePath?: string; error?: string }>;
@@ -590,6 +594,16 @@ export type PorscheApi = {
   ) => Promise<ObdConnectionResult>;
   canCapture?: (request: CanCaptureRequest) => Promise<CanCaptureResult>;
 }
+
+export type DiagnosticPreparationResult = { ok: boolean; error?: string; canceled?: boolean; saved?: boolean;
+  backups?: { id: string; identity: Record<string, string>; profileId: string; capturedUtc: string; original: boolean; blockCount: number; provenance?: string }[];
+  backup?: { identity: Record<string, string>; profileId: string; blocks: { did: string; dataHex: string }[] };
+  options?: { rawValue: number; label: string }[]; decoded?: { text?: string; raw?: number };
+  beforeHex?: string; afterHex?: string; changedBitMaskHex?: string;
+  plan?: { kind?: string; changedBlocks: number; blockers: string[]; blocks: { did: string; beforeHex: string; targetHex: string; changed: boolean }[] };
+  result?: { ok: boolean; simulation: boolean; error?: string; stages: string[] };
+  preparation?: { hashMatches: boolean; targetSoftware: string; file: { name: string; sha256: string; bytes: number }; blockers: string[] };
+};
 
 export type CanCaptureRequest = { action: "list" | "start" | "status" | "cancel" | "replay";
   seconds?: number; confirmedReadOnly?: boolean; x431Inactive?: boolean; jobId?: string; runId?: string };
@@ -609,8 +623,10 @@ export type OfflineDiagnosticsAction =
   | "match"
   | "decode"
   | "preview"
+  | "coding-options"
+  | "catalog-units" | "catalog-parameters" | "catalog-plan" | "catalog-replay" | "catalog-coding-plan"
   | "replay"
-  | "ready-units" | "ready-parameters" | "ready-plan" | "ready-replay";
+  | "ready-units" | "ready-parameters" | "ready-plan" | "ready-replay" | "ready-acquire";
 
 export type OfflineDiagnosticsRequest = {
   action: OfflineDiagnosticsAction;
@@ -642,6 +658,11 @@ export type OfflineDiagnosticsResult = {
 export type ObdConnectionAction =
   | "list"
   | "select"
+  | "configure"
+  | "record-start"
+  | "record-stop"
+  | "save-result"
+  | "new-batch"
   | "connect"
   | "voltage"
   | "disconnect"
@@ -652,6 +673,8 @@ export type ObdConnectionRequest = {
   action: ObdConnectionAction;
   deviceId?: string;
   model?: "vLinker" | "OBDLink MX+" | "VNCI";
+  purpose?: "diagnostic" | "internal";
+  canNetwork?: "drive" | "adas";
 };
 
 export type ObdConnectionDevice = {
@@ -663,7 +686,7 @@ export type ObdConnectionDevice = {
   paired?: boolean;
   osStatus?: string | null;
   guidance?: string | null;
-  transport?: "d-pdu-usb";
+  transport?: "d-pdu-usb" | "bluetooth-spp";
   serial?: string;
   address?: string | null;
 };
@@ -677,6 +700,13 @@ export type ObdConnectionResult = {
   writePayload: null;
   selectedDeviceId?: string | null;
   model?: string | null;
+  purpose?: "diagnostic" | "internal";
+  canNetwork?: "drive" | "adas" | null;
+  internalSupported?: boolean;
+  internal?: { startedAt: string; endedAt: string | null; frameCount: number; retainedFrames: number; frameLimit: number;
+    batchClosed: boolean; interruptions: { at: string; reason: string }[]; verifiedSignalCount: number;
+    latest: { canId: number; extended: boolean; dataHex: string; timestampUs: number; timestampSource: string }[] } | null;
+  recording?: { active: boolean; file: string; startedAt: string; frameCount: number; error?: string; reason?: string } | null;
   connected?: boolean;
   linkState?: string;
   pairingOk?: boolean;

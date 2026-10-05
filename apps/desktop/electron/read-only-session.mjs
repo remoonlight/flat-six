@@ -10,6 +10,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { StringDecoder } from "node:string_decoder";
 import { resolvePythonCandidates } from "./offline-diagnostics.mjs";
+import { validCanFrame } from "./internal-can-data.mjs";
 
 export const SESSION_CHANNEL = "diagnostics:session";
 
@@ -34,7 +35,7 @@ const SCENARIOS = new Set([
   "disconnect",
   "slow",
 ]);
-const EVENT_TYPES = new Set(["plan", "progress", "result"]);
+const EVENT_TYPES = new Set(["plan", "progress", "result", "can-frame"]);
 const RESULT_STATUS = new Set(["completed", "failed", "cancelled"]);
 
 const PREPARE_START_KEYS = Object.freeze([
@@ -56,7 +57,7 @@ const JOB_KEYS = Object.freeze(["action", "jobId"]);
 const OVERVIEW_KEYS = Object.freeze(["action"]);
 
 const MAX_JSON = 16 * 1024;
-const MAX_STDOUT = 512 * 1024;
+const MAX_STDOUT = 2 * 1024 * 1024;
 const MAX_STDERR = 32 * 1024;
 const MAX_OP_IDS = 32;
 const MAX_EVENTS = 40;
@@ -306,6 +307,8 @@ function checkSuccessResult(doc, backend) {
 
 function checkEvent(ev, backend) {
   if (!EVENT_TYPES.has(ev.type)) return "protocol_error";
+  if (ev.type === "can-frame" && (!validCanFrame(ev.frame) || ev.profileId !== backend.profileId
+    || typeof ev.runId !== "string" || !RUN_ID_RE.test(ev.runId) || ev.simulation !== (backend.mode === "simulation"))) return "protocol_error";
   if (ev.type === "progress") {
     if (typeof ev.runId !== "string" || typeof ev.stage !== "string") return "protocol_error";
     if (ev.profileId != null && ev.profileId !== backend.profileId) return "protocol_error";
@@ -522,6 +525,7 @@ export function createReadOnlySessionManager(opts) {
 
   function spawnSession(backend, job, onDone) {
     const env = { ...envIn, PYTHONIOENCODING: "utf-8", PYTHONUTF8: "1" };
+    env.PORSCHE981_SESSION_TRANSIENT = backend.sessionTask === "clear" ? "0" : "1";
     delete env.PORSCHE981_SERIAL;
     delete env.PORSCHE981_SERIAL_PORT;
     const payload = JSON.stringify(backend) + "\n";
@@ -547,6 +551,7 @@ export function createReadOnlySessionManager(opts) {
       const args = injected
         ? ["-m", "scripts.diagnostics.sessions", "--stdio"]
         : [...prefix, "-m", "scripts.diagnostics.sessions", "--stdio"];
+      if (env.PORSCHE981_SESSION_ARTIFACT_ROOT) args.push("--artifact-root", env.PORSCHE981_SESSION_ARTIFACT_ROOT);
       let child;
       try {
         child = spawnFn(exe, args, {
@@ -563,6 +568,8 @@ export function createReadOnlySessionManager(opts) {
 
       const attempt = { abandoned: false };
       job.child = child;
+      job.childClosed = false;
+      job.failUnclosed = (error) => settle(error);
       active = { jobId: job.id, child };
       let stdout = Buffer.alloc(0);
       let rest = "";
@@ -579,7 +586,6 @@ export function createReadOnlySessionManager(opts) {
         if (!watchdog) {
           watchdog = trackTimer(
             setTimeout(() => {
-              if (active && active.jobId === job.id) active = null;
               settle(error || "cancel_timeout");
             }, killWatchMs),
           );
@@ -594,16 +600,16 @@ export function createReadOnlySessionManager(opts) {
             watchdog = trackTimer(
               setTimeout(() => {
                 if (settled) return;
-                if (active && active.jobId === job.id) active = null;
                 settle("timeout");
               }, gracefulMs + killWatchMs),
             );
           }
         }, tmo),
       );
+      job.sessionTimer = timer;
 
       const consume = (chunk) => {
-        if (attempt.abandoned || capped || protocolErr) return;
+        if (settled || attempt.abandoned || capped || protocolErr) return;
         const room = maxStdout + 1 - stdout.length;
         const take = chunk.subarray(0, Math.max(0, room));
         stdout = Buffer.concat([stdout, take]);
@@ -633,7 +639,8 @@ export function createReadOnlySessionManager(opts) {
             finishWait(protocolErr);
             return;
           }
-          pushEvent(job, parsed.event);
+          if (parsed.event.type === "can-frame") opts.onCanFrame?.(parsed.event);
+          else pushEvent(job, parsed.event);
         }
       };
 
@@ -643,6 +650,9 @@ export function createReadOnlySessionManager(opts) {
           attempt.abandoned = true;
           clearT(timer);
           killChild(child);
+          // These spawn errors mean no process was launched. Do not retain a
+          // phantom child if every configured Python candidate is missing.
+          job.child = null;
           if (active && active.jobId === job.id) active = null;
           tryOne();
           return;
@@ -660,7 +670,18 @@ export function createReadOnlySessionManager(opts) {
         if (err && err.code === "EPIPE") finishWait("stdin_closed");
       });
       child.on("close", (code) => {
-        if (attempt.abandoned || settled) return;
+        if (attempt.abandoned) return;
+        job.childClosed = true;
+        clearT(timer);
+        if (watchdog) clearT(watchdog);
+        if (job.cancelTimer) clearT(job.cancelTimer);
+        if (active && active.jobId === job.id) active = null;
+        // A timeout is already reportable, but the serial gate stays owned
+        // until the process actually closes, even after kill() was requested.
+        if (settled) {
+          releaseClosedSession(job);
+          return;
+        }
         rest += decoder.end();
         if (rest.trim()) {
           if (job.final) {
@@ -671,9 +692,6 @@ export function createReadOnlySessionManager(opts) {
             else if (!parsed.skip && parsed.event) pushEvent(job, parsed.event);
           }
         }
-        clearT(timer);
-        if (watchdog) clearT(watchdog);
-        if (active && active.jobId === job.id) active = null;
         if (protocolErr) {
           settle(protocolErr);
           return;
@@ -733,8 +751,7 @@ export function createReadOnlySessionManager(opts) {
         job.cancelTimer = trackTimer(
           setTimeout(() => {
             if (job.state === "running" || job.state === "cancelling") {
-              job.state = "failed";
-              job.error = fromTimeout ? "timeout" : "cancel_timeout";
+              job.failUnclosed?.(fromTimeout ? "timeout" : "cancel_timeout");
             }
           }, killWatchMs),
         );
@@ -744,6 +761,7 @@ export function createReadOnlySessionManager(opts) {
 
   function completeJob(job, error) {
     if (job.cancelTimer) clearT(job.cancelTimer);
+    if (job.sessionTimer) clearT(job.sessionTimer);
     if (error) {
       job.state = "failed";
       job.error = error;
@@ -772,16 +790,20 @@ export function createReadOnlySessionManager(opts) {
       lastTransportDisconnect = false;
     }
     remember(job);
+    releaseClosedSession(job);
+  }
+
+  function releaseClosedSession(job) {
+    if (job.child && !job.childClosed) return;
+    if (job.endNotified) return;
+    job.endNotified = true;
     gate?.release("session");
     if (job.kind !== "prepare") opts.onSessionEnded?.(job);
   }
 
   async function runPrepare(req, ownerId) {
+    if (active) return fail("busy");
     if (gate && !gate.tryAcquire("session")) return fail("busy");
-    if (active) {
-      gate?.release("session");
-      return fail("busy");
-    }
     if (!injected) {
       const missing = sessionsMissing(repoRoot);
       if (missing) {
@@ -828,11 +850,8 @@ export function createReadOnlySessionManager(opts) {
       const deviceId = typeof getLiveDeviceId === "function" ? getLiveDeviceId() : null;
       if (typeof getLiveDeviceId === "function" && !deviceId) return fail("device_not_selected");
     }
+    if (active) return fail("busy");
     if (gate && !gate.tryAcquire("session")) return fail("busy");
-    if (active) {
-      gate?.release("session");
-      return fail("busy");
-    }
     if (!injected) {
       const missing = sessionsMissing(repoRoot);
       if (missing) {
@@ -940,7 +959,6 @@ export function createReadOnlySessionManager(opts) {
           if (active?.child) killChild(active.child);
           for (const t of timers) clearTimeout(t);
           timers.clear();
-          active = null;
           resolve();
           return;
         }
@@ -950,7 +968,19 @@ export function createReadOnlySessionManager(opts) {
     });
   }
 
-  return { handle, cancelOwned, shutdown, isIdle, _jobs: jobs };
+  async function cancelActiveAndWait() {
+    for (const job of jobs.values()) {
+      if (job.state === "running" || job.state === "cancelling") {
+        job.state = "cancelling";
+        sendCancel(job, false);
+      }
+    }
+    const deadline = Date.now() + gracefulMs + killWatchMs + 200;
+    while (!isIdle() && Date.now() < deadline) await new Promise((resolve) => setTimeout(resolve, 40));
+    return isIdle() ? { ok: true } : fail("session_close_timeout");
+  }
+
+  return { handle, cancelOwned, cancelActiveAndWait, shutdown, isIdle, _jobs: jobs };
 }
 
 export function backendReadyPath(repoRoot) {

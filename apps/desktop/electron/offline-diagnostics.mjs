@@ -15,8 +15,10 @@ export const ACTIONS = Object.freeze([
   "match",
   "decode",
   "preview",
+  "coding-options",
   "replay",
-  "ready-units", "ready-parameters", "ready-plan", "ready-replay",
+  "ready-units", "ready-parameters", "ready-plan", "ready-replay", "ready-acquire",
+  "catalog-units", "catalog-parameters", "catalog-plan", "catalog-replay", "catalog-coding-plan",
 ]);
 
 const ACTION_SET = new Set(ACTIONS);
@@ -67,6 +69,8 @@ export function validateRequest(req) {
   const bad = Object.keys(req).filter((k) => FORBIDDEN.has(k));
   if (bad.length) return fail("forbidden_field", { fields: bad });
   if (!ACTION_SET.has(req.action)) return fail("invalid_action", { action: req.action });
+  if (req.action === "ready-acquire" && Object.keys(req).some((key) =>
+    !["action", "generation", "ecuId", "profileId", "parameterIds"].includes(key))) return fail("forbidden_field");
   if (req.groupId != null && (typeof req.groupId !== "string" || !/^(?:[0-9A-F]{8}|ungrouped)$/.test(req.groupId))) return fail("invalid_group_id");
   if (req.parameterIds != null && (!Array.isArray(req.parameterIds) || req.parameterIds.length > 12
     || req.parameterIds.some((id) => typeof id !== "string" || !/^[a-f0-9]{64}$/.test(id))
@@ -117,14 +121,16 @@ export function validateRequest(req) {
 
 export function resolvePython(env = process.env) {
   const pinned = (env.PORSCHE981_PYTHON || "").trim();
-  if (pinned) return { exe: pinned, prefix: [] };
+  if (pinned) return { exe: pinned, prefix: ["-X", "utf8"] };
   if (process.platform === "win32") return { exe: "py", prefix: ["-3"] };
   return { exe: "python3", prefix: [] };
 }
 
 export function resolvePythonCandidates(env = process.env) {
   const pinned = (env.PORSCHE981_PYTHON || "").trim();
-  if (pinned) return [{ exe: pinned, prefix: [] }];
+  // An isolated bundled Python ignores PYTHONUTF8/PYTHONIOENCODING.
+  // Use the interpreter flag so Chinese JSON works on non-UTF8 Windows too.
+  if (pinned) return [{ exe: pinned, prefix: ["-X", "utf8"] }];
   if (process.platform === "win32") {
     return [
       { exe: "py", prefix: ["-3"] },
@@ -348,7 +354,7 @@ export function createOfflineOperations(opts) {
   return {
     async run(request, ownerId, operationId) {
       if (operationId == null) return handleOfflineDiagnostics(request, opts);
-      if (!validId(operationId) || request?.action !== "ready-plan") return fail("invalid_operation");
+      if (!validId(operationId) || !["ready-plan", "ready-replay", "ready-acquire", "catalog-plan", "catalog-replay"].includes(request?.action)) return fail("invalid_operation");
       const key = `${ownerId}:${operationId}`;
       if (operations.has(key)) return fail("operation_exists");
       const controller = new AbortController();

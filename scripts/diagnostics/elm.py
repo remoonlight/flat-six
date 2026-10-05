@@ -63,10 +63,11 @@ def _setting_ok(text: str) -> bool:
 class ElmClient:
     """ELM327 ISO-TP with explicit CAF0 PCI ownership. Not ATMA. Not live-proven."""
 
-    def __init__(self, port: BytePort, timeout_s: float = 8.0, *, clock=None, sleeper=None, cancel_event=None):
+    def __init__(self, port: BytePort, timeout_s: float = 8.0, *, clock=None, sleeper=None, cancel_event=None, frame_sink=None):
         self.port = port
         self.timeout_s = timeout_s
         self.raw_log: list[dict] = []
+        self._frame_sink = frame_sink
         self._closed = False
         self._configured = False
         self._rx_id: int | None = None
@@ -134,6 +135,8 @@ class ElmClient:
 
     def _read_until_prompt(self, deadline: float, *, occupy: bool = False) -> str:
         buf = bytearray()
+        frame_line = bytearray()
+        discard_line = False
         try:
             while self._now() < deadline:
                 if self._cancelled():
@@ -145,7 +148,23 @@ class ElmClient:
                     self._sleeper(0.01)
                     continue
                 buf.extend(chunk)
-                self.raw_log.append({"dir": "rx", "hex": chunk.hex().upper()})
+                stamp_us = time.time_ns() // 1000
+                self.raw_log.append({"dir": "rx", "hex": chunk.hex().upper(), "timestampUs": stamp_us})
+                if self._frame_sink:
+                    from .can_monitor import parse_frame
+                    for byte in chunk:
+                        if byte in (10, 13, 62):
+                            frame = None if discard_line else parse_frame(bytes(frame_line).strip())
+                            frame_line.clear(); discard_line = False
+                            if frame:
+                                can_id, extended, data = frame
+                                self._frame_sink({"canId": can_id, "extended": extended, "dataHex": data.hex().upper(),
+                                    "timestampUs": stamp_us, "timestampSource": "host-chunk-arrival"})
+                        elif not discard_line:
+                            if len(frame_line) < 4096:
+                                frame_line.append(byte)
+                            else:
+                                frame_line.clear(); discard_line = True
                 if buf.endswith(b">"):
                     return buf.decode("latin-1", errors="replace")
             raise ElmError("prompt-timeout:" + buf.decode("latin-1", errors="replace"))

@@ -116,6 +116,12 @@ assert(operations.cancel(10, "preparation-1").cancelled === false, "finished ope
 const closing = operations.run({ action: "ready-plan" }, 10, "preparation-2");
 operations.cancelOwned(10);
 assert((await closing).error === "cancelled", "window close cancels worker");
+for (const action of ["ready-replay", "catalog-plan", "catalog-replay"]) {
+  const pending = operations.run({ action }, 10, action);
+  assert(operations.cancel(11, action).cancelled === false, "foreign window cannot stop replay/catalogue work");
+  assert(operations.cancel(10, action).cancelled === true, `${action} accepts a cancellable window-owned operation`);
+  assert((await pending).error === "cancelled", `${action} cancellation reaches worker`);
+}
 const aborted = new AbortController(); aborted.abort();
 assert((await runWorkbench({ action: "summary" }, { repoRoot, signal: aborted.signal,
   spawnFn: () => { throw new Error("must not spawn"); } })).error === "cancelled", "abort before spawn");

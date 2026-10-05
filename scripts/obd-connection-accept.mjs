@@ -99,9 +99,8 @@ try {
 
   await page.goto(`http://127.0.0.1:${port}/obd-connection-harness.html?nocom=1`, { waitUntil: "networkidle" });
   await page.click("[data-obd-tab='connection']");
-  await page.waitForSelector("[data-testid='obd-conn-list']");
-  await page.click("[data-testid='obd-device-bt:000000000000']");
-  await page.waitForFunction(() => (document.querySelector("[data-testid='obd-conn-note']")?.textContent || "").includes("串口"));
+  await page.waitForSelector("[data-testid='obd-conn-empty']");
+  if (await page.getByRole("radio").count()) throw new Error("paired device without transport shown");
   await page.screenshot({ path: path.join(shotDir, "no-com.png") });
   results.push("no-com");
 
@@ -190,19 +189,22 @@ try {
   await page.click("[data-obd-tab='connection']");
   const registry = page.getByTestId("obd-device-registry");
   await registry.waitFor();
-  if (await page.locator("[data-testid='obd-conn-list'] > li").count() !== 4) throw new Error("associated devices must be deduplicated");
+  if (await page.locator("[data-testid='obd-conn-list'] > li").count() !== 1) throw new Error("only the current available supported head may be listed");
   const buttons = await page.getByTestId("obd-connection").getByRole("button").allTextContents();
   if (JSON.stringify(buttons) !== JSON.stringify(["刷新", "连接设备", "断开设备"])) throw new Error("unexpected connection controls " + buttons);
-  for (const family of ["vLinker", "OBDLink MX+", "VNCI", "PT3G"]) {
+  for (const family of ["vLinker"]) {
     await page.getByTestId(`obd-registered-${family}`).waitFor();
   }
-  for (const family of ["X431", "X431-tablet", "Espressif"]) {
+  for (const family of ["X431", "X431-tablet", "Espressif", "OBDLink MX+", "VNCI", "PT3G"]) {
     if (await page.getByTestId(`obd-registered-${family}`).count()) throw new Error(`hidden connection device shown: ${family}`);
   }
-  const pt3g = page.getByTestId("obd-registered-PT3G");
-  if (!(await pt3g.textContent()).includes("USB 在线") || (await pt3g.getByRole("button").count())) throw new Error("PT3G falsely offered a vehicle transport");
-  const offlineVnci = page.getByTestId("obd-registered-VNCI");
-  if (!(await offlineVnci.getByRole("radio").isDisabled()) || !(await offlineVnci.textContent()).includes("本次未发现")) throw new Error("offline VNCI can be selected as online");
+  await page.getByTestId("obd-purpose").selectOption("internal");
+  await page.getByTestId("obd-can-network").waitFor();
+  if (await page.getByTestId("obd-can-network").inputValue() !== "") throw new Error("CAN was guessed");
+  await page.getByTestId("obd-can-network").selectOption("adas");
+  await page.getByTestId("obd-conn-refresh").click();
+  if (await page.getByTestId("obd-can-network").inputValue() !== "adas") throw new Error("CAN selection lost on refresh");
+  await page.getByTestId("obd-purpose").selectOption("diagnostic");
   await page.getByTestId("obd-registered-vLinker").getByRole("radio").check();
   await page.waitForFunction(() => document.querySelector("input[name='obd-device']")?.checked);
   if (!(await page.getByTestId("obd-header-voltage").textContent()).includes("--")) throw new Error("selecting a registry device started hardware");
@@ -212,7 +214,7 @@ try {
   const overflows = await registry.evaluate((el) => el.scrollWidth > el.clientWidth + 1);
   if (overflows) throw new Error("device registry overflows on mobile");
   if (errors.length) throw new Error(`browser errors: ${errors.join("; ")}`);
-  results.push("compact-deduplicated-devices, three-controls, excluded-reference-devices, offline-state, select-without-open, mobile");
+  results.push("compact-deduplicated-devices, three-controls, excluded-reference-devices, current-available-only, manual-CAN, select-without-open, mobile");
   await browser.close();
 } finally {
   vite.kill();

@@ -143,8 +143,14 @@ def windows_serial_rows(runner=None) -> tuple[list[dict], str | None]:
     script = (
         "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; "
         "$OutputEncoding = [Console]::OutputEncoding; "
-        "Get-CimInstance Win32_SerialPort | "
-        "Select-Object DeviceID, Name, Description, PNPDeviceID | ConvertTo-Json -Compress"
+        # Win32_SerialPort can stall in its CIM provider. Use present, healthy
+        # PnP ports and retain pyserial as the independent OS listing source.
+        "Get-PnpDevice -Class Ports -PresentOnly -ErrorAction SilentlyContinue | "
+        "Where-Object { $_.Status -eq 'OK' -and $_.FriendlyName -match '\\(COM[0-9]+\\)' } | "
+        "Select-Object @{Name='DeviceID';Expression={[regex]::Match($_.FriendlyName,'COM[0-9]+').Value}}, "
+        "@{Name='Name';Expression={$_.FriendlyName}}, @{Name='Description';Expression={$_.FriendlyName}}, "
+        "@{Name='PNPDeviceID';Expression={$_.InstanceId}} | "
+        "ConvertTo-Json -Compress"
     )
     data, err = _ps_json(script, runner)
     if err:
@@ -577,8 +583,6 @@ def run_voltage_monitor(
         ident = client.validate_adapter(10.0)
         _trim_raw(client)
         volts = parse_voltage_volts(ident.get("atrv"))
-        if volts is None:
-            return fail("atrv-unparsed", {"ati": ident.get("ati"), "atdpn": ident.get("atdpn")})
         samples = 1
         _emit(
             outf,
@@ -594,6 +598,7 @@ def run_voltage_monitor(
                 "voltageSource": "atrv",
                 "serialOpens": serial_opens,
                 "identityOnce": True,
+                "commOk": True,
                 "at": _utc(),
                 **flags,
             },
@@ -605,14 +610,13 @@ def run_voltage_monitor(
             atrv = client.send_at("ATRV")
             _trim_raw(client)
             volts = parse_voltage_volts(atrv)
-            if volts is None:
-                return fail("atrv-unparsed")
             samples += 1
             _emit(
                 outf,
                 {
                     "ok": True,
                     "type": "reading",
+                    "commOk": True,
                     "deviceId": device_id,
                     "atrv": atrv,
                     "volts": volts,
@@ -653,7 +657,7 @@ def stdio_loop(stdin=None, stdout=None) -> int:
     if not isinstance(req, dict):
         outf.write(json.dumps({"ok": False, "error": "stdin-not-object", "liveVerified": False, "writePayload": None}) + "\n")
         return 2
-    extra = set(req) - {"action", "deviceId", "kind"}
+    extra = set(req) - {"action", "deviceId", "kind", "purpose", "canNetwork"}
     if extra:
         outf.write(json.dumps({"ok": False, "error": "unexpected-keys", "liveVerified": False, "writePayload": None}) + "\n")
         return 2
@@ -670,12 +674,18 @@ def stdio_loop(stdin=None, stdout=None) -> int:
         return 0
     if action == "monitor":
         did = req.get("deviceId")
+        if req.get("purpose", "diagnostic") not in ("diagnostic", "internal"):
+            _emit(outf, {"ok": False, "type": "error", "error": "invalid-purpose"})
+            return 2
         if _live_probe_blocked():
             outf.write(
                 json.dumps({"ok": False, "type": "error", "error": "live-probe-disabled", "liveVerified": False, "writePayload": None, "simulation": False})
                 + "\n"
             )
             return 2
+        if req.get("purpose") == "internal":
+            from .internal_stream import run_internal_monitor
+            return run_internal_monitor(did, req.get("canNetwork"), stdout=outf, stdin=inf)
         return run_voltage_monitor(did, stdout=outf, stdin=inf)
     if action == "probe":
         did = req.get("deviceId")

@@ -598,3 +598,22 @@ assert.equal(headerTaskState({ apiAvailable: true, overviewOk: false, overviewSt
 }
 
 console.log(`can-topology-logic.selfcheck ok ${ADAPTED_PROFILES.length} profiles; capability, transport and retained-source gates`);
+
+{
+  // Continue a candidate-local terminal response only with independent link and cleanup evidence.
+  for (const error of ["NO DATA", "negative-response", "prompt-timeout"]) {
+    const starts = [];
+    const candidateFailure = error === "NO DATA" ? "no-response" : "negative-response";
+    const invoke = async (request) => {
+      if (request.action === "start") { starts.push(request.profileId); return { ok: true, jobId: `j${starts.length}` }; }
+      if (request.action === "status") return { ok: true, state: "failed", error,
+        final: { ok: false, status: "failed", mode: "simulation", simulation: true, profileId: starts.at(-1),
+          error, ...(error !== "prompt-timeout" ? { candidateFailure, linkHealth: "verified", restoration: { errors: [] } } : {}) } };
+      return { ok: true };
+    };
+    const queue = createScanQueue({ invoke, pollMs: 1, sleep: async () => {} });
+    const out = await queue.run({ nodes: adaptedNodes(g981), ctx: { mode: "simulation", sessionTask: "read" } });
+    assert.equal(starts.length, error === "prompt-timeout" ? 1 : 2);
+    if (error === "NO DATA") assert.equal(out.results[0].classified.kind, KIND.noResponse);
+  }
+}

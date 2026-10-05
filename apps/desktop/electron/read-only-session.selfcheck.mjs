@@ -528,6 +528,49 @@ const ki = seq.findIndex((x) => x.ev === "kill");
 assert(ci >= 0 && ki > ci, `cancel before kill ${JSON.stringify(seq)}`);
 assert(seq[ki].t - seq[ci].t >= 50, `grace ${JSON.stringify(seq)}`);
 
+// kill() being accepted is not proof of process/serial closure. A late close
+// must keep every competing owner blocked and must not change the timeout result.
+for (const kind of ["timeout", "cancel", "output-cap", "prepare"]) {
+  const gate = createTransportGate();
+  let child; let ended = 0;
+  const mgr = createReadOnlySessionManager({
+    repoRoot, gate, timeoutMs: kind === "cancel" ? 2000 : 40, prepareTimeoutMs: 40,
+    gracefulMs: 20, killWatchMs: 20, maxStdout: 32,
+    onSessionEnded: () => ended++,
+    spawnFn: () => {
+      child = mockChild({ hang: true, emitCloseOnKill: false });
+      // Retain the unclosed process, even when kill() has been requested.
+      child.kill = () => { child.killed = true; };
+      return child;
+    },
+  });
+  let terminal;
+  if (kind === "prepare") {
+    terminal = await mgr.handle({ action: "prepare", profileId: DME }, { ownerId: 1 });
+  } else {
+    const started = await mgr.handle({ action: "start", profileId: DME }, { ownerId: 1 });
+    if (kind === "cancel") await mgr.handle({ action: "cancel", jobId: started.jobId }, { ownerId: 1 });
+    if (kind === "output-cap") child.stdout.emit("data", Buffer.alloc(64, 0x41));
+    terminal = await waitJob(mgr, started.jobId, 1);
+  }
+  assert(terminal.error === (kind === "output-cap" ? "output_cap" : kind === "cancel" ? "cancel_timeout" : "timeout"), `${kind} bounded failure`);
+  assert(!mgr.isIdle() && gate.owner() === "session", `${kind} retain gate before close`);
+  assert(!gate.tryAcquire("monitor"), `${kind} reject voltage monitor`);
+  assert((await mgr.handle({ action: "start", profileId: GW }, { ownerId: 2 })).error === "busy", `${kind} reject second session`);
+  assert((await mgr.handle({ action: "prepare", profileId: GW }, { ownerId: 2 })).error === "busy", `${kind} reject prepare`);
+  if (kind !== "prepare") {
+    child.stdout.emit("data", Buffer.from(okResult() + "\n"));
+    const late = await mgr.handle({ action: "status", jobId: terminal.jobId }, { ownerId: 1 });
+    assert(late.error === terminal.error && late.final == null, `${kind} late success cannot replace failure`);
+  }
+  await mgr.shutdown();
+  assert(!mgr.isIdle() && gate.owner() === "session", `${kind} shutdown cannot prove close`);
+  assert(ended === 0, `${kind} no premature end notification`);
+  child.emit("close", 1);
+  assert(mgr.isIdle() && gate.owner() == null, `${kind} release on actual close`);
+  assert(ended === (kind === "prepare" ? 0 : 1), `${kind} one end notification`);
+}
+
 assert(liveReady(true, true) && !liveReady(true, false), "liveReady");
 const sel = `${DME}:live`;
 assert(!canOperate("live", false, "s1234567", sel, sel, false).resume, "resume needs liveReady");
@@ -929,7 +972,7 @@ if (fs.existsSync(sessionsPy)) {
 
 {
   const gate = createTransportGate();
-  const connFile = path.join(repoRoot, ".local", "cursor-coordination", "obd-connection-20260927", "scratch", "conn-state.json");
+  const connFile = path.join(repoRoot, ".local", "selfchecks", "read-only-session", "conn-state.json");
   try {
     fs.unlinkSync(connFile);
   } catch {
@@ -1064,7 +1107,7 @@ if (fs.existsSync(sessionsPy)) {
 
 {
   const gate = createTransportGate();
-  const connFile = path.join(repoRoot, ".local", "cursor-coordination", "obd-x431-cadence-20260927", "scratch", "handoff.json");
+  const connFile = path.join(repoRoot, ".local", "selfchecks", "read-only-session", "handoff.json");
   const devices = [{ id: "bt:0425E85BD4CB", brand: "vLinker", available: true, paired: true, comPort: "COM9" }];
   let monitorAlive = false;
   let overlap = false;
@@ -1147,7 +1190,7 @@ if (fs.existsSync(sessionsPy)) {
 
 {
   const gate = createTransportGate();
-  const connFile = path.join(repoRoot, ".local", "cursor-coordination", "obd-x431-cadence-20260927", "scratch", "handoff-delay.json");
+  const connFile = path.join(repoRoot, ".local", "selfchecks", "read-only-session", "handoff-delay.json");
   let monitor;
   const conn = createObdConnectionManager({
     repoRoot,

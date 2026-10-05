@@ -1,0 +1,30 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import os from "node:os";
+import { installedRuntime } from "./installed-runtime.mjs";
+import { resolvePythonCandidates } from "./offline-diagnostics.mjs";
+const root = fs.mkdtempSync(path.join(os.tmpdir(), "flat-six-runtime-"));
+const repoRoot = path.join(root, "app"), userData = path.join(root, "user");
+const devEnv = { CUSTOM: "unchanged" };
+assert.equal(installedRuntime({ packaged: false, repoRoot, userData, env: devEnv }).env, devEnv);
+assert.throws(() => installedRuntime({ packaged: true, repoRoot, userData, env: {} }), /runtime-missing/);
+fs.mkdirSync(path.join(repoRoot, "runtime/python"), { recursive: true });
+fs.writeFileSync(path.join(repoRoot, "runtime/node.exe"), "fixture");
+fs.writeFileSync(path.join(repoRoot, "runtime/python/python.exe"), "fixture");
+fs.mkdirSync(path.join(repoRoot, "data/seed/diagnostics"), { recursive: true });
+fs.writeFileSync(path.join(repoRoot, "data/seed/diagnostics/source.json"), "original");
+const runtime = installedRuntime({ packaged: true, repoRoot, userData, env: {} });
+assert.ok(runtime.env.PORSCHE981_PYTHON.startsWith(repoRoot));
+assert.ok(runtime.env.PORSCHE981_VARIANTS.startsWith(userData));
+for (const key of ["PORSCHE981_CONNECTION_STATE", "PORSCHE981_SESSION_ARTIFACT_ROOT", "PORSCHE981_CAN_CAPTURE_ROOT", "PORSCHE981_LOCAL_ROOT"])
+  assert.ok(runtime.env[key].startsWith(userData), key);
+assert.deepEqual(resolvePythonCandidates(runtime.env)[0].prefix, ["-X", "utf8"]);
+const destination = path.join(runtime.definitionsRoot, "data/seed/diagnostics/source.json");
+fs.writeFileSync(destination, "user's imported contents");
+installedRuntime({ packaged: true, repoRoot, userData, env: {} });
+assert.equal(fs.readFileSync(destination, "utf8"), "user's imported contents", "startup must preserve imported definitions");
+// Test owns this fresh temp directory; there are no user files here.
+assert.equal(path.dirname(path.resolve(root)), path.resolve(os.tmpdir()));
+fs.rmSync(root, { recursive: true });
+console.log("installed-runtime.selfcheck: ok");

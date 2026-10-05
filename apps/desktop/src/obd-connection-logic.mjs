@@ -62,7 +62,7 @@ export function isTransportFault(error) {
   if (/adapter-identity-mismatch|device-id-invalid|live-probe-disabled|invalid-kind|atrv-unparsed|malformed_request|malformed_device/i.test(s)) {
     return false;
   }
-  return /port-io|timeout|spawn_failed|disconnect|python_runtime_missing|prompt-timeout|output_cap|stdin_closed|device-port-unavailable|device-identity-missing|device-port-not-unique/i.test(s);
+  return /internal-monitor-ended|serial-short-write|port-io|timeout|spawn_failed|disconnect|python_runtime_missing|prompt-timeout|output_cap|stdin_closed|device-port-unavailable|device-identity-missing|device-port-not-unique/i.test(s);
 }
 
 function isPlain(v) {
@@ -89,9 +89,9 @@ export function acceptMonitorReading(doc, { deviceId, now, freshMs }) {
   const source = deviceId?.startsWith("vnci:") ? "d-pdu-vbatt" : "atrv";
   if (doc.voltageSource !== source) return { reject: "malformed" };
   if (doc.deviceId !== deviceId) return { reject: "device_mismatch" };
-  if (typeof doc.volts !== "number" || !Number.isFinite(doc.volts) || doc.volts < 6 || doc.volts > 20) {
-    return { reject: "malformed" };
-  }
+  // A completed adapter response independently proves the link even when ATRV is unavailable.
+  if (doc.volts === null && doc.commOk !== true) return { reject: "malformed" };
+  if (doc.volts !== null && (typeof doc.volts !== "number" || !Number.isFinite(doc.volts) || doc.volts < 6 || doc.volts > 20)) return { reject: "malformed" };
   const at = parseSampleAt(doc.at, now);
   if (at == null || at > now || now - at > freshMs) return { reject: "stale" };
   return { volts: doc.volts, at, source };

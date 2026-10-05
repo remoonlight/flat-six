@@ -9,15 +9,16 @@ from pathlib import Path
 from .decode import redact_vin
 from .offline import DEFAULT_COVERAGE, DEFAULT_REGISTRY, DEFAULT_VARIANTS, build_plan, load_json, match_identity, summary_doc
 from .response_values import decode_application_response
-from .x431_values import preview_coding
+from .x431_values import preview_coding, formula_from_record, decode_record
 from .realtime_preparation import READY_ACTIONS, handle_ready
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-PROTOCOL_SEED = REPO_ROOT / "data" / "seed" / "diagnostics" / "protocol-inventory.v1.json"
-VALUE_SEED = REPO_ROOT / "data" / "seed" / "diagnostics" / "value-support.v1.json"
-MANUAL_SEED = REPO_ROOT / "data" / "seed" / "diagnostics" / "manual-evidence.v1.json"
+DATA_ROOT = Path(os.environ.get('PORSCHE981_DEFINITION_ROOT') or REPO_ROOT)
+PROTOCOL_SEED = DATA_ROOT / "data" / "seed" / "diagnostics" / "protocol-inventory.v1.json"
+VALUE_SEED = DATA_ROOT / "data" / "seed" / "diagnostics" / "value-support.v1.json"
+MANUAL_SEED = DATA_ROOT / "data" / "seed" / "diagnostics" / "manual-evidence.v1.json"
 INDEX_NAME = "workbench-index.v1.json"
-ACTIONS = frozenset({"summary", "plan", "variants", "records", "match", "decode", "preview", "replay"}) | READY_ACTIONS
+ACTIONS = frozenset({"summary", "plan", "variants", "records", "match", "decode", "preview", "coding-options", "replay"}) | READY_ACTIONS
 CATEGORIES = frozenset({"identity", "measurement", "coding", "dtc", "routine"})
 FORBIDDEN = frozenset(
     {
@@ -895,7 +896,7 @@ def handle(req: dict) -> dict:
     at = req.get("recordAt")
     if cat not in CATEGORIES:
         return _err("invalid_category", category=cat)
-    if action == "preview" and cat != "coding":
+    if action in ("preview", "coding-options") and cat != "coding":
         return _err("preview_coding_only", category=cat)
     if type(at) is not int:
         return _err("cap_limit", field="recordAt")
@@ -909,6 +910,21 @@ def handle(req: dict) -> dict:
         data = _hex_bytes(hx)
     except ValueError as e:
         return _err("missing_binary", detail=str(e))
+    if action == "coding-options":
+        _text, parsed = formula_from_record(rec)
+        if not parsed.get("ok") or parsed.get("kind") != "TEXTTABLE" or not 0 < parsed.get("bitLength", 0) <= 16:
+            return _err("coding_options_not_defined")
+        options = []
+        for raw in range(1 << parsed["bitLength"]):
+            preview = preview_coding(rec, data, raw)
+            if not preview.get("ok"):
+                continue
+            decoded = decode_record(rec, bytes.fromhex(preview["afterHex"]))
+            if decoded.get("textStatus") == "resolved" and decoded.get("text"):
+                options.append({"rawValue": raw, "label": decoded["text"]})
+                if len(options) > 256:
+                    return _err("coding_options_limit")
+        return _ok({"options": options, "decoded": decode_record(rec, data), "record": slim_record(rec, cat)})
     if action == "decode":
         mode = req.get("responseMode") or "data"
         if mode not in ("data", "pdu"):

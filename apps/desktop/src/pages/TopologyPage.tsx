@@ -19,6 +19,7 @@ import {
 } from "../can-topology-logic.mjs";
 import { topologyCapability } from "../can-topology-capabilities.mjs";
 import { persistTopologySnapshot } from "../obd-diag-persist";
+import { DiagnosticCanRecordingControls } from "../obd/DiagnosticCanRecordingControls";
 import "../can-topology.css";
 
 type NodeT = {
@@ -53,11 +54,15 @@ export function TopologyPage({
   onBusyChange,
   peerBusy = false,
   adapterModel,
+  active = false,
+  diagnosticReady = false,
   onNavigate,
 }: {
   onBusyChange?: (busy: boolean) => void;
   peerBusy?: boolean;
   adapterModel?: string | null;
+  active?: boolean;
+  diagnosticReady?: boolean;
   onNavigate?: (tab: "connection" | "live" | "coding", systemId?: string) => void;
 }) {
   const seed = topologySeed();
@@ -90,6 +95,9 @@ export function TopologyPage({
   const [progress, setProgress] = useState<string | null>(null);
   const [statuses, setStatuses] = useState<Record<string, Record<string, unknown>>>(() => emptyStatusMap(gen));
   const [busy, setBusy] = useState(false);
+  const [batch, setBatch] = useState<Parameters<typeof persistTopologySnapshot>[1] | null>(null);
+  const [saving, setSaving] = useState(false);
+  const autoChecked = useRef(false);
   const queueRef = useRef<ReturnType<typeof createScanQueue> | null>(null);
   const startLock = useRef(false);
   const mounted = useRef(true);
@@ -148,6 +156,11 @@ export function TopologyPage({
     const q = createScanQueue({ invoke });
     queueRef.current = q;
     setBusy(true);
+    setBatch(null);
+    if (task === "read") {
+      statusesRef.current = emptyStatusMap(gen);
+      setStatuses(statusesRef.current);
+    }
     setError(null);
     setProgress(task === "clear" ? "清除中…" : "读取中…");
     const ctx = {
@@ -175,16 +188,9 @@ export function TopologyPage({
       if (out.error === "cancelled") setProgress("已取消");
       else if (out.error === "busy") setError("已有任务在进行");
       else setProgress(completionFeedback({ results: out.results, adaptedQueued: targets.length, totalNodes: nodes.length }));
-      if (out.error !== "busy" && task === "read" && (out.results || []).length) {
-        try {
-          await persistTopologySnapshot(api(), {
-            task,
-            source: ctx.mode,
-            results: (out.results || []) as Parameters<typeof persistTopologySnapshot>[1]["results"],
-          });
-        } catch (e) {
-          console.warn("Topology snapshot persistence failed", e);
-        }
+      if (out.error !== "busy" && task === "read" && (out.results || []).some((row) => !!(row as { doc?: { jobId?: string } }).doc?.jobId)) {
+        setBatch({ task, source: ctx.mode,
+          results: (out.results || []) as Parameters<typeof persistTopologySnapshot>[1]["results"] });
       }
     } catch (e) {
       if (mounted.current && token === runToken.current) setError(String(e));
@@ -197,9 +203,16 @@ export function TopologyPage({
     }
   }
 
+  function clearEligible(node: NodeT) {
+    const status = statusesRef.current[node.id];
+    return status?.kind === "dtc-present" && status.stale !== true &&
+      (status.identity as { observedProfileMatch?: boolean } | undefined)?.observedProfileMatch === true &&
+      topologyCapability(node, adapterModel).clearable;
+  }
+
   function requestTask(task: "read" | "clear", list: NodeT[]) {
     if (startLock.current || busy || peerBusy) return;
-    if (!list.length || list.some((n) => !canTransmit(n)) || (task === "clear" && list.some((n) => !topologyCapability(n, adapterModel).clearable))) return;
+    if (!list.length || list.some((n) => !canTransmit(n)) || (task === "clear" && list.some((n) => !clearEligible(n)))) return;
     startLock.current = true;
     void runTask(task, list, {
       x431Inactive: true,
@@ -208,10 +221,41 @@ export function TopologyPage({
     }, true);
   }
 
+  useEffect(() => {
+    if (!active) { autoChecked.current = false; return; }
+    if (fixture || autoChecked.current || !diagnosticReady || busy || peerBusy || !supported.length) return;
+    autoChecked.current = true;
+    requestTask("read", supported);
+  }, [active, diagnosticReady, busy, peerBusy, fixture, supported]);
+
+  useEffect(() => {
+    if (!active && !busy && !fixture) { setBatch(null); setStatuses(emptyStatusMap(gen)); setProgress(null); }
+  }, [active, busy, fixture, gen]);
+  useEffect(() => {
+    if (!diagnosticReady && !busy && !fixture) setStatuses((current) => {
+      const next = Object.fromEntries(Object.entries(current).map(([id, status]) => [id,
+        status.kind === "dtc-present" || status.kind === "no-dtc" ? { ...status, stale: true } : status]));
+      statusesRef.current = next;
+      return next;
+    });
+  }, [diagnosticReady, busy, fixture]);
+
+  async function saveBatch() {
+    if (!batch || saving || busy) return;
+    setSaving(true);
+    try {
+      const saved = await persistTopologySnapshot(api(), batch);
+      if (!saved) throw new Error("本批没有可保存的实际读取结果");
+      setProgress("本批读取结果已保存");
+    } catch (e) { setError(`保存失败：${String(e)}`); }
+    finally { setSaving(false); }
+  }
+
   const selectedAdapted = selected && isAdaptedProfile(selected.profileId);
-  const actionsOff = locked || !canHardware;
+  const actionsOff = locked || !canHardware || (!fixture && !diagnosticReady);
   const selectedOff = actionsOff || !selectedAdapted;
-  const canClearAll = supported.length > 0 && supported.every((n) => topologyCapability(n, adapterModel).clearable);
+  const clearTargets = supported.filter(clearEligible);
+  const canClearAll = clearTargets.length > 0;
 
   function chip(n: NodeT, key: string, index: number) {
     const st = statuses[n.id] || { kind: "unscanned", simulated: false };
@@ -383,6 +427,10 @@ export function TopologyPage({
               </p>
             ) : null}
 
+            <button type="button" className="btn" data-testid="topo-save-result" disabled={!batch || busy || saving}
+              onClick={() => void saveBatch()}>{saving ? "正在保存…" : "保存结果"}</button>
+            <DiagnosticCanRecordingControls simulation={fixture} />
+            {!fixture && !diagnosticReady && !busy ? <p className="muted">请先在连接设置中连接诊断头，并选择诊断 CAN 用途。</p> : null}
             {selected?.isGateway ? (
               <>
                 <h3>{selected.short} · {selected.label}</h3>
@@ -390,7 +438,7 @@ export function TopologyPage({
                   <button type="button" className="btn" data-testid="topo-read-all" disabled={actionsOff || !supported.length}
                     onClick={() => requestTask("read", supported)}>读取所有单元故障码</button>
                   <button type="button" className="btn" data-testid="topo-clear-all" disabled={actionsOff || !canClearAll}
-                    onClick={() => requestTask("clear", supported)}>清除所有单元故障码</button>
+                    onClick={() => requestTask("clear", clearTargets)}>清除所有单元故障码</button>
                 </div>
               </>
             ) : selected ? (
@@ -435,7 +483,7 @@ export function TopologyPage({
                     type="button"
                     className="btn"
                     data-testid="topo-clear-selected"
-                    disabled={selectedOff || !capability.clearable}
+                    disabled={selectedOff || !selected || !clearEligible(selected)}
                     onClick={() => selected && requestTask("clear", [selected])}
                   >
                     清除故障码

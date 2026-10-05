@@ -612,6 +612,7 @@ def run_session(
     list_ports=None,
     device_id=None,
     discovery=None,
+    retain_artifacts: bool = True,
 ) -> dict:
     started = datetime.now(timezone.utc)
     root = Path(artifact_root) if artifact_root is not None else DEFAULT_ARTIFACT_ROOT
@@ -636,6 +637,9 @@ def run_session(
         "startedUtc": started.isoformat(),
         "hostStamp": started.isoformat(),
     }
+    if not retain_artifacts and (session_task == "clear" or resume_run_id is not None):
+        result["error"] = "transient-task-not-allowed"
+        return result
     if not isinstance(profile_id, str):
         result["error"] = "profileId-type"
         return result
@@ -777,6 +781,8 @@ def run_session(
         result["engine"] = engine_state
 
     def persist(extra=None) -> None:
+        if not retain_artifacts:
+            return
         ck = {
             "mode": mode,
             "profileId": profile_id,
@@ -853,9 +859,11 @@ def run_session(
     dest = root / run_id
     result["artifactDir"] = None
 
+    vnci_live = mode == "live" and isinstance(device_id, str) and device_id.startswith("vnci:")
     try:
-        dest.mkdir(parents=True, exist_ok=True)
-        result["artifactDir"] = str(dest)
+        if retain_artifacts:
+            dest.mkdir(parents=True, exist_ok=True)
+            result["artifactDir"] = str(dest)
         vnci_live = mode == "live" and isinstance(device_id, str) and device_id.startswith("vnci:")
         if vnci_live:
             if session_task == "clear":
@@ -877,7 +885,9 @@ def run_session(
                     discovery=discovery,
                 )
         if client is None:
-            client = ElmClient(port, timeout_s=min(8.0, budget_s), cancel_event=cancel)
+            client = ElmClient(port, timeout_s=min(8.0, budget_s), cancel_event=cancel,
+                frame_sink=(lambda frame: _emit(progress_sink, {"type": "can-frame", "runId": run_id, "profileId": profile_id,
+                    "simulation": simulation, "frame": frame})) if progress_sink else None)
         end = time.monotonic() + budget_s
         ident_ops = IDENTITY_FIELDS[profile_id]
         dep_ops = plan["dependentOperations"]
@@ -908,10 +918,93 @@ def run_session(
                 last = engine_state["samples"][-1]["cycle"] if engine_state["samples"] else None
                 ev["engine"] = {
                     **engine_state,
-                    "samples": [s for s in engine_state["samples"] if last is None or s["cycle"] == last],
+                    "samples": list(engine_state["samples"]),
                 }
             _emit(progress_sink, ev)
             stage_guard()
+
+        def transport_fault(exc) -> bool:
+            message = str(exc)
+            return isinstance(exc, (OSError, ConnectionError)) or message == "disconnect" or message.startswith(("port-io:", "short-write", "device-port-unavailable", "device-identity-missing"))
+
+        def close_faulted_client() -> None:
+            closed = client.close_restore()
+            # A poisoned old link is expected; an actual close failure blocks a new open.
+            if any(str(item).startswith("close:") for item in closed.get("errors", [])) or getattr(port, "is_open", False):
+                raise ElmError("recovery-close-failed")
+
+        def transaction(req_hex, deadline, allow, **kwargs):
+            nonlocal client, port
+            try:
+                return _one_request(client, req_hex, deadline, allow, **kwargs)
+            except (ElmError, OSError, ConnectionError) as first:
+                if not transport_fault(first) or session_task not in ("read", "engine") or mode != "live" or not own_port or not isinstance(device_id, str) or not device_id.startswith("bt:"):
+                    raise
+                expected_identity = dict(identity)
+                prior_raw = list(client.raw_log)
+                close_faulted_client()
+                episode = {"unfinishedRequestHex": req_hex, "attempts": [], "recovered": False}
+                result.setdefault("recovery", []).append(episode)
+                for attempt in range(1, 4):
+                    stage_guard()
+                    prog("reconnecting")
+                    entry = {"attempt": attempt, "ok": False}
+                    episode["attempts"].append(entry)
+                    try:
+                        port = _open_live_port(serial_module, list_ports, device_id=device_id, discovery=None)
+                        client = ElmClient(port, timeout_s=min(8.0, budget_s), cancel_event=cancel,
+                            frame_sink=(lambda frame: _emit(progress_sink, {"type": "can-frame", "runId": run_id, "profileId": profile_id,
+                                "simulation": simulation, "frame": frame})) if progress_sink else None)
+                        client.raw_log.extend(prior_raw)
+                        stage_guard()
+                        client.validate_adapter(min(10.0, max(0.0, end - time.monotonic())))
+                        client.configure_pair(profile["txId"], profile["rxId"], end)
+                        session_hex, positive = SESSION_BY_PROFILE[profile_id]
+                        session_response = _one_request(client, session_hex, min(end, time.monotonic() + 15.0), None)
+                        if not session_response.get("ok") or not (session_response.get("payload_hex") or "").upper().startswith(positive):
+                            raise ElmError(session_response.get("error") or "recovery-session-mismatch")
+                        recovered_identity = {}
+                        for field, oid in ident_ops:
+                            stage_guard()
+                            op = operation(profile, oid)
+                            response = _one_request(client, op["requestHex"], min(end, time.monotonic() + 15.0), allowed)
+                            payload = response.get("payload_hex") or ""
+                            if not response.get("ok") or not payload.upper().startswith(op["positivePrefixHex"].upper()):
+                                raise ElmError(response.get("error") or "recovery-identity-invalid")
+                            decoded = decode_payload(payload, op["decode"])
+                            if not decoded.get("ok"):
+                                raise ElmError("recovery-identity-invalid")
+                            recovered_identity[field] = decoded.get("text")
+                        qualified = qualify_identity({"generation": "981", "ecuId": ECU_ID[profile_id], "identity": recovered_identity}, catalog, expected_generation="981")
+                        if not qualified.get("observedProfileMatch") or any(recovered_identity.get(k) != v for k, v in expected_identity.items()):
+                            raise ElmError("identity-mismatch")
+                        if session_task == "engine" and kwargs.get("engine_authorized"):
+                            client.send_at("ATPC", end, require_ok=True)
+                            client.configure_standard_engine(end)
+                            if req_hex != "0100":
+                                support = _one_request(client, "0100", min(end, time.monotonic() + 15.0), None, engine_authorized=kwargs["engine_authorized"])
+                                if not support.get("ok"):
+                                    raise ElmError(support.get("error") or "engine-support-failed")
+                                mask = parse_0100(support.get("payload_hex") or "")
+                                supported, _unsupported = split_support(spec, mask)
+                                if req_hex not in {row["requestHex"] for row in supported}:
+                                    raise ElmError("engine-support-changed")
+                        # Continue only the unfinished read; prior completed data stays intact.
+                        reply = _one_request(client, req_hex, min(end, time.monotonic() + 15.0), allow, **kwargs)
+                        entry["ok"] = True
+                        episode["recovered"] = True
+                        return reply
+                    except (ElmError, OSError, ConnectionError) as recovery_error:
+                        entry["error"] = str(recovery_error)
+                        if not transport_fault(recovery_error):
+                            raise
+                        prior_raw = list(client.raw_log)
+                        close_faulted_client()
+                        if attempt == 3:
+                            raise ElmError("recovery-exhausted") from recovery_error
+                        if cancel.wait(0.25 * attempt):
+                            raise ElmError("cancelled")
+                raise ElmError("recovery-exhausted")
 
         stage_guard()
         result["adapter"] = client.validate_adapter(min(10.0, max(0.0, end - time.monotonic())))
@@ -922,7 +1015,7 @@ def run_session(
         sess_hex, sess_pos = SESSION_BY_PROFILE[profile_id]
         stage_guard()
         req_deadline = min(end, time.monotonic() + 15.0)
-        sess = _one_request(client, sess_hex, req_deadline, None)
+        sess = transaction( sess_hex, req_deadline, None)
         sess_rec = {
             "role": "session",
             "requestHex": sess_hex,
@@ -947,7 +1040,7 @@ def run_session(
             stage_guard()
             op = operation(profile, oid)
             req_deadline = min(end, time.monotonic() + 15.0)
-            resp = _one_request(client, op["requestHex"], req_deadline, allowed)
+            resp = transaction( op["requestHex"], req_deadline, allowed)
             rec = {
                 "role": "identity",
                 "field": field,
@@ -1019,7 +1112,7 @@ def run_session(
 
             stage_guard()
             req_deadline = min(end, time.monotonic() + 15.0)
-            resp = _one_request(client, "0100", req_deadline, None, engine_authorized=auth)
+            resp = transaction( "0100", req_deadline, None, engine_authorized=auth)
             if not resp.get("ok"):
                 persist()
                 error = resp.get("error") or "engine-support-failed"
@@ -1045,7 +1138,7 @@ def run_session(
                 for row in supported_rows:
                     stage_guard()
                     req_deadline = min(end, time.monotonic() + 15.0)
-                    resp = _one_request(client, row["requestHex"], req_deadline, None, engine_authorized=auth)
+                    resp = transaction( row["requestHex"], req_deadline, None, engine_authorized=auth)
                     if not resp.get("ok"):
                         persist()
                         error = resp.get("error") or "engine-pid-failed"
@@ -1097,7 +1190,7 @@ def run_session(
             stage_guard()
             op = operation(profile, oid)
             req_deadline = min(end, time.monotonic() + 15.0)
-            resp = _one_request(client, op["requestHex"], req_deadline, allowed)
+            resp = transaction( op["requestHex"], req_deadline, allowed)
             rec = {
                 "role": "dependent",
                 "operationId": oid,
@@ -1181,7 +1274,7 @@ def run_session(
             stage_guard()
             prog("clear")
             req_deadline = min(end, time.monotonic() + 15.0)
-            resp = _one_request(client, req_hex, req_deadline, None, clear_authorized=req_hex)
+            resp = transaction( req_hex, req_deadline, None, clear_authorized=req_hex)
             got = (resp.get("payload_hex") or "").upper()
             pending = resp.get("pending") or []
             clear_err = resp.get("error")
@@ -1218,7 +1311,7 @@ def run_session(
                 stage_guard()
                 op = operation(profile, oid)
                 req_deadline = min(end, time.monotonic() + 15.0)
-                resp = _one_request(client, op["requestHex"], req_deadline, allowed)
+                resp = transaction( op["requestHex"], req_deadline, allowed)
                 rec = {
                     "role": "dependent",
                     "operationId": oid,
@@ -1307,6 +1400,14 @@ def run_session(
         error = str(e)
         status = "failed"
     finally:
+        if session_task == "read" and error in ("NO DATA", "UNABLE TO CONNECT", "negative-response") and client is not None and not vnci_live and not cancel.is_set():
+            try:
+                from .elm import adapter_identity_ok
+                if adapter_identity_ok(client.send_at("ATI")):
+                    result["linkHealth"] = "verified"
+                    result["candidateFailure"] = "no-response" if error != "negative-response" else "negative-response"
+            except Exception:
+                pass
         result["results"] = results
         result["endedUtc"] = _utc()
         result["simulation"] = simulation
@@ -1316,6 +1417,32 @@ def run_session(
         result["status"] = status
         result["ok"] = status == "completed"
         cleanup()
+        if client is not None and not vnci_live:
+            from .can_monitor import parse_frame
+            received, line = [], bytearray()
+            discard_line = False
+            for chunk in client.raw_log:
+                if chunk.get("dir") != "rx" or chunk.get("note") or type(chunk.get("timestampUs")) is not int:
+                    line.clear()
+                    discard_line = False
+                    continue
+                for byte in bytes.fromhex(chunk.get("hex", "")):
+                    if byte in (10, 13, 62):
+                        frame = None if discard_line else parse_frame(bytes(line).strip())
+                        line.clear()
+                        discard_line = False
+                        if frame:
+                            can_id, extended, data = frame
+                            received.append({"canId": can_id, "extended": extended, "dataHex": data.hex().upper(),
+                                "timestampUs": chunk["timestampUs"], "timestampSource": "host-chunk-arrival"})
+                    elif not discard_line:
+                        if len(line) < 4096:
+                            line.append(byte)
+                        else:
+                            line.clear()
+                            discard_line = True
+            result["receivedCanFrames"] = received
+            result["captureScope"] = "adapter-reported-received-CAN-only; no reconstructed-PDU or invented TX"
         if persist_error:
             result["ok"] = False
             if result["status"] == "completed":
@@ -1553,6 +1680,7 @@ def stdio_loop(stdin=None, stdout=None, *, artifact_root: Path | None = None) ->
             progress_sink=sink,
             artifact_root=artifact_root,
             device_id=req.get("deviceId"),
+            retain_artifacts=req.get("sessionTask") == "clear" or os.environ.get("PORSCHE981_SESSION_TRANSIENT") != "1",
         )
         _print_ndjson(out, outf)
         if out.get("status") == "cancelled":

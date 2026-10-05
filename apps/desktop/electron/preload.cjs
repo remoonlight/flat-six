@@ -1,6 +1,9 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("porsche981", {
+  diagnosticPreparation: (request) => ipcRenderer.invoke("diagnostics:preparation", request),
+  diagnosticDefinitionBundle: (request) => ipcRenderer.invoke("diagnostics:definitionBundle", request),
+  diagnosticCanRecording: (request) => ipcRenderer.invoke("diagnostics:canRecording", request),
   workshopFlashIndex: () => ipcRenderer.invoke("workshop:flashIndex"),
   workshopExportPreview: (input) => ipcRenderer.invoke("workshop:exportPreview", input),
   obdGetState: () => ipcRenderer.invoke("obd:getState"),

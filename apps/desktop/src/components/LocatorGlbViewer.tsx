@@ -1947,7 +1947,7 @@ export function LocatorGlbViewer({
       controls.update();
     }
 
-    transformControls.addEventListener("dragging-changed", (event: { value?: boolean }) => {
+    transformControls.addEventListener("dragging-changed", (event) => {
       const dragging = Boolean(event.value);
       gizmoDragging = dragging;
       controls.enabled = !dragging;
@@ -1984,13 +1984,13 @@ export function LocatorGlbViewer({
       gizmoDragging: () => gizmoDragging,
     };
 
-    function resize() {
+    const resize = () => {
       const w = host.clientWidth || 320;
       const h = host.clientHeight || 240;
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h, false);
-    }
+    };
     resize();
     const ro = new ResizeObserver(resize);
     ro.observe(host);

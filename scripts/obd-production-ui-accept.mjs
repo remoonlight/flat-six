@@ -80,18 +80,16 @@ try {
   for (const retired of ["faults", "session", "offline", "guide", "compare", "broadcast", "developer", "analysis", "vehicle"]) {
     assert.equal(await page.locator(`[data-obd-tab="${retired}"]`).count(), 0);
   }
-  // Opening/selecting never transmits. Explicit read/clear clicks execute directly.
+  // Startup does not connect or scan; unidentified candidates cannot be cleared.
   assert.deepEqual(await page.getByTestId("topo-detail").locator("button").allTextContents(),
-    ["读取所有单元故障码", "清除所有单元故障码"]);
+    ["保存结果", "开始记录车辆原始接收帧", "结束原始帧记录", "读取所有单元故障码", "清除所有单元故障码"]);
   assert.equal(await page.getByTestId("topo-detail").locator("dl").count(), 0);
   assert.match(await page.getByTestId("topo-detail").locator("h3").innerText(), /GW/);
   assert.doesNotMatch(await page.locator("body").innerText(), /仅读取 GW、DME 的身份与故障码；其他系统跳过。|此模块尚未接入车辆诊断，可先查看离线资料。/);
   await shot("gw-actions.png");
-  await page.getByTestId("topo-clear-all").click();
+  assert.equal(await page.getByTestId("topo-clear-all").isDisabled(), true);
   assert.equal(await page.getByTestId("topo-confirm").count(), 0);
   assert.equal(await page.getByTestId("topo-cancel").count(), 0);
-  await page.waitForFunction(() => !document.querySelector('[data-testid="topo-clear-all"]').disabled
-    && document.querySelector('[data-testid="topo-progress"]')?.textContent.includes("失败 1"));
   await page.locator('[data-testid="topo-node-dme"]').first().click();
   assert.equal(await page.getByTestId("topo-overview").count(), 0);
   assert.equal(await page.getByTestId("topo-read-all").count(), 0);
@@ -100,20 +98,15 @@ try {
   assert.equal(await page.getByTestId("topo-open-coding").count(), 0);
   assert.equal(await page.getByTestId("topo-adapter").count(), 0);
   assert.equal((await page.evaluate(() => window.porsche981.obdDiag({ op: "snapshot:list" }))).length, 0);
-  await page.getByTestId("topo-read-selected").click();
+  assert.equal(await page.getByTestId("topo-read-selected").isDisabled(), true, "unconnected topology cannot start reads");
+  assert.equal(await page.getByTestId("topo-clear-selected").isDisabled(), true, "unidentified unit cannot clear");
   assert.equal(await page.getByTestId("topo-confirm").count(), 0);
   assert.equal(await page.getByTestId("topo-cancel").count(), 0);
-  await page.waitForFunction(() => !document.querySelector('[data-testid="topo-read-selected"]').disabled
-    && document.querySelector('[data-testid="topo-progress"]')?.textContent.includes("失败 1"));
   const snapshotsAfterRead = (await page.evaluate(() => window.porsche981.obdDiag({ op: "snapshot:list" }))).length;
   assert.equal(snapshotsAfterRead, 0, "a rejected start has no capture event to save");
   assert.equal(await page.getByTestId("topo-persist-retry").count(), 0);
   assert.doesNotMatch(await page.getByTestId("topo-detail").innerText(), /诊断快照未保存|diag_capture_event_required/);
-  await page.getByTestId("topo-clear-selected").click();
-  assert.equal(await page.getByTestId("topo-confirm").count(), 0);
-  assert.equal(await page.getByTestId("topo-cancel").count(), 0);
-  await page.waitForFunction(() => !document.querySelector('[data-testid="topo-clear-selected"]').disabled
-    && document.querySelector('[data-testid="topo-progress"]')?.textContent.includes("失败 1"));
+  assert.equal(await page.getByTestId("topo-save-result").isDisabled(), true);
   await page.locator('[data-testid="topo-node-pdk"]').first().click();
   assert.equal(await page.getByTestId("topo-read-selected").isDisabled(), true);
   assert.equal(await page.getByTestId("topo-clear-selected").isDisabled(), true);
@@ -132,7 +125,7 @@ try {
   await page.getByTestId("topo-diagram").waitFor();
   assert.equal((await page.evaluate(() => window.porsche981.obdDiag({ op: "snapshot:list" }))).length, snapshotsAfterRead);
   await shot("topology.png");
-  checks.push("direct read/clear have no confirmation/cancel UI; rejected starts create no snapshot; single-ECU actions, unsupported/reference gates and engine navigation; no implicit scan");
+  checks.push("unconnected read and unidentified clear disabled; no implicit startup scan; single-ECU actions, unsupported/reference gates and engine navigation; no implicit scan");
 
   await page.locator('[data-obd-tab="connection"]').click();
   const radio = page.getByTestId(`obd-device-${device.id}`);
@@ -157,6 +150,8 @@ try {
   await page.waitForFunction(() => document.querySelector('[data-testid="obd-header-device"]').textContent.trim() === "已连接设备：vLinker");
   await page.locator('[data-obd-tab="topology"]').click();
   assert.equal(await page.getByTestId("obd-header-device").innerText(), "已连接设备：vLinker");
+  await page.waitForFunction(() => document.querySelector('[data-testid="topo-progress"]')?.textContent.includes("失败 1"));
+  assert.equal(await page.getByTestId("topo-save-result").isDisabled(), true, "denied automatic scan has no result to save");
   await shot("topology-connected.png");
   await page.locator('[data-obd-tab="connection"]').click();
   await page.waitForFunction(() => document.querySelector('[data-testid="obd-header-device"]').textContent.trim() === "已连接设备：vLinker");
@@ -180,6 +175,7 @@ try {
   const denied = await page.evaluate(() => window.porsche981.readOnlySession({ action: "start",
     profileId: "porsche-981-2014-dme", mode: "live", sessionTask: "engine", confirmedReadOnly: true, x431Inactive: true }));
   assert.equal(denied.error, "live_not_enabled");
+  await page.getByTestId("eng-continuous").uncheck();
   await page.getByTestId("eng-cycles").fill("1");
   await page.getByTestId("eng-interval").fill("500");
   await page.getByTestId("eng-prepare").click();
@@ -196,7 +192,10 @@ try {
   while (!fs.existsSync(exported) && Date.now() < deadline) await new Promise((resolve) => setTimeout(resolve, 50));
   const saved = JSON.parse(fs.readFileSync(exported, "utf8"));
   assert.equal(saved.simulation, true);
-  assert.equal(saved.engine.samples.length, 6);
+  assert.equal(saved.kind, "engine-acquisition-batch");
+  assert.equal(saved.samples.length, 6);
+  assert.equal(saved.runs.length, 1);
+  assert.equal(saved.retentionComplete, true);
   assert.equal(await page.locator('.eng-chart').count(), 6);
   await page.getByTestId("eng-display-text").click();
   assert.equal(await page.locator('.eng-chart').count(), 0);
@@ -219,8 +218,8 @@ try {
   const selectedDeadline = Date.now() + 5000;
   while (!fs.existsSync(selectedExport) && Date.now() < selectedDeadline) await new Promise((resolve) => setTimeout(resolve, 50));
   const selectedSaved = JSON.parse(fs.readFileSync(selectedExport, "utf8"));
-  assert.deepEqual(selectedSaved.engine.selectedPids, ["0C"]);
-  assert.deepEqual([...new Set(selectedSaved.engine.samples.map((s) => s.pid))], ["0C"]);
+  assert.deepEqual(selectedSaved.runs[0].engine.selectedPids, ["0C"]);
+  assert.deepEqual([...new Set(selectedSaved.samples.map((s) => s.pid))], ["0C"]);
   await page.setViewportSize({ width: 760, height: 900 });
   assert.ok(await page.locator('[data-page="engine-session"]').evaluate((el) => el.scrollWidth <= el.clientWidth));
   await page.getByTestId("eng-pids").scrollIntoViewIfNeeded();
@@ -232,13 +231,14 @@ try {
   assert.equal(await page.getByTestId("eng-kind").getAttribute("data-freshness"), "idle");
   await page.getByTestId("eng-scenario").selectOption("slow");
   await page.getByTestId("eng-start").click();
-  await page.waitForFunction(() => document.querySelector('[data-obd-tab="connection"]').disabled);
+  await page.waitForFunction(() => document.querySelector('[data-obd-tab="coding"]').disabled);
+  assert.equal(await page.locator('[data-obd-tab="connection"]').isDisabled(), false);
   assert.equal(await page.getByTestId("eng-system").isDisabled(), true);
   assert.equal(await page.getByTestId("eng-select-0C").isDisabled(), true);
   const busy = await page.evaluate(() => window.porsche981.readOnlySession({ action: "start", profileId: "porsche-981-2014-dme", mode: "simulation" }));
   assert.equal(busy.error, "busy");
   await page.getByTestId("eng-cancel").click();
-  await page.waitForFunction(() => !document.querySelector('[data-obd-tab="connection"]').disabled, null, { timeout: 30000 });
+  await page.waitForFunction(() => !document.querySelector('[data-obd-tab="coding"]').disabled, null, { timeout: 30000 });
   checks.push("controller-first selection, actual selected-PID simulation/export, text/graph views, three timed points, reset on unit/selection change, narrow layout, task locking/cancel, live denied");
   await page.locator('[data-obd-tab="topology"]').click();
   await page.locator('[data-testid="topo-node-dme"]').first().click();
@@ -262,7 +262,7 @@ try {
   await page.waitForFunction((id) => document.querySelector(`[data-testid="obd-device-${id}"]`)?.checked, device.id);
   assert.equal((await page.evaluate(() => window.porsche981.obdConnection({ action: "status" }))).connected, false);
   assert.equal(await page.getByTestId("obd-conn-clear").count(), 0);
-  assert.deepEqual(await page.getByTestId("obd-connection").getByRole("button").allTextContents(), ["刷新", "连接设备", "断开设备"]);
+  assert.deepEqual(await page.getByTestId("obd-connection").getByRole("button").allTextContents(), ["刷新", "连接设备", "断开设备", "导出诊断资料包", "导入诊断资料包"]);
   checks.push("restart: selected device without auto-connect; retired faults tab remains absent");
   assert.equal(await page.locator('[data-obd-tab="faults"]').count(), 0);
   await page.setViewportSize({ width: 760, height: 900 });

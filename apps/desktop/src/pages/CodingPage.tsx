@@ -7,6 +7,7 @@ import {
 import { CodingGuidePanel } from "./CodingGuidePanel";
 import { CodingMenuDetail } from "./CodingMenuDetail";
 import { PiwisWorkshopPage } from "./PiwisWorkshopPage";
+import { DiagnosticPreparationPanel } from "../obd/DiagnosticPreparationPanel";
 import "../coding-workspace.css";
 
 export function CodingPage({ initialSystemId = "" }: { initialSystemId?: string }) {
@@ -38,6 +39,7 @@ export function CodingPage({ initialSystemId = "" }: { initialSystemId?: string 
             {CODING_CATEGORIES.map((c) => <button type="button" key={c.id} data-coding-category={c.id} className={`chip${category === c.id ? " active" : ""}`}
               aria-pressed={category === c.id} onClick={() => { setCategory(c.id); setActiveId(""); }}>{c.label}（{systemEntries.filter((e) => e.category === c.id).length}）</button>)}
           </nav>
+          {(category === "coding" || category === "programming") && <DiagnosticPreparationPanel key={`${systemId}-${category}`} ecu={systemId} programming={category === "programming"} />}
           {!functions.length && <section className="panel" data-testid="coding-empty-category"><h3>暂无内容</h3>
             <p className="muted">{system.label}的{CODING_CATEGORIES.find((c) => c.id === category)?.label}类别尚无资料。</p></section>}
         </>}

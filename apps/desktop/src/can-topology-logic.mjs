@@ -16,6 +16,8 @@ export const KIND = Object.freeze({
   unscanned: "unscanned",
   scanning: "scanning",
   commFail: "comm-fail",
+  noResponse: "no-response",
+  negativeResponse: "negative-response",
   identity: "identity-mismatch",
   cancelled: "cancelled",
   notInstalled: "not-installed",
@@ -171,6 +173,8 @@ export function statusText(entry, { simulated } = {}) {
           [KIND.unscanned]: "未扫描",
           [KIND.scanning]: "扫描中",
           [KIND.commFail]: "通讯失败",
+          [KIND.noResponse]: "未响应",
+          [KIND.negativeResponse]: "否定响应",
           [KIND.identity]: "身份不匹配",
           [KIND.cancelled]: "已取消",
           [KIND.notInstalled]: "未装配",
@@ -246,6 +250,9 @@ export function classifySessionFinal(final, extras = {}) {
     return { kind: KIND.partial, error: "profile-mismatch", simulated };
   }
 
+  if (["no-response", "negative-response"].includes(final?.candidateFailure) && final?.linkHealth === "verified" && Array.isArray(final?.restoration?.errors) && final.restoration.errors.length === 0) {
+    return { kind: final.candidateFailure === "no-response" ? KIND.noResponse : KIND.negativeResponse, error: err, simulated };
+  }
   if (err === "identity-mismatch" || extras.identityMismatch) {
     return { kind: KIND.identity, error: "identity-mismatch", simulated };
   }
@@ -750,7 +757,7 @@ export function createScanQueue({
       aborted ||
       done?.statusThrow ||
       done?.ok === false ||
-      (classified.kind !== KIND.dtc && classified.kind !== KIND.noDtc);
+      (![KIND.dtc, KIND.noDtc, KIND.noResponse, KIND.negativeResponse].includes(classified.kind));
     return { nodeId: node.id, classified, doc: done, stop };
   }
 

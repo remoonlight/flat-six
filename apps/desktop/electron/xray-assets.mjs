@@ -8,7 +8,7 @@ import { ensureLocalFromSeed } from "./ensure-local-snapshot.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "../../..");
-const LOCAL_ROOT = path.join(repoRoot, ".local");
+const LOCAL_ROOT = process.env.PORSCHE981_LOCAL_ROOT || path.join(repoRoot, ".local");
 const SEED_PATH = path.join(repoRoot, "data", "seed", "xray", "assemblies.json");
 const GARAGE_SEED_PATH = path.join(
   repoRoot,

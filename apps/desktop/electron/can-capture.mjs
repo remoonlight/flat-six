@@ -2,6 +2,7 @@ import { spawn } from "node:child_process";
 import { readdir, readFile, lstat } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
+import { resolvePythonCandidates } from "./offline-diagnostics.mjs";
 
 export const CAN_CAPTURE_CHANNEL = "diagnostics:can-capture";
 const RUN = /^\d{8}-\d{6}-\d{6}$/;
@@ -9,14 +10,15 @@ const FLAGS = { executionEnabled: false, writePayload: null, liveVerified: false
 const fail = (error) => ({ ok: false, error, ...FLAGS });
 
 export function createCanCaptureManager({ repoRoot, conn, gate, spawnFn = spawn, env = process.env, allowInjectedLive = false }) {
-  const root = path.join(repoRoot, ".local", "mxplus-drive-can");
+  const root = env.PORSCHE981_CAN_CAPTURE_ROOT || path.join(repoRoot, ".local", "mxplus-drive-can");
   let active = null;
   let last = null;
   let stopped = false;
   const children = new Set();
 
   function launch(args, onDoc, onClose) {
-    const child = spawnFn("python", ["-m", "scripts.diagnostics.can_monitor", ...args], {
+    const runtime = env.PORSCHE981_PYTHON ? resolvePythonCandidates(env)[0] : { exe: "python", prefix: [] };
+    const child = spawnFn(runtime.exe, [...runtime.prefix, "-m", "scripts.diagnostics.can_monitor", ...args], {
       cwd: repoRoot, windowsHide: true, env: { ...env, PYTHONIOENCODING: "utf-8" }, stdio: ["pipe", "pipe", "pipe"],
     });
     children.add(child);

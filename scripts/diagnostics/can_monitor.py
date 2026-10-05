@@ -22,7 +22,7 @@ import time
 from .connection import collect_snapshot, enumerate_devices, open_selected_port, valid_device_id
 
 ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_OUTPUT = ROOT / ".local" / "mxplus-drive-can"
+DEFAULT_OUTPUT = Path(os.environ.get('PORSCHE981_CAN_CAPTURE_ROOT') or ROOT / ".local" / "mxplus-drive-can")
 SETUP = (
     "STPC", "ATE0", "ATL0", "ATH1", "ATS1", "ATD0",
     "STP 31", "STCMM 0", "ATCAF0", "ATCFC0", "STCSEGR 0",
@@ -66,14 +66,14 @@ def archive_references(directory):
     return names
 
 
-def parse_frame(line: bytes):
+def parse_frame(line: bytes, *, allow_zero=False):
     """H1/S1/D0 raw classical CAN only; preserve IDE and DLC, reject other text."""
     tokens = line.split()
     if not tokens or not re.fullmatch(rb"(?:[0-9A-Fa-f]{3}|[0-9A-Fa-f]{8})", tokens[0]):
         return None
     extended = len(tokens[0]) == 8
     ident = int(tokens[0], 16)
-    if ident > (0x1FFFFFFF if extended else 0x7FF) or not 1 <= len(tokens) - 1 <= 8:
+    if ident > (0x1FFFFFFF if extended else 0x7FF) or not (0 if allow_zero else 1) <= len(tokens) - 1 <= 8:
         return None
     if any(not re.fullmatch(rb"[0-9A-Fa-f]{2}", token) for token in tokens[1:]):
         return None

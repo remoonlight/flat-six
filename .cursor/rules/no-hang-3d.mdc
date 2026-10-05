@@ -1,13 +1,13 @@
 ---
 description: 3D/GLB/Electron 防 hang：大文件不进上下文、长任务后台超时
-globs: .local/**,apps/desktop/**/*.{ts,tsx,mjs,cjs},scripts/**/*
+globs: .local/flat-six/**,.local/petka-models/**,.local/cms-rip/**,apps/desktop/**/*.{ts,tsx,mjs,cjs},scripts/**/*.{mjs,cjs,py}
 alwaysApply: false
 ---
 
 # 防 hang（3D / 大资源）
 
 - GLB / 大二进制：**只读大小与 header**，禁止整文件读进对话上下文。
-- Electron 启动、模型转换、CMS rip：**后台化 + 显式超时**；不在前台干等。
+- Electron 启动、模型转换、CMS rip：可轮询进程 + 显式总超时；日志保存在本任务 scratch。
 - 3D 验证用截图判定；缺资源走 placeholder（见 `workspace` / ADR 004）。
-- 同一转换/加载失败 **连续 2 次** → 停手汇报，换方案或缩小 mesh 范围。
-- Codex 直接执行，默认不派 worker；仅用户明确要求当前任务委派时才使用允许的 Codex worker。3D/GLB/Electron 操作串行共享状态，不并发启动 Electron / 模型转换 / rip。
+- 同一转换/加载原因连续失败两次 → 先诊断、换方案或缩小 mesh；不重跑无变化的命令，不因此中止可独立完成的工作。
+- 共享状态串行；轮询、进程归属与结束规则见 `AGENTS.md`，不得按进程名杀其他会话。

@@ -12,19 +12,17 @@ export function ObdDeviceRegistry({ devices, detectedDevices, busy, selectedId, 
   onSelect: (id: string) => void;
 }) {
   const rows = new Map<string, { id: string; family: string; name?: string | null; state: string; serial?: string; comPort?: string | null; selectable: boolean }>();
-  for (const d of devices) {
-    if (HIDDEN_FAMILIES.has(d.family)) continue;
-    rows.set(d.id, { id: d.id, family: d.family, name: d.name, state: d.state, serial: d.serial, comPort: d.comPort, selectable: false });
-  }
   for (const d of detectedDevices) {
-    const family = d.brand || rows.get(d.id)?.family || "未识别型号";
+    if (!d.available) continue;
+    const family = d.brand || devices.find((known) => known.id === d.id)?.family || "未识别型号";
+    if (!["vLinker", "OBDLink MX+", "VNCI", "unresolved"].includes(family)) continue;
     if (HIDDEN_FAMILIES.has(family)) continue;
     rows.set(d.id, { id: d.id, family, name: d.name, serial: d.serial, comPort: d.comPort,
       state: d.available ? d.transport === "d-pdu-usb" ? "USB 已接入" : d.paired ? "已配对" : "可连接" : d.paired ? "已配对 · 无可用串口" : "本次未发现",
-      selectable: !!d.available || !!d.paired });
+      selectable: !!d.available });
   }
-  if (!rows.size) return <p className="muted" data-testid="obd-conn-empty">暂无关联设备，请刷新。</p>;
-  return <div className="obd-device-registry" data-testid="obd-device-registry" aria-label="已关联或已连接设备">
+  if (!rows.size) return <p className="muted" data-testid="obd-conn-empty">本次没有发现可用诊断头，请接入设备后刷新。</p>;
+  return <div className="obd-device-registry" data-testid="obd-device-registry" aria-label="本次可用设备">
     <ul data-testid="obd-conn-list">
       {[...rows.values()].map((d) => <li key={d.id} data-testid={`obd-registered-${d.family}`}>
         <label className="obd-conn-item">

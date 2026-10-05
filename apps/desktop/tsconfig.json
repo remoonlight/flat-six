@@ -11,7 +11,6 @@
     "noEmit": true,
     "baseUrl": ".",
     "types": ["vite/client"],
-    "resolveJsonModule": true,
     "paths": {
       "@can-topology": ["../../data/seed/diagnostics/can-topology.v1.json"]
     }

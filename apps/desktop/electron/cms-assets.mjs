@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "../../..");
-const LOCAL_ROOT = path.join(repoRoot, ".local");
+const LOCAL_ROOT = process.env.PORSCHE981_LOCAL_ROOT || path.join(repoRoot, ".local");
 const MESH_MAP_PATH = path.join(LOCAL_ROOT, "cms-mesh-map.json");
 const GARAGE_MODELS_PATH = path.join(
   repoRoot,

@@ -298,6 +298,24 @@ class FakeClock:
 
 
 class TestVoltageMonitor(unittest.TestCase):
+    def test_unknown_voltage_keeps_independently_verified_link(self):
+        class UnknownVoltage(RepeatAtrvPort):
+            def write(inner, data):
+                if data.strip().upper() == b"ATRV":
+                    inner.writes.append(data)
+                    inner._rx.extend(b"?\r\r>")
+                    return len(data)
+                return super().write(data)
+        port = UnknownVoltage()
+        clock = FakeClock()
+        out = io.StringIO()
+        rc = run_voltage_monitor(VLIKER, port=port, stdout=out, clock=clock.now, sleep_fn=clock.sleep, max_samples=2)
+        self.assertEqual(rc, 0, out.getvalue())
+        readings = [json.loads(line) for line in out.getvalue().splitlines() if json.loads(line).get("type") in ("handshake", "reading")]
+        self.assertEqual(len(readings), 2)
+        self.assertTrue(all(row["volts"] is None and row["commOk"] for row in readings))
+        self.assertTrue(port.closed)
+
     def test_mx_plus_spp_monitor_and_session_use_selected_com_only(self):
         from scripts.diagnostics.sessions import _open_live_port
 

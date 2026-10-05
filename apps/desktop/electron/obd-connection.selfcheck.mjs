@@ -13,7 +13,7 @@ import { createReadOnlySessionManager } from "./read-only-session.mjs";
 import { acceptMonitorReading, parseVoltageVolts, VOLTAGE_FRESH_MS, RETRY_BACKOFF_MS } from "../src/obd-connection-logic.mjs";
 
 const repoRoot = process.cwd();
-const scratch = path.join(repoRoot, ".local/cursor-coordination/obd-x431-cadence-20260927/scratch");
+const scratch = path.join(repoRoot, ".local/selfchecks/obd-connection");
 fs.mkdirSync(scratch, { recursive: true });
 const device = { id: "bt:0425E85BD4CB", brand: "vLinker", available: true, paired: true };
 let serial = 0;
@@ -417,3 +417,66 @@ await syn.shutdown();
 }
 
 console.log("obd-connection selfcheck PASS: close-timeout quarantine, cadence, backoff, ingest, silent child, queued device identity, MX+ persistence and explicit model");
+
+// Current list, persistent purpose/CAN, unavailable remembered head, and no startup open.
+{
+  let opens = 0;
+  const stateFile = path.join(scratch, `settings-${Date.now()}.json`);
+  const settings = manager({ env: { PORSCHE981_CONNECTION_STATE: stateFile },
+    listFn: async () => ({ devices: [device, { ...device, id: "bt:AABBCCDDEEFF", available: false }, { id: "pt3g:1", brand: "PT3G", available: true }] }),
+    monitorSpawnFn: () => { opens++; return fakeChild(); } });
+  assert.equal((await settings.handle({ action: "list" })).devices.length, 1);
+  await settings.handle({ action: "configure", purpose: "internal" });
+  assert.equal((await settings.handle({ action: "configure", canNetwork: "guess" })).error, "invalid_can_network");
+  await settings.handle({ action: "configure", canNetwork: "adas" });
+  await settings.handle({ action: "select", deviceId: device.id });
+  assert.equal((await settings.handle({ action: "connect" })).error, "internal_profile_not_qualified");
+  assert.equal(opens, 0, "internal selection must never fall back to diagnostic commands");
+  await settings.shutdown();
+  const restored = manager({ env: { PORSCHE981_CONNECTION_STATE: stateFile }, listFn: async () => ({ devices: [] }), monitorSpawnFn: () => { opens++; return fakeChild(); } });
+  assert.equal(restored.snapshot().purpose, "internal");
+  assert.equal(restored.snapshot().canNetwork, "adas");
+  assert.equal(restored.snapshot().selectedDeviceId, device.id);
+  await restored.handle({ action: "list" });
+  await restored.handle({ action: "configure", purpose: "diagnostic" });
+  assert.equal((await restored.handle({ action: "connect" })).error, "device_port_unavailable");
+  assert.equal(opens, 0);
+  await restored.shutdown();
+}
+{
+  let child;
+  const g = createTransportGate();
+  const conn = manager({ gate: g, now: () => 1000, gracefulMs: 15, killWaitMs: 15,
+    monitorSpawnFn: () => { child = fakeChild(); return child; } });
+  await select(conn);
+  await conn.handle({ action: "connect" });
+  child.stdout.emit("data", Buffer.from(JSON.stringify({ ok: true, type: "handshake", deviceId: device.id,
+    simulation: false, commOk: true, volts: null, voltageSource: "atrv", at: 1000 }) + "\n"));
+  assert.equal(conn.snapshot().connected, true);
+  assert.equal(conn.snapshot().voltageVolts, null);
+  const stopping = conn.handle({ action: "disconnect" });
+  await new Promise((resolve) => setTimeout(resolve, 5));
+  assert.equal(conn.snapshot().linkState, "disconnecting");
+  assert.equal((await stopping).error, "monitor_close_timeout");
+  assert.equal(conn.snapshot().linkState, "close_failed");
+  assert.ok(g.owner(), "failed close retains port ownership");
+  child.exitCode = 0; child.emit("close", 0);
+  assert.equal(conn.snapshot().linkState, "idle");
+  assert.equal(g.owner(), null);
+  await conn.shutdown();
+}
+{
+  const g = createTransportGate();
+  const conn = manager({ gate: g });
+  let cancelled = false;
+  const session = { handle: async () => ({ ok: true }), cancelActiveAndWait: async () => {
+    cancelled = true; g.release("session"); conn.releaseDispatch(); return { ok: true };
+  } };
+  attachSessionHandoff(conn, session);
+  g.tryAcquire("session");
+  assert.equal((await conn.handle({ action: "disconnect" })).ok, true);
+  assert.equal(cancelled, true);
+  assert.equal(conn.snapshot().linkState, "idle");
+  await conn.shutdown();
+}
+console.log("obd-connection convergence checks PASS: settings, current devices, unknown voltage, truthful close, session disconnect");

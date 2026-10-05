@@ -1,0 +1,51 @@
+const messages: Record<string, string> = {
+  "manufacturer-transport-unqualified": "当前诊断头尚未完成厂商参数传输适配，不能开始实车读取。",
+  "manufacturer-profile-unqualified": "当前演练只支持历史身份已匹配的本车 DME 版本。",
+  "manufacturer-definition-incomplete": "所选参数的请求或解码定义不完整，请先补齐资料。",
+  "manufacturer-historical-response-missing": "所选参数缺少完整历史响应，请先按采集清单补采。",
+  "manufacturer-response-source-missing": "本机缺少已核对的历史原始响应资料，不能开始演练。",
+  "manufacturer-response-reference-mismatch": "历史响应与所选参数的来源、地址或采集阶段不符，演练已停止。",
+  "manufacturer-shared-response-conflict": "同一请求组的历史响应来源冲突，演练已停止。",
+  "manufacturer-no-data": "没有收到可处理的响应，已停止本轮，缺失值不会补零。",
+  "EISDIR": "所选位置是文件夹，请选择可保存的文件名；本批结果已保留。",
+  "backup-identity-or-coverage-invalid": "备份的车辆身份、控制单元版本或完整码值清单不符合格式。",
+  "backup-block-invalid": "备份中的码值块格式无效，不能继续分析。",
+  "backup-incomplete": "备份缺少码值块或存在重复项目，不能作为完整备份。",
+  "backup-time-invalid": "备份缺少有效的读取时间。",
+  "backup-current-ecu-mismatch": "备份属于其他控制单元，请选择当前控制单元的备份。",
+  "backup-integrity-failed": "备份内容已改变或损坏，完整性校验未通过。",
+  "restore-identity-version-mismatch": "原码基线与当前备份的车辆、控制单元或硬件软件版本不一致，不能恢复。",
+  "restore-coverage-mismatch": "两份备份包含的码值块不同，不能把不完整的内容用于恢复。",
+  "restore-block-length-mismatch": "码值块长度发生变化，当前版本的恢复方案无法成立。",
+  "coding_options_not_defined": "该字段尚未提供可核实的合法选项，暂时不能修改。",
+  "coding_options_limit": "该字段的合法选项超过当前支持范围，需要先补充字段定义。",
+  "unknown_profile": "本机没有该控制单元版本的定义资料。",
+  "unknown_record": "所选字段不在当前版本的定义中。",
+  "firmware-manifest-invalid": "原厂固件匹配清单缺少有效的来源、哈希、长度或版本信息。",
+  "firmware-current-ecu-mismatch": "固件清单或所选备份属于其他控制单元。",
+  "firmware-size-invalid": "固件文件为空或超过当前支持的 512 MiB 上限。",
+  "firmware-not-prepared": "还没有当前控制单元的固件准备结果。",
+  "connection-lost-outcome-unknown": "模拟连接在写入过程中断开，无法确认模拟目标是否已应用码值。流程已停止，没有自动重发写入。",
+  "readback-mismatch": "模拟回读的码值与目标码值不一致。流程已停止，需要恢复检查。",
+  "pre-write-backup-failed": "完整操作前备份没有保存成功，流程已停止，没有执行模拟写入。",
+  "pre-write-identity-mismatch": "重新读取的控制单元身份或版本与方案不一致，流程已停止，没有执行写入。",
+  "pre-write-coding-changed": "重新读取的完整当前码值与方案的修改前内容不同，流程已停止，需要重新分析。",
+  "bundle-busy-disconnect-first": "请先停止诊断任务并断开诊断头，再迁移资料。",
+  "bundle-integrity-failed": "资料包中有文件未通过哈希校验，未导入这些文件。",
+  "bundle-path-invalid": "资料包包含不允许导入的位置或文件类型。",
+  "bundle-target-outside-root": "资料包的目标位置超出了本项目目录，不能导入。",
+  "bundle-timeout": "资料包处理超过三分钟，已停止。请检查资料包大小和磁盘状态。",
+  "EEXIST": "所选位置已有同名文件。原文件已保留，请选择新的文件名。",
+  "ENOSPC": "磁盘空间不足，文件没有完整保存。",
+  "EACCES": "所选位置没有写入权限，请选择其他保存位置。",
+  "EPERM": "系统不允许写入所选位置，请选择其他保存位置。",
+  "no_valid_received_can_frames": "本批没有带有效接收时间的原始 CAN 帧，不能生成抓包文件。",
+  "raw_can_frames_unavailable": "请先连接能够提供原始接收 CAN 帧的 vLinker 或 MX+ 诊断头。只返回诊断 PDU 的设备无法生成真实 CAN 抓包。",
+};
+export function diagnosticMessage(error: unknown) {
+  const code = String(error || "");
+  if (messages[code]) return messages[code];
+  if (code.startsWith("source-hash-mismatch:")) return "本机资料或编译代码已变化，请重新生成并核对准备包后再演练。";
+  if (code.startsWith("bundle-existing-file-conflict:")) return "目标电脑已有不同内容的同名资料。原文件已保留，本次导入没有覆盖它。";
+  return code ? `处理未完成（${code}）。` : "处理未完成，未获得有效结果。";
+}

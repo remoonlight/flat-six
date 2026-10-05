@@ -1,10 +1,10 @@
 # 实时 OBD：统一故障库与数据分析需求
 
-> 历史/设计资料（2026-10-02 标注）：旧阶段交互细则；与当前菜单冲突的条目保留作沿革，当前需求以 requirements 的更新条目为准。 当前状态见 [progress.md](progress.md) 与 [OBD_STATUS.md](../OBD_STATUS.md)，操作边界见 [ADR 001](adr/001-no-ecu-write.md)。
+> 历史来源端交互快照（2026-10-04 核对）：正文保留 2026-09-13 的故障页/数据分析页、8 项预算、跳转即采集及旧验收规则，不是当前四入口要求。故障关联分析页面已退役；现行选择不启动通信，12 项为显示预算，独立 live 仍限 DME 六项。统一知识库、逐码完整步骤核查、适用条件及内部追溯目标继续保留，见 [requirements.md](requirements.md#r51-实时-obd产品方向phase-1-已交付)。当前状态见 [progress.md](progress.md)，操作见 [当前使用](obd-current-guide.md)，车辆边界见 [ADR 001](adr/001-no-ecu-write.md)。
 
-更新：2026-09-13。权威需求：[requirements.md](requirements.md) §R5.1。当前实现与验收：[实时 OBD 说明](obd-live-guide.md)。资料种子：[data/seed/obd/README.md](../data/seed/obd/README.md)。
+更新：2026-09-13。权威需求：[requirements.md](requirements.md) §R5.1。当前实现与验收：[实时 OBD 说明](obd-current-guide.md)。资料种子：[data/seed/obd/README.md](../data/seed/obd/README.md)。
 
-本文是页面与资料整理的**确认规则**，不是第二份 当前进度记录。软件完成度、测试计数以 live guide 为准。原始维修手册位于 `Z:\porsche\981`。
+本文的“确认规则”“本轮”“已执行”均指上述历史时点，当前 UI 要求不从本文恢复。软件结果见 [OBD_STATUS.md](../OBD_STATUS.md)。`Z:\porsche\981` 是迁入记录的原件路径，不证明本机有该盘符或文件；来源存在性与版本须按实际文件核对。
 
 状态（规则，不是验收替代）：用户要求「隐藏手册出处」后的交互已按本文执行；产品详情三个分类标签，出处只留在内部数据。逐码完整步骤核查与实车验证尚未完成。
 
@@ -185,4 +185,4 @@
 
 收敛决定：保留全部候选及缺口，不根据标题补造厂商参数、阈值或维修结论；982 的知识收录不扩张本车适用范围。短时接车先确认基础读取和刷新耗时，再按缺口安排最小补采。
 
-软件侧完成情况见 [使用说明](obd-live-guide.md)（16 个 Mode 01 参数按 ECU 支持位；批限 8；离线测试与四组 UI 验收；无实车）。
+软件侧的 16 个 Mode 01 参数、8 项预算和旧 UI 验收属于本文历史快照。当前标准参数、X431 离线计划及对应验收见 [使用说明](obd-current-guide.md) 与 [当前 OBD 状态](../OBD_STATUS.md)；上述资料数量不替代完整步骤核查。
