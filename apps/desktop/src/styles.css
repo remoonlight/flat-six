@@ -1325,3 +1325,8 @@ button.chip:disabled {
   margin-top: 10px;
   max-width: 280px;
 }
+
+.obd-purpose-options { display: flex; flex-wrap: wrap; gap: 12px 20px; border: 0; margin: 0; padding: 10px 0; min-width: 0; }
+.obd-purpose-options legend { padding: 0; }
+.obd-purpose-options label { display: flex; flex-direction: row; align-items: center; gap: 6px; }
+.obd-purpose-options input { width: 16px; min-width: 0; height: 16px; flex: 0 0 16px; padding: 0; margin: 0; }

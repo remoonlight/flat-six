@@ -8,7 +8,7 @@ from pathlib import Path
 
 from .decode import redact_vin
 from .offline import DEFAULT_COVERAGE, DEFAULT_REGISTRY, DEFAULT_VARIANTS, build_plan, load_json, match_identity, summary_doc
-from .response_values import decode_application_response
+from .response_values import decode_application_response, request_from_record
 from .x431_values import preview_coding, formula_from_record, decode_record
 from .realtime_preparation import READY_ACTIONS, handle_ready
 
@@ -326,6 +326,11 @@ def _validate(req) -> dict | None:
     hx = req.get("dataHex")
     if hx is not None and (not isinstance(hx, str) or len(hx) > MAX_HEX_CHARS):
         return _err("cap_limit", field="dataHex")
+    expected = req.get('expectedReadRequestHex')
+    if expected is not None and (not isinstance(expected, str) or not (
+        (len(expected) == 4 and expected.startswith('21')) or (len(expected) == 6 and expected.startswith('22')))
+        or any(c not in '0123456789ABCDEF' for c in expected)):
+        return _err('coding_block_request_invalid')
     mode = req.get("responseMode")
     if mode is not None and mode not in ("data", "pdu"):
         return _err("invalid_response_mode", responseMode=mode)
@@ -875,6 +880,10 @@ def handle(req: dict) -> dict:
                 continue
             if not _search_hit(rec, cat, q):
                 continue
+            if req.get('expectedReadRequestHex') is not None:
+                request = request_from_record(rec)
+                if cat != 'coding' or not request.get('ok') or request['request'].hex().upper() != req['expectedReadRequestHex']:
+                    continue
             item = slim_record(rec, cat)
             if cat == "dtc":
                 item["manual"] = join_manual_dtc(gen, ecu if type(ecu) is int else (row.get("ecuIds") or [None])[0], rec)
@@ -903,6 +912,10 @@ def handle(req: dict) -> dict:
     rec = _find_record(variant, cat, at)
     if rec is None:
         return _err("unknown_record", profileId=pid, category=cat, recordAt=at)
+    if action in ('preview', 'coding-options') and req.get('expectedReadRequestHex') is not None:
+        request = request_from_record(rec)
+        if not request.get('ok') or request['request'].hex().upper() != req['expectedReadRequestHex']:
+            return _err('coding_field_block_mismatch')
     hx = req.get("dataHex")
     if not isinstance(hx, str):
         return _err("missing_binary")
@@ -935,6 +948,12 @@ def handle(req: dict) -> dict:
     if type(raw) is not int:
         return _err("malformed_raw_value")
     out = preview_coding(rec, data, raw)
+    if req.get('expectedReadRequestHex') is not None and out.get('ok'):
+        _text, parsed = formula_from_record(rec)
+        decoded = decode_record(rec, bytes.fromhex(out['afterHex']))
+        if (parsed.get('kind') != 'TEXTTABLE' or not 0 < parsed.get('bitLength', 0) <= 16
+                or decoded.get('textStatus') != 'resolved' or not decoded.get('text')):
+            return _err('coding_value_not_defined')
     return _flags({**out, "ok": bool(out.get("ok")), "error": None if out.get("ok") else out.get("reason"), "record": slim_record(rec, cat)})
 
 

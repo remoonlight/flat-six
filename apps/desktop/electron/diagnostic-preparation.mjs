@@ -7,34 +7,54 @@ const hex = (value, max = 8192) => typeof value === "string" && value.length <= 
 const text = (value) => typeof value === "string" && value.length > 0 && value.length <= 240;
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const idFields = ["generation", "vin", "ecu", "hardware", "software"];
+export function codingBlockKey(block) {
+  if (typeof block?.did === "string" && block?.identifierKind === undefined && block?.identifierHex === undefined && /^[0-9A-F]{4}$/.test(block.did)) return `DID:${block.did}`;
+  if (block?.did === undefined && typeof block?.identifierHex === "string" && ((block?.identifierKind === "LID" && /^[0-9A-F]{2}$/.test(block.identifierHex))
+    || (block?.identifierKind === "DID" && /^[0-9A-F]{4}$/.test(block.identifierHex)))) return `${block.identifierKind}:${block.identifierHex}`;
+  throw new Error("backup-block-identifier-invalid");
+}
+function blockLocator(block) {
+  codingBlockKey(block);
+  return block.did !== undefined ? { did: block.did } : { identifierKind: block.identifierKind, identifierHex: block.identifierHex };
+}
+function blockReadRequest(block) {
+  const [kind, identifier] = codingBlockKey(block).split(":");
+  return (kind === "LID" ? "21" : "22") + identifier;
+}
 export function normalizeCodingBackup(input) {
-  if (!input || input.schemaVersion !== 1 || input.kind !== "ecu-coding-backup" || !input.identity
+  if (!input || ![1, 2].includes(input.schemaVersion) || input.kind !== "ecu-coding-backup" || !input.identity
     || !idFields.every((key) => text(input.identity[key])) || !["981", "982"].includes(input.identity.generation)
     || !/^[A-HJ-NPR-Z0-9]{17}$/.test(input.identity.vin) || !text(input.profileId)
-    || !Array.isArray(input.blocks) || !input.blocks.length || input.blocks.length > 256
-    || !Array.isArray(input.expectedDids) || input.expectedDids.length !== input.blocks.length
-    || !input.expectedDids.every((did) => /^[0-9A-F]{4}$/.test(did))) throw new Error("backup-identity-or-coverage-invalid");
-  const expected = [...input.expectedDids].sort();
+    || !Array.isArray(input.blocks) || !input.blocks.length || input.blocks.length > 256) throw new Error("backup-identity-or-coverage-invalid");
+  const legacy = input.schemaVersion === 1;
+  const declared = legacy ? input.expectedDids : input.expectedBlocks;
+  if (!Array.isArray(declared) || declared.length !== input.blocks.length
+    || (legacy ? input.expectedBlocks !== undefined : input.expectedDids !== undefined)) throw new Error("backup-identity-or-coverage-invalid");
+  const expected = legacy ? declared.map((did) => { codingBlockKey({ did }); return did; }).sort()
+    : declared.map((block) => { if (block?.did !== undefined) throw new Error("backup-block-identifier-invalid"); return blockLocator(block); })
+      .sort((a, b) => codingBlockKey(a).localeCompare(codingBlockKey(b)));
   const blocks = input.blocks.map((block) => {
-    if (!block || !/^[0-9A-F]{4}$/.test(block.did) || !hex(block.dataHex)) throw new Error("backup-block-invalid");
-    return { did: block.did, dataHex: block.dataHex };
-  }).sort((a, b) => a.did.localeCompare(b.did));
-  if (new Set(expected).size !== expected.length || !same(expected, blocks.map((b) => b.did))) throw new Error("backup-incomplete");
+    if (!block || !hex(block.dataHex) || (legacy ? block.did === undefined : block.did !== undefined)) throw new Error("backup-block-invalid");
+    return { ...blockLocator(block), dataHex: block.dataHex };
+  }).sort((a, b) => codingBlockKey(a).localeCompare(codingBlockKey(b)));
+  const expectedKeys = legacy ? expected.map((did) => codingBlockKey({ did })) : expected.map(codingBlockKey);
+  if (new Set(expectedKeys).size !== expectedKeys.length || !same(expectedKeys, blocks.map(codingBlockKey))) throw new Error("backup-incomplete");
   if (!text(input.capturedUtc) || !Number.isFinite(Date.parse(input.capturedUtc))) throw new Error("backup-time-invalid");
   // Imported completeness is a declared block list. It never authorizes a live write.
-  return { schemaVersion: 1, kind: input.kind, identity: Object.fromEntries(idFields.map((key) => [key, input.identity[key]])),
-    profileId: input.profileId, expectedDids: expected, blocks, capturedUtc: input.capturedUtc,
+  // Keep v1 normalized bytes stable: existing immutable files/hashes remain readable.
+  return { schemaVersion: input.schemaVersion, kind: input.kind, identity: Object.fromEntries(idFields.map((key) => [key, input.identity[key]])),
+    profileId: input.profileId, ...(legacy ? { expectedDids: expected } : { expectedBlocks: expected }), blocks, capturedUtc: input.capturedUtc,
     provenance: input.provenance === "simulation" ? "simulation" : "imported", freshReadProven: false, completeness: "declared-block-list", liveVerified: false };
 }
 
 export function codingRestorePlan(original, current) {
   const before = normalizeCodingBackup(current), baseline = normalizeCodingBackup(original);
   if (!same(before.identity, baseline.identity) || before.profileId !== baseline.profileId) throw new Error("restore-identity-version-mismatch");
-  if (!same(before.expectedDids, baseline.expectedDids)) throw new Error("restore-coverage-mismatch");
+  if (!same(before.blocks.map(codingBlockKey), baseline.blocks.map(codingBlockKey))) throw new Error("restore-coverage-mismatch");
   const blocks = baseline.blocks.map((block, i) => {
     const prior = before.blocks[i];
     if (prior.dataHex.length !== block.dataHex.length) throw new Error("restore-block-length-mismatch");
-    return { did: block.did, beforeHex: prior.dataHex, targetHex: block.dataHex, changed: prior.dataHex !== block.dataHex };
+    return { ...blockLocator(block), beforeHex: prior.dataHex, targetHex: block.dataHex, changed: prior.dataHex !== block.dataHex };
   });
   return { kind: "current-ecu-restore-plan", identity: baseline.identity, profileId: baseline.profileId, blocks,
     changedBlocks: blocks.filter((b) => b.changed).length, originalHash: hash(JSON.stringify(baseline)),
@@ -47,7 +67,9 @@ export function codingRestorePlan(original, current) {
 export async function runCodingRehearsal(plan, dependencies) {
   const stages = [], readbacks = []; let writeAttemptCount = 0, backupId = null;
   if (dependencies.simulation !== true || plan.executionEnabled !== false || !Array.isArray(plan.blocks) || !plan.blocks.length || plan.blocks.length > 256
-    || !plan.blocks.every((block) => /^[0-9A-F]{4}$/.test(block.did) && hex(block.beforeHex) && hex(block.targetHex) && block.beforeHex.length === block.targetHex.length)) throw new Error("rehearsal-only");
+    || !plan.blocks.every((block) => hex(block.beforeHex) && hex(block.targetHex) && block.beforeHex.length === block.targetHex.length)) throw new Error("rehearsal-only");
+  const keys = plan.blocks.map(codingBlockKey);
+  if (new Set(keys).size !== keys.length) throw new Error("rehearsal-only");
   try {
     stages.push("read-identity");
     const identity = await dependencies.readIdentity();
@@ -55,18 +77,25 @@ export async function runCodingRehearsal(plan, dependencies) {
     stages.push("read-complete-current-coding");
     const current = normalizeCodingBackup(await dependencies.readCurrent());
     if (!same(current.identity, plan.identity) || current.profileId !== plan.profileId
-      || !same(current.blocks.map((block) => ({ did: block.did, dataHex: block.dataHex })), plan.blocks.map((block) => ({ did: block.did, dataHex: block.beforeHex })))) throw new Error("pre-write-coding-changed");
+      || !same(current.blocks.map((block) => [codingBlockKey(block), block.dataHex]), plan.blocks.map((block) => [codingBlockKey(block), block.beforeHex]))) throw new Error("pre-write-coding-changed");
     stages.push("persist-complete-current-backup");
     const persisted = await dependencies.persistBackup(current);
     if (!persisted?.id) throw new Error("pre-write-backup-failed");
     backupId = persisted.id;
     for (const block of plan.blocks) {
       if (!block.changed) continue;
-      stages.push(`write-once:${block.did}`); writeAttemptCount++;
-      await dependencies.writeBlock(block.did, block.targetHex);
-      stages.push(`readback:${block.did}`);
-      const read = await dependencies.readBlock(block.did);
-      readbacks.push({ did: block.did, dataHex: read });
+      const key = codingBlockKey(block);
+      stages.push(`write-once:${key}`); writeAttemptCount++;
+      await dependencies.writeBlock(key, block.targetHex);
+      stages.push(`readback-immediate:${key}`);
+      const read = await dependencies.readBlock(key);
+      if (read !== block.targetHex) throw new Error("readback-mismatch");
+    }
+    // Final full-scope reread also catches a later write altering an earlier block.
+    for (const block of plan.blocks) {
+      stages.push(`readback:${codingBlockKey(block)}`);
+      const read = await dependencies.readBlock(codingBlockKey(block));
+      readbacks.push({ ...blockLocator(block), dataHex: read });
       if (read !== block.targetHex) throw new Error("readback-mismatch");
     }
     return { ok: true, simulation: true, liveVerified: false, stages, readbacks, backupId, writeAttemptCount, automaticWriteRetry: false };
@@ -142,7 +171,7 @@ export function createDiagnosticPreparation({ directory, chooseOpenFile, saveFil
   }
   async function perform(req) {
     if (!req || typeof req !== "object" || Array.isArray(req) || Object.keys(req).some((k) =>
-      !["action", "ecu", "id", "did", "recordAt", "rawValue", "scenario"].includes(k))) throw new Error("preparation-request-invalid");
+      !["action", "ecu", "id", "did", "blockKey", "recordAt", "rawValue", "scenario"].includes(k))) throw new Error("preparation-request-invalid");
     if (req.ecu !== undefined && !text(req.ecu)) throw new Error("preparation-ecu-invalid");
     if (req.action === "list") return { ok: true, backups: await list(req.ecu) };
     if (req.action === "import-backup") {
@@ -157,19 +186,23 @@ export function createDiagnosticPreparation({ directory, chooseOpenFile, saveFil
       if (req.action === "backup") return { ok: true, backup: stored.backup };
       if (req.action === "export-backup") return saveFile("ecu-coding-backup.json", stored.backup);
       if (req.action.startsWith("coding-") || req.action === "simulate-coding") {
-        const block = stored.backup.blocks.find((b) => b.did === req.did);
+        if (req.blockKey !== undefined && (typeof req.blockKey !== "string" || !/^(LID:[0-9A-F]{2}|DID:[0-9A-F]{4})$/.test(req.blockKey)
+          || req.did !== undefined)) throw new Error("coding-field-invalid");
+        const selectedKey = req.blockKey ?? (req.did !== undefined ? codingBlockKey({ did: req.did }) : null);
+        const block = stored.backup.blocks.find((b) => codingBlockKey(b) === selectedKey);
         if (!block || !Number.isInteger(req.recordAt) || req.recordAt < 0 || (req.action !== "coding-options" && !Number.isInteger(req.rawValue))) throw new Error("coding-field-invalid");
         const result = await previewField({ action: req.action === "coding-options" ? "coding-options" : "preview", category: "coding",
           generation: stored.backup.identity.generation, profileId: stored.backup.profileId, recordAt: req.recordAt,
-          dataHex: block.dataHex, ...(req.action !== "coding-options" ? { rawValue: req.rawValue } : {}) });
+          dataHex: block.dataHex, expectedReadRequestHex: blockReadRequest(block),
+          ...(req.action !== "coding-options" ? { rawValue: req.rawValue } : {}) });
         if (req.action === "simulate-coding" && result.ok) {
           if (result.beforeHex !== block.dataHex || !hex(result.afterHex) || result.afterHex.length !== block.dataHex.length) throw new Error("coding-preview-invalid");
-          const target = { ...stored.backup, blocks: stored.backup.blocks.map((item) => item.did === block.did ? { ...item, dataHex: result.afterHex } : item) };
+          const target = { ...stored.backup, blocks: stored.backup.blocks.map((item) => codingBlockKey(item) === selectedKey ? { ...item, dataHex: result.afterHex } : item) };
           const { originalHash, ...base } = codingRestorePlan(target, stored.backup);
           const plan = { ...base, kind: "current-ecu-coding-preview-plan", targetHash: originalHash };
           return { ok: true, plan, result: await rehearse(plan, stored.backup, req.scenario) };
         }
-        return { ...result, did: block.did, backupId: req.id, executionEnabled: false, writePayload: null };
+        return { ...result, ...blockLocator(block), backupId: req.id, executionEnabled: false, writePayload: null };
       }
       const baseId = (await readJson(path.join(directory, `baseline-${stored.identityKey}.json`))).id;
       const baseline = (await load(baseId)).backup;
@@ -202,7 +235,7 @@ export function createDiagnosticPreparation({ directory, chooseOpenFile, saveFil
   }
   async function rehearse(plan, current, scenario = "success") {
     if (!["success", "readback-mismatch", "disconnect", "identity-mismatch", "backup-failed"].includes(scenario)) throw new Error("simulation-scenario-invalid");
-    const memory = new Map(current.blocks.map((block) => [block.did, block.dataHex]));
+    const memory = new Map(current.blocks.map((block) => [codingBlockKey(block), block.dataHex]));
     return runCodingRehearsal(plan, { simulation: true,
       readIdentity: async () => scenario === "identity-mismatch" ? { ...current.identity, software: "mismatch-simulated" } : current.identity,
       readCurrent: async () => ({ ...current, capturedUtc: new Date().toISOString(), provenance: "simulation" }),

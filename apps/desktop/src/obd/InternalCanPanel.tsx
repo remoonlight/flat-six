@@ -18,7 +18,7 @@ export function InternalCanPanel({ status, busy, invoke }: {
       saved?.saved ? `已保存本批结果：${saved.filePath}` : result.recording?.error ? `记录未完整结束：${result.recording.error}` : "");
   }
   return <section className="panel" data-testid="internal-can-panel">
-    <h3>{status?.canNetwork === "adas" ? "ADAS CAN" : "Drive CAN"} · 持续接收</h3>
+    <h3>{status?.canNetwork ? ({ drive: "驱动 CAN", chassis: "底盘 CAN", comfort: "舒适性 CAN", crash: "碰撞 CAN", adas: "ADAS CAN" })[status.canNetwork] : "未选择 CAN"} · 持续接收</h3>
     <p className="muted">数据来自所选接线。切换页面继续接收；断线期间不补造数据。</p>
     {!status?.internalSupported ? <p className="muted">此 CAN 与诊断头尚无已核实的原始监听配置，连接功能不可执行。</p> : null}
     <p data-testid="internal-can-count">已接收 {data?.frameCount || 0} 帧；本批保留 {data?.retainedFrames || 0} / {data?.frameLimit || 25000} 帧。</p>

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { createHash } from "node:crypto";
-import { createDiagnosticPreparation, normalizeCodingBackup, codingRestorePlan, firmwarePreparation, runCodingRehearsal } from "./diagnostic-preparation.mjs";
+import { createDiagnosticPreparation, normalizeCodingBackup, codingRestorePlan, firmwarePreparation, runCodingRehearsal, codingBlockKey } from "./diagnostic-preparation.mjs";
 import { createEngineAcquisition } from "../src/engine-acquisition.mjs";
 import { createDiagnosticCanRecorder } from "./diagnostic-can-recording.mjs";
 
@@ -17,6 +17,8 @@ assert.throws(() => normalizeCodingBackup({ ...backup(), identity: { ...identity
 const original = normalizeCodingBackup(backup());
 const current = normalizeCodingBackup(backup("A4"));
 assert.equal(original.freshReadProven, false);
+assert.deepEqual(original, { ...backup(), provenance: "imported", freshReadProven: false, completeness: "declared-block-list", liveVerified: false },
+  "v1 normalized representation remains byte-compatible with existing immutable hashes");
 const plan = codingRestorePlan(original, current);
 assert.equal(plan.blocks[0].targetHex, "A5");
 assert.equal(plan.changedBlocks, 1);
@@ -65,6 +67,65 @@ const file = path.join(directory, "vault", `${second.id}.json`);
 const altered = JSON.parse(await fs.readFile(file, "utf8")); altered.backup.blocks[0].dataHex = "FF";
 await fs.writeFile(file, JSON.stringify(altered));
 assert.equal((await vault.handle({ action: "restore-plan", ecu: "dme", id: second.id })).error, "backup-integrity-failed");
+// LID 10 and DID 0010 are different blocks, even when their numeric IDs match.
+const typedBackup = (dataHex, capturedUtc) => ({ schemaVersion: 2, kind: "ecu-coding-backup", identity,
+  profileId: "typed-test-only", capturedUtc,
+  expectedBlocks: [{ identifierKind: "LID", identifierHex: "10" }, { identifierKind: "DID", identifierHex: "0010" }],
+  blocks: [{ identifierKind: "LID", identifierHex: "10", dataHex }, { identifierKind: "DID", identifierHex: "0010", dataHex: "7E" }] });
+const typed = normalizeCodingBackup(typedBackup("A5", "2026-10-05T01:00:00Z"));
+assert.deepEqual(typed.blocks.map(codingBlockKey), ["DID:0010", "LID:10"]);
+assert.throws(() => normalizeCodingBackup({ ...typed, expectedBlocks: [typed.expectedBlocks[0], typed.expectedBlocks[0]] }), /incomplete/);
+assert.throws(() => normalizeCodingBackup({ ...typed, blocks: [{ did: "0010", identifierKind: "LID", identifierHex: "10", dataHex: "A5" }, typed.blocks[1]] }), /block/);
+assert.throws(() => normalizeCodingBackup({ ...typed, expectedDids: ["0010"] }), /coverage/);
+assert.throws(() => codingBlockKey({ identifierKind: "LID", identifierHex: "0010" }), /identifier/);
+assert.throws(() => codingBlockKey({ identifierKind: "DID", identifierHex: "10" }), /identifier/);
+const typedInputs = ["typed-original.json", "typed-current.json"].map((name) => path.join(directory, name));
+await fs.writeFile(typedInputs[0], JSON.stringify(typedBackup("A5", "2026-10-05T01:00:00Z")));
+await fs.writeFile(typedInputs[1], JSON.stringify(typedBackup("A4", "2026-10-05T01:01:00Z")));
+let typedInput = 0, previewCalls = [];
+const typedVault = createDiagnosticPreparation({ directory: path.join(directory, "typed-vault"),
+  chooseOpenFile: async () => typedInputs[typedInput++], saveFile: async (_name, data) => ({ ok: true, saved: true, data }),
+  connectionStatus: () => null, previewField: async (request) => {
+    previewCalls.push(request);
+    return { ok: true, beforeHex: request.dataHex, afterHex: "A4", changedBitMaskHex: "01" };
+  } });
+const typedFirst = await typedVault.handle({ action: "import-backup", ecu: "dme" });
+const typedSecond = await typedVault.handle({ action: "import-backup", ecu: "dme" });
+assert.equal(typedFirst.ok, true); assert.equal(typedSecond.ok, true);
+assert.equal(typedSecond.backups.find((row) => row.original).id, typedFirst.id);
+const typedPreview = await typedVault.handle({ action: "simulate-coding", ecu: "dme", id: typedFirst.id,
+  blockKey: "LID:10", recordAt: 10, rawValue: 0 });
+assert.equal(typedPreview.result.ok, true);
+assert.deepEqual(typedPreview.result.readbacks.map(codingBlockKey).sort(), ["DID:0010", "LID:10"]);
+assert.equal(previewCalls[0].expectedReadRequestHex, "2110");
+assert.equal(typedPreview.plan.blocks.find((block) => codingBlockKey(block) === "DID:0010").targetHex, "7E");
+await typedVault.handle({ action: "coding-options", ecu: "dme", id: typedFirst.id, blockKey: "DID:0010", recordAt: 11 });
+assert.equal(previewCalls[1].expectedReadRequestHex, "220010");
+const typedRestore = await typedVault.handle({ action: "simulate-restore", ecu: "dme", id: typedSecond.id });
+assert.equal(typedRestore.result.ok, true); assert.equal(typedRestore.plan.changedBlocks, 1);
+assert.equal((await typedVault.handle({ action: "simulate-restore", ecu: "dme", id: typedSecond.id, scenario: "backup-failed" })).result.writeAttemptCount, 0);
+const typedInterrupted = await typedVault.handle({ action: "simulate-restore", ecu: "dme", id: typedSecond.id, scenario: "disconnect" });
+assert.equal(typedInterrupted.result.writeAttemptCount, 1); assert.equal(typedInterrupted.result.automaticWriteRetry, false);
+assert.equal((await typedVault.handle({ action: "coding-preview", ecu: "dme", id: typedFirst.id,
+  blockKey: "LID:10", did: "0010", recordAt: 10, rawValue: 0 })).error, "coding-field-invalid");
+const typedPlan = codingRestorePlan(typed, typedBackup("A4", "2026-10-05T01:01:00Z"));
+const typedMemory = new Map([["DID:0010", "7E"], ["LID:10", "A4"]]);
+const unintended = await runCodingRehearsal(typedPlan, { simulation: true,
+  readIdentity: async () => identity, readCurrent: async () => typedBackup("A4", "2026-10-05T01:01:00Z"),
+  persistBackup: async () => ({ id: "simulated-durable-backup" }),
+  writeBlock: async (key, value) => { typedMemory.set(key, value); typedMemory.set("DID:0010", "FF"); },
+  readBlock: async (key) => typedMemory.get(key) });
+assert.equal(unintended.error, "readback-mismatch", "changes outside the selected field must be detected");
+const multiTarget = { ...typed, blocks: typed.blocks.map((block) => ({ ...block, dataHex: "A5" })) };
+const multiCurrent = { ...typed, blocks: typed.blocks.map((block) => ({ ...block, dataHex: "A4" })) };
+const multiPlan = codingRestorePlan(multiTarget, multiCurrent);
+const multiMemory = new Map(multiCurrent.blocks.map((block) => [codingBlockKey(block), block.dataHex]));
+const crossWrite = await runCodingRehearsal(multiPlan, { simulation: true,
+  readIdentity: async () => identity, readCurrent: async () => multiCurrent,
+  persistBackup: async () => ({ id: "simulated-durable-backup" }),
+  writeBlock: async (key, value) => { multiMemory.set(key, value); if (key === "LID:10") multiMemory.set("DID:0010", "FF"); },
+  readBlock: async (key) => multiMemory.get(key) });
+assert.equal(crossWrite.error, "readback-mismatch", "final full reread must detect a later write corrupting an already checked block");
 const digest = createHash("sha256").update("test firmware bytes").digest("hex");
 const manifest = { schemaVersion: 1, kind: "oem-ecu-firmware-manifest", origin: "original", identity,
   sha256: digest, bytes: 19, manufacturerSource: "synthetic test declaration, not original evidence", targetSoftware: "synthetic-new" };

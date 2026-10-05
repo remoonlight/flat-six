@@ -3,6 +3,7 @@ import {
   hasDesktopApi,
   topologyFixtureEnabled,
   type ObdConnectionDevice,
+  type ObdCanNetwork,
   type ObdConnectionResult,
   type ObdRegisteredDevice,
   type PorscheApi,
@@ -14,7 +15,6 @@ import { TopologyPage } from "./TopologyPage";
 import { EngineDataPage } from "./EngineDataPage";
 import { ObdDeviceRegistry } from "../obd/ObdDeviceRegistry";
 import { InternalCanPanel } from "../obd/InternalCanPanel";
-import { DiagnosticDefinitionsPanel } from "../obd/DiagnosticDefinitionsPanel";
 
 type ObdTab =
   | "topology"
@@ -29,10 +29,18 @@ const TABS: { id: ObdTab; label: string }[] = [
   { id: "coding", label: "设码与编程" },
 ];
 
+const CONNECTION_PURPOSES = [
+  { value: "diagnostic", label: "诊断" },
+  { value: "drive", label: "内网-驱动can" },
+  { value: "chassis", label: "内网-底盘can" },
+  { value: "comfort", label: "内网-舒适性can" },
+  { value: "crash", label: "内网-碰撞can" },
+] as const;
+
 function vnciConnectionMessage(error: unknown): string | null {
   const messages: Record<string, string> = {
     device_port_unavailable: "上次选择的诊断头本次不可用。请接入该设备后刷新，或手动选择其他设备。",
-    can_network_required: "请按实际接线选择 Drive CAN 或 ADAS CAN。",
+    can_network_required: "请按实际接线选择内网用途。",
     internal_receive_not_integrated: "内网持续接收尚未接入桌面，本次不会打开诊断链路。已保存所选 CAN。",
     internal_profile_not_qualified: "此诊断头与 CAN 尚无已核实的原始监听配置，连接已停止；不会发送诊断请求。",
     diagnostic_purpose_required: "当前用途为内网读取。请断开设备、手动改接诊断 CAN，再选择诊断用途。",
@@ -69,7 +77,7 @@ export function ObdPage() {
   const [connected, setConnected] = useState(false);
   const [linkState, setLinkState] = useState("idle");
   const [purpose, setPurpose] = useState<"diagnostic" | "internal">("diagnostic");
-  const [canNetwork, setCanNetwork] = useState<"drive" | "adas" | "">("");
+  const [canNetwork, setCanNetwork] = useState<ObdCanNetwork | "">("");
   const [connectionStatus, setConnectionStatus] = useState<ObdConnectionResult | null>(null);
   const [modelPick, setModelPick] = useState<"vLinker" | "OBDLink MX+" | "VNCI" | "">("");
   const [topologyAdapterModel, setTopologyAdapterModel] = useState<string | null>(null);
@@ -251,24 +259,18 @@ export function ObdPage() {
 
       {tab === "connection" && (
         <section className="panel" data-testid="obd-connection">
-          <label className="field">连接用途
-            <select data-testid="obd-purpose" value={purpose} disabled={connBusy || sessionLocked || linkState !== "idle"}
-              onChange={(e) => void connectionCall({ action: "configure", purpose: e.target.value as "diagnostic" | "internal" })}>
-              <option value="diagnostic">诊断 CAN · 控制单元诊断</option>
-              <option value="internal">内网 CAN · 只接收数据</option>
-            </select>
-          </label>
-          {purpose === "internal" ? <>
-            <label className="field">实际接入的 CAN
-              <select data-testid="obd-can-network" value={canNetwork} disabled={connBusy || sessionLocked || linkState !== "idle"}
-                onChange={(e) => { if (e.target.value) void connectionCall({ action: "configure", canNetwork: e.target.value as "drive" | "adas" }); }}>
-                <option value="">请选择实际接线</option>
-                <option value="drive">Drive CAN</option>
-                <option value="adas">ADAS CAN</option>
-              </select>
-            </label>
-            <p className="muted">请手动接到所选 CAN。项目不自动识别网络或切换接线；已接入 MX+ 的 Drive CAN 原始监听。</p>
-          </> : null}
+          <fieldset className="obd-purpose-options" data-testid="obd-purpose" disabled={connBusy || sessionLocked || linkState !== "idle"}>
+            <legend>连接用途</legend>
+            {CONNECTION_PURPOSES.map((option) => <label key={option.value}>
+              <input type="radio" name="obd-purpose" data-testid={`obd-purpose-${option.value}`} value={option.value}
+                checked={(purpose === "diagnostic" ? "diagnostic" : canNetwork) === option.value}
+                onChange={() => void connectionCall(option.value === "diagnostic" ? { action: "configure", purpose: "diagnostic" } :
+                  { action: "configure", purpose: "internal", canNetwork: option.value })} />
+              <span>{option.label}</span>
+            </label>)}
+          </fieldset>
+          {purpose === "internal" ? <p className="muted">请手动接到所选 CAN。项目不自动识别网络或切换接线；当前仅 MX+ 驱动 CAN 有已核实的监听配置。</p> : null}
+          {purpose === "internal" && canNetwork === "adas" ? <p className="muted">上次保存的接线为 ADAS CAN，请按实际接线重新选择连接用途。</p> : null}
           <p className="muted">目前支持 vLinker FS BT、OBDLink MX+ 和 VNCI VAS6154A（USB）设备。</p>
           <ObdDeviceRegistry devices={deviceRegistry} detectedDevices={devices} busy={connBusy || sessionLocked} selectedId={selectedId}
             connectionState={linkState === "disconnecting" ? "正在断开" : linkState === "close_failed" ? "关闭失败 · 等待释放" : sessionLocked || linkState === "diagnostic" ? "诊断占用" : linkState === "connecting" ? "连接中" : linkState === "reconnecting" ? "等待重连" : connected ? "已连接" : "已选择"}
@@ -303,7 +305,6 @@ export function ObdPage() {
           </div>
           {listErrors.length > 0 ? <p className="error" data-testid="obd-conn-errors">{listErrors.join("；")}</p> : null}
           {connNote ? <p className="error" data-testid="obd-conn-note">{connNote}</p> : null}
-          <DiagnosticDefinitionsPanel connected={connected} />
         </section>
       )}
 

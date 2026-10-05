@@ -69,7 +69,7 @@ export function validateConnectionRequest(req) {
     return fail("malformed_model");
   }
   if (req.purpose != null && !["diagnostic", "internal"].includes(req.purpose)) return fail("invalid_purpose");
-  if (req.canNetwork != null && !["drive", "adas"].includes(req.canNetwork)) return fail("invalid_can_network");
+  if (req.canNetwork != null && !["drive", "chassis", "comfort", "crash", "adas"].includes(req.canNetwork)) return fail("invalid_can_network");
   if (req.action === "configure" && req.purpose == null && req.canNetwork == null) return fail("missing_settings");
   try {
     if (Buffer.byteLength(JSON.stringify(req), "utf8") > MAX_JSON) return fail("request_too_large");
@@ -92,7 +92,7 @@ function loadState(file) {
     const deviceId = typeof raw.deviceId === "string" && DEVICE_RE.test(raw.deviceId) ? raw.deviceId : null;
     const model = MODELS.has(raw.model) ? raw.model : null;
     return { deviceId, model, purpose: raw.purpose === "internal" ? "internal" : "diagnostic",
-      canNetwork: ["drive", "adas"].includes(raw.canNetwork) ? raw.canNetwork : null };
+      canNetwork: ["drive", "chassis", "comfort", "crash", "adas"].includes(raw.canNetwork) ? raw.canNetwork : null };
   } catch {
     return defaults;
   }

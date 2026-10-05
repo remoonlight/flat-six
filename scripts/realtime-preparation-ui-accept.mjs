@@ -143,21 +143,13 @@ try {
   assert.equal(await page.getByTestId("offline-plan-result").count(), 0);
   const bad = await page.evaluate(() => window.porsche981.offlineDiagnostics({ action: "ready-plan", ecuId: 1, profileId: "x", parameterIds: ["a".repeat(64)], serialPort: "COM999" }));
   assert.equal(bad.error, "forbidden_field");
-  for (const generation of ["981", "982"]) {
-    await page.getByTestId("offline-catalogue").selectOption(generation);
-    await page.getByTestId("eng-system").selectOption("dme");
-    await page.waitForFunction(() => document.querySelector('[data-testid="offline-profile"]')?.options.length > 1);
-    const profile = await page.getByTestId("offline-profile").locator("option").nth(1).getAttribute("value");
-    await page.getByTestId("offline-profile").selectOption(profile);
-    await page.waitForFunction(() => document.querySelector('[data-testid="offline-parameters"]')?.getAttribute("aria-busy") === "false");
-    assert.ok(await page.getByTestId("offline-parameters").locator("label").count() > 0);
-    assert.match(await page.getByTestId("offline-realtime").innerText(), /尚未与本车身份匹配|历史身份已匹配/);
-    assert.equal(await page.getByTestId("offline-plan-result").count(), 0, "catalogue change discards old result");
-  }
+  assert.equal(await page.getByTestId("offline-catalogue").count(), 0);
+  assert.equal(await page.getByTestId("offline-profile").count(), 0);
+  assert.doesNotMatch(await page.getByTestId("offline-realtime").innerText(), /资料范围|请选择定义版本/);
   assert.deepEqual(errors, []);
   fs.writeFileSync(path.join(output, "result.json"), JSON.stringify({ ok: true, noHardware: true,
-    checks: ["automatic verified version", "candidate exclusion", "manual full-directory version is not qualification", "one panel", "12 cap", "category resets selection, pagination retains it", "native Save As", "save canceled retains result", "real worker stop IPC", "historical replay and full 981/982 catalogues", "grouped continuous manufacturer rehearsal", "stop releases controls", "save failure retains complete batch", "manufacturer live request rejected", "narrow layout"], errors }, null, 2));
-  console.log("PASS realtime controls: matched versions, selection, stopped worker, native Save As/cancel, provenance, historical replay/full catalogues, no vehicle I/O");
+    checks: ["automatic verified version", "candidate exclusion", "scope and manual version controls removed", "one panel", "12 cap", "category resets selection, pagination retains it", "native Save As", "save canceled retains result", "real worker stop IPC", "historical replay", "grouped continuous manufacturer rehearsal", "stop releases controls", "save failure retains complete batch", "manufacturer live request rejected", "narrow layout"], errors }, null, 2));
+  console.log("PASS realtime controls: matched versions, selection, stopped worker, native Save As/cancel, provenance, historical replay, no vehicle I/O");
 } catch (error) {
   if (app) {
     const page = await app.firstWindow();

@@ -83,6 +83,29 @@ try {
     generation: "981", ecuId: 1, profileId }), profileId);
   assert.equal(scope.ok, true, JSON.stringify(scope)); assert.equal(scope.plan.definitionFieldCount, 39);
   assert.equal(scope.plan.completeVehicleCodingScopeQualified, false);
+  const syntheticIdentity = { generation: "981", vin: "WP0ZZZ98ZES000000", ecu: "dme", hardware: "TEST-HW", software: "TEST-SW" };
+  const typedFiles = ["synthetic-original.json", "synthetic-current.json"].map((name) => path.join(output, name));
+  for (const [i, file] of typedFiles.entries()) fs.writeFileSync(file, JSON.stringify({ schemaVersion: 2, kind: "ecu-coding-backup",
+    identity: syntheticIdentity, profileId, capturedUtc: `2026-10-05T01:0${i}:00Z`,
+    expectedBlocks: [{ identifierKind: "LID", identifierHex: "01" }, { identifierKind: "DID", identifierHex: "0001" }],
+    blocks: [{ identifierKind: "LID", identifierHex: "01", dataHex: i ? "A4" : "A5" },
+      { identifierKind: "DID", identifierHex: "0001", dataHex: "7E" }] }));
+  const importedCoding = [];
+  for (const file of typedFiles) {
+    await app.evaluate(({ dialog }, file) => { dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [file] }); }, file);
+    const doc = await page.evaluate(() => window.porsche981.diagnosticPreparation({ action: "import-backup", ecu: "dme" }));
+    assert.equal(doc.ok, true, JSON.stringify(doc)); importedCoding.push(doc);
+  }
+  const typedCoding = await page.evaluate((id) => window.porsche981.diagnosticPreparation({ action: "simulate-coding", ecu: "dme", id,
+    blockKey: "LID:01", recordAt: 4047899, rawValue: 0 }), importedCoding[0].id);
+  assert.equal(typedCoding.result?.ok, true, JSON.stringify(typedCoding));
+  assert.equal(typedCoding.result.readbacks.length, 2); assert.equal(typedCoding.result.simulation, true);
+  const typedRestore = await page.evaluate((id) => window.porsche981.diagnosticPreparation({ action: "simulate-restore", ecu: "dme", id }), importedCoding[1].id);
+  assert.equal(typedRestore.result?.ok, true, JSON.stringify(typedRestore));
+  assert.equal(typedRestore.plan.changedBlocks, 1); assert.equal(typedRestore.result.readbacks.length, 2);
+  const wrongBlock = await page.evaluate((id) => window.porsche981.diagnosticPreparation({ action: "coding-preview", ecu: "dme", id,
+    blockKey: "DID:0001", recordAt: 4047899, rawValue: 0 }), importedCoding[0].id);
+  assert.equal(wrongBlock.error, "coding_field_block_mismatch");
   await page.locator('nav.side button[data-tab="obd"]').click();
   await page.locator('[data-obd-tab="coding"]').click();
   await page.locator('[data-coding-system="dme"]').click();
@@ -92,6 +115,11 @@ try {
   assert.match(await page.getByTestId("coding-read-scope-result").innerText(), /39 个来源字段/);
   assert.match(await page.getByTestId("coding-read-scope-result").innerText(), /编码块的完整长度.*尚未确认/);
   await page.getByText("查看全部 28 个编码读取组", { exact: true }).click();
+  await page.getByLabel("码值备份", { exact: true }).selectOption(importedCoding[0].id);
+  await page.getByLabel("码值块", { exact: true }).selectOption("LID:01");
+  await page.getByLabel("设码字段", { exact: true }).selectOption("4047899");
+  await page.getByText("查看备份中的完整原始码值", { exact: true }).click();
+  assert.match(await page.getByTestId("diagnostic-preparation").innerText(), /DID 0001：\s*7E/);
   assert.match(await page.getByTestId("coding-read-scope-result").innerText(), /LID A4/);
   await page.getByText("查看全部 28 个编码读取组", { exact: true }).click();
   assert.ok(fs.existsSync(path.join(userData, "garage.db")), "bundled Node initialized the fresh SQLite database");
@@ -106,6 +134,7 @@ try {
     developerPathRemoved: true, bundledPythonUtf8: encoding.utf8 === 1, originalCapturesBundled: false, definitionFilesImported: imported.files,
     samples: acquired.samples.length, requestGroups: acquired.requestCount, codingFields: scope.plan.definitionFieldCount,
     standardEngineSamples: engine.final.engine.samples.length,
+    typedCodingRehearsal: typedCoding.result.ok, typedRestoreRehearsal: typedRestore.result.ok, fullScopeReadback: true,
     simulation: true, noDeviceIO: true, vehicleVerified: false, errors }, null, 2));
   console.log(JSON.stringify({ ok: true, output, samples: acquired.samples.length, imported: imported.files }));
 } finally { if (app) await app.close(); }

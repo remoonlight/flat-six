@@ -23,6 +23,7 @@ CRUISE = {
     "byteOffset": 0,
     "bitOffset": 0,
     "name": "巡航控制",
+    "readSID": 0x21, "pid": 1, "read_request_candidate_hex": "2101",
     "formula": {
         "id_hex": "F0000078",
         "text": "TEXTTABLE:DataType=A_UINT32,[0x00]->0xF000010F;[0x01]->0xF0000110;LengthInfo=Standard,BitLength=1,BitMask=0,HighLow=1;",
@@ -247,6 +248,27 @@ class TestFixturePools(unittest.TestCase):
         self.assertFalse(doc["items"][0]["decoderReady"], "unresolved wire definition remains disabled")
         other = handle({"action": "catalog-units", "generation": "982"})
         self.assertEqual(other["units"], [])
+
+    @_with_fixture
+    def test_coding_block_binding_and_filtered_fields(self, _p):
+        request = {"generation": "981", "profileId": EU5, "category": "coding", "recordAt": 4047899,
+                   "dataHex": "A5", "expectedReadRequestHex": "2101"}
+        self.assertTrue(handle({**request, "action": "coding-options"})['ok'])
+        self.assertTrue(handle({**request, "action": "preview", "rawValue": 0})['ok'])
+        for wrong in ('2102', '220001'):
+            for action in ('coding-options', 'preview'):
+                self.assertEqual(handle({**request, "action": action, "rawValue": 0,
+                    "expectedReadRequestHex": wrong})['error'], 'coding_field_block_mismatch')
+            filtered = handle({**request, "action": "records", "expectedReadRequestHex": wrong})
+            self.assertEqual(filtered['items'], [])
+        self.assertEqual(handle({**request, "action": "records"})['total'], 1)
+        for malformed in ('21', '210001', '2210', '22F00Z', 2101):
+            self.assertEqual(handle({**request, "action": "preview", "rawValue": 0,
+                "expectedReadRequestHex": malformed})['error'], 'coding_block_request_invalid')
+        variant = json.loads(_p.read_text(encoding='utf8'))
+        variant['pool_records']['coding']['records'][0]['enumText']['F000010F'] = ''
+        _p.write_text(json.dumps(variant), encoding='utf8')
+        self.assertEqual(handle({**request, "action": "preview", "rawValue": 0})['error'], 'coding_value_not_defined')
 
     def test_cli_and_no_vin_in_stdout(self):
         stdin = io.StringIO(json.dumps({"action": "summary"}))

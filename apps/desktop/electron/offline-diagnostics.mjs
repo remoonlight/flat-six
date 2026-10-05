@@ -102,6 +102,8 @@ export function validateRequest(req) {
   if (req.dataHex != null && (typeof req.dataHex !== "string" || req.dataHex.length > MAX_HEX)) {
     return fail("cap_limit", { field: "dataHex" });
   }
+  if (req.expectedReadRequestHex != null && (typeof req.expectedReadRequestHex !== "string"
+    || !/^(?:21[0-9A-F]{2}|22[0-9A-F]{4})$/.test(req.expectedReadRequestHex))) return fail("coding_block_request_invalid");
   if (req.responseMode != null && req.responseMode !== "data" && req.responseMode !== "pdu") {
     return fail("invalid_response_mode", { responseMode: req.responseMode });
   }

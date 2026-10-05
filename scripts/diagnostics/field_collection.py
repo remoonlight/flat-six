@@ -13,6 +13,7 @@ from pathlib import Path
 from .offline_match import FLAGS, sha, verify_source
 from .realtime_preparation import DEFAULT_OUTPUT, GGP_PATH, load, record_from_parameter
 from .response_values import decode_application_response, request_from_record
+from .all_unit_collection import build_all_unit_pack
 from scripts.x431_re.gag_lib import GgpLanguage, compact_text
 
 TARGET_STATES = frozenset({'identity-matched', 'selector-candidate', 'system-selector-candidate'})
@@ -188,10 +189,14 @@ def build_pack(bundle, output):
             'Prefer missing response groups, then repeated stable samples; stop at the time budget.',
             'Preserve raw files and hashes. Decode, compare and investigate after disconnecting.'], **FLAGS}
     output.mkdir(parents=True)
+    all_units = build_all_unit_pack(output / 'all-control-units')
+    pack['allControlUnits'] = {'register': 'all-control-units/all-units.json', **all_units}
     target = output / 'collection-pack.json'
     target.write_text(json.dumps(pack, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     lines = ['# 接车采集资料包', '', '生成自本机哈希核对资料；不枚举设备、不打开串口、不访问运行数据库。',
         '请求仅供 X431 已有只读菜单的离线关联；不改变 vLinker 白名单，也不授权设码或清码。', '',
+        '完整目标为 981/982 所有控制单元及设码；下面七个重点单元仅为已有匹配资料的优先批次。',
+        '全量逐版本身份、实时请求组及原码范围见 [全控制单元采集](all-control-units/全控制单元采集.md)。', '',
         '## 按请求组采集，回家再解码', '']
     for unit in units:
         missing = unit['requestGroupCount'] - unit['historicalRequestGroupCount']
@@ -214,10 +219,11 @@ def build_pack(bundle, output):
     manifest = {'inputs': inputs, 'code': [verify_source(Path(__file__)),
         verify_source(Path(__file__).with_name('response_values.py')),
         verify_source(Path(__file__).with_name('x431_values.py'))],
-                'outputs': [verify_source(target), verify_source(report)], **FLAGS}
+                'outputs': [verify_source(target), verify_source(report),
+                            verify_source(output / 'all-control-units/manifest.json')], **FLAGS}
     (output / 'manifest.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     return {'ok': True, 'units': len(units), 'output': str(output.resolve()),
-            'collectionPackSha256': sha(target), **FLAGS}
+            'allControlUnits': all_units, 'collectionPackSha256': sha(target), **FLAGS}
 
 
 def main():

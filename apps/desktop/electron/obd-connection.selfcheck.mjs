@@ -416,6 +416,31 @@ await syn.shutdown();
   await restored.shutdown();
 }
 
+// Explicit networks persist; unqualified MX+ networks never reuse drive CAN.
+{
+  let opens = 0;
+  const stateFile = path.join(scratch, `networks-${Date.now()}.json`);
+  const mx = { ...device, brand: "OBDLink MX+" };
+  const options = { env: { PORSCHE981_CONNECTION_STATE: stateFile }, listFn: async () => ({ devices: [mx] }),
+    monitorSpawnFn: () => { opens++; return fakeChild(); } };
+  let settings = manager(options);
+  await settings.handle({ action: "list" });
+  await settings.handle({ action: "select", deviceId: mx.id });
+  for (const canNetwork of ["drive", "chassis", "comfort", "crash"]) {
+    assert.equal((await settings.handle({ action: "configure", purpose: "internal", canNetwork })).ok, true);
+    await settings.shutdown();
+    settings = manager(options);
+    assert.equal(settings.snapshot().canNetwork, canNetwork);
+    assert.equal(settings.snapshot().purpose, "internal");
+    assert.equal(settings.snapshot().connected, false);
+    if (canNetwork !== "drive") {
+      await settings.handle({ action: "list" });
+      assert.equal((await settings.handle({ action: "connect" })).error, "internal_profile_not_qualified");
+    }
+  }
+  assert.equal(opens, 0);
+  await settings.shutdown();
+}
 console.log("obd-connection selfcheck PASS: close-timeout quarantine, cadence, backoff, ingest, silent child, queued device identity, MX+ persistence and explicit model");
 
 // Current list, persistent purpose/CAN, unavailable remembered head, and no startup open.

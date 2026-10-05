@@ -579,7 +579,7 @@ export type PorscheApi = {
     request: OfflineDiagnosticsRequest,
     operationId?: string,
   ) => Promise<OfflineDiagnosticsResult>;
-  diagnosticPreparation?: (request: { action: string; ecu: string; id?: string; did?: string; recordAt?: number; rawValue?: number; scenario?: string }) => Promise<DiagnosticPreparationResult>;
+  diagnosticPreparation?: (request: { action: string; ecu: string; id?: string; did?: string; blockKey?: string; recordAt?: number; rawValue?: number; scenario?: string }) => Promise<DiagnosticPreparationResult>;
   diagnosticDefinitionBundle?: (request: { action: "export" | "import" }) => Promise<{ ok: boolean; error?: string; canceled?: boolean; files?: number; imported?: number }>;
   diagnosticCanRecording?: (request: { action: "status" | "start" | "stop"; simulation?: boolean }) => Promise<{ ok: boolean; error?: string; canceled?: boolean;
     recording?: { active: boolean; simulation: boolean; frameCount: number; file: string; error?: string; reason?: string } | null }>;
@@ -595,12 +595,13 @@ export type PorscheApi = {
   canCapture?: (request: CanCaptureRequest) => Promise<CanCaptureResult>;
 }
 
+export type CodingBlockIdentifier = { did?: string; identifierKind?: "LID" | "DID"; identifierHex?: string };
 export type DiagnosticPreparationResult = { ok: boolean; error?: string; canceled?: boolean; saved?: boolean;
   backups?: { id: string; identity: Record<string, string>; profileId: string; capturedUtc: string; original: boolean; blockCount: number; provenance?: string }[];
-  backup?: { identity: Record<string, string>; profileId: string; blocks: { did: string; dataHex: string }[] };
+  backup?: { identity: Record<string, string>; profileId: string; blocks: (CodingBlockIdentifier & { dataHex: string })[] };
   options?: { rawValue: number; label: string }[]; decoded?: { text?: string; raw?: number };
   beforeHex?: string; afterHex?: string; changedBitMaskHex?: string;
-  plan?: { kind?: string; changedBlocks: number; blockers: string[]; blocks: { did: string; beforeHex: string; targetHex: string; changed: boolean }[] };
+  plan?: { kind?: string; changedBlocks: number; blockers: string[]; blocks: (CodingBlockIdentifier & { beforeHex: string; targetHex: string; changed: boolean })[] };
   result?: { ok: boolean; simulation: boolean; error?: string; stages: string[] };
   preparation?: { hashMatches: boolean; targetSoftware: string; file: { name: string; sha256: string; bytes: number }; blockers: string[] };
 };
@@ -639,6 +640,7 @@ export type OfflineDiagnosticsRequest = {
   search?: string;
   recordAt?: number;
   dataHex?: string;
+  expectedReadRequestHex?: string;
   responseMode?: "data" | "pdu";
   rawValue?: number;
   identity?: Record<string, unknown>;
@@ -669,12 +671,14 @@ export type ObdConnectionAction =
   | "clear"
   | "status";
 
+export type ObdCanNetwork = "drive" | "chassis" | "comfort" | "crash" | "adas";
+
 export type ObdConnectionRequest = {
   action: ObdConnectionAction;
   deviceId?: string;
   model?: "vLinker" | "OBDLink MX+" | "VNCI";
   purpose?: "diagnostic" | "internal";
-  canNetwork?: "drive" | "adas";
+  canNetwork?: ObdCanNetwork;
 };
 
 export type ObdConnectionDevice = {
@@ -701,7 +705,7 @@ export type ObdConnectionResult = {
   selectedDeviceId?: string | null;
   model?: string | null;
   purpose?: "diagnostic" | "internal";
-  canNetwork?: "drive" | "adas" | null;
+  canNetwork?: ObdCanNetwork | null;
   internalSupported?: boolean;
   internal?: { startedAt: string; endedAt: string | null; frameCount: number; retainedFrames: number; frameLimit: number;
     batchClosed: boolean; interruptions: { at: string; reason: string }[]; verifiedSignalCount: number;

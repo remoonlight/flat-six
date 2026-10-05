@@ -10,15 +10,18 @@ await fs.mkdir(scratch, { recursive: true });
 const temp = await fs.mkdtemp(path.join(scratch, "ui-"));
 const profileId = "9x1:DME_BDE_Continental:SDI9_1_981_3_4L_EU5";
 const identity = { generation: "981", vin: "WP0ZZZ98ZES000000", ecu: "dme", hardware: "TEST-HW", software: "TEST-SW" };
-const backup = (dataHex, capturedUtc) => ({ schemaVersion: 1, kind: "ecu-coding-backup", identity, profileId,
-  capturedUtc, expectedDids: ["F001"], blocks: [{ did: "F001", dataHex }] });
+const backup = (dataHex, capturedUtc) => ({ schemaVersion: 2, kind: "ecu-coding-backup", identity, profileId,
+  capturedUtc, expectedBlocks: [{ identifierKind: "LID", identifierHex: "01" }, { identifierKind: "DID", identifierHex: "0001" }],
+  blocks: [{ identifierKind: "LID", identifierHex: "01", dataHex }, { identifierKind: "DID", identifierHex: "0001", dataHex: "7E" }] });
 await fs.writeFile(path.join(temp, "original.json"), JSON.stringify(backup("A5", "2026-10-05T00:00:00Z")));
 await fs.writeFile(path.join(temp, "current.json"), JSON.stringify(backup("A4", "2026-10-05T00:01:00Z")));
 await fs.writeFile(path.join(temp, "devices.json"), JSON.stringify({ devices: [], errors: [] }));
 await fs.writeFile(path.join(temp, "variants.jsonl"), JSON.stringify({ profile_id: profileId, name: "TEST definition, not car", module: "DME_BDE_Continental",
-  generation: "981", membership: "confirmed", pool_records: { coding: { count: 1, records: [{ at: 4047899, name: "巡航控制（测试定义）", byteOffset: 0, bitOffset: 0,
+  generation: "981", membership: "confirmed", pool_records: { coding: { count: 2, records: [{ at: 4047899, name: "巡航控制（测试定义）", byteOffset: 0, bitOffset: 0,
+    readSID: 0x21, pid: 1, read_request_candidate_hex: "2101",
     formula: { text: "TEXTTABLE:DataType=A_UINT32,[0x00]->0xF000010F;[0x01]->0xF0000110;LengthInfo=Standard,BitLength=1,BitMask=0,HighLow=1;" },
-    enumText: { F000010F: "否", F0000110: "是" } }] } } }) + "\n");
+    enumText: { F000010F: "否", F0000110: "是" } }, { at: 4047900, name: "其他码值块字段（测试定义）", byteOffset: 0, bitOffset: 0,
+      readSID: 0x22, pid: 1, read_request_candidate_hex: "220001" }] } } }) + "\n");
 const env = { ...process.env, PORSCHE981_HEADLESS: "1", PORSCHE981_OBD_SMOKE: "1", PORSCHE981_SESSION_DENY_LIVE: "1",
   PORSCHE981_DB: path.join(temp, "ui.db"), PORSCHE981_CONNECTION_FIXTURE: path.join(temp, "devices.json"), PORSCHE981_CONNECTION_STATE: path.join(temp, "real-state.json") };
 delete env.ELECTRON_RUN_AS_NODE; delete env.VITE_DEV_SERVER_URL;
@@ -68,6 +71,12 @@ try {
   await page.waitForFunction(() => document.querySelector('[aria-label="码值备份"]').options.length === 2);
   const originalId = await panel.getByLabel("码值备份").locator("option").nth(1).getAttribute("value");
   await panel.getByLabel("码值备份").selectOption(originalId);
+  await panel.getByLabel("码值块", { exact: true }).selectOption("LID:01");
+  await page.waitForFunction(() => document.querySelector('[aria-label="设码字段"]').options.length === 2);
+  assert.equal(await panel.getByLabel("设码字段", { exact: true }).locator('option[value="4047900"]').count(), 0);
+  const mismatched = await page.evaluate(async ({ id }) => window.porsche981.diagnosticPreparation({ action: "coding-preview", ecu: "dme", id,
+    blockKey: "DID:0001", recordAt: 4047899, rawValue: 0 }), { id: originalId });
+  assert.equal(mismatched.error, "coding_field_block_mismatch");
   await panel.getByLabel("设码字段", { exact: true }).selectOption("4047899");
   await panel.getByRole("button", { name: "分析当前值与合法选项", exact: true }).click();
   await panel.getByLabel("设码合法值").selectOption("0");
@@ -78,7 +87,19 @@ try {
   await page.waitForFunction(() => document.querySelector('[aria-label="码值备份"]').options.length === 3);
   const currentId = await panel.getByLabel("码值备份").locator("option").nth(1).getAttribute("value");
   assert.notEqual(originalId, currentId);
+  await page.reload();
+  await page.locator('nav.side button[data-tab="obd"]').click();
+  await page.locator('[data-obd-tab="coding"]').click();
+  await page.locator('[data-coding-system="dme"]').click();
+  await page.locator('[data-coding-category="coding"]').click();
+  await page.waitForFunction(() => document.querySelector('[aria-label="码值备份"]')?.options.length === 3);
+  assert.equal(await panel.getByLabel("码值备份").locator(`option[value="${originalId}"]`).count(), 1,
+    "saved original baseline loads on first visit after reload, without another import");
   await panel.getByLabel("码值备份").selectOption(currentId);
+  await panel.getByLabel("码值块", { exact: true }).selectOption("LID:01");
+  await panel.getByText("查看备份中的完整原始码值", { exact: true }).click();
+  assert.match(await panel.innerText(), /DID 0001：\s*7E/);
+  assert.match(await panel.innerText(), /LID 01：\s*A4/);
   await panel.getByRole("button", { name: "恢复当前控制单元原码：生成方案", exact: true }).click();
   await panel.getByText("共 1 个码值块需要改变", { exact: false }).waitFor();
   await panel.getByRole("button", { name: "模拟写入中断", exact: true }).click();
@@ -89,8 +110,7 @@ try {
   await page.locator('[data-obd-tab="connection"]').click();
   await page.getByTestId("obd-conn-refresh").click();
   await page.locator('input[name="obd-device"]').check();
-  await page.getByTestId("obd-purpose").selectOption("internal");
-  await page.getByTestId("obd-can-network").selectOption("drive");
+  await page.getByTestId("obd-purpose-drive").check();
   await page.getByTestId("obd-conn-connect").click();
   await page.locator('[data-obd-tab="live"]').click();
   await page.getByTestId("internal-can-panel").waitFor();
@@ -110,7 +130,7 @@ try {
   assert.ok(JSON.parse(await fs.readFile(path.join(temp, "explicit-result.json"), "utf8")).frames.length > 0);
   await page.screenshot({ path: path.join(temp, "internal.png"), fullPage: true });
   await page.locator('[data-obd-tab="connection"]').click(); await page.getByTestId("obd-conn-disconnect").click();
-  await page.getByTestId("obd-purpose").selectOption("diagnostic");
+  await page.getByTestId("obd-purpose-diagnostic").check();
   await page.locator('[data-obd-tab="live"]').click();
   await page.getByTestId("eng-system").selectOption("dme"); await page.getByTestId("eng-select-0C").check();
   await page.getByTestId("eng-cycles").fill("1"); await page.getByTestId("eng-interval").fill("500");

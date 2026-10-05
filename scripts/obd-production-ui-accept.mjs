@@ -82,7 +82,7 @@ try {
   }
   // Startup does not connect or scan; unidentified candidates cannot be cleared.
   assert.deepEqual(await page.getByTestId("topo-detail").locator("button").allTextContents(),
-    ["保存结果", "开始记录车辆原始接收帧", "结束原始帧记录", "读取所有单元故障码", "清除所有单元故障码"]);
+    ["保存结果", "读取所有单元故障码", "清除所有单元故障码"]);
   assert.equal(await page.getByTestId("topo-detail").locator("dl").count(), 0);
   assert.match(await page.getByTestId("topo-detail").locator("h3").innerText(), /GW/);
   assert.doesNotMatch(await page.locator("body").innerText(), /仅读取 GW、DME 的身份与故障码；其他系统跳过。|此模块尚未接入车辆诊断，可先查看离线资料。/);
@@ -115,6 +115,8 @@ try {
   await page.locator('[data-testid="topo-node-pdk"]').first().click();
   await page.getByTestId("topo-open-live").click();
   await page.getByTestId("offline-realtime").waitFor();
+  assert.equal(await page.getByTestId("offline-catalogue").count(), 0);
+  assert.equal(await page.getByTestId("offline-profile").count(), 0);
   assert.equal(await page.getByTestId("eng-system").inputValue(), "pdk");
   assert.equal(await page.getByTestId("eng-prepare").count(), 0);
   await page.locator('[data-obd-tab="topology"]').click();
@@ -262,7 +264,25 @@ try {
   await page.waitForFunction((id) => document.querySelector(`[data-testid="obd-device-${id}"]`)?.checked, device.id);
   assert.equal((await page.evaluate(() => window.porsche981.obdConnection({ action: "status" }))).connected, false);
   assert.equal(await page.getByTestId("obd-conn-clear").count(), 0);
-  assert.deepEqual(await page.getByTestId("obd-connection").getByRole("button").allTextContents(), ["刷新", "连接设备", "断开设备", "导出诊断资料包", "导入诊断资料包"]);
+  assert.deepEqual(await page.getByTestId("obd-connection").getByRole("button").allTextContents(), ["刷新", "连接设备", "断开设备"]);
+  const purposes = page.getByTestId("obd-purpose");
+  assert.deepEqual(await purposes.locator("label").allTextContents(), ["诊断", "内网-驱动can", "内网-底盘can", "内网-舒适性can", "内网-碰撞can"]);
+  assert.ok(await purposes.locator("input").first().evaluate((el) => el.getBoundingClientRect().width <= 20));
+  for (const network of ["drive", "chassis", "comfort", "crash"]) {
+    await page.getByTestId(`obd-purpose-${network}`).check();
+    await page.getByTestId("obd-conn-refresh").click();
+    const status = await page.evaluate(() => window.porsche981.obdConnection({ action: "status" }));
+    assert.equal(status.purpose, "internal");
+    assert.equal(status.canNetwork, network);
+    assert.equal(await page.getByTestId(`obd-purpose-${network}`).isChecked(), true);
+  }
+  await close();
+  page = await open();
+  await page.locator('[data-obd-tab="connection"]').click();
+  await page.getByTestId("obd-purpose-crash").waitFor();
+  assert.equal(await page.getByTestId("obd-purpose-crash").isChecked(), true);
+  await page.getByTestId("obd-purpose-diagnostic").check();
+  checks.push("five visible purposes persist on refresh/restart; migration/scope/version controls and topology frame recording removed");
   checks.push("restart: selected device without auto-connect; retired faults tab remains absent");
   assert.equal(await page.locator('[data-obd-tab="faults"]').count(), 0);
   await page.setViewportSize({ width: 760, height: 900 });

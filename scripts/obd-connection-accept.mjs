@@ -198,13 +198,13 @@ try {
   for (const family of ["X431", "X431-tablet", "Espressif", "OBDLink MX+", "VNCI", "PT3G"]) {
     if (await page.getByTestId(`obd-registered-${family}`).count()) throw new Error(`hidden connection device shown: ${family}`);
   }
-  await page.getByTestId("obd-purpose").selectOption("internal");
-  await page.getByTestId("obd-can-network").waitFor();
-  if (await page.getByTestId("obd-can-network").inputValue() !== "") throw new Error("CAN was guessed");
-  await page.getByTestId("obd-can-network").selectOption("adas");
-  await page.getByTestId("obd-conn-refresh").click();
-  if (await page.getByTestId("obd-can-network").inputValue() !== "adas") throw new Error("CAN selection lost on refresh");
-  await page.getByTestId("obd-purpose").selectOption("diagnostic");
+  if (!await page.getByTestId("obd-purpose-diagnostic").isChecked()) throw new Error("purpose was guessed");
+  for (const network of ["drive", "chassis", "comfort", "crash"]) {
+    await page.getByTestId(`obd-purpose-${network}`).check();
+    await page.getByTestId("obd-conn-refresh").click();
+    if (!await page.getByTestId(`obd-purpose-${network}`).isChecked()) throw new Error("CAN selection lost on refresh");
+  }
+  await page.getByTestId("obd-purpose-diagnostic").check();
   await page.getByTestId("obd-registered-vLinker").getByRole("radio").check();
   await page.waitForFunction(() => document.querySelector("input[name='obd-device']")?.checked);
   if (!(await page.getByTestId("obd-header-voltage").textContent()).includes("--")) throw new Error("selecting a registry device started hardware");

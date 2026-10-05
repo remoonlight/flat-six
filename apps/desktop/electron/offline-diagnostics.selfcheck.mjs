@@ -59,6 +59,10 @@ assert(validateRequest({ action: "ready-parameters", groupId: "../../db" }).erro
 assert(validateRequest({ action: "ready-plan", parameterIds: Array(13).fill("a".repeat(64)) }).error === "invalid_parameter_selection", "ready cap");
 assert(validateRequest({ action: "ready-plan", parameterIds: ["a".repeat(64), "a".repeat(64)] }).error === "invalid_parameter_selection", "ready duplicate");
 assert(validateRequest({ action: "ready-parameters", ecuId: 2, profileId: "test", limit: 40 }) === null, "ready listing");
+assert(validateRequest({ action: "coding-options", expectedReadRequestHex: "2110" }) === null, "LID coding block");
+assert(validateRequest({ action: "coding-options", expectedReadRequestHex: "220010" }) === null, "DID coding block");
+for (const hx of ["210010", "2210", "2210XX", 2110])
+  assert(validateRequest({ action: "coding-options", expectedReadRequestHex: hx }).error === "coding_block_request_invalid", "invalid block request rejected before spawn");
 assert(bad && bad.error === "invalid_action", "invalid_action");
 assert(validateRequest({ action: "summary", send: 1 }).error === "forbidden_field", "send");
 assert(validateRequest({ action: "summary", formula: "x" }).error === "forbidden_field", "formula");

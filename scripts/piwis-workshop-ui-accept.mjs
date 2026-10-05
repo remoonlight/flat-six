@@ -129,9 +129,7 @@ try {
   await page.locator('[data-coding-function="workshop-brake-bleed"]').click();
   await page.getByRole("heading", { name: "刹车排气", exact: true }).waitFor();
   assert.equal(await page.getByLabel("搜索功能").count(), 0);
-  await page.locator('[data-coding-system="can-adapter"]').click();
-  await page.getByRole("heading", { name: "暂无内容", exact: true }).waitFor();
-  assert.equal(await page.locator('[data-testid="workshop-detail"]').count(), 0);
+  assert.equal(await page.locator('[data-coding-system="can-adapter"]').count(), 0, "empty control unit is hidden");
   await page.locator('[data-coding-system="psm"]').click();
   await page.locator('[data-coding-category="special"]').click();
   await page.locator('[data-coding-function="workshop-psm-roller"]').click();

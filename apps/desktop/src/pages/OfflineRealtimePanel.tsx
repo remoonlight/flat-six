@@ -24,8 +24,7 @@ export function OfflineRealtimePanel({ systemId, locked, onBusyChange }: { syste
   const [manufacturerBusy, setManufacturerBusy] = useState(false);
   useEffect(() => { onBusyChange?.(manufacturerBusy); }, [manufacturerBusy, onBusyChange]);
   const [units, setUnits] = useState<Unit[]>([]);
-  const [catalogue, setCatalogue] = useState("matched");
-  const generation = catalogue === "982" ? "982" : "981";
+  const generation = "981";
   const [present, setPresent] = useState<boolean | null>(null);
   const [profileId, setProfileId] = useState("");
   const [search, setSearch] = useState("");
@@ -58,7 +57,7 @@ export function OfflineRealtimePanel({ systemId, locked, onBusyChange }: { syste
     mounted.current = true;
     let active = true;
     setPresent(null); setProfileId(""); setUnits([]); setSelected([]); resetResults(); setOffset(0); setGroupId("");
-    void callOfflineDiagnostics({ action: catalogue === "matched" ? "ready-units" : "catalog-units", generation }).then((doc) => {
+    void callOfflineDiagnostics({ action: "ready-units", generation }).then((doc) => {
       if (!active) return;
       if (!doc.ok) { setError(doc.error || "离线清单读取失败"); setPresent(false); return; }
       const list = (doc.units || []) as Unit[];
@@ -71,7 +70,7 @@ export function OfflineRealtimePanel({ systemId, locked, onBusyChange }: { syste
       active = false; mounted.current = false; ++sequence.current; ++opSequence.current;
       if (operation.current) void api().cancelOfflineDiagnostics?.(operation.current).catch(() => {});
     };
-  }, [systemId, catalogue]);
+  }, [systemId]);
 
   useEffect(() => {
     const id = ++sequence.current;
@@ -79,7 +78,7 @@ export function OfflineRealtimePanel({ systemId, locked, onBusyChange }: { syste
     if (!unit || !profileId) { setLoading(false); return; }
     setLoading(true); setError("");
     const timer = setTimeout(() => {
-      void callOfflineDiagnostics({ action: catalogue === "matched" ? "ready-parameters" : "catalog-parameters", generation, ecuId: unit.ecuId,
+      void callOfflineDiagnostics({ action: "ready-parameters", generation, ecuId: unit.ecuId,
         profileId, search, offset, limit: 40, groupId: groupId || undefined }).then((doc) => {
         if (id !== sequence.current || !mounted.current) return;
         if (!doc.ok) setError(doc.error || "参数读取失败");
@@ -88,7 +87,7 @@ export function OfflineRealtimePanel({ systemId, locked, onBusyChange }: { syste
         .finally(() => { if (id === sequence.current && mounted.current) setLoading(false); });
     }, 180);
     return () => { clearTimeout(timer); ++sequence.current; };
-  }, [unit, profileId, search, offset, groupId, catalogue]);
+  }, [unit, profileId, search, offset, groupId]);
 
   function resetResults() {
     ++opSequence.current; setPlan(null); setError(""); setStartedAt(""); setFinishedAt("");
@@ -102,7 +101,7 @@ export function OfflineRealtimePanel({ systemId, locked, onBusyChange }: { syste
     setBusy(true); setError(""); setPlan(null); setStopped(false); setSavedMessage("");
     setReplay(null);
     setStartedAt(new Date().toISOString()); setFinishedAt("");
-    const req: OfflineDiagnosticsRequest = { action: catalogue === "matched" ? "ready-plan" : "catalog-plan", generation, ecuId: unit.ecuId, profileId, parameterIds: selected.map((p) => p.id) };
+    const req: OfflineDiagnosticsRequest = { action: "ready-plan", generation, ecuId: unit.ecuId, profileId, parameterIds: selected.map((p) => p.id) };
     try {
       const doc = await callOfflineDiagnostics(req, operationId);
       if (!mounted.current || id !== opSequence.current) return;
@@ -128,7 +127,7 @@ export function OfflineRealtimePanel({ systemId, locked, onBusyChange }: { syste
     const token = ++opSequence.current; const operationId = crypto.randomUUID(); operation.current = operationId;
     setBusy(true); setError(""); setReplay(null);
     try {
-      const doc = await callOfflineDiagnostics({ action: catalogue === "matched" ? "ready-replay" : "catalog-replay",
+      const doc = await callOfflineDiagnostics({ action: "ready-replay",
         generation, ecuId: unit.ecuId, profileId, parameterIds: selected.map((parameter) => parameter.id) }, operationId);
       if (mounted.current && token === opSequence.current) { if (doc.ok) setReplay(doc); else setError(doc.error || "历史响应读取失败"); }
     } catch (error) { if (mounted.current && token === opSequence.current) setError(String(error)); }
@@ -152,18 +151,9 @@ export function OfflineRealtimePanel({ systemId, locked, onBusyChange }: { syste
   const disabled = locked || busy || saving || manufacturerBusy;
   const planBody = plan?.plan as { requestCountPerCycle: number; groups: { requestHex: string; parameterIds: string[]; minimumDataBytes: number; spanKind: string }[]; blocked: unknown[] } | undefined;
   return <div className="offline-realtime" data-testid="offline-realtime">
-    <label>资料范围 <select data-testid="offline-catalogue" value={catalogue} disabled={disabled || loading}
-      onChange={(event) => { resetResults(); setCatalogue(event.target.value); }}>
-      <option value="matched">981 本车已匹配的离线清单</option><option value="981">981 全量定义目录</option><option value="982">982 全量定义目录</option>
-    </select></label>
     {present === null ? <p className="muted">正在读取本地清单…</p> : !present ? <p className="muted">本机尚未生成离线数据清单。</p> : !unit ? <p className="muted">此节点没有独立的 X431 参数定义。</p> : <>
-      <label>离线版本 <select data-testid="offline-profile" value={profileId} disabled={disabled || loading}
-        onChange={(event) => { resetResults(); setSelected([]); setProfileId(event.target.value); setOffset(0); setGroupId(""); }}>
-        <option value="">请选择定义版本</option>{unit.variants.map((item) => <option key={item.profileId} value={item.profileId}>{item.name} · {item.parameterCount} 项{item.status === "identity-matched" ? " · 历史身份已匹配" : " · 未与本车匹配"}</option>)}
-      </select></label>
       {variant ? <>
         <p className="muted" data-testid="offline-version">{variant.name}</p>
-        {variant.status !== "identity-matched" && <p>这是手动选择的目录定义，尚未与本车身份匹配。这里只能查看定义和生成离线读取计划。</p>}
         <div className="eng-section-head offline-filter-row">
           <label>分类 <select data-testid="offline-category" value={groupId} disabled={disabled || loading} onChange={(e) => { resetResults(); setSelected([]); setGroupId(e.target.value); setOffset(0); }}>
             <option value="">全部数据（{variant.parameterCount}）</option>{categories.filter((c) => c.count > 0 && c.label !== "VIRTUAL_CURRENTDATA").map((c) => <option key={c.id} value={c.id}>{c.label}（{c.count}）</option>)}
@@ -181,7 +171,7 @@ export function OfflineRealtimePanel({ systemId, locked, onBusyChange }: { syste
         {loading ? <p className="muted">正在载入参数…</p> : !parameters.length ? <p className="muted">没有符合条件的参数。</p> : null}
         <div className="eng-selection-actions"><button disabled={disabled || loading || offset === 0} onClick={() => setOffset(Math.max(0, offset - 40))}>上一页</button><span>{total ? offset + 1 : 0}–{Math.min(offset + 40, total)} / {total}</span><button disabled={disabled || loading || offset + 40 >= total} onClick={() => setOffset(offset + 40)}>下一页</button></div>
         {selected.length ? <div className="offline-selected" data-testid="offline-selected">{selected.map((p) => <button key={p.id} disabled={disabled} onClick={() => { resetResults(); setSelected(selected.filter((s) => s.id !== p.id)); }}>{p.name} ×</button>)}</div> : null}
-        {catalogue === "matched" && systemId === "dme" && variant.status === "identity-matched" &&
+        {systemId === "dme" && variant.status === "identity-matched" &&
           <ManufacturerRehearsalPanel profileId={profileId} parameters={selected}
             locked={locked || busy || saving} onBusyChange={setManufacturerBusy} />}
         <div className="eng-selection-actions">

@@ -19,7 +19,6 @@ import {
 } from "../can-topology-logic.mjs";
 import { topologyCapability } from "../can-topology-capabilities.mjs";
 import { persistTopologySnapshot } from "../obd-diag-persist";
-import { DiagnosticCanRecordingControls } from "../obd/DiagnosticCanRecordingControls";
 import "../can-topology.css";
 
 type NodeT = {
@@ -429,7 +428,6 @@ export function TopologyPage({
 
             <button type="button" className="btn" data-testid="topo-save-result" disabled={!batch || busy || saving}
               onClick={() => void saveBatch()}>{saving ? "正在保存…" : "保存结果"}</button>
-            <DiagnosticCanRecordingControls simulation={fixture} />
             {!fixture && !diagnosticReady && !busy ? <p className="muted">请先在连接设置中连接诊断头，并选择诊断 CAN 用途。</p> : null}
             {selected?.isGateway ? (
               <>

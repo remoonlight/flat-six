@@ -8,6 +8,7 @@ import unittest
 from scripts.diagnostics import field_collection
 from scripts.diagnostics.field_collection import decode_recorded_cycle, request_groups
 from scripts.diagnostics.offline_match import FLAGS, sha
+from scripts.diagnostics.all_unit_collection import build_all_unit_pack
 
 
 def parameter(key, request='2110', offset=0, historical=0):
@@ -113,6 +114,56 @@ class TestFieldCollection(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'output-already-exists'):
                 field_collection.build_pack('unused', directory)
             self.assertEqual(list(Path(directory).iterdir()), [])
+
+
+class TestAllUnitCollection(unittest.TestCase):
+    def test_all_menus_versions_and_coding_gaps_retained_without_fit_claims(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            coverage = {'menu_ecus': [{'ecu_id': 1, 'label': 'DME', 'dsn_modules': ['DME']},
+                {'ecu_id': 2, 'label': 'PDK', 'dsn_modules': ['PDK']},
+                {'ecu_id': 3, 'label': 'unmapped', 'dsn_modules': []}]}
+            def variant(pid, module, generation):
+                return {'profile_id': pid, 'name': pid, 'module': module, 'generation': generation,
+                    'on_target_menu': True, 'pool_records': {
+                        'measurement': {'records': [parameter('a')['record'], parameter('b')['record'], {'at': 999}]},
+                        'identity': {'records': [parameter('id', '22F190')['record']]},
+                        'coding': {'records': [parameter('coding')['record'], {'at': 888}]}}}
+            variants = root / 'variants.jsonl'
+            variants.write_text('\n'.join(json.dumps(v) for v in [variant('981-version', 'DME', '981'),
+                variant('shared-version', 'PDK', None), variant('982-version', 'DME', '982'),
+                variant('outside', 'DME', '991')]), encoding='utf8')
+            result = build_all_unit_pack(root / 'pack', variants=variants, coverage=coverage, expected_sha256=sha(variants))
+            self.assertEqual(result['menuUnitCounts'], {'981': 3, '982': 3})
+            self.assertEqual(result['uniqueVersionCounts'], {'981': 2, '982': 2})
+            pack = json.loads((root / 'pack/all-units.json').read_text(encoding='utf8'))
+            self.assertEqual(len(pack['units']), 6)
+            self.assertEqual(sum(u['status'] == 'source-mapping-missing' for u in pack['units']), 2)
+            self.assertTrue(all(u['installedOnVehicle'] is None and not u['codingWriteQualified'] for u in pack['units']))
+            for unit in pack['units']:
+                for row in unit['variants']:
+                    self.assertNotEqual(row['profileId'], 'outside')
+                    self.assertEqual(row['measurementReadGroups'], 1)
+                    self.assertEqual(row['measurementMissing'], 1)
+                    profile = json.loads((root / 'pack' / row['file']).read_text(encoding='utf8'))
+                    self.assertEqual(len(profile['measurementGroups'][0]['fields']), 2)
+                    self.assertEqual(profile['coding']['requestGroups'][0]['identifierKind'], 'LID')
+                    self.assertEqual(len(profile['coding']['missing']), 1)
+                    self.assertFalse(profile['coding']['completeVehicleCodingScopeQualified'])
+                    self.assertFalse(profile['executionEnabled'])
+            manifest = json.loads((root / 'pack/manifest.json').read_text(encoding='utf8'))
+            self.assertTrue(all(sha(Path(item['path'])) == item['sha256'] for item in manifest['outputs']))
+            with self.assertRaisesRegex(ValueError, 'already-exists'):
+                build_all_unit_pack(root / 'pack', variants=variants, coverage=coverage, expected_sha256=sha(variants))
+            with self.assertRaisesRegex(ValueError, 'hash-mismatch'):
+                build_all_unit_pack(root / 'bad', variants=variants, coverage=coverage, expected_sha256='0' * 64)
+            self.assertFalse((root / 'bad').exists())
+            duplicate = root / 'duplicate.jsonl'
+            record = variant('same-version', 'DME', '981')
+            duplicate.write_text(json.dumps(record) + '\n' + json.dumps(record), encoding='utf8')
+            with self.assertRaisesRegex(ValueError, 'duplicate-profile-id'):
+                build_all_unit_pack(root / 'duplicate-pack', variants=duplicate, coverage=coverage, expected_sha256=sha(duplicate))
+            self.assertFalse((root / 'duplicate-pack').exists())
 
 
 if __name__ == '__main__':

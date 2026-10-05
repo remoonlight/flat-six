@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { api, hasDesktopApi, callOfflineDiagnostics, type DiagnosticPreparationResult } from "../api";
+import { api, hasDesktopApi, callOfflineDiagnostics, type DiagnosticPreparationResult, type CodingBlockIdentifier } from "../api";
 import { diagnosticMessage } from "./diagnostic-messages";
 import { CodingReadScopePanel } from "./CodingReadScopePanel";
 
 type Row = NonNullable<DiagnosticPreparationResult["backups"]>[number];
 type Field = { at: number; displayName?: string | { text?: string }; name?: string };
+const codingBlockKey = (block: CodingBlockIdentifier) => block.did ? `DID:${block.did}` : `${block.identifierKind}:${block.identifierHex}`;
+const readRequest = (key: string) => (key.startsWith("LID:") ? "21" : "22") + key.split(":")[1];
 export function DiagnosticPreparationPanel({ ecu, programming = false }: { ecu: string; programming?: boolean }) {
   const [rows, setRows] = useState<Row[]>([]), [id, setId] = useState("");
   const [backup, setBackup] = useState<DiagnosticPreparationResult["backup"]>();
@@ -21,7 +23,7 @@ export function DiagnosticPreparationPanel({ ecu, programming = false }: { ecu: 
     const token = ++sequence.current;
     setBusy(true); setResult(null); setMessage("");
     try {
-      const doc = await fn({ action, ecu, id: id || undefined, did: did || undefined, recordAt: field ? Number(field) : undefined,
+      const doc = await fn({ action, ecu, id: id || undefined, blockKey: did || undefined, recordAt: field ? Number(field) : undefined,
         rawValue: raw ? Number(raw) : undefined, ...extra });
       if (token !== sequence.current) return;
       setResult(doc);
@@ -34,11 +36,11 @@ export function DiagnosticPreparationPanel({ ecu, programming = false }: { ecu: 
   }
   useEffect(() => {
     if (!hasDesktopApi()) return;
-    const token = ++sequence.current;
+    ++sequence.current;
     let active = true;
     setRows([]); setId(""); setBackup(undefined); setResult(null); setMessage(""); setLoading(true);
     void api().diagnosticPreparation?.({ action: "list", ecu }).then((doc) => {
-      if (!active || token !== sequence.current) return;
+      if (!active) return;
       if (doc.ok) setRows(doc.backups || []); else setMessage(`备份读取失败：${doc.error}`);
     }).catch((error) => { if (active) setMessage(String(error)); }).finally(() => { if (active) setLoading(false); });
     if (!api().diagnosticPreparation) setLoading(false);
@@ -52,24 +54,24 @@ export function DiagnosticPreparationPanel({ ecu, programming = false }: { ecu: 
     setLoading(true);
     void api().diagnosticPreparation?.({ action: "backup", ecu, id }).then((doc) => {
       if (!active) return;
-      if (doc.ok) { setBackup(doc.backup); setDid(doc.backup?.blocks[0]?.did || ""); }
+      if (doc.ok) { setBackup(doc.backup); setDid(doc.backup?.blocks[0] ? codingBlockKey(doc.backup.blocks[0]) : ""); }
       else setMessage(`备份读取失败：${doc.error}`);
     }).catch((error) => { if (active) setMessage(String(error)); }).finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [ecu, id]);
   useEffect(() => {
     let active = true; setFields([]); setField(""); setOptions([]); setRaw(""); setResult(null);
-    if (!backup || programming) return;
+    if (!backup || programming || !did) return;
     const timer = setTimeout(() => {
       void callOfflineDiagnostics({ action: "records", category: "coding", generation: backup.identity.generation as "981" | "982",
-        profileId: backup.profileId, search, offset, limit: 40 }).then((doc) => {
+        profileId: backup.profileId, expectedReadRequestHex: readRequest(did), search, offset, limit: 40 }).then((doc) => {
         if (!active) return;
         if (doc.ok) { setFields((doc.items || []) as Field[]); setTotal(Number(doc.total || 0)); }
         else setMessage(`该备份的设码定义无法读取：${doc.error}`);
       }).catch((error) => { if (active) setMessage(String(error)); });
     }, 180);
     return () => { active = false; clearTimeout(timer); };
-  }, [backup, programming, search, offset]);
+  }, [backup, programming, did, search, offset]);
   function discard() { ++sequence.current; setResult(null); setOptions([]); setRaw(""); setMessage(""); }
   const locked = busy || loading;
   if (!hasDesktopApi()) return <section className="panel"><p>码值备份、恢复演练与原厂固件准备需要桌面端。</p></section>;
@@ -88,8 +90,8 @@ export function DiagnosticPreparationPanel({ ecu, programming = false }: { ecu: 
     {current && <p className="muted">硬件 {current.identity.hardware} · 软件 {current.identity.software} · {current.blockCount} 个码值块 · {current.profileId}</p>}
     {!programming && backup && <>
       <div className="chip-row">
-        <label>码值块 <select aria-label="码值块" value={did} disabled={locked} onChange={(event) => { discard(); setDid(event.target.value); }}>
-          {backup.blocks.map((block) => <option key={block.did} value={block.did}>DID {block.did} · {block.dataHex.length / 2} 字节</option>)}
+        <label>码值块 <select aria-label="码值块" value={did} disabled={locked} onChange={(event) => { discard(); setDid(event.target.value); setField(""); setOffset(0); }}>
+          {backup.blocks.map((block) => <option key={codingBlockKey(block)} value={codingBlockKey(block)}>{codingBlockKey(block).replace(":", " ")} · {block.dataHex.length / 2} 字节</option>)}
         </select></label>
         <label>搜索设码字段 <input value={search} disabled={locked} onChange={(event) => { discard(); setSearch(event.target.value); setOffset(0); }} /></label>
         <select aria-label="设码字段" value={field} disabled={locked} onChange={(event) => { discard(); setField(event.target.value); }}>
@@ -112,7 +114,8 @@ export function DiagnosticPreparationPanel({ ecu, programming = false }: { ecu: 
       </div>
       {result?.decoded && <p>当前字段值：{result.decoded.text || "定义未提供可显示名称"}（{result.decoded.raw ?? "--"}）</p>}
       {result?.afterHex && <><p>修改前：<code>{result.beforeHex}</code></p><p>修改后：<code>{result.afterHex}</code></p><p>实际改变位：<code>{result.changedBitMaskHex}</code>。其余字节与位保持原值。</p></>}
-      {result?.plan && <><p>{result.plan.kind === "current-ecu-coding-preview-plan" ? "模拟设码范围" : "恢复范围"}仅为本控制单元，共 {result.plan.changedBlocks} 个码值块需要改变。</p>{result.plan.blocks.filter((block) => block.changed).map((block) => <p key={block.did}>DID {block.did}：<code>{block.beforeHex}</code> → <code>{block.targetHex}</code></p>)}</>}
+      <details><summary>查看备份中的完整原始码值</summary>{backup.blocks.map((block) => <p key={codingBlockKey(block)} style={{ overflowWrap: "anywhere" }}>{codingBlockKey(block).replace(":", " ")}：<code>{block.dataHex}</code></p>)}</details>
+      {result?.plan && <><p>{result.plan.kind === "current-ecu-coding-preview-plan" ? "模拟设码范围" : "恢复范围"}仅为本控制单元，共 {result.plan.changedBlocks} 个码值块需要改变。</p>{result.plan.blocks.filter((block) => block.changed).map((block) => <p key={codingBlockKey(block)}>{codingBlockKey(block).replace(":", " ")}：<code>{block.beforeHex}</code> → <code>{block.targetHex}</code></p>)}</>}
       {result?.result && <p data-testid="restore-simulation">模拟结果：{result.result.ok ? "内存中的修改及回读检查通过。" : diagnosticMessage(result.result.error)}这是内存模拟；没有向车辆发送命令。</p>}
       <button type="button" disabled>写入车辆 / 执行实车恢复（通信定义与实车验收未完成）</button>
     </>}

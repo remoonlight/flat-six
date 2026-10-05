@@ -10,12 +10,13 @@ import { PiwisWorkshopPage } from "./PiwisWorkshopPage";
 import { DiagnosticPreparationPanel } from "../obd/DiagnosticPreparationPanel";
 import "../coding-workspace.css";
 
+const systems = CODING_SYSTEMS.filter((system) => WORKSPACE_ENTRIES.some((entry) => entry.systemIds.includes(system.id)));
+
 export function CodingPage({ initialSystemId = "" }: { initialSystemId?: string }) {
-  const [systemId, setSystemId] = useState(() => CODING_SYSTEMS.some((s) => s.id === initialSystemId) ? initialSystemId : "");
+  const [systemId, setSystemId] = useState(() => systems.some((s) => s.id === initialSystemId) ? initialSystemId : "");
   const [category, setCategory] = useState<CodingCategory>(initialSystemId ? "coding" : "maintenance");
   const [activeId, setActiveId] = useState("");
-  const system = CODING_SYSTEMS.find((s) => s.id === systemId);
-  const systems = CODING_SYSTEMS;
+  const system = systems.find((s) => s.id === systemId);
   const systemEntries = WORKSPACE_ENTRIES.filter((e) => e.systemIds.includes(systemId));
   const functions = systemEntries.filter((e) => e.category === category);
   const active = functions.find((f) => f.id === activeId) ?? functions[0];

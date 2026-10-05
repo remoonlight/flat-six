@@ -14,8 +14,6 @@ delete env.VITE_DEV_SERVER_URL;
 const read = async (name) => JSON.parse(await fs.readFile(path.join(root, name), "utf8"));
 const menu = await read("data/seed/coding-guide/workspace-menu.json");
 const guide = await read("data/seed/coding-guide/981.json");
-const topo = await read("data/seed/diagnostics/can-topology.v1.json");
-const topologyIds = [...new Set(topo.generations.flatMap((g) => [g.gateway.id, ...g.branches.flatMap((b) => b.nodes.map((n) => n.id))]))];
 const marker = "isolated UI record, not vehicle evidence";
 let app;
 const errors = [];
@@ -39,13 +37,14 @@ try {
   assert.equal(await page.locator('[aria-label="系统功能类别"]').count(), 0);
   const ids = await page.locator('[data-coding-system]').evaluateAll((els) => els.map((el) => el.dataset.codingSystem));
   assert.equal(ids.length, new Set(ids).size);
-  assert.ok(topologyIds.every((id) => ids.includes(id)), "all union topology systems must remain available");
   assert.ok(!ids.includes("source-驾驶员车门") && !ids.includes("source-附加仪表时钟"), "guide aliases must use actual topology systems");
   // Every guide and plaintext menu must remain reachable after regrouping.
   const found = new Set();
   for (const [index] of ids.entries()) {
     await page.locator('[data-coding-system]').nth(index).click();
     assert.equal(await page.locator('[data-coding-category]').count(), 4);
+    const counts = await page.locator('[data-coding-category]').allTextContents();
+    assert.ok(counts.some((text) => Number(text.match(/（(\d+)）/)?.[1]) > 0), "a visible system must have content in at least one category");
     for (const category of ["maintenance", "coding", "special", "programming"]) {
       await page.locator(`[data-coding-category="${category}"]`).click();
       const functions = await page.locator('[data-coding-function]').evaluateAll((els) => els.flatMap((el) => el.dataset.codingSourceIds.split(" ")));
@@ -66,9 +65,7 @@ try {
   await page.locator('[data-coding-system="pdk"]').click();
   await page.locator('[data-coding-category="maintenance"]').click();
   assert.ok(!(await page.locator('[aria-label="系统功能列表"]').innerText()).includes("Tiptronic"));
-  await page.locator('[data-coding-system="can-adapter"]').click();
-  assert.equal(await page.locator('[data-testid="workshop-detail"]').count(), 0);
-  await page.getByRole("heading", { name: "暂无内容", exact: true }).waitFor();
+  assert.equal(await page.locator('[data-coding-system="can-adapter"]').count(), 0, "empty control unit is hidden");
   // One merged menu entry exposes both source families and stores actual blank/manual values only.
   const door = menu.items.find((item) => item.system === "驾驶员侧车门" && item.function === "设码");
   await page.locator('[data-coding-system="door-driver"]').click();
@@ -100,7 +97,7 @@ try {
   assert.equal(await page.locator('[data-page="coding"]').evaluate((el) => el.scrollWidth <= el.clientWidth), true);
   await page.screenshot({ path: path.join(scratch, "unified-narrow.png"), fullPage: true });
   assert.deepEqual(errors, []);
-  console.log(`PASS unified coding workspace: ${topologyIds.length} topology systems, ${found.size} reachable source entries, four categories, blank categories, merged family labels, aliases, manual record validation/restart and narrow layout.`);
+  console.log(`PASS unified coding workspace: ${ids.length} nonempty systems, ${found.size} reachable source entries, four categories, blank categories, merged family labels, aliases, manual record validation/restart and narrow layout.`);
 } catch (e) {
   const page = app ? await app.firstWindow() : null;
   if (page) await page.screenshot({ path: path.join(scratch, "failure.png"), fullPage: true });

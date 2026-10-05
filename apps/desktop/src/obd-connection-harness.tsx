@@ -29,7 +29,7 @@ function installFake() {
   let selected: string | null = null;
   let model: ObdConnectionRequest["model"] | null = null;
   let purpose: "diagnostic" | "internal" = "diagnostic";
-  let canNetwork: "drive" | "adas" | null = null;
+  let canNetwork: "drive" | "chassis" | "comfort" | "crash" | "adas" | null = null;
   let connected = false;
   let volts: number | null = null;
   let busy = false;
