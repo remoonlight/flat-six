@@ -5,12 +5,12 @@ const PROFILES = Object.freeze({
   vLinker: { name: "vLinker FS BT", connection: "蓝牙 SPP", features: ["连接与电压", "具名只读诊断", "发动机参数"], routes: ["session", "live"], note: "按蓝牙身份匹配当前串口；设码逐功能验证。" },
   "OBDLink MX+": { name: "OBDLink MX+", connection: "蓝牙 SPP / Drive CAN", features: ["连接与电压", "广播记录与回放"], routes: ["broadcast"], note: "当前接 Drive CAN；广播质量错误保留在记录中，诊断读取需核验接口与 ECU 身份。" },
   VNCI: { name: "VNCI VAS6154A", connection: "USB / D-PDU", features: ["连接与电压", "具名只读诊断"], routes: ["session"], note: "实车 ECU 读取待验证；发动机标准参数、清码与独立设码尚未开放。" },
-  PT3G: { name: "PT3G / E70", connection: "USB 网卡 / E70 服务", features: ["驱动与 USB 状态", "历史模块身份"], routes: [], note: "已关联已安装的 E70 驱动；项目车辆传输尚未接入，不能启动诊断或设码。" },
+  PT3G: { name: "PT3G / E70", connection: "USB / E70 D-PDU", features: ["连接与电压", "当前模块身份"], routes: [], note: "仅诊断头通信与供电监测；车辆读取、设码与内网监听尚未资格化。" },
   X431: { name: "Launch X431 Pro3S 诊断头", connection: "诊断头 ↔ 平板蓝牙", features: ["数据与日志回放", "设码原值记录"], routes: ["offline", "coding"], note: "经平板留存的诊断参考；项目不直接连接该蓝牙头，也不重放设码指令。" },
   "X431-tablet": { name: "X431 Android 平板", connection: "USB / ADB", features: ["诊断参考数据", "设码记录"], routes: ["offline", "coding"], note: "USB 存在与 ADB 授权分别核验；进入记录页面不会启动 ADB 或诊断。" },
   Espressif: { name: "Espressif USB 调试设备", connection: "USB 调试 / 串口", features: ["USB 识别"], routes: [], note: "完整板型、CAN 收发器与采集固件未确认；不作为可连接 OBD 诊断头。" },
 });
-const CONNECTABLE = new Set(["vLinker", "OBDLink MX+", "VNCI"]);
+const CONNECTABLE = new Set(["vLinker", "OBDLink MX+", "VNCI", "PT3G"]);
 
 function identity(row) {
   if (!row || typeof row.id !== "string" || row.id.length > 240 || !PROFILES[row.family]) return null;

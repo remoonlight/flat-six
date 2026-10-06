@@ -112,7 +112,7 @@ export function TopologyPage({
   const selected = nodes.find((n) => n.id === selectedId) || nodes[0];
   const stSel = selected ? statuses[selected.id] : null;
   const locked = busy || peerBusy;
-  const supported = nodes.filter(canTransmit);
+  const supported = nodes.filter((node) => canTransmit(node) && topologyCapability(node, adapterModel).readable);
   const capability = topologyCapability(selected, adapterModel);
 
   useEffect(() => {
@@ -140,7 +140,7 @@ export function TopologyPage({
     lockedStart = false,
   ) {
     if (!lockedStart && (startLock.current || busy || peerBusy)) return;
-    const targets = list.filter((n) => canTransmit(n));
+    const targets = list.filter((n) => canTransmit(n) && topologyCapability(n, adapterModel).readable);
     if (!list.length || targets.length !== list.length || (task === "clear" && list.some((n) => !topologyCapability(n, adapterModel).clearable))) {
       if (lockedStart) startLock.current = false;
       return;
@@ -252,7 +252,7 @@ export function TopologyPage({
 
   const selectedAdapted = selected && isAdaptedProfile(selected.profileId);
   const actionsOff = locked || !canHardware || (!fixture && !diagnosticReady);
-  const selectedOff = actionsOff || !selectedAdapted;
+  const selectedOff = actionsOff || !selectedAdapted || !capability.readable;
   const clearTargets = supported.filter(clearEligible);
   const canClearAll = clearTargets.length > 0;
 
@@ -487,7 +487,7 @@ export function TopologyPage({
                     清除故障码
                   </button>
                 </div>
-                {selectedAdapted ? <p className="muted topo-note" data-testid="topo-clear-scope">{capability.clearable ? "受限清码仅用于当前 DME / Gateway，实车清码与复读待验收。" : "当前设备未开放清故障码；仍可进行具名只读诊断。"}</p> : null}
+                {selectedAdapted && capability.readable ? <p className="muted topo-note" data-testid="topo-clear-scope">{capability.clearable ? "受限清码仅用于当前 DME / Gateway，实车清码与复读待验收。" : "当前设备未开放清故障码；仍可进行具名只读诊断。"}</p> : null}
               </>
             ) : (
               <p className="muted">选择模块</p>

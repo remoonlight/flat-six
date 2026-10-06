@@ -17,7 +17,7 @@ from .decode import decode_payload
 from .elm import ElmClient, ElmError
 from .manufacturer_acquisition import DME_PROFILE, acquire_cycle, historical_fixtures
 from .qualification import qualify_identity
-from .realtime_preparation import plan_for, record_from_parameter
+from .realtime_preparation import FLAGS, plan_for, record_from_parameter
 from .response_values import request_from_record, data_span
 from .session_simulator import SessionSimPort, ath1_prompt, isotp_ath1_lines
 from .sessions import IDENTITY_FIELDS, SESSION_BY_PROFILE
@@ -65,11 +65,49 @@ def prepared_read_contract(profile, selected, catalog=None):
 
 def transport_rehearsal(profile, selected, groups, *, mode='simulation',
                         port_factory=None, cancel_event=None, budget_s=30):
+    # Resolve and validate historical references before opening any port.
+    if mode != 'simulation':
+        return _transport_cycle(profile, selected, None, mode=mode)
+    try:
+        fixtures = historical_fixtures(profile, selected, groups)
+    except (ValueError, KeyError, TypeError) as error:
+        result = _empty_result()
+        result['error'] = str(error)
+        return result
+    def factory():
+        port = SessionSimPort(CATALOG_PROFILE)
+        for hx, pdu in fixtures.items():
+            port.ecu_map[hx] = ath1_prompt(isotp_ath1_lines(0x7E8, pdu))
+        return port
+    return _transport_cycle(profile, selected, port_factory or factory,
+                            cancel_event=cancel_event, budget_s=budget_s)
+
+
+def synthetic_transport_cycles(profile, selected, *, port_factory, cycles=1,
+                               cancel_event=None, budget_s=30, mode='simulation'):
+    """Exercise prepared reads against a test-owned changing ECU, never live.
+
+    No historical response or example is required. The caller supplies an
+    explicitly synthetic BytePort; this is not exposed as a desktop live route.
+    """
+    return _transport_cycle(profile, selected, port_factory, cycles=cycles, mode=mode,
+                            source='synthetic-ecu', cancel_event=cancel_event, budget_s=budget_s)
+
+
+def _empty_result(source='historical-fixture-rehearsal'):
     out = {'ok': False, 'error': None, 'sourceKind': 'historical-fixture-rehearsal',
            'simulation': True, 'vehicleDataCollected': False, 'liveVerified': False,
+           **FLAGS,
            'samples': [], 'transactions': [], 'completedCycles': 0,
            'transport': {'kind': 'injected-byte-port', 'qualification': None,
                          'recovery': [], 'closed': False, 'closeErrors': [], 'rawLog': []}}
+    out['sourceKind'] = source
+    return out
+
+
+def _transport_cycle(profile, selected, factory, *, mode='simulation', cycles=1,
+                     source='historical-fixture-rehearsal', cancel_event=None, budget_s=30):
+    out = _empty_result(source)
     if mode != 'simulation':
         out['error'] = 'manufacturer-transport-unqualified'
         return out
@@ -78,19 +116,14 @@ def transport_rehearsal(profile, selected, groups, *, mode='simulation',
     try:
         if isinstance(budget_s, bool) or not math.isfinite(float(budget_s)) or not 0 < float(budget_s) <= 60:
             raise ValueError('manufacturer-budget-invalid')
+        if type(cycles) is not int or not 1 <= cycles <= 1000:
+            raise ValueError('manufacturer-cycles-invalid')
         deadline = time.monotonic() + float(budget_s)
         catalog = load_catalog()
         contract = prepared_read_contract(profile, selected, catalog)
         out['readContract'] = contract
         authorized = frozenset(g['requestHex'] for g in contract['groups'])
-        fixtures = historical_fixtures(profile, selected, groups)
         named = profile_by_id(catalog, CATALOG_PROFILE)
-        def factory():
-            port = SessionSimPort(CATALOG_PROFILE)
-            for hx, pdu in fixtures.items():
-                port.ecu_map[hx] = ath1_prompt(isotp_ath1_lines(0x7E8, pdu))
-            return port
-        factory = port_factory or factory
         def guard():
             if cancel.is_set(): raise ElmError('cancelled')
             if time.monotonic() >= deadline: raise ElmError('deadline-expired')
@@ -107,11 +140,17 @@ def transport_rehearsal(profile, selected, groups, *, mode='simulation',
             if any(str(e).startswith('close:') for e in errors):
                 raise ElmError('recovery-close-failed')
             out['transport']['closed'] = True
+            if any(not str(e).startswith('poisoned:') for e in errors):
+                raise ElmError('manufacturer-close-failed')
         def open_qualified(expected=None):
             nonlocal client
             guard()
             client = ElmClient(factory(), cancel_event=cancel)
             out['transport']['closed'] = False
+            if source == 'synthetic-ecu' and getattr(client.port, 'trafficKind', None) != 'synthetic-session':
+                # Close without AT/ECU traffic when a test supplied the wrong port.
+                client._poisoned = True
+                raise ElmError('synthetic-port-required')
             client.validate_adapter(min(10, max(0, deadline - time.monotonic())))
             client.configure_pair(named['txId'], named['rxId'], deadline)
             hx, positive = SESSION_BY_PROFILE[CATALOG_PROFILE]
@@ -171,8 +210,22 @@ def transport_rehearsal(profile, selected, groups, *, mode='simulation',
         def bounded_receive(hx):
             try: return receive(hx)
             except (ElmError, OSError) as error: raise ValueError(str(error)) from error
-        result = acquire_cycle(profile, selected, bounded_receive, cancelled=cancel.is_set)
-        out.update(result)
+        acquisition_started = time.monotonic()
+        for cycle in range(cycles):
+            elapsed_offset = (time.monotonic() - acquisition_started) * 1000
+            result = acquire_cycle(profile, selected, bounded_receive, cancelled=cancel.is_set)
+            for sample in result['samples']:
+                sample.update(cycle=cycle + 1, sourceKind=source)
+                sample['elapsedMs'] += elapsed_offset
+            for transaction in result['transactions']:
+                transaction.update(cycle=cycle + 1, sourceKind=source)
+            out['samples'].extend(result['samples'])
+            out['transactions'].extend(result['transactions'])
+            out['completedCycles'] += result['completedCycles']
+            out['requestCount'] = len(out['transactions'])
+            out['ok'], out['error'] = result['ok'], result['error']
+            if not result['ok']:
+                break
     except (ValueError, KeyError, TypeError, ElmError, OSError) as error:
         out['error'] = str(error)
     finally:

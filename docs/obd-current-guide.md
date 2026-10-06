@@ -1,12 +1,16 @@
 # 实时 OBD 当前使用说明
 
-更新：2026-10-05。当前软件状态见 [OBD_STATUS](../OBD_STATUS.md)，需求见 [requirements](requirements.md)，车辆操作资格见 [ADR 001](adr/001-no-ecu-write.md)。本轮没有接车；以下离线准备、模拟和历史回放不算车辆操作成功。
+更新：2026-10-06。当前软件状态见 [OBD_STATUS](../OBD_STATUS.md)，需求见 [requirements](requirements.md)，车辆操作资格见 [ADR 001](adr/001-no-ecu-write.md)。诊断头连接、离线准备、模拟和历史回放不算车辆操作成功。
 
 ## 四个入口与连接设置
 
 1. **连接设置**：连接用途常显为“诊断 / 内网-驱动can / 内网-底盘can / 内网-舒适性can / 内网-碰撞can”。按实际接线手动选择，软件不控制物理接线。用途、上次诊断头和 CAN 会记住，应用启动不自动连接。列表只显示本次可用的支持设备，记住的设备缺席时不会悄悄换成另一个。点击连接验证头通信，读不到电压显示 `--`；电压和通信状态分开。诊断过程中仍可进入本页主动断开，等待实际释放完成；失败状态不会假装断开成功。
 
 VNCI 接车前仅接 USB 可验证诊断头连接，外部电压为 0 V 时显示 `--`；这不证明无外部供电的 CAN/ECU 通信。开发版私人驱动在 `.local/vnci-support/vendor/VW_PDUAPI_OS/`，安装版在 userData 的 `diagnostic-library/.local/vnci-support/vendor/VW_PDUAPI_OS/`；也可用本机环境变量 `PORSCHE981_VNCI_ROOT` 指向已核对的完整目录。主库及八份配套文件在原生加载前核对哈希，缺失或版本漂移停止。Windows 驱动与私人配套资料另行准备，程序包和定义 ZIP 均不自动包含或安装它们。
+PT3G / E70 现在可按本次原生 USB 模块身份选择、连接和监测供电；无有效电压显示 `--`。默认使用本机 `C:/ProgramData/PORSCHE-VCI/X64`，受信任的本机环境配置可用 `PORSCHE981_PT3G_ROOT` 指定完整 X64 目录及其上一级 E70 服务文件。全部配套哈希及关闭自动协议检测的配置核对失败时不加载。仅支持诊断头操作，车辆读取和内网监听仍禁用；没有固件/车辆资格。VNCI/PT3G 释放报告缺失、报错或进程被强制结束时，保持关闭失败并停止接续；核对 USB 后重新启动应用。刷新前须断开并等待释放，避免已有会话期间再次枚举原生驱动。
+
+本机此次 VNCI 的设备本地 Power management / Activate buzzer 已关闭；原值和回读记录保留，设备重启及物理重插后设置仍在。更换设备时须核对实际设备设置，不能把本机结果当作所有诊断头的默认状态。该选项对应定时蜂鸣提示，其他声音仍需实际观察。USB 长测中本机待机后曾出现 Windows 错误 43，用户重插后设备网页与 Windows 状态恢复；尚未验证待机自动恢复。长测按用户要求暂缓，没有运行中的长测或保持唤醒请求。完整结果见 [VNCI 台架记录](../OBD_STATUS.md#2026-10-06-vnci-定时蜂鸣与-usb-长测)。
+
 2. **系统拓扑**：进入后依次识别已适配的具名单元并读取故障码；目前 live 范围是 981 DME/Gateway，参考菜单不算本车已安装。只有识别有效且当前有故障的单元能清码；清前重新核对身份、持久备份、发送一次并复读。无码/读取失败/过期结果不清。点击“保存结果”才保存当前批次到本地 SQLite，失败在页面显示。清码前证据是强制保存的独立例外。
 3. **实时数据**：诊断用途使用标准 DME 数据、自动匹配的 X431 参数清单和历史回放；已移除“资料范围”及关联的手选定义版本控件。内网用途显示持续接收到的原始 CAN 帧；只有已有核实定义的字段才可显示车辆含义，未知值不猜。
 4. **设码与编程**：列表仅显示维护、设码、特殊功能、编程子项合计大于零的控制单元，保留已有资料和手工记录、当前单元完整备份、字段修改预览、恢复演练与原厂固件准备检查。实际写入车辆仍禁用，页面列出缺少的资格。
@@ -76,9 +80,12 @@ LID 或混合标识使用 `schemaVersion: 2`：`expectedBlocks` 和 `blocks` 均
 
 `npm run accept:vnci-usb-bench -- 120000` 是实际设备检查，要求本机恰有一只已核对且可用的 VNCI；不属于普通离线软件套件。仅允许诊断头枚举、身份/固件匹配、供电响应和正常释放，禁止 CAN 逻辑链路/通信原语；不要与其他设备会话并行。可追加已生成运行包目录检查包内路径。没有设备时明确失败，不用模拟结果替代。
 
-`npm run audit:obd-decoders -- --output .local/<新的目录>/decoder-audit.json` 核对 DME 分组、短响应、否定响应、错误标识及已保存历史值；`npm run prepare:obd-adapters -- --output .local/<新的目录>/adapter-preparation.json` 只读取已安装 PT3G 文件/MDF 和内网候选来源，不加载驱动。输出文件不能已存在。名称矩阵区分源词条缺失、源词条为空和动态名称的空白组件，继续保持未命名/未资格化状态。
+`npm run audit:obd-decoders -- --output .local/<新的目录>/decoder-audit.json` 核对 DME 分组、短响应、否定响应、错误标识及已保存历史值，并用不调用生产公式解析器的逐位/有理数参考实现比较合成边界样本；发现差异时返回失败。定义与软件一致仍不代表车辆定义已核实。
+
+`npm run prepare:obd-adapters -- --output .local/<新的目录>/adapter-preparation.json` 只读取已安装 PT3G 文件/MDF 和内网候选来源，不加载驱动；输出包括来源协议参数引用、Racelogic 原厂编号证据与 981 REF 候选位布局。候选布局不导入实时监测，不把 982 来源并作 981 已核实定义。两个命令的输出文件不能已存在。名称矩阵区分源词条缺失、源词条为空和动态名称的空白组件，继续保持未命名/未资格化状态。
 
 - `npm run check:obd-offline-software`：相关 Python 测试，包含厂商通信演练、原码读取范围、补采和备份；连接/会话/原始帧/文件保存/离线 IPC/拓扑、Windows 运行路径及注入负载自检，最后独立类型检查。测试数量以本次输出为准。
+- `npm run status:pt3g`：本机原生枚举，真实设备操作，不发送 ECU 请求。`npm run accept:pt3g` 是不接设备的边界/释放自检；`npm run accept:pt3g-ui` 构建并检查模拟界面。`npm run accept:pt3g-usb-bench` 对一只可用 PT3G 做两分钟真实桌面监测、释放及再次连接，禁止 CAN 链路和 ECU 原语；它不属于普通离线套件，不与其他诊断头会话并行。
 - `npm run accept:obd-offline-software`：上述检查、一次生产构建、四入口及新离线流程/X431/设码/PIWIS 的隔离 Electron 测试、核心文档检查。
 - 既有 `accept:obd-workspace`、`accept:obd-tools`、`accept:obd-transports`、`accept:obd-offline` 与 `accept:obd-realtime-offline` 保留，各自范围以脚本为准；部分要求本机资料包。
 
@@ -92,15 +99,24 @@ LID 或混合标识使用 `schemaVersion: 2`：`expectedBlocks` 和 `blocks` 均
 
 ### 上车前已准备的工具
 
-最终目标是全部 981/982 控制单元与完整 X431 设码。`prepare:obd-precar` 新增 `collection/all-control-units/all-units.json`、逐版本 `profiles/` 和 `全控制单元采集.md`；两车系所有来源菜单保留，含身份/实时请求组、命名设码字段、LID/DID 原码读取范围和缺项。七单元清单是优先批次，不是交付范围；共享版本、本车装配、读取与设码资格分别判断。最新包在本机 `.local/obd-precar-followup-20261005/ready-pack/`。真实设码仍须本次完整原值及明确写入/回读/当前单元恢复定义，不以目录或模拟成功开放。
+最终目标是全部 981/982 控制单元与完整 X431 设码。`prepare:obd-precar` 新增 `collection/all-control-units/all-units.json`、逐版本 `profiles/` 和 `全控制单元采集.md`；两车系所有来源菜单保留，含身份/实时请求组、命名设码字段、LID/DID 原码读取范围和缺项。七单元清单是优先批次，不是交付范围；共享版本、本车装配、读取与设码资格分别判断。最新包在本机 `.local/obd-precar-next-20261006/ready-pack/`。真实设码仍须本次完整原值及明确写入/回读/当前单元恢复定义，不以目录或模拟成功开放。
 
-`npm run stage:windows -- .local/<新的目录>` 在构建后生成解压式 Windows 包，内置 Node/Python；启动 `FlatSix.exe`。本次可用包为 `.local/obd-precar-followup-20261005/Flat Six Precar Final/`，此前运行包保留。诊断资料由保留的后台导入能力写入 userData 下的独立资料目录；业务库及车辆编码备份另行管理。程序包不包含本机私人原始捕获、运行数据库、车辆原码和固件正文。已有空 userData、移除开发环境 PATH、含空格路径的实际运行验收；新电脑驱动、配对及设备验证仍需单独完成。
+`npm run stage:windows -- .local/<新的目录>` 在构建后生成解压式 Windows 包，内置 Node/Python；启动 `FlatSix.exe`。本次可用包为 `.local/obd-precar-next-20261006/Flat Six OBD Final/`，此前运行包保留。同级 `definitions-current.zip` 与当前源码匹配；旧 ZIP 可能因来源哈希漂移被拒绝，不绕过校验。诊断资料由保留的后台导入能力写入 userData 下的独立资料目录；业务库及车辆编码备份另行管理。程序包不包含本机私人原始捕获、运行数据库、车辆原码和固件正文。已有空 userData、移除开发环境 PATH、含空格路径的实际运行验收；新电脑驱动、配对及设备验证仍需单独完成。
+
+正式安装的数据备份使用 `scripts/diagnostics/user_data_backup.py` 的 userData 备份 CLI。先关闭 Flat Six；默认安装目录名为 `flat-six`，用户目录通常为 `%APPDATA%/flat-six`，设置过 `PORSCHE981_USER_DATA` 时以实际目录为准。运行包自带 Python，无需安装系统 Python。在包含 `FlatSix.exe` 的目录使用 PowerShell：
+
+```powershell
+& ".\resources\app\runtime\python\python.exe" -X utf8 -m scripts.diagnostics.user_data_backup backup --user-data "$env:APPDATA\flat-six" --output-dir "D:\FlatSixBackups\本次新备份" --app-closed
+& ".\resources\app\runtime\python\python.exe" -X utf8 -m scripts.diagnostics.user_data_backup restore --backup-dir "D:\FlatSixBackups\本次新备份" --user-data "D:\FlatSixBackups\本次新恢复目录" --app-closed
+```
+
+`--app-closed` 是调用者声明，不是自动终止进程或检测所有客户端。备份和恢复目标必须尚不存在；只发布核验通过的新目录，失败的 `.pending-*` 目录不算有效备份。覆盖业务库、诊断资料、连接设置、原码备份、目录内捕获和本地资源；外部导出文件、Electron 缓存及环境变量指向的外部资源另行保留。恢复后用 `PORSCHE981_USER_DATA` 指向新目录启动，核对业务记录、定义、原码基线及设备设置，不会自动切换或覆盖旧目录。本机已完成 375 文件恢复及最终包启动核对；原码内容为模拟备份，不能当作本车基线。
 
 设码页新增“当前控制单元原码读取范围”，先选择 981/982 和资料版本，查看读取组、LID/DID、最低已知长度及缺项，可显式保存准备结果。DME 的 39 字段对应 28 个 LID 读取组；不能把 LID 当作 DID，也不能把字段最低长度当作完整编码块长度。范围未资格化前不自动读取车辆，不创建完整车辆基线或开放写入。
 
 `npm run check:obd-prepared-reads` 检查通信准备与原码范围；`npm run audit:obd-coverage -- --output-dir .local/<新的目录>` 生成版本覆盖登记；`npm run check:obd-precar-stress` 检查注入接收容量和文件完整性。版本登记区分唯一版本与 ECU/版本引用，不能当作功能完成数。负载检查也不证明物理静默、休眠唤醒或长时间实车稳定性。
 
-运行 `npm run prepare:obd-precar`，会在新的 `.local/diagnostics/precar-<时间>/` 私有目录生成环境/来源核对、开发数据库一致性快照、已有编码备份副本（如存在）、七单元采集资料和 `首次接车清单.md`。不会连接诊断头、修改源业务库或覆盖旧资料包。本轮更新后的完整清单位于 `.local/obd-precar-followup-20261005/ready-pack/首次接车清单.md`；请按每一步的预期、保存要求和停止条件填写实际结果。开发库备份不替代正式安装的 userData 库备份。
+运行 `npm run prepare:obd-precar`，会在新的 `.local/diagnostics/precar-<时间>/` 私有目录生成环境/来源核对、开发数据库一致性快照、已有编码备份副本（如存在）、七单元采集资料和 `首次接车清单.md`。不会连接诊断头、修改源业务库或覆盖旧资料包。本轮更新后的完整清单位于 `.local/obd-precar-next-20261006/ready-pack/首次接车清单.md`；请按每一步的预期、保存要求和停止条件填写实际结果。开发库备份不替代正式安装的 userData 库备份。
 
 在实时数据页选择 DME、X431 数据清单及有历史响应的参数，可点“开始厂商参数演练”。同一请求组每轮只取一份完整历史 PDU，连续演练、停止、数值/曲线和完整保存均可用；保存失败保留本批，换分类丢弃未保存旧批。该按钮不会连接车辆，重复历史 PDU 不产生新的车辆数值；独立诊断头的厂商实车读取资格还需补齐。首次接车先验收已定义 DME/Gateway 身份与 DTC、六项标准 PID；其他单元按资料包在 X431 已适配只读菜单补采，不猜请求。
 

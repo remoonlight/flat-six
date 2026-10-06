@@ -676,7 +676,7 @@ export type ObdCanNetwork = "drive" | "chassis" | "comfort" | "crash" | "adas";
 export type ObdConnectionRequest = {
   action: ObdConnectionAction;
   deviceId?: string;
-  model?: "vLinker" | "OBDLink MX+" | "VNCI";
+  model?: "vLinker" | "OBDLink MX+" | "VNCI" | "PT3G";
   purpose?: "diagnostic" | "internal";
   canNetwork?: ObdCanNetwork;
 };

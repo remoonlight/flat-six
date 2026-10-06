@@ -13,6 +13,7 @@ const durationMs = Number(process.argv[2] || 120000);
 assert.ok(Number.isInteger(durationMs) && durationMs >= 10000 && durationMs <= 3600000, "10 s–1 h bounded duration");
 const base = path.join(root, ".local/obd-precar-followup-20261005"); fs.mkdirSync(base, { recursive: true });
 const output = fs.mkdtempSync(path.join(base, "desktop-soak-"));
+console.log(JSON.stringify({ phase: "started", output, soakRequestedMs: durationMs, synthetic: true }));
 const fixture = path.join(output, "devices.json"); fs.writeFileSync(fixture, '{"devices":[],"errors":[]}');
 const env = { ...process.env, PORSCHE981_HEADLESS: "1", PORSCHE981_OBD_SMOKE: "1", PORSCHE981_SESSION_DENY_LIVE: "1",
   PORSCHE981_DB: path.join(output, "isolated.db"), PORSCHE981_CONNECTION_FIXTURE: fixture,
@@ -103,8 +104,14 @@ try {
     assert.equal(state.connected, true, JSON.stringify(state.monitorDiagnostics));
     assert.ok(state.internal.retainedFrames <= 25000 && state.internal.latest.length <= 256);
     const memory = await app.evaluate(() => process.memoryUsage());
+    const processes = await app.evaluate(({ app }) => app.getAppMetrics().map((metric) => ({
+      type: metric.type, workingSetBytes: metric.memory.workingSetSize * 1024,
+      privateBytes: metric.memory.privateBytes == null ? null : metric.memory.privateBytes * 1024,
+    })));
     samples.push({ elapsedMs: Date.now() - started, frames: state.internal.frameCount, retained: state.internal.retainedFrames,
-      mainRssBytes: memory.rss, mainHeapBytes: memory.heapUsed });
+      mainRssBytes: memory.rss, mainHeapBytes: memory.heapUsed, processes });
+    fs.writeFileSync(path.join(output, "progress.json"), JSON.stringify({ phase: "receiving", synthetic: true,
+      soakRequestedMs: durationMs, sample: samples.at(-1), pageSwitches: samples.length * 2 }, null, 2));
     await page.locator('[data-obd-tab="coding"]').click();
     const previous = state.internal.frameCount;
     await waitForIpc(page, async (count) => (await window.porsche981.obdConnection({ action: "status" })).internal.frameCount > count, previous);
@@ -178,6 +185,10 @@ try {
     samples, capture, monitorDiagnostics: closed.monitorDiagnostics, standardSamples: engine.samples.length,
     workerReports, errors }, null, 2));
   console.log(JSON.stringify({ ok: true, output, soakRequestedMs: durationMs, capture, standardSamples: engine.samples.length }));
+} catch (error) {
+  fs.writeFileSync(path.join(output, "failure.json"), JSON.stringify({ ok: false, synthetic: true,
+    soakRequestedMs: durationMs, error: String(error.stack || error), samples, errors }, null, 2));
+  throw error;
 } finally {
   clearTimeout(watchdog);
   if (app) { await app.evaluate(async () => globalThis.__soak?.mgr.shutdown()).catch(() => {}); await app.close(); }

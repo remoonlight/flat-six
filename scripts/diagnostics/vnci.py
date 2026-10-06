@@ -581,7 +581,7 @@ def run_monitor(device_id, *, stdout, stdin=None, stop_event=None, max_samples=N
             cleanup = client.close_restore()
             if cleanup["errors"]:
                 status = 1
-                _emit(stdout, {**base, "ok": False, "type": "error", "error": "vnci-cleanup-failed", "restoration": cleanup})
+                _emit(stdout, {**base, "ok": False, "type": "error", "error": device_id.split(':', 1)[0] + "-cleanup-failed", "restoration": cleanup})
             else:
                 _emit(stdout, {**base, "ok": True, "type": "stopped", "restoration": cleanup})
     return status

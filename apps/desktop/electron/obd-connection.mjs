@@ -38,8 +38,8 @@ export {
 };
 
 const ACTIONS = new Set(["list", "select", "configure", "connect", "voltage", "disconnect", "clear", "status", "record-start", "record-stop", "new-batch", "save-result"]);
-const DEVICE_RE = /^(?:bt:[0-9A-F]{12}|vnci:[0-9]{1,16})$/;
-const MODELS = new Set(["vLinker", "OBDLink MX+", "VNCI"]);
+const DEVICE_RE = /^(?:bt:[0-9A-F]{12}|(?:vnci|pt3g):[0-9]{1,16})$/;
+const MODELS = new Set(["vLinker", "OBDLink MX+", "VNCI", "PT3G"]);
 const MAX_JSON = 16 * 1024;
 const LIST_TIMEOUT_MS = 20_000;
 const MONITOR_LINE_CAP = 64 * 1024;
@@ -233,6 +233,7 @@ export function createObdConnectionManager(opts) {
   let retryTimer = null;
   let retryFails = 0;
   let lastFatal = null;
+  let nativeReleaseFailure = null;
   let dispatchReserved = false;
   let pausedForSession = false;
   let watchTimer = null;
@@ -295,7 +296,7 @@ export function createObdConnectionManager(opts) {
   function snapshot(extra = {}) {
     const v = voltageView();
     const diagnostic = pausedForSession || gate.owner() === "session";
-    if (["disconnecting", "close_failed"].includes(linkState) && !monitorChild && !gate.owner() && !dispatchReserved) {
+    if (!nativeReleaseFailure && ["disconnecting", "close_failed"].includes(linkState) && !monitorChild && !gate.owner() && !dispatchReserved) {
       linkState = "idle";
       lastFatal = null;
     }
@@ -374,6 +375,8 @@ export function createObdConnectionManager(opts) {
   }
 
   async function listDevices() {
+    if (nativeReleaseFailure) return fail(nativeReleaseFailure, snapshot({ ok: false }));
+    if (gate.owner() || monitorChild || dispatchReserved) return fail("disconnect_before_refresh", snapshot({ ok: false }));
     try {
       const doc = listFn
         ? await listFn()
@@ -427,7 +430,7 @@ export function createObdConnectionManager(opts) {
 
   async function stopMonitorProcess() {
     const child = monitorChild;
-    if (!child) return { ok: true };
+    if (!child) return nativeReleaseFailure ? { ok: false, error: nativeReleaseFailure } : { ok: true };
     monitorEvent("stop-requested", { generation: child._monitorGeneration, pid: child.pid ?? null });
     ingestGen += 1;
     clearWatch();
@@ -436,14 +439,23 @@ export function createObdConnectionManager(opts) {
     } catch {
       /* */
     }
-    if (await waitUntilClosed(child, gracefulMs)) return { ok: true };
+    const closeResult = () => {
+      if (child._nativeAdapter && (!child._stopReported || !child._stopCleanupOk || child._closeCode !== 0)) {
+        nativeReleaseFailure = "adapter_release_not_verified";
+        linkState = "close_failed";
+        lastFatal = nativeReleaseFailure;
+        return { ok: false, error: nativeReleaseFailure };
+      }
+      return { ok: true };
+    };
+    if (await waitUntilClosed(child, gracefulMs)) return closeResult();
     try {
       monitorEvent("forced-kill", { generation: child._monitorGeneration, reason: "graceful-close-timeout" });
       child.kill();
     } catch {
       /* */
     }
-    if (await waitUntilClosed(child, killWaitMs)) return { ok: true };
+    if (await waitUntilClosed(child, killWaitMs)) return closeResult();
     monitorEvent("close-timeout", { generation: child._monitorGeneration });
     return { ok: false, error: "monitor_close_timeout" };
   }
@@ -458,6 +470,7 @@ export function createObdConnectionManager(opts) {
       lastFatal = reason;
       connected = false;
       clearReading();
+      monitorChild._reportedFailure = true;
       try {
         monitorChild.kill();
       } catch {
@@ -490,8 +503,14 @@ export function createObdConnectionManager(opts) {
   }
 
   function ingestLine(doc, gen, child) {
-    if (doc?.type === "stopped") child._stopReported = true;
+    if (doc?.type === "stopped") {
+      child._stopReported = true;
+      child._stopCleanupOk = Array.isArray(doc.restoration?.errors) && doc.restoration.errors.length === 0;
+    }
     if (stopped || gen !== ingestGen) return;
+    // Cleanup reports still count, but a failed worker cannot publish more
+    // readings or frames while the native adapter is being released.
+    if (child._reportedFailure && doc?.type !== "error" && doc?.ok !== false) return;
     if (doc?.type === "frames") {
       if (selected.purpose !== "internal" || doc.deviceId !== selected.deviceId || doc.canNetwork !== selected.canNetwork || doc.simulation !== false) return;
       try {
@@ -518,6 +537,8 @@ export function createObdConnectionManager(opts) {
       return;
     }
     if (acc.fatal) {
+      const firstFailure = !child._reportedFailure;
+      child._reportedFailure = true;
       monitorEvent("reported-error", { generation: gen, reason: acc.error.slice(0, 160) });
       lastFatal = acc.error;
       connected = false;
@@ -526,6 +547,14 @@ export function createObdConnectionManager(opts) {
         wantConnected = false;
         linkState = "idle";
       }
+      if (child._nativeAdapter) {
+        // The Python worker reports its error before native cleanup. Give it
+        // the existing bounded release window instead of killing mid-release.
+        linkState = "disconnecting";
+        if (firstFailure) armWatch(gracefulMs, acc.error);
+        return;
+      }
+      if (!firstFailure) return;
       try {
         child.kill();
       } catch {
@@ -533,6 +562,7 @@ export function createObdConnectionManager(opts) {
       }
       return;
     }
+    child._lastReject = null;
     applyReading(acc.volts, acc.source, acc.at);
     child._lastAcceptedAt = nowFn();
     connected = true;
@@ -547,6 +577,7 @@ export function createObdConnectionManager(opts) {
     monitorToken = token;
     children.add(child);
     child._monitorGeneration = gen;
+    child._nativeAdapter = /^(vnci|pt3g):/.test(id);
     monitorStarts++;
     monitorEvent("started", { generation: gen, pid: child.pid ?? null });
     lastFatal = null;
@@ -590,6 +621,7 @@ export function createObdConnectionManager(opts) {
       }
     });
     child.on("close", (code, signal) => {
+      child._closeCode = code;
       monitorEvent("closed", { generation: gen, pid: child.pid ?? null, code: code ?? null,
         signal: signal ?? null, reason: lastFatal, stopReported: child._stopReported === true,
         lastAcceptedAt: child._lastAcceptedAt ?? null, stderrBytes });
@@ -602,6 +634,19 @@ export function createObdConnectionManager(opts) {
       }
       clearWatch();
       if (gate.owner() === token) gate.release(token);
+      if (child._nativeAdapter && (!child._stopReported || !child._stopCleanupOk)) {
+        nativeReleaseFailure = "adapter_release_not_verified";
+        lastFatal = nativeReleaseFailure;
+        wantConnected = false;
+        connected = false;
+        clearReading();
+        linkState = "close_failed";
+        monitorEvent("native-release-unverified", { generation: gen, code: code ?? null });
+        return;
+      }
+      // A failed operation may exit 1 after successfully releasing the head.
+      // Show the error in idle rather than clearing it as a normal disconnect.
+      if (child._reportedFailure && !wantConnected) linkState = "idle";
       if (stopped || pausedForSession) return;
       if (gen !== ingestGen) return;
       if (selected.purpose === "internal") {
@@ -628,7 +673,7 @@ export function createObdConnectionManager(opts) {
   }
 
   async function startMonitor() {
-    if (stopped || !wantConnected || pausedForSession || monitorChild) return;
+    if (stopped || nativeReleaseFailure || !wantConnected || pausedForSession || monitorChild) return;
     const id = selected.deviceId;
     if (!id) return;
     if (gate.owner() && !String(gate.owner()).startsWith("monitor")) return;
@@ -687,6 +732,7 @@ export function createObdConnectionManager(opts) {
 
   async function beginConnect(model) {
     if (stopped) return fail("connection_closed");
+    if (nativeReleaseFailure) return fail(nativeReleaseFailure, snapshot({ ok: false }));
     if (sessionBusy()) return fail("busy");
     if (["disconnecting", "close_failed"].includes(linkState) && (monitorChild || gate.owner())) return fail("port_release_pending", snapshot({ ok: false }));
     const id = selected.deviceId;
@@ -806,6 +852,7 @@ export function createObdConnectionManager(opts) {
   }
 
   async function doSelect(request) {
+    if (nativeReleaseFailure) return fail(nativeReleaseFailure, snapshot({ ok: false }));
     if (!request.deviceId) return fail("malformed_device_id");
     const hit = lastList.devices.find((d) => d.id === request.deviceId);
     if (!hit) return fail("unknown_device");
@@ -835,7 +882,7 @@ export function createObdConnectionManager(opts) {
     const bad = validateConnectionRequest(request);
     if (bad) return bad;
     if (stopped) return fail("connection_closed");
-    if (request.action === "list") return listDevices();
+    if (request.action === "list") return enqueue(() => listDevices());
     if (request.action === "status") return snapshot();
     if (request.action === "voltage") {
       if (!connected) return fail("not_connected", snapshot({ ok: false }));
@@ -906,6 +953,7 @@ export function attachSessionHandoff(conn, sessionMgr, hooks = {}) {
       if (blocked) return fail("live_not_enabled", { reason: blocked });
       if (conn.snapshot().purpose !== "diagnostic") return fail("diagnostic_purpose_required");
       if (!conn.selectedId()) return fail("device_not_selected");
+      if (conn.selectedId().startsWith("pt3g:")) return fail("pt3g-vehicle-transport-not-qualified");
     }
     if (!conn.reserveDispatch()) return fail("busy");
     try {

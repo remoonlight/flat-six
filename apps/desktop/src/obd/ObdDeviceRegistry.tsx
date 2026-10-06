@@ -15,7 +15,7 @@ export function ObdDeviceRegistry({ devices, detectedDevices, busy, selectedId, 
   for (const d of detectedDevices) {
     if (!d.available) continue;
     const family = d.brand || devices.find((known) => known.id === d.id)?.family || "未识别型号";
-    if (!["vLinker", "OBDLink MX+", "VNCI", "unresolved"].includes(family)) continue;
+    if (!["vLinker", "OBDLink MX+", "VNCI", "PT3G", "unresolved"].includes(family)) continue;
     if (HIDDEN_FAMILIES.has(family)) continue;
     rows.set(d.id, { id: d.id, family, name: d.name, serial: d.serial, comPort: d.comPort,
       state: d.available ? d.transport === "d-pdu-usb" ? "USB 已接入" : d.paired ? "已配对" : "可连接" : d.paired ? "已配对 · 无可用串口" : "本次未发现",

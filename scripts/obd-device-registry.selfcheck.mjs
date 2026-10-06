@@ -49,7 +49,7 @@ try {
   const list = await manager.handle({ action: "list" });
   assert.equal(list.deviceRegistry.length, 5);
   assert.equal((await manager.handle({ action: "select", deviceId: device.id })).ok, true);
-  assert.equal((await manager.handle({ action: "select", deviceId: known[2].id })).error, "malformed_device_id");
+  assert.equal((await manager.handle({ action: "select", deviceId: known[2].id })).error, "unknown_device");
   rows = [];
   const gone = await manager.handle({ action: "list" });
   assert.equal(gone.devices.length, 0);

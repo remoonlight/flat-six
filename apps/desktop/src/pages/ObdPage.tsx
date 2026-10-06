@@ -47,8 +47,15 @@ function vnciConnectionMessage(error: unknown): string | null {
     disconnect_before_configure: "请先断开设备并等待端口释放，再更改用途或 CAN。",
     monitor_close_timeout: "关闭未完成，正在等待诊断头端口释放。请勿重复连接。",
     session_close_timeout: "诊断任务关闭未完成，正在等待端口释放。请勿重复连接。",
+    "pt3g-vehicle-transport-not-qualified": "PT3G 已支持诊断头连接与供电监测；车辆读取尚未核实，当前不能启动诊断。",
+    "pt3g-device-in-use": "PT3G 被其他软件占用，请退出 PIWIS 等诊断软件后重试。",
+    "pt3g-device-identity-missing-or-ambiguous": "未找到唯一匹配的 PT3G，请核对 USB 连接并刷新。",
+    "pt3g-cleanup-failed": "PT3G 释放失败，请等待连接关闭后重试。",
+    adapter_release_not_verified: "诊断头原生释放未确认，已停止重连及诊断。请重新接入该头 USB，再重启应用并检查连接。",
+    disconnect_before_refresh: "请先断开诊断头并等待释放，再刷新设备列表。",
   };
   if (typeof error === "string" && messages[error]) return messages[error];
+  if (typeof error === "string" && error.startsWith("pt3g-driver-support-")) return "PT3G 驱动配套资料缺失或版本已变化，请核对完整 E70 驱动目录。";
   if (error === "vnci-device-in-use") return "VNCI 被其他软件占用。请退出 ODIS、PIWIS 等诊断软件后重试。";
   if (error === "vnci-firmware-mismatch-no-auto-update") return "VNCI 固件与已接入的驱动版本不一致，连接已停止。请核对驱动版本；项目不会自动升级诊断头。";
   if (error === "vnci-firmware-check-failed") return "无法核对 VNCI 固件。请检查 USB 连接后重试。";
@@ -80,7 +87,7 @@ export function ObdPage() {
   const [purpose, setPurpose] = useState<"diagnostic" | "internal">("diagnostic");
   const [canNetwork, setCanNetwork] = useState<ObdCanNetwork | "">("");
   const [connectionStatus, setConnectionStatus] = useState<ObdConnectionResult | null>(null);
-  const [modelPick, setModelPick] = useState<"vLinker" | "OBDLink MX+" | "VNCI" | "">("");
+  const [modelPick, setModelPick] = useState<"vLinker" | "OBDLink MX+" | "VNCI" | "PT3G" | "">("");
   const [topologyAdapterModel, setTopologyAdapterModel] = useState<string | null>(null);
   const [codingTargetSystem, setCodingTargetSystem] = useState("");
   const [liveTargetSystem, setLiveTargetSystem] = useState("");
@@ -175,7 +182,7 @@ export function ObdPage() {
     if (doc.deviceRegistry) setDeviceRegistry(doc.deviceRegistry);
     if (doc.listErrors) setListErrors(doc.listErrors);
     if ("selectedDeviceId" in doc) setSelectedId(doc.selectedDeviceId ?? null);
-    if ("model" in doc) setModelPick(doc.model === "vLinker" || doc.model === "OBDLink MX+" || doc.model === "VNCI" ? doc.model : "");
+    if ("model" in doc) setModelPick(doc.model === "vLinker" || doc.model === "OBDLink MX+" || doc.model === "VNCI" || doc.model === "PT3G" ? doc.model : "");
     if ("model" in doc) setTopologyAdapterModel(doc.model || null);
     if (typeof doc.voltageVolts === "number") {
       setOverview((o) => ({ ...(o || {}), voltageVolts: doc.voltageVolts }));
@@ -272,7 +279,7 @@ export function ObdPage() {
           </fieldset>
           {purpose === "internal" ? <p className="muted">请手动接到所选 CAN。项目不自动识别网络或切换接线；当前仅 MX+ 驱动 CAN 有已核实的监听配置。</p> : null}
           {purpose === "internal" && canNetwork === "adas" ? <p className="muted">上次保存的接线为 ADAS CAN，请按实际接线重新选择连接用途。</p> : null}
-          <p className="muted">目前支持 vLinker FS BT、OBDLink MX+ 和 VNCI VAS6154A（USB）设备。</p>
+          <p className="muted">支持 vLinker FS BT、OBDLink MX+、VNCI VAS6154A 与 PT3G / E70（USB）。PT3G 当前仅支持诊断头连接与供电监测。</p>
           <ObdDeviceRegistry devices={deviceRegistry} detectedDevices={devices} busy={connBusy || sessionLocked} selectedId={selectedId}
             connectionState={linkState === "disconnecting" ? "正在断开" : linkState === "close_failed" ? "关闭失败 · 等待释放" : sessionLocked || linkState === "diagnostic" ? "诊断占用" : linkState === "connecting" ? "连接中" : linkState === "reconnecting" ? "等待重连" : connected ? "已连接" : "已选择"}
             onSelect={(deviceId) => {

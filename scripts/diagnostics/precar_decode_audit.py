@@ -15,6 +15,7 @@ from .realtime_preparation import DEFAULT_OUTPUT, load, record_from_parameter, v
 from .manufacturer_acquisition import DME_PROFILE, historical_fixtures
 from .manufacturer_transport import prepared_read_contract, transport_rehearsal
 from .response_values import decode_application_response, normalize_response, request_from_record, data_span
+from .decoder_reference import reference_value, reference_cases, compare_reference
 
 
 def audit(bundle=DEFAULT_OUTPUT):
@@ -30,6 +31,7 @@ def audit(bundle=DEFAULT_OUTPUT):
     checks = Counter()
     formulas = Counter()
     groups = []
+    reference_failures = []
     for hx, parameters in by_request.items():
         observed = [p for p in parameters if p['decodedSampleCount']]
         for start in range(0, len(parameters), 12):
@@ -44,6 +46,14 @@ def audit(bundle=DEFAULT_OUTPUT):
             assert request['ok'] and request['request'].hex().upper() == hx
             assert data_span(record) == parameter['dataSpan']
             formulas[parameter['formula']['text'].split(':', 1)[0]] += 1
+            for data in reference_cases(record):
+                expected = reference_value(record, data)
+                actual = decode_application_response(record, data, 'data', source='synthetic-reference-audit')
+                differences = compare_reference(expected, actual)
+                checks['independentSyntheticFields'] += 1
+                if differences:
+                    reference_failures.append({'parameterId': parameter['id'], 'dataHex': data.hex().upper(),
+                                               'mismatchedKeys': differences})
             header = bytes([request['sid'] + 0x40]) + request['request'][1:]
             for nrc in (0x11, 0x31, 0x78):
                 result = decode_application_response(record, bytes([0x7F, request['sid'], nrc]), 'pdu')
@@ -70,9 +80,13 @@ def audit(bundle=DEFAULT_OUTPUT):
     out = transport_rehearsal(profile, [profile['parameters'][0]['id']], fixtures, mode='live',
                               port_factory=lambda: opened.append(True))
     assert out['error'] == 'manufacturer-transport-unqualified' and not opened
-    return {'ok': True, 'kind': 'precar-DME-decoder-audit', 'noDeviceIO': True, 'vehicleVerified': False,
+    return {'ok': not reference_failures, 'kind': 'precar-DME-decoder-audit', 'noDeviceIO': True, 'vehicleVerified': False,
             'syntheticChecksAreNotVehicleEvidence': True, 'historicalComparisonIsNotIndependentOracle': True,
             'source': source, 'fixtureSource': verify_source(bundle / 'rehearsal-fixtures.json'),
+            'independentReference': {'method': 'literal-formula/individual-bits/rational-arithmetic',
+                'productionParserUsedForExpectedValues': False, 'vehicleDefinitionVerified': False,
+                'code': verify_source(Path(__file__).with_name('decoder_reference.py')),
+                'parametersChecked': len(profile['parameters']), 'failures': reference_failures},
             'checks': dict(checks), 'formulaKinds': dict(formulas), 'requestGroups': groups,
             'parameters': len(profile['parameters']), 'missingResponseGroups': sum(not r['historicalResponsePresent'] for r in groups),
             'missingResponseParameters': sum(r['missingResponseParameters'] for r in groups), 'liveGateClosed': True}
@@ -90,6 +104,8 @@ def main():
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding='utf-8')
     print(json.dumps({k: v for k, v in result.items() if k in ('ok', 'checks', 'parameters', 'missingResponseGroups', 'missingResponseParameters', 'liveGateClosed')}))
+    if not result['ok']:
+        raise SystemExit(1)
 
 
 if __name__ == '__main__': main()

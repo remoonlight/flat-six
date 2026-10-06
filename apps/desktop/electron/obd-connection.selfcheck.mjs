@@ -450,7 +450,7 @@ console.log("obd-connection selfcheck PASS: close-timeout quarantine, cadence, b
   const settings = manager({ env: { PORSCHE981_CONNECTION_STATE: stateFile },
     listFn: async () => ({ devices: [device, { ...device, id: "bt:AABBCCDDEEFF", available: false }, { id: "pt3g:1", brand: "PT3G", available: true }] }),
     monitorSpawnFn: () => { opens++; return fakeChild(); } });
-  assert.equal((await settings.handle({ action: "list" })).devices.length, 1);
+  assert.deepEqual((await settings.handle({ action: "list" })).devices.map((d) => d.id), [device.id, "pt3g:1"]);
   await settings.handle({ action: "configure", purpose: "internal" });
   assert.equal((await settings.handle({ action: "configure", canNetwork: "guess" })).error, "invalid_can_network");
   await settings.handle({ action: "configure", canNetwork: "adas" });

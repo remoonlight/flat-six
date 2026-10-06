@@ -77,6 +77,15 @@ class TransportTests(unittest.TestCase):
         self.assertEqual(transport_rehearsal(p, ['a' * 64], groups, mode='live', port_factory=forbidden)['error'],
                          'manufacturer-transport-unqualified')
 
+    def test_unqualified_flags_preserved_for_success_and_failure(self):
+        p, groups, _ = fixtures()
+        for out in (transport_rehearsal(p, ['a' * 64], groups),
+                    transport_rehearsal(p, ['a' * 64], groups, mode='live'),
+                    transport_rehearsal(p, ['a' * 64], [])):
+            for key in ('executionEnabled', 'independentLiveVerified', 'liveApproved', 'fittedClaim'):
+                self.assertIs(out[key], False)
+            self.assertIsNone(out['writePayload'])
+
     def test_identity_mismatch_prevents_measurement(self):
         def change(port):
             wrong = SessionSimPort(CATALOG_PROFILE, 'identity-mismatch')

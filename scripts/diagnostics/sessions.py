@@ -864,6 +864,8 @@ def run_session(
         if retain_artifacts:
             dest.mkdir(parents=True, exist_ok=True)
             result["artifactDir"] = str(dest)
+        if mode == "live" and isinstance(device_id, str) and device_id.startswith("pt3g:"):
+            raise ElmError("pt3g-vehicle-transport-not-qualified")
         vnci_live = mode == "live" and isinstance(device_id, str) and device_id.startswith("vnci:")
         if vnci_live:
             if session_task == "clear":

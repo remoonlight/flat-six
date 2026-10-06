@@ -44,6 +44,9 @@ export function voltageFresh(at, now, ttlMs) {
 // Product design defaults — NOT measured X431 ATRV cadence:
 export const ATRV_INTERVAL_MS = 2000;
 export const VOLTAGE_FRESH_MS = 6000;
+// Windows CPython and Date.now() can differ by 1 ms at receipt. Bound that
+// granularity difference; never extend a reading's freshness into the future.
+export const MONITOR_CLOCK_GRANULARITY_MS = 2;
 export const RETRY_BACKOFF_MS = Object.freeze([5000, 10000, 20000, 30000]);
 export const MONITOR_AT_TIMEOUT_MS = 4000;
 export const MONITOR_HANDSHAKE_MS = 30_000;
@@ -86,13 +89,13 @@ export function acceptMonitorReading(doc, { deviceId, now, freshMs }) {
   }
   if (doc.ok !== true || doc.simulation !== false) return { reject: "malformed" };
   if (doc.type !== "handshake" && doc.type !== "reading") return { reject: "malformed" };
-  const source = deviceId?.startsWith("vnci:") ? "d-pdu-vbatt" : "atrv";
+  const source = /^(vnci|pt3g):/.test(deviceId || "") ? "d-pdu-vbatt" : "atrv";
   if (doc.voltageSource !== source) return { reject: "malformed" };
   if (doc.deviceId !== deviceId) return { reject: "device_mismatch" };
   // A completed adapter response independently proves the link even when ATRV is unavailable.
   if (doc.volts === null && doc.commOk !== true) return { reject: "malformed" };
   if (doc.volts !== null && (typeof doc.volts !== "number" || !Number.isFinite(doc.volts) || doc.volts < 6 || doc.volts > 20)) return { reject: "malformed" };
   const at = parseSampleAt(doc.at, now);
-  if (at == null || at > now || now - at > freshMs) return { reject: "stale" };
-  return { volts: doc.volts, at, source };
+  if (at == null || !Number.isFinite(now) || at - now > MONITOR_CLOCK_GRANULARITY_MS || now - at > freshMs) return { reject: "stale" };
+  return { volts: doc.volts, at: Math.min(at, now), source };
 }

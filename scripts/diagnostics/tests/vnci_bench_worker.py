@@ -17,7 +17,13 @@ def main():
     if ".local" not in directory.parts or not directory.is_dir():
         raise SystemExit("private scratch required")
     audit = directory / f"native-{os.getpid()}.jsonl"
-    original = vnci.NativeDpu.call
+    is_pt3g = '--pt3g' in sys.argv
+    if is_pt3g:
+        from scripts.diagnostics import pt3g
+        adapter, native_type = pt3g, pt3g.NativeAdapter
+    else:
+        adapter, native_type = vnci, vnci.NativeDpu
+    original = native_type.call
 
     def guarded(self, name, *args):
         if name not in ALLOWED:
@@ -41,15 +47,15 @@ def main():
             with audit.open("a", encoding="utf-8") as stream:
                 stream.write(json.dumps({**item, "phase": "end", "durationNs": time.monotonic_ns() - started}) + "\n")
 
-    vnci.NativeDpu.call = guarded
+    native_type.call = guarded
     if "--discover" in sys.argv:
-        print(json.dumps({"devices": vnci.discover(), "errors": []}))
+        print(json.dumps({"devices": adapter.discover(), "errors": []}))
         return 0
     request = json.loads(sys.stdin.readline())
     if (request.get("action") != "monitor" or request.get("purpose") != "diagnostic"
-            or not str(request.get("deviceId", "")).startswith("vnci:")):
+            or not str(request.get("deviceId", "")).startswith('pt3g:' if is_pt3g else 'vnci:')):
         raise SystemExit("bench-request-not-permitted")
-    return vnci.run_monitor(request["deviceId"], stdout=sys.stdout, stdin=sys.stdin)
+    return adapter.run_monitor(request["deviceId"], stdout=sys.stdout, stdin=sys.stdin)
 
 
 if __name__ == "__main__":

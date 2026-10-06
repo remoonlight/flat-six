@@ -15,11 +15,15 @@ def source(path):
     return {'path': str(path), 'bytes': len(raw), 'sha256': hashlib.sha256(raw).hexdigest()}
 
 
-def resources(path):
+def _document(path):
     raw = path.read_bytes()
     if len(raw) > 4 * 1024 * 1024 or b'<!ENTITY' in raw or b'<!DOCTYPE' in raw:
         raise ValueError('unsafe-or-oversized-MDF')
-    document = ET.fromstring(raw)
+    return ET.fromstring(raw)
+
+
+def resources(path):
+    document = _document(path)
     seen, result = set(), []
     for item in document.iter('RESOURCE'):
         name = item.findtext('SHORT_NAME')
@@ -38,6 +42,42 @@ def resources(path):
     return result
 
 
+def protocol_contracts(path):
+    """Resolve source object/parameter references; do not apply driver settings."""
+    document = _document(path)
+    objects = {}
+    for element in document.iter():
+        eid = element.get('EID')
+        if not eid:
+            continue
+        if eid in objects:
+            raise ValueError('duplicate-MDF-object')
+        objects[eid] = element
+    wanted = {'ISO_14230_3_on_ISO_15765_2', 'ISO_15765_3_on_ISO_15765_2', 'ISO_OBD_on_ISO_15765_4'}
+    contracts = []
+    for element in document.iter('PROTOCOL'):
+        name = element.findtext('SHORT_NAME')
+        if name not in wanted:
+            continue
+        parameters, unresolved = [], []
+        for ref in element.findall('COMPARAM_REF'):
+            link = ref.find('COMPARAM')
+            eid = link.get('IDREF') if link is not None else None
+            target = objects.get(eid)
+            if target is None or target.tag != 'COMPARAM':
+                unresolved.append(eid)
+                continue
+            parameters.append({'name': target.findtext('SHORT_NAME'), 'id': target.findtext('ID'),
+                'dataType': target.findtext('DATA_TYPE'), 'class': target.findtext('CLASS'),
+                'layer': target.findtext('LAYER'),
+                'defaultValue': ref.findtext('DEFAULT_VALUE', target.findtext('DEFAULT_VALUE')),
+                'minimum': ref.findtext('MIN_VALUE'), 'maximum': ref.findtext('MAX_VALUE')})
+        contracts.append({'protocol': name, 'id': element.findtext('ID'), 'parameters': parameters,
+                          'unresolvedReferences': unresolved, 'sourceDeclaredOnly': True,
+                          'runtimeAbiVerified': False, 'executionEnabled': False})
+    return {'protocols': contracts, 'missingProtocols': sorted(wanted - {p['protocol'] for p in contracts})}
+
+
 def audit(driver, reference):
     required = ('PDU_VCI.dll', 'pdu2.dll', 'db.dll', 'Marstool564.dll', 'PassthruManage.dll', 'MDF_VCI.xml', 'PDU_VCI.ini')
     absent = [name for name in required if not (driver / name).is_file()]
@@ -50,23 +90,36 @@ def audit(driver, reference):
     ini = (driver / 'PDU_VCI.ini').read_text(encoding='utf-8-sig') if (driver / 'PDU_VCI.ini').is_file() else ''
     detections = re.findall(r'^\s*15765StartDetect\s*=\s*(\d+)\s*$', ini, re.M)
     rows = resources(driver / 'MDF_VCI.xml') if (driver / 'MDF_VCI.xml').is_file() else []
+    contracts = protocol_contracts(driver / 'MDF_VCI.xml') if (driver / 'MDF_VCI.xml').is_file() else None
     target = [r for r in rows if r['busRef'] == 'ID_ISO_11898_2_DWCAN' and
               {p['pin'] for p in r['pins']} == {'6', '14'}]
     definitions = json.loads(reference.read_text(encoding='utf-8'))
     signals = [r for r in definitions['signals'] if any('981' in m or '982' in m for m in r.get('models', []))]
     limitations = definitions.get('parser', {}).get('limitations', [])
+    from .vbox_ref import candidate_layout, REFERENCES
+    layouts, layout_errors = [], []
+    for signal in signals:
+        if signal['sourceId'] not in ('vbox-ref-boxster-981', 'vbox-ref-cayman-981'):
+            continue
+        try:
+            layouts.append(candidate_layout(signal))
+        except ValueError as error:
+            layout_errors.append({'sourceId': signal['sourceId'], 'name': signal.get('signalName'), 'error': str(error)})
     return {'ok': True, 'kind': 'offline-adapter-preparation', 'noDeviceIO': True, 'driverLoaded': False,
         'vehicleVerified': False, 'pt3g': {'sources': files, 'missingFiles': absent,
             'archiveComparisons': comparisons, 'automaticProtocolDetectionDisabled': detections == ['0'],
             'sourceResourceCount': len(rows), 'diagnosticPinCandidates': target, 'executionEnabled': False,
-            'gaps': ['current-hardware-and-firmware-binding', 'D-PDU-object-and-parameter-contract',
+            'diagnosticProtocolContracts': contracts,
+            'gaps': ['current-hardware-and-firmware-binding', 'runtime-D-PDU-object-and-parameter-application',
                      'no-spontaneous-traffic-on-link-creation', 'cancel/timeout/close-native-behavior',
                      'independent-ECU-read-and-response', 'physical-silent-receive-qualification']},
         'internalCan': {'source': source(reference), 'targetCandidateRows': len(signals),
             'sourceCounts': dict(Counter(r['sourceId'] for r in signals)), 'signals': signals,
+            'vboxNumberingReferences': REFERENCES, 'vboxCandidateLayouts': layouts,
+            'vboxLayoutErrors': layout_errors,
             'sourceLimitations': limitations, 'runtimeDecodeEnabled': False,
             'physicalSilenceVerified': False, 'gaps': ['physical-network/pin/bitrate-qualification',
-                'Motorola-bit-numbering-and-source-conflicts', 'independent-reference-capture',
+                'REF-column-binding-and-model-applicability', 'independent-reference-capture',
                 'exact-target-model/version-applicability']}}
 
 

@@ -584,6 +584,8 @@ assert.equal(headerTaskState({ apiAvailable: true, overviewOk: false, overviewSt
   assert.equal(topologyCapability(dme, "VNCI").readable, true);
   assert.equal(topologyCapability(dme, "VNCI").clearable, false);
   assert.equal(topologyCapability(dme, "PT3G").clearable, false);
+  assert.equal(topologyCapability(dme, "PT3G").readable, false);
+  assert.match(topologyCapability(dme, "PT3G").readEvidence, /仅支持诊断头/);
   assert.equal(topologyCapability({ id: "dme" }).engine, false);
   assert.equal(topologyCapability({ id: "pdk" }, "vLinker").clearable, false);
   assert.match(topologyCapability({ id: "bcm-rear" }).codingDetail, /2 项重名/);
