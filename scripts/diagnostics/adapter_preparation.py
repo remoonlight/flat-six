@@ -79,16 +79,19 @@ def protocol_contracts(path):
 
 
 def audit(driver, reference):
-    required = ('PDU_VCI.dll', 'pdu2.dll', 'db.dll', 'Marstool564.dll', 'PassthruManage.dll', 'MDF_VCI.xml', 'PDU_VCI.ini')
+    from .pt3g import ACTIVE_CONFIG, SUPPORT_SHA256
+    required = tuple(SUPPORT_SHA256)
     absent = [name for name in required if not (driver / name).is_file()]
     files = [source(driver / name) for name in required if (driver / name).is_file()]
     archived = ROOT / '.local/pt3g-support/vendor/PORSCHE-VCI/X64'
     comparisons = [{'file': name, 'archivePresent': (archived / name).is_file(),
                     'matchesArchive': source(driver / name)['sha256'] == source(archived / name)['sha256']
                       if (driver / name).is_file() and (archived / name).is_file() else None}
-                   for name in required if name != 'PDU_VCI.ini']
-    ini = (driver / 'PDU_VCI.ini').read_text(encoding='utf-8-sig') if (driver / 'PDU_VCI.ini').is_file() else ''
-    detections = re.findall(r'^\s*15765StartDetect\s*=\s*(\d+)\s*$', ini, re.M)
+                   for name in required if name not in ('PDU_VCI.ini', ACTIVE_CONFIG)]
+    disabled = {}
+    for name in ('PDU_VCI.ini', ACTIVE_CONFIG):
+        ini = (driver / name).read_text(encoding='utf-8-sig') if (driver / name).is_file() else ''
+        disabled[name] = re.findall(r'^\s*15765StartDetect\s*=\s*(\d+)\s*$', ini, re.M) == ['0']
     rows = resources(driver / 'MDF_VCI.xml') if (driver / 'MDF_VCI.xml').is_file() else []
     contracts = protocol_contracts(driver / 'MDF_VCI.xml') if (driver / 'MDF_VCI.xml').is_file() else None
     target = [r for r in rows if r['busRef'] == 'ID_ISO_11898_2_DWCAN' and
@@ -107,7 +110,8 @@ def audit(driver, reference):
             layout_errors.append({'sourceId': signal['sourceId'], 'name': signal.get('signalName'), 'error': str(error)})
     return {'ok': True, 'kind': 'offline-adapter-preparation', 'noDeviceIO': True, 'driverLoaded': False,
         'vehicleVerified': False, 'pt3g': {'sources': files, 'missingFiles': absent,
-            'archiveComparisons': comparisons, 'automaticProtocolDetectionDisabled': detections == ['0'],
+            'archiveComparisons': comparisons, 'automaticProtocolDetectionDisabled': all(disabled.values()),
+            'activeConfigFile': ACTIVE_CONFIG, 'configurationFilesDisabled': disabled,
             'sourceResourceCount': len(rows), 'diagnosticPinCandidates': target, 'executionEnabled': False,
             'diagnosticProtocolContracts': contracts,
             'gaps': ['current-hardware-and-firmware-binding', 'runtime-D-PDU-object-and-parameter-application',

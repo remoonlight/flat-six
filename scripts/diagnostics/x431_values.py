@@ -12,6 +12,7 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 from .x431_formula import formula_from_record
+from scripts.x431_re.request_fields import coding_profile_variant
 
 FLAGS = {"executionEnabled": False, "liveVerified": False, "writePayload": None}
 
@@ -49,6 +50,10 @@ EVIDENCE = {
     "bcd": "BCDtoDec@0x3734e packed BCD-P only; BCD-UP not implemented",
     "ascii": "fixed BitLength copy; MinMax ZERO terminator within MaxLength else overlong; missing NUL missing_terminator; Encoding ISO-8859-1/2",
     "signed": "GetLINEAR vcvt.f64.s32/u32; GetIc signed vs unsigned compare",
+    "mapRadix": "GetTEXTTABLE 0x2cc4c/0x2cc58 and byte-width<5 0x2ce84/0x2ce90; GetIc endpoints strtoul base16, GetLong signed 0x- convention",
+    "emptyMask": "GetIDENTICAL 0x27590/0x27594 skips empty mask; GetTEXTTABLE 0x2ca62/0x2ca66 skips parsed zero including empty string",
+    "literalText": "GetTEXTTABLE 0x2cfd2 extracts between -> and ; then GetIDText@0x38a4c leaves non-0x/0X ASCII words unchanged; device-matched CALC/GGP",
+    "compoundText": "Only complete F0005D93/F0005D94 source formulas: original GetTEXTTABLE + GetIDText query 310007B4 for raw 0/1; ignored suffix retained, named editing blocked; 16 isolated CALC/SYSP/STD cases",
     "float32": "A_FLOAT32 IEEE BE bits; TAB display f32 round; pack overflow -> out_of_range; nan/inf -> nan",
     "compucode": "getParaObjectX@0x95f58 hex-concat/strtol; Formel54@0x964c8 uxth+%d@0x9655c; Formel21/119 lo*hi*k; Formel33 lo/hi*100; Formel5 (lo-100)*hi*0.1; EntryPoint=execute",
     "preview": "rawValue unsigned field bits; bits outside BitMask -> preview_raw_unrepresentable; post-decode raw must equal rawValue",
@@ -401,7 +406,7 @@ def classify_decode(parsed: dict, byte_off, bit_off) -> dict:
         if any(s.get("xb") == 0 for s in segs):
             return {"ok": False, "reason": "zero_denominator"}
     if kind == "TEXTTABLE":
-        if not parsed.get("maps") and not parsed.get("ic"):
+        if not parsed.get("maps") and not parsed.get("literalMaps") and not parsed.get("ic"):
             return {"ok": False, "reason": "texttable_empty"}
     if kind == "COMPUCODE":
         if _formel_key(parsed) not in {"FORMEL54", "FORMEL21", "FORMEL119", "FORMEL33", "FORMEL5"}:
@@ -425,8 +430,12 @@ def classify_preview(parsed: dict, byte_off, bit_off) -> dict:
     if bl is None or bi is None or bl <= 0 or bl > 32:
         return {"ok": False, "reason": "preview_not_single_byte_texttable"}
     if kind == "TEXTTABLE":
+        if parsed.get("compoundTextMapping"):
+            return {"ok": False, "reason": "preview_compound_enum_meaning_unqualified"}
+        if parsed.get("literalMaps"):
+            return {"ok": False, "reason": "preview_literal_enum_unqualified"}
         maps = parsed.get("maps") or []
-        if not maps or any(lo != hi for lo, hi, _ in maps):
+        if not maps or sum(hi - lo + 1 for lo, hi, _ in maps) > 256:
             return {"ok": False, "reason": "preview_range_enum"}
         return {"ok": True, "reason": None, "kind": "TEXTTABLE"}
     if kind == "IDENTICAL" and not _is_bytes_type(parsed):
@@ -479,6 +488,8 @@ def decode_record(record: dict, data: bytes) -> dict:
         "byteOffset": record.get("byteOffset"),
         "bitOffset": record.get("bitOffset"),
         "evidence": EVIDENCE,
+        **({"compoundTextMapping": parsed["compoundTextMapping"]}
+           if parsed.get("compoundTextMapping") else {}),
     }
     if not parsed.get("ok"):
         return _fail(parsed.get("reason") or "malformed_formula", **base)
@@ -585,6 +596,13 @@ def decode_record(record: dict, data: bytes) -> dict:
         )
     tid = _lookup_maps(cmpv, parsed.get("maps") or [])
     if tid is None:
+        literal = _lookup_maps(cmpv, parsed.get("literalMaps") or [])
+        if literal is not None:
+            return _flags({
+                "ok": True, "reason": None, **base, "raw": raw, "value": value,
+                "textId": None, "text": literal, "textStatus": "formula_literal",
+                "numeric": False,
+            })
         return _fail("texttable_unmapped", **base, raw=raw, value=value)
     text, st = _enum_lookup(record, tid)
     return _flags(
@@ -634,8 +652,7 @@ def preview_coding(record: dict, original: bytes, raw_value) -> dict:
     if mask_f and (rv & ~mask_f):
         return _fail("preview_raw_unrepresentable", **base, rawValue=rv)
     if parsed.get("kind") == "TEXTTABLE":
-        allowed = {a for a, b, _ in (parsed.get("maps") or []) if a == b}
-        if cmpv not in allowed:
+        if not any(a <= cmpv <= b for a, b, _ in (parsed.get("maps") or [])):
             return _fail("preview_raw_not_allowed_singleton", **base, rawValue=rv)
     ins = insert_raw(parsed, original, byte_off, bit_off, rv)
     if not ins["ok"]:
@@ -669,7 +686,7 @@ def _iter_pool_records(path: Path):
         for line in fh:
             if not line.strip():
                 continue
-            v = json.loads(line)
+            v = coding_profile_variant(json.loads(line))
             pools = v.get("pool_records") or {}
             for cat, blob in pools.items():
                 for rec in (blob or {}).get("records") or []:
@@ -761,7 +778,7 @@ def _parse_hex(s: str) -> bytes:
 def _load_record(variants: Path, profile_id: str, at: int | None, offset: int | None) -> dict:
     with variants.open(encoding="utf-8") as fh:
         for line in fh:
-            v = json.loads(line)
+            v = coding_profile_variant(json.loads(line))
             pid = v.get("profile_id") or v.get("name")
             if pid != profile_id:
                 continue

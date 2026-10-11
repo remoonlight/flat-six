@@ -36,7 +36,7 @@ if __package__:
         parse_id_chain_table,
         pool_end,
     )
-    from .request_fields import derived_read_request, parse_coding_suffix8, parse_identity_suffix7
+    from .request_fields import derived_read_request, parse_coding_suffix8, parse_identity_suffix7, coding_profile_records
 else:
     from classify import classify_variant
     from gag_lib import GgpLanguage, compact_text, sha256_path
@@ -57,7 +57,7 @@ else:
         parse_id_chain_table,
         pool_end,
     )
-    from request_fields import derived_read_request, parse_coding_suffix8, parse_identity_suffix7
+    from request_fields import derived_read_request, parse_coding_suffix8, parse_identity_suffix7, coding_profile_records
 
 EU5_NAME = "SDI9_1_981_3_4L_EU5"
 GW_VARIANT = "CAN_CAN_Gateway_A7_1"
@@ -195,7 +195,8 @@ def resolve_pool(name: str, raw: dict, lang, src: dict) -> tuple[list[dict], dic
                 item["derived_request_hex"] = req.get("request_hex") if allow else None
                 item["request_status"] = "derived_1A_22" if allow else req.get("status")
             out.append(item)
-        return out, join
+        return (coding_profile_records(out, table_offset=raw.get('start'), record_count=raw.get('count'))
+                if name == 'coding' else out), join
     if name == "measurement":
         for g in raw.get("groups") or []:
             gid = g.get("gag_hex")

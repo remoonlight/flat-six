@@ -13,6 +13,60 @@ def record(kind='IDENTICAL', **fields):
 
 
 class IndependentReferenceTests(unittest.TestCase):
+    def test_piecewise_shared_endpoint_signed_range_and_gap(self):
+        rec = record('TAB-INTP')
+        rec['formula'] += 'Lower=0x0,Upper=0xA,Xa=0,Xb=2,Xc=1;Lower=0xA,Upper=0x14,Xa=0,Xb=1,Xc=3;'
+        self.check(rec, 'FF000A', phys=Fraction(5))  # First segment owns shared endpoint.
+        self.check(rec, 'FF000B', phys=Fraction(33))
+        self.check(rec, 'FF0015', ok=False, reason='out_of_bounds')
+        rec = record('SCALE-LINEAR', BaseDataType='A_INT32', Encoding='2C')
+        rec['formula'] += 'Lower=0x-A,Upper=0x-1,Xa=0,Xb=2,Xc=1;Lower=0x1,Upper=0xA,Xa=0,Xb=1,Xc=1;'
+        self.check(rec, 'FFFFFA', value=-6, phys=Fraction(-3))
+        self.check(rec, 'FF0000', ok=False, reason='out_of_bounds')
+        self.assertIn(bytes.fromhex('A5000B'), reference_cases(rec))
+
+    def test_compucode_known_native_algebra_not_vehicle_meaning(self):
+        for name, value, phys in [('54', 0x0203, None), ('21', 6, Fraction(3, 500)),
+                                  ('119', 6, Fraction(3, 50)), ('5', -194, Fraction(-97, 5)),
+                                  ('33', 3, Fraction(150))]:
+            rec = record('COMPUCODE', BitLength=24, EntryPoint='execute', CodeFile=f'Formel{name}.class')
+            expected, _ = self.check(rec, 'FFFF0203', raw=0xFF0203, value=value)
+            self.assertEqual(expected.get('phys'), phys)
+        self.check(record('COMPUCODE', BitLength=24, EntryPoint='execute', CodeFile='Formel33.class'),
+                   'FF120001', ok=False, reason='zero_denominator')
+        with self.assertRaisesRegex(ValueError, 'unsupported'):
+            reference_value(record('COMPUCODE', CodeFile='Formel999.class'), bytes.fromhex('FF0203'))
+
+    def test_variable_zero_end_length_and_empty_bytefield(self):
+        rec = record(BaseDataType='A_ASCIISTRING', Encoding='ASCII')
+        rec['formula'] = 'IDENTICAL:BaseDataType=A_ASCIISTRING,Encoding=ASCII,MinLength=2,MaxLength=3,Termination=ZERO;'
+        self.check(rec, 'FF4142005A', raw='4142', value='AB')
+        self.check(rec, 'FF4100', ok=False, reason='truncated')
+        self.check(rec, 'FF4142', ok=False, reason='missing_terminator')
+        self.check(rec, 'FF4142434400', ok=False, reason='overlong')
+        rec['formula'] = rec['formula'].replace('ZERO', 'END-OF-PDU')
+        self.check(rec, 'FF41424344', raw='414243', value='ABC')
+        rec['formula'] = 'IDENTICAL:BaseDataType=A_BYTEFIELD,MinLength=0,MaxLength=4094,Termination=END-OF-PDU;'
+        self.check(rec, 'FF', raw='', value='', numeric=False)
+        self.assertLessEqual(max(map(len, reference_cases(rec))), 4095)
+
+    def test_bytefield_texttable_literal_tokens_and_reserved_values(self):
+        rec = record('TEXTTABLE', BaseDataType='A_BYTEFIELD')
+        rec['formula'] += '[2038]->0xABCD;Ic:[0xFE,0xFF]->0x1234;'
+        rec['enumText'] = {'ABCD': 'native hexadecimal entry'}
+        self.check(rec, 'FF2038', value=0x2038, text='native hexadecimal entry')
+        self.check(rec, 'FF07F6', ok=False, reason='texttable_unmapped')
+        self.check(rec, 'FF00FF', ok=False, reason='invalid_reserved')
+
+    def test_hand_calculated_packed_decimal_and_ieee_float(self):
+        self.check(record(Encoding='BCD-P'), 'FF1234', raw=0x1234, value=1234)
+        self.check(record(Encoding='BCD-P'), 'FF12AF', ok=False, reason='encoding_bcd_invalid', raw=0x12AF)
+        self.check(record('LINEAR', Encoding='BCD-P', Xa=0, Xb=10, Xc=1),
+                   'FF1234', phys=Fraction(617, 5))
+        self.check(record(BaseDataType='A_FLOAT32', BitLength=32), 'FF3FC00000', value=Fraction(3, 2))
+        self.check(record(BaseDataType='A_FLOAT32', BitLength=32), 'FF00000001', value=Fraction(1, 2 ** 149))
+        self.check(record(BaseDataType='A_FLOAT32', BitLength=32), 'FF7F800000', ok=False, reason='nan')
+
     def check(self, rec, hx, **known):
         data = bytes.fromhex(hx)
         expected = reference_value(rec, data)

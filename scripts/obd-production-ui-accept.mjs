@@ -8,7 +8,7 @@ import { pathToFileURL } from "node:url";
 
 const root = path.resolve(import.meta.dirname, "..");
 const temp = fs.mkdtempSync(path.join(os.tmpdir(), "porsche-obd-workspace-"));
-const output = path.join(root, ".local/obd-workspace-accept");
+const output = path.resolve(process.env.PORSCHE981_ACCEPT_OUTPUT || path.join(root, ".local/obd-workspace-accept"));
 fs.mkdirSync(output, { recursive: true });
 const fixture = path.join(temp, "devices.json");
 fs.writeFileSync(fixture, JSON.stringify({ devices: [], errors: [] }));
@@ -82,7 +82,7 @@ try {
   }
   // Startup does not connect or scan; unidentified candidates cannot be cleared.
   assert.deepEqual(await page.getByTestId("topo-detail").locator("button").allTextContents(),
-    ["保存结果", "读取所有单元故障码", "清除所有单元故障码"]);
+    ["保存结果", "读取所有单元故障码(未完成)", "清除所有单元故障码(未完成)"]);
   assert.equal(await page.getByTestId("topo-detail").locator("dl").count(), 0);
   assert.match(await page.getByTestId("topo-detail").locator("h3").innerText(), /GW/);
   assert.doesNotMatch(await page.locator("body").innerText(), /仅读取 GW、DME 的身份与故障码；其他系统跳过。|此模块尚未接入车辆诊断，可先查看离线资料。/);
@@ -91,6 +91,8 @@ try {
   assert.equal(await page.getByTestId("topo-confirm").count(), 0);
   assert.equal(await page.getByTestId("topo-cancel").count(), 0);
   await page.locator('[data-testid="topo-node-dme"]').first().click();
+  assert.equal((await page.getByTestId("topo-read-selected").innerText()).trim(), "读取故障码");
+  assert.equal((await page.getByTestId("topo-clear-selected").innerText()).trim(), "清除故障码");
   assert.equal(await page.getByTestId("topo-overview").count(), 0);
   assert.equal(await page.getByTestId("topo-read-all").count(), 0);
   assert.equal(await page.getByTestId("topo-clear-all").count(), 0);
@@ -108,6 +110,8 @@ try {
   assert.doesNotMatch(await page.getByTestId("topo-detail").innerText(), /诊断快照未保存|diag_capture_event_required/);
   assert.equal(await page.getByTestId("topo-save-result").isDisabled(), true);
   await page.locator('[data-testid="topo-node-pdk"]').first().click();
+  assert.equal((await page.getByTestId("topo-read-selected").innerText()).trim(), "读取故障码(未完成)");
+  assert.equal((await page.getByTestId("topo-clear-selected").innerText()).trim(), "清除故障码(未完成)");
   assert.equal(await page.getByTestId("topo-read-selected").isDisabled(), true);
   assert.equal(await page.getByTestId("topo-clear-selected").isDisabled(), true);
   await page.locator('[data-testid="topo-node-shaker"]').first().click();
@@ -222,6 +226,15 @@ try {
   assert.deepEqual(selectedSaved.runs[0].engine.selectedPids, ["0C"]);
   assert.deepEqual([...new Set(selectedSaved.samples.map((s) => s.pid))], ["0C"]);
   await page.setViewportSize({ width: 760, height: 900 });
+  const layout = await page.locator('[data-page="engine-session"]').evaluate(root => {
+    const rect = root.getBoundingClientRect();
+    return { clientWidth: root.clientWidth, scrollWidth: root.scrollWidth,
+      overflow: [...root.querySelectorAll("*")].filter(el => el.getBoundingClientRect().right > rect.right + 1 || el.scrollWidth > el.clientWidth + 1).map(el => ({
+        tag: el.tagName, className: typeof el.className === "string" ? el.className : "svg", testId: el.getAttribute("data-testid"),
+        text: el.textContent.slice(0, 240), right: el.getBoundingClientRect().right,
+      })) };
+  });
+  fs.writeFileSync(path.join(output, "narrow-engine-layout.json"), JSON.stringify(layout, null, 2));
   assert.ok(await page.locator('[data-page="engine-session"]').evaluate((el) => el.scrollWidth <= el.clientWidth));
   await page.getByTestId("eng-pids").scrollIntoViewIfNeeded();
   await shot("engine-selected-narrow.png");

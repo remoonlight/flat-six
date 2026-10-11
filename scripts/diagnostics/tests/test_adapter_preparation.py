@@ -1,10 +1,27 @@
 import tempfile
+import json
 from pathlib import Path
 import unittest
-from scripts.diagnostics.adapter_preparation import resources, protocol_contracts
+from scripts.diagnostics.adapter_preparation import resources, protocol_contracts, audit
+from scripts.diagnostics.pt3g import ACTIVE_CONFIG
 
 
 class AdapterPreparationTests(unittest.TestCase):
+    def test_audit_never_claims_detection_disabled_from_legacy_file_alone(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            reference = root / 'signals.json'; reference.write_text(json.dumps({'signals': []}))
+            (root / 'PDU_VCI.ini').write_text('15765StartDetect=0\n')
+            doc = audit(root, reference)['pt3g']
+            self.assertFalse(doc['automaticProtocolDetectionDisabled'])
+            self.assertIn(ACTIVE_CONFIG, doc['missingFiles'])
+            (root / ACTIVE_CONFIG).write_text('15765StartDetect=1\n')
+            self.assertFalse(audit(root, reference)['pt3g']['automaticProtocolDetectionDisabled'])
+            (root / ACTIVE_CONFIG).write_text('15765StartDetect=0\n')
+            doc = audit(root, reference)['pt3g']
+            self.assertTrue(doc['automaticProtocolDetectionDisabled'])
+            self.assertFalse(doc['executionEnabled'])
+
     def read(self, body):
         with tempfile.TemporaryDirectory() as temp:
             path = Path(temp) / 'MDF.xml'; path.write_text(body, encoding='utf8')

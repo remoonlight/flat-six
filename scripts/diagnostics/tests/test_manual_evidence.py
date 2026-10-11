@@ -372,8 +372,21 @@ class ManualEvidenceTests(unittest.TestCase):
         self.assertEqual(joins[0]["relation"], "x431_only_no_manual_body")
 
     def test_caption_honesty_and_hash_bound_pin_pairs(self):
+        from unittest.mock import patch
         from scripts.diagnostics.manual_evidence import apply_caption_honesty, diagnostic_topology, overlay_wiring_pages
         from scripts.diagnostics.workshop_registry import bind_obd_gateway_facts
+
+        # Explicit input fixture for binding behavior; no private local review
+        # archive is required and this test does not qualify vehicle wiring.
+        facts = {"sources": [{"id": "wiring-981",
+            "sha256": "40E4C38CFBEA097EDBA39E5ECA57A4C93D08A489F5248DED9985BA16153DD5BD",
+            "pdfPage": 11, "printedModelYear": "2013 (D)"}],
+            "obdToGateway": [{"fromComponent": "X001.1", "fromPin": "A6",
+                "toComponent": "A010.1", "toPin": "A19"}],
+            "gatewayConnectorPairs": [{"lowPin": "A5"}]}
+        loader = patch("scripts.diagnostics.workshop_registry.load_coordinator_wiring_facts", return_value=facts)
+        loader.start()
+        self.addCleanup(loader.stop)
 
         pages = apply_caption_honesty(
             [

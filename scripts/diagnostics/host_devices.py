@@ -9,21 +9,54 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def collect_host_devices(*, platform=None, query=None, program_data=None, vendor_root=None):
+def collect_host_devices(*, platform=None, query=None, program_data=None, vendor_root=None, env=None):
     from .connection import _ps_json
 
     plat = platform or sys.platform
     if plat != "win32":
         return {"usb": [], "services": [], "drivers": {}, "errors": []}
-    data_root = Path(program_data or os.environ.get("ProgramData", r"C:\ProgramData"))
-    vnci_root = Path(vendor_root or ROOT / ".local/vnci-support/vendor/VW_PDUAPI_OS")
-    e70 = data_root / "PORSCHE-VCI"
+    from .vnci import vendor_root as vnci_path, verify_vendor_files as verify_vnci, DRIVER_VERSION
+    from .pt3g import vendor_root as pt3g_path, verify_vendor_files as verify_pt3g
+    from .x431_reference import verify_windows_tools
+
+    environment = dict(os.environ if env is None else env)
+    if program_data is not None:
+        environment['ProgramData'] = str(program_data)
+    vnci_root = Path(vendor_root) if vendor_root is not None else vnci_path(environment)
+    pt_root = pt3g_path(environment)
+
+    def driver(root, required, verify, version):
+        installed = all((root / name).is_file() for name in required)
+        verified = False;error = None
+        try:
+            verify(root)
+            verified = True
+        except (OSError, ValueError, RuntimeError) as failure:
+            error = str(failure) or type(failure).__name__
+        return {'installed': installed, 'version': version if verified else None,
+                'expectedVersion': version, 'supportFilesQualified': verified, 'supportError': error,
+                'versionSource': 'pinned-support-file-hashes' if verified else None,
+                'driverLoaded': False, 'firmwareQualified': False, 'vehicleQualified': False}
+
+    adb = environment.get('PORSCHE981_ADB') or shutil.which('adb', path=environment.get('PATH', ''))
+    adb_tools = None;adb_error = 'adb-runtime-missing'
+    if adb:
+        try:
+            adb_tools = verify_windows_tools(adb)
+            adb_error = None
+        except (OSError, ValueError, RuntimeError) as failure:
+            adb_error = str(failure) or type(failure).__name__
     drivers = {
-        "VNCI": {"installed": (vnci_root / "PDUAPI_VW.dll").is_file(), "version": "29.0.0"},
-        "PT3G": {"installed": all((e70 / f).is_file() for f in
-                                  ("E70_PT3G_SERVICE.exe", "X64/PDU_VCI.dll", "X64/pdu2.dll")),
-                  "version": "E70/PORSCHE-VCI"},
-        "X431-tablet": {"installed": bool(shutil.which("adb")), "version": "ADB"},
+        "VNCI": driver(vnci_root, ('PDUAPI_VW.dll',), verify_vnci, DRIVER_VERSION),
+        "PT3G": driver(pt_root, ('../E70_PT3G_SERVICE.exe', 'PDU_VCI.dll', 'pdu2.dll'),
+                       verify_pt3g, "E70/PORSCHE-VCI"),
+        "X431-tablet": {"installed": bool(adb and Path(adb).is_file()),
+                        "version": adb_tools['version'] if adb_tools else None,
+                        "supportFilesQualified": bool(adb_tools), "supportError": adb_error,
+                        "versionSource": 'pinned-support-file-hashes' if adb_tools else None,
+                        "runtimeExecuted": False, "serverStarted": False,
+                        "firmwareQualified": False, "vehicleQualified": False,
+                        "directProjectHeadTransportImplemented": False},
     }
     script = (
         "[Console]::OutputEncoding=[System.Text.Encoding]::UTF8; "

@@ -11,10 +11,12 @@ import path from "node:path";
 import { StringDecoder } from "node:string_decoder";
 import { resolvePythonCandidates } from "./offline-diagnostics.mjs";
 import { validCanFrame } from "./internal-can-data.mjs";
+import { validDiagnosticPdu } from "./diagnostic-pdu-data.mjs";
+import { createEngineAcquisition } from "../src/engine-acquisition.mjs";
 
 export const SESSION_CHANNEL = "diagnostics:session";
 
-const ACTIONS = new Set(["prepare", "start", "status", "cancel", "overview"]);
+const ACTIONS = new Set(["prepare", "start", "status", "cancel", "overview", "saveEngine", "discardEngine"]);
 const PROFILES = new Set(["porsche-981-2014-dme", "porsche-981-2014-gateway"]);
 const MODES = new Set(["simulation", "live"]);
 const SESSION_TASKS = new Set(["read", "clear", "engine"]);
@@ -35,7 +37,7 @@ const SCENARIOS = new Set([
   "disconnect",
   "slow",
 ]);
-const EVENT_TYPES = new Set(["plan", "progress", "result", "can-frame"]);
+const EVENT_TYPES = new Set(["plan", "progress", "result", "can-frame", "diagnostic-pdu"]);
 const RESULT_STATUS = new Set(["completed", "failed", "cancelled"]);
 
 const PREPARE_START_KEYS = Object.freeze([
@@ -52,9 +54,11 @@ const PREPARE_START_KEYS = Object.freeze([
   "sampleCycles",
   "intervalMs",
   "selectedPids",
+  "engineBatchId",
 ]);
 const JOB_KEYS = Object.freeze(["action", "jobId"]);
 const OVERVIEW_KEYS = Object.freeze(["action"]);
+const ENGINE_BATCH_KEYS = Object.freeze(["action", "engineBatchId"]);
 
 const MAX_JSON = 16 * 1024;
 const MAX_STDOUT = 2 * 1024 * 1024;
@@ -65,6 +69,7 @@ const MAX_HISTORY = 8;
 const OP_ID_RE = /^[A-Za-z0-9:_-]{1,80}$/;
 const RUN_ID_RE = /^[A-Za-z0-9][A-Za-z0-9_-]{7,63}$/;
 const JOB_ID_RE = /^j[a-f0-9]{16}$/;
+const ENGINE_BATCH_DURATION_MS = 10 * 60 * 1000;
 
 const FLAGS = Object.freeze({
   executionEnabled: false,
@@ -96,6 +101,11 @@ export function validateSessionRequest(req) {
   if (!isPlain(req)) return fail("malformed_request");
   const keys = Object.keys(req);
   if (!ACTIONS.has(req.action)) return fail("invalid_action", { action: req.action });
+  if (req.action === "saveEngine" || req.action === "discardEngine") {
+    if (keys.some(key => !ENGINE_BATCH_KEYS.includes(key))) return fail("forbidden_field");
+    return typeof req.engineBatchId === "string" && JOB_ID_RE.test(req.engineBatchId)
+      ? null : fail("invalid_engine_batch");
+  }
   const allowed =
     req.action === "overview" ? OVERVIEW_KEYS : req.action === "status" || req.action === "cancel" ? JOB_KEYS : PREPARE_START_KEYS;
   const extra = keys.filter((k) => !allowed.includes(k));
@@ -117,6 +127,9 @@ export function validateSessionRequest(req) {
   if (req.action === "overview") {
     return null;
   }
+
+  if (req.engineBatchId !== undefined && (req.action !== "start" || req.sessionTask !== "engine"
+    || typeof req.engineBatchId !== "string" || !JOB_ID_RE.test(req.engineBatchId))) return fail("invalid_engine_batch");
 
   if (typeof req.profileId !== "string" || !PROFILES.has(req.profileId)) {
     return fail("invalid_profile_id");
@@ -201,6 +214,7 @@ function toBackend(req, extra = {}) {
   const sessionTask = req.sessionTask || "read";
   const body = { action: req.action === "start" ? "run" : "prepare", profileId: req.profileId, mode };
   if (mode === "live" && extra.deviceId) body.deviceId = extra.deviceId;
+  if (mode === "live" && extra.adapterModel) body.adapterModel = extra.adapterModel;
   if (sessionTask === "clear") body.sessionTask = "clear";
   if (sessionTask === "engine") {
     body.sessionTask = "engine";
@@ -309,6 +323,8 @@ function checkEvent(ev, backend) {
   if (!EVENT_TYPES.has(ev.type)) return "protocol_error";
   if (ev.type === "can-frame" && (!validCanFrame(ev.frame) || ev.profileId !== backend.profileId
     || typeof ev.runId !== "string" || !RUN_ID_RE.test(ev.runId) || ev.simulation !== (backend.mode === "simulation"))) return "protocol_error";
+  if (ev.type === "diagnostic-pdu" && (!validDiagnosticPdu(ev.pdu) || ev.profileId !== backend.profileId
+    || typeof ev.runId !== "string" || !RUN_ID_RE.test(ev.runId) || ev.simulation !== (backend.mode === "simulation"))) return "protocol_error";
   if (ev.type === "progress") {
     if (typeof ev.runId !== "string" || typeof ev.stage !== "string") return "protocol_error";
     if (ev.profileId != null && ev.profileId !== backend.profileId) return "protocol_error";
@@ -321,6 +337,10 @@ function checkEvent(ev, backend) {
   if (ev.type === "plan" && typeof ev.ok !== "boolean") return "protocol_error";
   if (ev.type === "result") {
     if (typeof ev.ok !== "boolean") return "protocol_error";
+    // Failed/cancelled sessions may carry partial samples. Validate them before
+    // retaining anything in main, just as for a successful result.
+    if (ev.runId != null && (typeof ev.runId !== "string" || !RUN_ID_RE.test(ev.runId))) return "protocol_error";
+    if (ev.engine != null && checkEnginePayload(ev.engine, backend)) return "protocol_error";
     const successBad = checkSuccessResult(ev, backend);
     if (successBad) return successBad;
     if (ev.profileId != null && ev.profileId !== backend.profileId) return "protocol_error";
@@ -483,6 +503,11 @@ export function createReadOnlySessionManager(opts) {
   const injected = Boolean(opts.spawnFn);
   const gate = opts.gate;
   const getLiveDeviceId = opts.getLiveDeviceId;
+  const getLiveAdapterModel = opts.getLiveAdapterModel;
+  const now = opts.nowFn || (() => performance.now());
+  const setDeadlineTimer = opts.setDeadlineTimeoutFn || setTimeout;
+  const clearDeadlineTimer = opts.clearDeadlineTimeoutFn || clearTimeout;
+  const engineBatches = new Map();
 
   let active = null;
   const jobs = new Map();
@@ -509,6 +534,7 @@ export function createReadOnlySessionManager(opts) {
   }
 
   function snapshot(job) {
+    expireEngineJob(job);
     return {
       ok: !job.error,
       ...FLAGS,
@@ -520,7 +546,26 @@ export function createReadOnlySessionManager(opts) {
       plan: job.plan || null,
       error: job.error || null,
       resumed: Boolean(job.resumed),
+      engineBatchId: job.engineBatch?.id,
+      stopReason: job.stopReason || null,
     };
+  }
+
+  function armEngineDeadline(job) {
+    job.engineTimer = setDeadlineTimer(() => {
+      if (jobs.get(job.id) !== job || job.state !== "running") return;
+      expireEngineJob(job);
+      // A rounded or early timer must not silently remove the deadline guard.
+      if (job.state === "running") armEngineDeadline(job);
+    }, Math.max(1, Math.ceil(job.engineBatch.deadline - now())));
+    job.engineTimer?.unref?.();
+  }
+
+  function expireEngineJob(job) {
+    if (!job.engineBatch || now() < job.engineBatch.deadline || job.state !== "running") return;
+    job.stopReason = "time-limit";
+    job.state = "cancelling";
+    sendCancel(job, false);
   }
 
   function spawnSession(backend, job, onDone) {
@@ -537,6 +582,7 @@ export function createReadOnlySessionManager(opts) {
     const settle = (error) => {
       if (settled) return;
       settled = true;
+      job.workerProtocolFailed = Boolean(error);
       onDone(error);
     };
 
@@ -608,8 +654,14 @@ export function createReadOnlySessionManager(opts) {
       );
       job.sessionTimer = timer;
 
+      const routeEvent = (event) => {
+        if (event.type === "can-frame") opts.onCanFrame?.(event);
+        else if (event.type === "diagnostic-pdu") opts.onDiagnosticPdu?.(event);
+        else pushEvent(job, event);
+      };
       const consume = (chunk) => {
         if (settled || attempt.abandoned || capped || protocolErr) return;
+        expireEngineJob(job);
         const room = maxStdout + 1 - stdout.length;
         const take = chunk.subarray(0, Math.max(0, room));
         stdout = Buffer.concat([stdout, take]);
@@ -639,8 +691,7 @@ export function createReadOnlySessionManager(opts) {
             finishWait(protocolErr);
             return;
           }
-          if (parsed.event.type === "can-frame") opts.onCanFrame?.(parsed.event);
-          else pushEvent(job, parsed.event);
+          routeEvent(parsed.event);
         }
       };
 
@@ -672,6 +723,7 @@ export function createReadOnlySessionManager(opts) {
       child.on("close", (code) => {
         if (attempt.abandoned) return;
         job.childClosed = true;
+        job.childCloseCode = code;
         clearT(timer);
         if (watchdog) clearT(watchdog);
         if (job.cancelTimer) clearT(job.cancelTimer);
@@ -689,7 +741,7 @@ export function createReadOnlySessionManager(opts) {
           } else {
             const parsed = parseLine(rest, backend);
             if (parsed.error) protocolErr = parsed.error;
-            else if (!parsed.skip && parsed.event) pushEvent(job, parsed.event);
+            else if (!parsed.skip && parsed.event) routeEvent(parsed.event);
           }
         }
         if (protocolErr) {
@@ -760,6 +812,7 @@ export function createReadOnlySessionManager(opts) {
   }
 
   function completeJob(job, error) {
+    if (job.engineTimer) clearDeadlineTimer(job.engineTimer);
     if (job.cancelTimer) clearT(job.cancelTimer);
     if (job.sessionTimer) clearT(job.sessionTimer);
     if (error) {
@@ -797,7 +850,19 @@ export function createReadOnlySessionManager(opts) {
     if (job.child && !job.childClosed) return;
     if (job.endNotified) return;
     job.endNotified = true;
+    if (job.nativeSession && job.child) {
+      const restoration = job.final?.restoration;
+      job.nativeReleaseVerified = !job.workerProtocolFailed && [0, 1].includes(job.childCloseCode)
+        && restoration?.adapterClose === "D-PDU disconnect/destruct"
+        && Array.isArray(restoration.errors) && restoration.errors.length === 0;
+      if (!job.nativeReleaseVerified) { job.error = "adapter_release_not_verified"; job.state = "failed"; }
+    }
     gate?.release("session");
+    if (job.engineBatch?.acquisition && !job.batchRetained) {
+      job.batchRetained = true;
+      if (job.final) job.engineBatch.acquisition.append({ ...job.final, sessionState: job.state, sessionError: job.error });
+      if (job.stopReason) job.engineBatch.acquisition.stop(job.stopReason);
+    }
     if (job.kind !== "prepare") opts.onSessionEnded?.(job);
   }
 
@@ -811,7 +876,7 @@ export function createReadOnlySessionManager(opts) {
         return fail("sessions_source_missing", { path: missing });
       }
     }
-    const backend = toBackend({ ...req, action: "prepare" }, { deviceId: getLiveDeviceId?.() });
+    const backend = toBackend({ ...req, action: "prepare" }, { deviceId: getLiveDeviceId?.(), adapterModel: getLiveAdapterModel?.() });
     const job = {
       id: newJobId(),
       ownerId,
@@ -842,7 +907,8 @@ export function createReadOnlySessionManager(opts) {
     });
   }
 
-  function start(req, ownerId) {
+  function start(req, ownerId, requestedAt = now()) {
+    if (engineBatches.get(ownerId)?.saving) return fail("engine_batch_saving");
     const mode = req.mode || "simulation";
     if (mode === "live") {
       const blocked = liveBlocked(opts, envIn);
@@ -859,8 +925,28 @@ export function createReadOnlySessionManager(opts) {
         return fail("sessions_source_missing", { path: missing });
       }
     }
+    let engineBatch;
+    if (req.sessionTask === "engine") {
+      const signature = JSON.stringify([mode, req.profileId, req.selectedPids || ENGINE_PIDS, getLiveDeviceId?.(), getLiveAdapterModel?.(),
+        req.sampleCycles ?? ENGINE_SAMPLE_CYCLES_DEFAULT, req.intervalMs ?? ENGINE_INTERVAL_MS_DEFAULT, req.scenario || "success"]);
+      if (req.engineBatchId) {
+        engineBatch = engineBatches.get(ownerId);
+        if (!engineBatch || engineBatch.id !== req.engineBatchId || engineBatch.signature !== signature) { gate?.release("session"); return fail("invalid_engine_batch"); }
+      } else {
+        const previous = engineBatches.get(ownerId);
+        if (previous) previous.acquisition = null;
+        engineBatch = { id: newJobId(), signature, deadline: requestedAt + ENGINE_BATCH_DURATION_MS,
+          acquisition: createEngineAcquisition(), saving: false };
+        engineBatches.set(ownerId, engineBatch);
+      }
+      if (now() >= engineBatch.deadline) {
+        engineBatch.acquisition.stop("time-limit");
+        gate?.release("session");
+        return fail("engine_batch_time_limit", { engineBatchId: engineBatch.id, stopReason: "time-limit" });
+      }
+    }
     const liveId = typeof getLiveDeviceId === "function" ? getLiveDeviceId() : null;
-    const backend = toBackend({ ...req, action: "start" }, { deviceId: liveId });
+    const backend = toBackend({ ...req, action: "start" }, { deviceId: liveId, adapterModel: getLiveAdapterModel?.() });
     const job = {
       id: newJobId(),
       ownerId,
@@ -872,11 +958,15 @@ export function createReadOnlySessionManager(opts) {
       error: null,
       child: null,
       kind: "run",
+      nativeSession: mode === "live" && typeof liveId === "string" && liveId.startsWith("vnci:"),
       resumed: Boolean(req.resumeRunId),
+      engineBatch,
     };
     jobs.set(job.id, job);
+    if (engineBatch) armEngineDeadline(job);
     spawnSession(backend, job, (error) => completeJob(job, error));
-    return { ok: true, jobId: job.id, ...FLAGS };
+    expireEngineJob(job);
+    return { ok: true, jobId: job.id, engineBatchId: engineBatch?.id, ...FLAGS };
   }
 
   function owned(job, ownerId) {
@@ -921,18 +1011,34 @@ export function createReadOnlySessionManager(opts) {
     return out;
   }
 
-  async function handle(request, { ownerId } = { ownerId: 0 }) {
+  async function handle(request, { ownerId = 0, engineRequestedAt } = {}) {
     const checked = validateSessionRequest(request);
     if (checked) return checked;
+    if (request.action === "saveEngine" || request.action === "discardEngine") {
+      const batch = engineBatches.get(ownerId);
+      if (!batch || batch.id !== request.engineBatchId) return fail("invalid_engine_batch");
+      if (batch.saving) return fail("engine_batch_saving");
+      if ([...jobs.values()].some(job => job.engineBatch === batch && (["running", "cancelling"].includes(job.state)
+        || (job.child && !job.childClosed)))) return fail("busy");
+      if (request.action === "discardEngine") { batch.acquisition = null; engineBatches.delete(ownerId); return { ok: true, ...FLAGS }; }
+      if (!batch.acquisition.count || typeof opts.saveEngineRecording !== "function") return fail("engine_recording_unavailable");
+      batch.saving = true;
+      try { return { ...FLAGS, ...await opts.saveEngineRecording(batch.acquisition.export(), ownerId) }; }
+      catch (error) { return fail(error?.code || "recording_save_failed"); }
+      finally { batch.saving = false; }
+    }
     if (request.action === "overview") return overview(ownerId);
     if (request.action === "prepare") return runPrepare(request, ownerId);
-    if (request.action === "start") return start(request, ownerId);
+    if (request.action === "start") return start(request, ownerId, engineRequestedAt ?? now());
     if (request.action === "status") return status(request, ownerId);
     if (request.action === "cancel") return cancel(request, ownerId);
     return fail("invalid_action");
   }
 
   function cancelOwned(ownerId) {
+    const batch = engineBatches.get(ownerId);
+    if (batch) batch.acquisition = null;
+    engineBatches.delete(ownerId);
     for (const job of jobs.values()) {
       if (job.ownerId === ownerId && (job.state === "running" || job.state === "cancelling")) {
         sendCancel(job, false);
@@ -980,7 +1086,7 @@ export function createReadOnlySessionManager(opts) {
     return isIdle() ? { ok: true } : fail("session_close_timeout");
   }
 
-  return { handle, cancelOwned, cancelActiveAndWait, shutdown, isIdle, _jobs: jobs };
+  return { handle, cancelOwned, cancelActiveAndWait, shutdown, isIdle, requestTime: now, _jobs: jobs };
 }
 
 export function backendReadyPath(repoRoot) {

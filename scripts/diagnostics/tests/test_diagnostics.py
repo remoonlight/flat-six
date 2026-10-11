@@ -423,6 +423,11 @@ class TestElmFake(unittest.TestCase):
 
 
 class TestAllowlistLive(unittest.TestCase):
+    def setUp(self):
+        directory = tempfile.TemporaryDirectory(prefix='flat-six-injected-live-')
+        self.addCleanup(directory.cleanup)
+        self.output = Path(directory.name)
+
     def test_blocks_writes(self):
         cat = load_catalog()
         gw = profile_by_id(cat, "porsche-981-2014-gateway")
@@ -441,11 +446,11 @@ class TestAllowlistLive(unittest.TestCase):
             + [_ok_prompt("OK\r\r")]
         )
         port = FakePort(chunks)
-        out = run_read("porsche-981-2014-dme", "dme-dsn", port=port, budget_s=20)
+        out = run_read("porsche-981-2014-dme", "dme-dsn", port=port, budget_s=20, out_dir=self.output / 'success')
         self.assertTrue(out["ok"], out)
         self.assertEqual(out["decoded"]["text"], "P200")
         self.assertTrue(port.closed)
-        failed = run_read("porsche-981-2014-dme", "dme-dsn", port=FakePort([]), budget_s=0.2)
+        failed = run_read("porsche-981-2014-dme", "dme-dsn", port=FakePort([]), budget_s=0.2, out_dir=self.output / 'failed')
         self.assertFalse(failed["ok"])
 
     def test_identity_mismatch_fails_closed_exact_trim(self):
@@ -462,7 +467,7 @@ class TestAllowlistLive(unittest.TestCase):
             + [_ath1("7E8 06 5A 9F 50 32 30 31 AA")]
             + [_ok_prompt("OK\r\r")]
         )
-        out = run_read("porsche-981-2014-dme", "dme-dsn", port=FakePort(chunks), budget_s=20)
+        out = run_read("porsche-981-2014-dme", "dme-dsn", port=FakePort(chunks), budget_s=20, out_dir=self.output)
         self.assertFalse(out["ok"])
         self.assertTrue(out.get("identityMismatch"))
         self.assertEqual(out.get("error"), "identity-mismatch")
@@ -474,7 +479,7 @@ class TestAllowlistLive(unittest.TestCase):
             + [_ath1("7E8 03 5A 9F 50 AA AA AA AA")]
             + [_ok_prompt("OK\r\r")]
         )
-        out = run_read("porsche-981-2014-dme", "dme-dsn", port=FakePort(chunks), budget_s=20)
+        out = run_read("porsche-981-2014-dme", "dme-dsn", port=FakePort(chunks), budget_s=20, out_dir=self.output)
         self.assertFalse(out["ok"])
         self.assertNotEqual(out.get("error"), "identity-mismatch")
 

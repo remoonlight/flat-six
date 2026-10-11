@@ -12,6 +12,9 @@ from .offline import DEFAULT_COVERAGE, DEFAULT_REGISTRY, DEFAULT_VARIANTS, build
 from .response_values import decode_application_response, request_from_record
 from .x431_values import preview_coding, formula_from_record, decode_record
 from .realtime_preparation import READY_ACTIONS, handle_ready
+from .hashutil import sha256_file
+from .routine_definitions import routine_definition
+from .source_catalog import ACTIONS as SOURCE_ACTIONS, handle_source_catalog
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DATA_ROOT = Path(os.environ.get('PORSCHE981_DEFINITION_ROOT') or REPO_ROOT)
@@ -19,7 +22,7 @@ PROTOCOL_SEED = DATA_ROOT / "data" / "seed" / "diagnostics" / "protocol-inventor
 VALUE_SEED = DATA_ROOT / "data" / "seed" / "diagnostics" / "value-support.v1.json"
 MANUAL_SEED = DATA_ROOT / "data" / "seed" / "diagnostics" / "manual-evidence.v1.json"
 INDEX_NAME = "workbench-index.v1.json"
-ACTIONS = frozenset({"summary", "plan", "variants", "records", "match", "decode", "preview", "coding-options", "replay"}) | READY_ACTIONS
+ACTIONS = frozenset({"summary", "plan", "variants", "records", "match", "decode", "preview", "coding-options", "replay", "firmware-container"}) | READY_ACTIONS | SOURCE_ACTIONS
 CATEGORIES = frozenset({"identity", "measurement", "coding", "dtc", "routine"})
 FORBIDDEN = frozenset(
     {
@@ -133,6 +136,13 @@ def _enum_source(rec: dict) -> str:
 
 
 def _request_candidate(rec: dict) -> dict | None:
+    if 'codingReadOrigin' in rec:
+        from .response_values import request_from_record
+        request = request_from_record(rec)
+        return {'payloadHex': request['request'].hex().upper() if request.get('ok') else None,
+            'status': 'source-profile-read-candidate' if request.get('ok') else request.get('reason'),
+            'readOrigin': rec['codingReadOrigin'], 'originalPrefixHex': rec.get('request_prefix_hex'),
+            'originalCandidateHex': rec.get('sourceReadRequestCandidateHex'), 'disabled': True, 'liveApproved': False}
     cand = rec.get("disabledreadrequestcandidate")
     if isinstance(cand, dict):
         return {
@@ -163,6 +173,7 @@ def _source_pages(rec: dict) -> dict | None:
 
 def slim_record(rec: dict, category: str) -> dict:
     dtc = None
+    routine = routine_definition(rec) if category == 'routine' else None
     if category == "dtc":
         text = rec.get("text")
         dtc = {
@@ -174,8 +185,8 @@ def slim_record(rec: dict, category: str) -> dict:
     return {
         "at": rec.get("at"),
         "category": category,
-        "name": rec.get("name"),
-        "displayName": _display_name(rec),
+        "name": routine['name'] if routine else rec.get("name"),
+        "displayName": routine['name'] if routine else _display_name(rec),
         "unit": rec.get("unit"),
         "byteOffset": rec.get("byteOffset"),
         "bitOffset": rec.get("bitOffset"),
@@ -184,10 +195,11 @@ def slim_record(rec: dict, category: str) -> dict:
         "joinStatus": rec.get("join_status"),
         "labelSource": _label_source(rec),
         "enumSource": _enum_source(rec),
-        "requestCandidate": _request_candidate(rec),
+        "requestCandidate": None if routine else _request_candidate(rec),
         "source": _source_pages(rec),
         "dtc": dtc,
-        "unsupportedReason": rec.get("fields_status") if rec.get("fields_status") not in (None, "ok") else None,
+        **({'routineDefinition': routine} if routine else {}),
+        "unsupportedReason": routine['reason'] if routine else rec.get("fields_status") if rec.get("fields_status") not in (None, "ok") else None,
     }
 
 
@@ -214,7 +226,11 @@ def _index_path(variants: Path) -> Path:
 
 def _stat(path: Path) -> dict:
     st = path.stat()
-    return {"size": st.st_size, "mtimeNs": st.st_mtime_ns}
+    digest = sha256_file(path)
+    after = path.stat()
+    if (st.st_size, st.st_mtime_ns, st.st_dev, st.st_ino) != (after.st_size, after.st_mtime_ns, after.st_dev, after.st_ino):
+        raise ValueError("variant-source-changed-during-fingerprint")
+    return {"size": st.st_size, "mtimeNs": st.st_mtime_ns, "device": str(st.st_dev), "inode": str(st.st_ino), "sha256": digest}
 
 
 def load_or_build_index(variants: Path, coverage: dict) -> dict:
@@ -226,7 +242,8 @@ def load_or_build_index(variants: Path, coverage: dict) -> dict:
     if ip.is_file():
         try:
             cached = json.loads(ip.read_text(encoding="utf-8"))
-            if (cached.get("stat") == want and cached.get("coverageSha256") == coverage_sha
+            if (cached.get("schemaVersion") == 2 and cached.get("path") == str(variants)
+                    and cached.get("stat") == want and cached.get("coverageSha256") == coverage_sha
                     and isinstance(cached.get("rows"), list)):
                 cached["present"] = True
                 return cached
@@ -234,15 +251,17 @@ def load_or_build_index(variants: Path, coverage: dict) -> dict:
             pass
     mods = _module_ecus(coverage)
     rows = []
-    with variants.open(encoding="utf-8") as fh:
+    parsed_hash = hashlib.sha256()
+    with variants.open("rb") as fh:
         while True:
             offset = fh.tell()
             line = fh.readline()
             if not line:
                 break
+            parsed_hash.update(line)
             if not line.strip():
                 continue
-            o = json.loads(line)
+            o = json.loads(line.decode("utf-8"))
             module = o.get("module")
             pools = o.get("pool_records") or {}
             rows.append(
@@ -262,7 +281,12 @@ def load_or_build_index(variants: Path, coverage: dict) -> dict:
                     },
                 }
             )
-    doc = {"present": True, "path": str(variants), "stat": want, "coverageSha256": coverage_sha, "rows": rows}
+    after = variants.stat()
+    if (parsed_hash.hexdigest().upper() != want["sha256"]
+            or (after.st_size, after.st_mtime_ns, str(after.st_dev), str(after.st_ino))
+                != (want["size"], want["mtimeNs"], want["device"], want["inode"])):
+        raise ValueError("variant-source-changed-during-index-build")
+    doc = {"schemaVersion": 2, "present": True, "path": str(variants), "stat": want, "coverageSha256": coverage_sha, "rows": rows}
     ip.write_text(json.dumps(doc, ensure_ascii=False) + "\n", encoding="utf-8")
     return doc
 
@@ -270,7 +294,11 @@ def load_or_build_index(variants: Path, coverage: dict) -> dict:
 def _load_variant(variants: Path, row: dict) -> dict:
     with variants.open(encoding="utf-8") as fh:
         fh.seek(int(row["offset"]))
-        return json.loads(fh.readline())
+        value = json.loads(fh.readline())
+    if value.get("profile_id") != row.get("profileId"):
+        raise ValueError("variant-source-row-mismatch")
+    from scripts.x431_re.request_fields import coding_profile_variant
+    return coding_profile_variant(value)
 
 
 def _find_row(index: dict, profile_id: str) -> dict | None:
@@ -297,6 +325,11 @@ def _validate(req) -> dict | None:
     action = req.get("action")
     if action not in ACTIONS:
         return _err("invalid_action", action=action)
+    if action == 'firmware-container' and set(req) != {'action'}:
+        return _err('forbidden_field')
+    if 'cycleCount' in req and (action != 'ready-acquire' or type(req['cycleCount']) is not int
+                               or not 1 <= req['cycleCount'] <= 3):
+        return _err('invalid_cycle_count')
     ids = req.get("parameterIds")
     if ids is not None and (not isinstance(ids, list) or len(ids) > 12
         or any(not isinstance(k, str) or len(k) != 64 or any(c not in '0123456789abcdef' for c in k) for k in ids)
@@ -340,6 +373,11 @@ def _validate(req) -> dict | None:
     raw = req.get("rawValue")
     if raw is not None and type(raw) is not int:
         return _err("malformed_raw_value")
+    if 'physicalValue' in req:
+        if (req.get('action') != 'preview' or req.get('category') != 'coding'
+                or not req.get('expectedReadRequestHex') or 'rawValue' in req
+                or not isinstance(req['physicalValue'], str) or not 1 <= len(req['physicalValue']) <= 128):
+            return _err('numeric-target-invalid')
     ident = req.get("identity")
     if ident is not None:
         if not isinstance(ident, dict):
@@ -692,6 +730,22 @@ def handle(req: dict) -> dict:
     if err:
         return err
     action = req["action"]
+    if action == 'firmware-container':
+        if set(req) != {'action'}:
+            return _err('forbidden_field')
+        file = os.environ.get('PORSCHE981_FIRMWARE_FILE')
+        if not file or not Path(file).is_absolute():
+            return _err('firmware-container-selection-missing')
+        from .firmware_container import inspect_container
+        try:
+            return _ok({'container': inspect_container(file)})
+        except (ValueError, OSError) as error:
+            return _err(str(error) if isinstance(error, ValueError) else 'firmware-container-file-unavailable')
+    if action in SOURCE_ACTIONS:
+        try:
+            return handle_source_catalog(req, DATA_ROOT)
+        except (ValueError, OSError, KeyError, TypeError) as error:
+            return _err(str(error) if isinstance(error,(ValueError,OSError)) else 'source-catalog-data-invalid')
     if action in READY_ACTIONS:
         return handle_ready(req)
     variants = _variants_path()
@@ -928,18 +982,18 @@ def handle(req: dict) -> dict:
         return _err("missing_binary", detail=str(e))
     if action == "coding-options":
         _text, parsed = formula_from_record(rec)
-        if not parsed.get("ok") or parsed.get("kind") != "TEXTTABLE" or not 0 < parsed.get("bitLength", 0) <= 16:
-            return _err("coding_options_not_defined")
-        options = []
-        for raw in range(1 << parsed["bitLength"]):
-            preview = preview_coding(rec, data, raw)
-            if not preview.get("ok"):
-                continue
-            decoded = decode_record(rec, bytes.fromhex(preview["afterHex"]))
-            if decoded.get("textStatus") == "resolved" and decoded.get("text"):
-                options.append({"rawValue": raw, "label": decoded["text"]})
-                if len(options) > 256:
-                    return _err("coding_options_limit")
+        if parsed.get('kind') == 'LINEAR':
+            from .coding_numeric import numeric_domain
+            domain = numeric_domain(rec)
+            if not domain['ok']:
+                return _err(domain['reason'])
+            return _ok({'options': [], 'numericDomain': domain, 'decoded': decode_record(rec, data),
+                        'record': slim_record(rec, cat)})
+        from .coding_fields import coding_options
+        try:
+            options = coding_options(rec, data)
+        except ValueError as error:
+            return _err(str(error))
         return _ok({"options": options, "decoded": decode_record(rec, data), "record": slim_record(rec, cat)})
     if action == "decode":
         mode = req.get("responseMode") or "data"
@@ -947,6 +1001,21 @@ def handle(req: dict) -> dict:
             return _err("invalid_response_mode", responseMode=mode)
         out = decode_application_response(rec, data, mode)
         return _flags({**out, "ok": bool(out.get("ok")), "error": None if out.get("ok") else out.get("reason"), "record": slim_record(rec, cat)})
+    if 'physicalValue' in req:
+        from .coding_numeric import physical_target, preview_numeric_candidate
+        from .coding_fields import coding_effects
+        try:
+            out = preview_numeric_candidate(rec, data, physical_target(req['physicalValue']))
+            if not out['ok']:
+                return _err(out['reason'])
+            out['numericDomain'] = out['sourceDomain']
+            out['decoded'] = decode_record(rec, data)
+            out['targetDecoded'] = out['decodedCandidate']
+            out['effects'] = coding_effects(variant.get('pool_records', {}).get('coding', {}).get('records', []),
+                rec, data, bytes.fromhex(out['afterHex']))
+            return _ok(out)
+        except ValueError as error:
+            return _err(str(error))
     raw = req.get("rawValue")
     if type(raw) is not int:
         return _err("malformed_raw_value")
@@ -954,8 +1023,16 @@ def handle(req: dict) -> dict:
     if req.get('expectedReadRequestHex') is not None and out.get('ok'):
         _text, parsed = formula_from_record(rec)
         decoded = decode_record(rec, bytes.fromhex(out['afterHex']))
-        if (parsed.get('kind') != 'TEXTTABLE' or not 0 < parsed.get('bitLength', 0) <= 16
-                or decoded.get('textStatus') != 'resolved' or not decoded.get('text')):
+        from .coding_fields import coding_options, coding_effects
+        try:
+            allowed = coding_options(rec, data)
+            if not any(option['rawValue'] == raw for option in allowed):
+                return _err('coding_value_not_defined')
+            out['effects'] = coding_effects(variant.get('pool_records', {}).get('coding', {}).get('records', []),
+                rec, data, bytes.fromhex(out['afterHex']))
+        except ValueError as error:
+            return _err(str(error))
+        if decoded.get('textStatus') != 'resolved' or not decoded.get('text'):
             return _err('coding_value_not_defined')
     return _flags({**out, "ok": bool(out.get("ok")), "error": None if out.get("ok") else out.get("reason"), "record": slim_record(rec, cat)})
 

@@ -2,7 +2,12 @@ const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("porsche981", {
   diagnosticPreparation: (request) => ipcRenderer.invoke("diagnostics:preparation", request),
+  codingCapture: (request) => ipcRenderer.invoke("diagnostics:codingCapture", request),
+  measurementCapture: (request) => ipcRenderer.invoke("diagnostics:measurementCapture", request),
+  dtcCapture: (request) => ipcRenderer.invoke("diagnostics:dtcCapture", request),
+  identityCapture: (request) => ipcRenderer.invoke("diagnostics:identityCapture", request),
   diagnosticDefinitionBundle: (request) => ipcRenderer.invoke("diagnostics:definitionBundle", request),
+  // Main validates the selected CAN/application capture layer; no renderer bytes.
   diagnosticCanRecording: (request) => ipcRenderer.invoke("diagnostics:canRecording", request),
   workshopFlashIndex: () => ipcRenderer.invoke("workshop:flashIndex"),
   workshopExportPreview: (input) => ipcRenderer.invoke("workshop:exportPreview", input),
@@ -99,10 +104,14 @@ contextBridge.exposeInMainWorld("porsche981", {
   modelOemLinksRemove: (kind, ref, sku, assemblyId) =>
     ipcRenderer.invoke("modelOem:remove", { kind, ref, sku, assemblyId }),
   modelOemCatalog: () => ipcRenderer.invoke("modelOem:catalog"),
+  // Typed start/read, paged polling and owner-bound save/discard by session ID.
+  manufacturerStream: (request) => ipcRenderer.invoke("diagnostics:manufacturerStream", request),
   offlineDiagnostics: (request, operationId) =>
     ipcRenderer.invoke("diagnostics:offline", request, operationId),
   cancelOfflineDiagnostics: (operationId) => ipcRenderer.invoke("diagnostics:offlineCancel", operationId),
   saveDiagnosticRecording: (input) => ipcRenderer.invoke("diagnostics:saveRecording", input),
+  acquisitionReplay: (request) => ipcRenderer.invoke("diagnostics:acquisitionReplay", request),
+  // Main owns standard-data batches; saveEngine/discardEngine pass only a batch ID.
   readOnlySession: (request) =>
     ipcRenderer.invoke("diagnostics:session", request),
   obdConnection: (request) =>

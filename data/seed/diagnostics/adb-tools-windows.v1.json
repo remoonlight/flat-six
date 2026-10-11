@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "kind": "pinned-windows-adb-tools",
+  "version": "37.0.1",
+  "officialSource": "https://developer.android.com/tools/releases/platform-tools",
+  "sourceArchiveSha256": "45f4d63113e895ebde0c90f194099a4676b6ac653bd28d54314a9e022bbc1a99",
+  "files": [
+    {
+      "path": "adb.exe",
+      "bytes": 8273560,
+      "sha256": "b4a6b455702684652cccf7b46258b29e653538904359a58fd4931cf3ef286b3f"
+    },
+    {
+      "path": "AdbWinApi.dll",
+      "bytes": 108184,
+      "sha256": "c1d653030b4bde65d3e07e4d0b0979e17be56df1436cdd15528630f27808050d"
+    },
+    {
+      "path": "AdbWinUsbApi.dll",
+      "bytes": 73368,
+      "sha256": "0710e894d9b40f71a670c13c694079d564c92c1279da382cfe4850983aaebe1b"
+    },
+    {
+      "path": "etc1tool.exe",
+      "bytes": 451224,
+      "sha256": "ee9bb89bb770badcfeb12bb9a3c4095682fb2ea0105487f9f16e440c582064a3"
+    },
+    {
+      "path": "fastboot.exe",
+      "bytes": 2429080,
+      "sha256": "b2d9cbff4ce9ae7eb448cfc831bafc867935f50f5be38f8f81057fd7eb3b8d86"
+    },
+    {
+      "path": "hprof-conv.exe",
+      "bytes": 52888,
+      "sha256": "70cfef266dd9d94922679be159901cec3218561be946347e6e4a7577fc81dede"
+    },
+    {
+      "path": "libwinpthread-1.dll",
+      "bytes": 243016,
+      "sha256": "f2044c755e39efc5d47f47c5a942178dd6d79dc8945bb182dc8753d10e2a4269"
+    },
+    {
+      "path": "make_f2fs.exe",
+      "bytes": 473752,
+      "sha256": "a1d8e18474636972e4ebaf2617ac17c880e76642fad7fa3e51ae5cd3c1fe5d17"
+    },
+    {
+      "path": "make_f2fs_casefold.exe",
+      "bytes": 473752,
+      "sha256": "9ac076516c2a1f620df24e148660becf3e7d4102b46ddda66970d35c59db2962"
+    },
+    {
+      "path": "mke2fs.conf",
+      "bytes": 1157,
+      "sha256": "ad58a58dcdd24d85055814ca9cac67db89d4e67c434e96774bdce0d0a007d067"
+    },
+    {
+      "path": "mke2fs.exe",
+      "bytes": 763544,
+      "sha256": "308304852b1f1a1449e9d9115332ab908b8a54b99f460ed1df5d109decef5be7"
+    },
+    {
+      "path": "NOTICE.txt",
+      "bytes": 1154131,
+      "sha256": "38ec8c6f5b7799c223ffeab1f9e81c2d5fc67b5e56d6424f649630ca1ee1a811"
+    },
+    {
+      "path": "source.properties",
+      "bytes": 38,
+      "sha256": "2dccd788c0234d8cf7f7457377e57f57527a86a629c6ed54feb8af0f549dac38"
+    },
+    {
+      "path": "sqlite3.exe",
+      "bytes": 3031704,
+      "sha256": "234d9e6c475c6e9ba07498a1ad96a6a32840fbfdc74e50277e1a94cbac48abdc"
+    }
+  ]
+}

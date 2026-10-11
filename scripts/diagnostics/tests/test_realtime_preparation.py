@@ -4,10 +4,11 @@ from pathlib import Path
 import struct
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from scripts.diagnostics.realtime_preparation import (
     identity_record, plan_for, replay_series, handle_ready, hci_times, resolve_dynamic_name,
-    dump, sha, FLAGS, POINT_LIMIT, NODE_ECU, zero_definition,
+    dump, sha, FLAGS, POINT_LIMIT, NODE_ECU, zero_definition, resolve_source_reference, compile_bundle,
 )
 from scripts.diagnostics.response_values import decode_application_response
 from scripts.diagnostics.workbench import _validate
@@ -26,6 +27,97 @@ def profile():
     return {'profileId': 'test', 'generation': '981', 'ecuIds': [2],
         'parameters': [field('a'), field('b', offset=1)], 'identity': [], 'checklist': [], **FLAGS}
 
+
+class SourceRelocationTests(unittest.TestCase):
+    def test_foreign_windows_reference_preserves_relative_path(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / '新项目 with spaces'
+            mapped = resolve_source_reference(r'D:\old project\.local\目录\variants.jsonl',
+                original_source_root=r'D:\old project', destination_root=root)
+            self.assertEqual(mapped, root.resolve() / '.local/目录/variants.jsonl')
+            self.assertFalse(root.exists())
+
+    def test_posix_and_relative_references(self):
+        with tempfile.TemporaryDirectory() as directory:
+            for reference in ('/old/project/.local/data.json', '.local/data.json'):
+                with self.subTest(reference=reference):
+                    self.assertEqual(resolve_source_reference(reference,
+                        original_source_root='/old/project', destination_root=directory),
+                        Path(directory).resolve() / '.local/data.json')
+
+    def test_explicit_mapping_rejects_outside_or_ambiguous_paths(self):
+        cases = [
+            (r'D:\other\file.json', r'D:\project'),
+            (r'D:\project-other\file.json', r'D:\project'),
+            (r'D:\project\..\other\file.json', r'D:\project'),
+            (r'D:file.json', r'D:\project'),
+            ('/old/project/../other/file.json', '/old/project'),
+            (r'D:\project\file.json', '/old/project'),
+            ('/old/project/file.json', 'relative/root'),
+            ('/old/project/file.json', '/old/../project'),
+            ('', '/old/project'), ('file\x00.json', '/old/project'),
+            (r'D:\project', r'D:\project'),
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            for reference, original in cases:
+                with self.subTest(reference=reference, original=original):
+                    with self.assertRaisesRegex(ValueError, 'manifest-'):
+                        resolve_source_reference(reference, original_source_root=original,
+                            destination_root=directory)
+
+    def test_no_mapping_keeps_existing_path_behavior(self):
+        for reference in (r'D:\project\file.json', '/old/project/file.json', 'relative/file.json'):
+            self.assertEqual(resolve_source_reference(reference), Path(reference))
+
+    def test_symlink_cannot_escape_destination(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / 'checkout'; root.mkdir()
+            outside = Path(directory) / 'outside'; outside.mkdir()
+            try:
+                (root / 'link').symlink_to(outside, target_is_directory=True)
+            except OSError as error:
+                if getattr(error, 'winerror', None) == 1314 or isinstance(error, PermissionError):
+                    self.skipTest('host does not permit creating test symlinks')
+                raise
+            with self.assertRaisesRegex(ValueError, 'outside-destination-root'):
+                resolve_source_reference('/old/project/link/file.json',
+                    original_source_root='/old/project', destination_root=root)
+
+    def test_compile_rejects_mapped_source_hash_before_creating_output(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory); bundle = root / 'bundle'; bundle.mkdir()
+            data = root / 'file.json'; data.write_bytes(b'changed')
+            manifest = bundle / 'manifest.json'
+            dump(manifest, {'inputs': [{'path': '/absent/file.json', 'sha256': '0' * 64}], 'outputs': []})
+            original = manifest.read_bytes(); output = root / 'output'
+            with patch('scripts.diagnostics.realtime_preparation.resolve_source_reference', return_value=data):
+                with self.assertRaisesRegex(ValueError, 'source-hash-mismatch'):
+                    compile_bundle(bundle, output, original_source_root='/absent')
+            self.assertFalse(output.exists()); self.assertEqual(manifest.read_bytes(), original)
+
+    def test_compile_checks_selected_bundle_copy_not_only_source(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory); bundle = root / 'bundle'; bundle.mkdir()
+            source = root / 'variants.json'; source.write_bytes(b'[]')
+            (bundle / 'variants.json').write_bytes(b'["altered"]')
+            manifest = bundle / 'manifest.json'
+            dump(manifest, {'inputs': [], 'outputs': [{'path': str(source), 'sha256': sha(source)}]})
+            original = manifest.read_bytes(); output = root / 'output'
+            with self.assertRaisesRegex(ValueError, 'source-hash-mismatch:variants.json'):
+                compile_bundle(bundle, output)
+            self.assertFalse(output.exists()); self.assertEqual(manifest.read_bytes(), original)
+
+    def test_compile_rejects_ambiguous_output_binding(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory); bundle = root / 'bundle'; bundle.mkdir()
+            sources = [root / name / 'variants.json' for name in ('first', 'second')]
+            for source in sources:
+                source.parent.mkdir(); source.write_bytes(b'[]')
+            dump(bundle / 'manifest.json', {'inputs': [],
+                'outputs': [{'path': str(source), 'sha256': sha(source)} for source in sources]})
+            with self.assertRaisesRegex(ValueError, 'manifest-output-binding-unresolved:variants.json'):
+                compile_bundle(bundle, root / 'output')
+            self.assertFalse((root / 'output').exists())
 
 class PreparationTests(unittest.TestCase):
     def test_zero_placeholder_only_not_measurement_or_offset(self):
@@ -57,6 +149,9 @@ class PreparationTests(unittest.TestCase):
         self.assertEqual(len(plan['groups'][0]['parameterIds']), 2)
         self.assertFalse(plan['executionEnabled']); self.assertIsNone(plan['writePayload'])
         p['parameters'][1]['dataSpan']['kind'] = 'lowerBound'
+        self.assertEqual(plan_for(p, ['b' * 64])['blocked'][0]['reason'], 'parameter-record-span-mismatch')
+        p['parameters'][1]['formula'] = {'text': 'IDENTICAL:DataType=A_BYTEFIELD,HighLow=1,Termination=END-OF-PDU;'}
+        p['parameters'][1]['dataSpan'] = {'kind': 'lowerBound', 'dataMin': 1, 'unknownRemaining': True}
         self.assertEqual(plan_for(p, ['b' * 64])['groups'][0]['spanKind'], 'lowerBound')
 
     def test_selection_boundaries_and_unresolved(self):

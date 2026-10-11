@@ -1,8 +1,8 @@
-export function createEngineAcquisition(options?: { limit?: number; byteLimit?: number }): {
+export function createEngineAcquisition(): {
   append(final: object): boolean;
   readonly samples: { pid: string; cycle: number; elapsedMs?: number; capturedUtc?: string; value?: number; synthetic?: boolean }[];
-  readonly full: boolean; readonly count: number;
+  readonly count: number;
   hasRun(id: unknown): boolean;
-  canFit(count: number): boolean;
-  export(): { kind: string; startedAt: string; endedAt: string; samples: object[]; runs: object[]; simulation: boolean; liveVerified: boolean };
+  stop(reason: string): void;
+  export(): { kind: string; startedAt: string; endedAt: string; stopReason: string | null; samples: object[]; runs: object[]; simulation: boolean; liveVerified: boolean };
 };

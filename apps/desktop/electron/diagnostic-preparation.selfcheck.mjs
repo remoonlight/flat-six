@@ -1,14 +1,16 @@
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import path from "node:path";
+import os from "node:os";
 import { createHash } from "node:crypto";
 import { createDiagnosticPreparation, normalizeCodingBackup, codingRestorePlan, firmwarePreparation, runCodingRehearsal, codingBlockKey } from "./diagnostic-preparation.mjs";
 import { createEngineAcquisition } from "../src/engine-acquisition.mjs";
 import { createDiagnosticCanRecorder } from "./diagnostic-can-recording.mjs";
 
-const scratch = path.join(process.cwd(), ".local", "obd-offline-implementation-20261005");
+const scratch = os.tmpdir();
 await fs.mkdir(scratch, { recursive: true });
-const directory = await fs.mkdtemp(path.join(scratch, "preparation-test-"));
+const directory = await fs.mkdtemp(path.join(scratch, "flat-six-preparation-test-"));
+try {
 const identity = { generation: "981", vin: "WP0ZZZ98ZES000000", ecu: "dme", hardware: "synthetic-HW", software: "synthetic-SW" };
 const backup = (dataHex = "A5", capturedUtc = "2026-10-05T00:00:00Z") => ({ schemaVersion: 1, kind: "ecu-coding-backup", identity,
   profileId: "synthetic-offline-only", expectedDids: ["F001"], blocks: [{ did: "F001", dataHex }], capturedUtc });
@@ -36,6 +38,16 @@ const failedBackup = await runCodingRehearsal(plan, { ...dependencies, persistBa
 assert.equal(failedBackup.error, "pre-write-backup-failed"); assert.equal(simulatedWrites, 0);
 const failedIdentity = await runCodingRehearsal(plan, { ...dependencies, readIdentity: async () => ({ ...identity, software: "changed" }) });
 assert.equal(failedIdentity.error, "pre-write-identity-mismatch"); assert.equal(simulatedWrites, 0);
+for (const changeAt of [2, 3]) {
+  let identityReads = 0, backups = 0;
+  const changedDuringReadOrBackup = await runCodingRehearsal(plan, { ...dependencies,
+    readIdentity: async () => ++identityReads === changeAt ? { ...identity, software: "changed" } : identity,
+    persistBackup: async () => { backups++; return { id: "persisted-before-identity-change" }; } });
+  assert.equal(changedDuringReadOrBackup.error, "pre-write-identity-mismatch");
+  assert.equal(changedDuringReadOrBackup.writeAttemptCount, 0);
+  assert.equal(simulatedWrites, 0);
+  assert.equal(backups, changeAt === 2 ? 0 : 1);
+}
 simulatedWrites = 0;
 const interrupted = await runCodingRehearsal(plan, { ...dependencies, writeBlock: async () => { simulatedWrites++; throw new Error("connection-lost-outcome-unknown"); } });
 assert.equal(interrupted.error, "connection-lost-outcome-unknown"); assert.equal(simulatedWrites, 1);
@@ -87,7 +99,8 @@ const typedVault = createDiagnosticPreparation({ directory: path.join(directory,
   chooseOpenFile: async () => typedInputs[typedInput++], saveFile: async (_name, data) => ({ ok: true, saved: true, data }),
   connectionStatus: () => null, previewField: async (request) => {
     previewCalls.push(request);
-    return { ok: true, beforeHex: request.dataHex, afterHex: "A4", changedBitMaskHex: "01" };
+    return { ok: true, beforeHex: request.dataHex, afterHex: "A4", changedBitMaskHex: "01",
+      effects: [{ sourceOffset: 10, selected: true, name: "named field", before: { raw: 1, text: "on" }, after: { raw: 0, text: "off" } }] };
   } });
 const typedFirst = await typedVault.handle({ action: "import-backup", ecu: "dme" });
 const typedSecond = await typedVault.handle({ action: "import-backup", ecu: "dme" });
@@ -96,11 +109,23 @@ assert.equal(typedSecond.backups.find((row) => row.original).id, typedFirst.id);
 const typedPreview = await typedVault.handle({ action: "simulate-coding", ecu: "dme", id: typedFirst.id,
   blockKey: "LID:10", recordAt: 10, rawValue: 0 });
 assert.equal(typedPreview.result.ok, true);
+assert.equal(typedPreview.beforeHex, "A5"); assert.equal(typedPreview.afterHex, "A4");
+assert.equal(typedPreview.effects[0].before.text, "on"); assert.equal(typedPreview.effects[0].after.text, "off");
+assert.equal(typedPreview.backupId, typedFirst.id);
+assert.equal(typedPreview.executionEnabled, false); assert.equal(typedPreview.writePayload, null);
 assert.deepEqual(typedPreview.result.readbacks.map(codingBlockKey).sort(), ["DID:0010", "LID:10"]);
 assert.equal(previewCalls[0].expectedReadRequestHex, "2110");
 assert.equal(typedPreview.plan.blocks.find((block) => codingBlockKey(block) === "DID:0010").targetHex, "7E");
 await typedVault.handle({ action: "coding-options", ecu: "dme", id: typedFirst.id, blockKey: "DID:0010", recordAt: 11 });
 assert.equal(previewCalls[1].expectedReadRequestHex, "220010");
+const numericPreview = await typedVault.handle({ action: "coding-preview", ecu: "dme", id: typedFirst.id,
+  blockKey: "LID:10", recordAt: 10, physicalValue: "0.1" });
+assert.equal(numericPreview.ok, true);
+assert.equal(previewCalls[2].physicalValue, "0.1");
+assert.equal(Object.hasOwn(previewCalls[2], "rawValue"), false);
+assert.equal(previewCalls[2].expectedReadRequestHex, "2110");
+assert.equal((await typedVault.handle({ action: "coding-preview", ecu: "dme", id: typedFirst.id,
+  blockKey: "LID:10", recordAt: 10, physicalValue: "0.1", rawValue: 1 })).error, "numeric-target-invalid");
 const typedRestore = await typedVault.handle({ action: "simulate-restore", ecu: "dme", id: typedSecond.id });
 assert.equal(typedRestore.result.ok, true); assert.equal(typedRestore.plan.changedBlocks, 1);
 assert.equal((await typedVault.handle({ action: "simulate-restore", ecu: "dme", id: typedSecond.id, scenario: "backup-failed" })).result.writeAttemptCount, 0);
@@ -134,11 +159,34 @@ const firmware = firmwarePreparation(manifest, { sha256: digest, bytes: 19, name
 assert.equal(firmware.hashMatches, true); assert.equal(firmware.executionEnabled, false);
 assert.ok(firmware.blockers.some((block) => block.includes("蓝牙")));
 const wired = firmwarePreparation(manifest, { sha256: digest, bytes: 19 }, identity,
-  { connected: true, commOk: true, purpose: "diagnostic", selectedDeviceId: "vnci:verified-test" });
-assert.ok(wired.blockers.length >= 4, "wired is necessary; file authenticity and programming definitions remain required");
+  { connected: true, commOk: true, purpose: "diagnostic", selectedDeviceId: "vnci:1" });
+assert.equal(wired.transportRequirement.selectedFamily, "VNCI");
+assert.equal(wired.transportRequirement.wiredConnectionVerified, false, "a VNCI module ID does not prove a wired link");
+for (const [deviceId, family] of [["vnci:1", "VNCI"], ["pt3g:1", "PT3G"], ["vnci:1234567890123456", "VNCI"],
+  ["pt3g:1234567890123456", "PT3G"], ["vnci:12345678901234567", null], ["pt3g:label", null],
+  ["vnci:1-extra", null], ["bt:AABBCCDDEEFF", null], [null, null]]) {
+  const prepared = firmwarePreparation(manifest, { sha256: digest, bytes: 19 }, identity,
+    { connected: true, commOk: true, purpose: "diagnostic", selectedDeviceId: deviceId,
+      connectionType: "usb", wiredConnectionVerified: true });
+  assert.deepEqual(prepared.transportRequirement.targetFamilies, ["VNCI", "PT3G"]);
+  assert.equal(prepared.transportRequirement.selectedFamily, family);
+  assert.equal(prepared.transportRequirement.targetFamilySelected, family !== null);
+  assert.equal(prepared.transportRequirement.wiredConnectionVerified, false, "unverified supplied metadata cannot qualify a physical link");
+  assert.equal(prepared.transportRequirement.connectionType, deviceId?.startsWith("bt:") ? "bluetooth" : "unverified");
+  assert.ok(prepared.blockers.some(block => block.includes("本次实际有线连接")));
+  assert.equal(prepared.blockers.some(block => block.includes("目标诊断头为 VNCI 或 PT3G")), family === null);
+  assert.equal(prepared.executionEnabled, false); assert.equal(prepared.writePayload, null);
+}
+for (const status of [null, { connected: false, commOk: true, purpose: "diagnostic" },
+  { connected: true, commOk: false, purpose: "diagnostic" }, { connected: true, commOk: true, purpose: "internal" },
+  { connected: "true", commOk: 1, purpose: "diagnostic" }]) {
+  const prepared = firmwarePreparation(manifest, { sha256: digest, bytes: 19 }, identity, status);
+  assert.equal(prepared.transportRequirement.connectedForDiagnostics, false);
+  assert.ok(prepared.blockers.includes("尚未连接并核实诊断头"));
+}
 assert.equal(firmwarePreparation(manifest, { sha256: "0".repeat(64), bytes: 19 }, identity, null).hashMatches, false);
 assert.throws(() => firmwarePreparation({ ...manifest, origin: "third-party" }, {}, identity, null), /manifest/);
-const acquisition = createEngineAcquisition({ limit: 120 });
+const acquisition = createEngineAcquisition();
 const run = (runId, stamp, cycle = 1) => ({ runId, simulation: true, engine: { samples: [{ pid: "0C", value: 1000, cycle, capturedUtc: stamp }] } });
 acquisition.append(run("one", "2026-10-05T00:00:00Z"));
 assert.equal(acquisition.append(run("one", "2026-10-05T00:00:00Z")), false);
@@ -177,3 +225,5 @@ pending.shutdown(); choose(path.join(directory, "late.pcapng"));
 assert.equal((await opening).error, "recording-start-interrupted");
 await assert.rejects(fs.stat(path.join(directory, "late.pcapng")), /ENOENT/);
 console.log("diagnostic preparation PASS: immutable baseline, integrity, version/coverage rejection, fsynced rehearsal backup, write-once/readback, wired firmware gate, complete batches, explicit recording window and shutdown");
+
+} finally { await fs.rm(directory, { recursive: true, force: true }); }

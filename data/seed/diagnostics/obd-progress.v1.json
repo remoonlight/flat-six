@@ -1,0 +1,533 @@
+{
+  "schemaVersion": 1,
+  "policyVersion": "milestones-48-v1",
+  "asOf": "2026-10-09",
+  "meaning": "工程验收清单进度：四类各 12 项、权重各 25%；不是工时估算、实车覆盖率或设备可用率。部分完成仍计 0，全部满足该项限定范围且有证据才计 1。",
+  "reportingRule": "每次进度汇报运行 npm run status:obd-progress，同时列总进度和四项百分比、核对日期、本次通过项与剩余设备/实车缺口。无新通过项则百分比保持。范围变化须另建政策版本并说明分母及前后差异，禁止删待验项提高百分比。",
+  "categories": [
+    {
+      "id": "live",
+      "label": "实时数据读取",
+      "weightPercent": 25,
+      "milestones": [
+        {
+          "criterion": "完整 981/982 参数目录及版本来源保留、可查询，缺项明确；仅目录里程碑",
+          "level": "source",
+          "done": true,
+          "evidence": [
+            {
+              "file": "OBD_STATUS.md",
+              "locator": "## 2026-10-09 桌面接车来源查询与 Windows 实际导入"
+            }
+          ],
+          "id": "live-01"
+        },
+        {
+          "criterion": "参数请求与来源绑定校验及全量单参数计划编译通过；不等于全量可执行",
+          "level": "software",
+          "done": true,
+          "evidence": [
+            {
+              "file": "OBD_STATUS.md",
+              "locator": "全部 52,299 项单参数读取组通过新的绑定检查"
+            }
+          ],
+          "id": "live-02"
+        },
+        {
+          "criterion": "既有 vLinker CLI 的具名 DME/Gateway 身份、DTC 和六项标准 PID 短批次本车记录可追溯",
+          "level": "cli-vehicle",
+          "done": true,
+          "evidence": [
+            {
+              "file": "OBD_STATUS.md",
+              "locator": "vLinker CLI 既有 DME/Gateway 身份与 DTC、六项标准 PID 本车记录继续有效"
+            }
+          ],
+          "id": "live-03"
+        },
+        {
+          "criterion": "标准六项持续采集、停止及完整批次保存的软件路径通过",
+          "level": "software",
+          "done": true,
+          "evidence": [
+            {
+              "file": "OBD_STATUS.md",
+              "locator": "195 项相关 Python 测试"
+            },
+            {
+              "file": "OBD_STATUS.md",
+              "locator": "标准 DME 六项可连续读取"
+            }
+          ],
+          "id": "live-04"
+        },
+        {
+          "criterion": "厂商历史响应持续演练、暂定 12 项选择与完整保存的软件路径通过两平台验收",
+          "level": "software",
+          "done": true,
+          "evidence": [
+            {
+              "file": "OBD_STATUS.md",
+              "locator": "## 2026-10-09 X431 厂商参数持续会话与完整批次"
+            }
+          ],
+          "id": "live-05"
+        },
+        {
+          "criterion": "显式开始/结束 PCAPNG 软件记录通过独立格式核对及 Wireshark 解析",
+          "level": "software",
+          "done": true,
+          "evidence": [
+            {
+              "file": "docs/obd-current-guide.md",
+              "locator": "本轮 4 份文件共 34 帧通过"
+            }
+          ],
+          "id": "live-06"
+        },
+        {
+          "criterion": "全部目标 ECU 身份、版本匹配及故障诊断路径取得实际证据，适用性和不支持项明确",
+          "level": "vehicle",
+          "done": false,
+          "evidence": [],
+          "id": "live-07"
+        },
+        {
+          "criterion": "全部目标参数布局、公式、单位与独立解码及实际 ECU 响应一致，缺项闭合",
+          "level": "vehicle",
+          "done": false,
+          "evidence": [],
+          "id": "live-08"
+        },
+        {
+          "criterion": "全量适用厂商实时参数通过独立诊断头读取及车辆值对照",
+          "level": "vehicle",
+          "done": false,
+          "evidence": [],
+          "id": "live-09"
+        },
+        {
+          "criterion": "Windows 新桌面完成实际车辆持续采集、停止、完整保存和断线恢复验收",
+          "level": "vehicle",
+          "done": false,
+          "evidence": [],
+          "id": "live-10"
+        },
+        {
+          "criterion": "内网实际接收、不发送、已核实广播车辆值显示与保存验收通过",
+          "level": "vehicle",
+          "done": false,
+          "evidence": [],
+          "id": "live-11"
+        },
+        {
+          "criterion": "核实 X431 实际读取上限/周期，各适用头持续采集稳定性通过，不用暂定 12 项代替",
+          "level": "device",
+          "done": false,
+          "evidence": [],
+          "id": "live-12"
+        }
+      ]
+    },
+    {
+      "id": "coding",
+      "label": "设码",
+      "weightPercent": 25,
+      "milestones": [
+        {
+          "criterion": "完整 59,871 条设码来源目录可查询，预览候选与定义缺项分列",
+          "level": "source",
+          "done": true,
+          "evidence": [
+            {
+              "file": "OBD_STATUS.md",
+              "locator": "原有 33,400／3,685／22,786 预览分类保持"
+            }
+          ],
+          "id": "coding-01"
+        },
+        {
+          "criterion": "首次声明完整原码基线持久保存、身份版本隔离且不覆盖的软件规则通过；不是本车基线",
+          "level": "software",
+          "done": true,
+          "evidence": [
+            {
+              "file": "docs/obd-current-guide.md",
+              "locator": "首次完整基线按车辆/当前单元/版本固定"
+            },
+            {
+              "file": "OBD_STATUS.md",
+              "locator": "重启保留基线"
+            }
+          ],
+          "id": "coding-02"
+        },
+        {
+          "criterion": "每次模拟修改前完整当前原码持久备份、备份失败零写入的软件规则通过",
+          "level": "software",
+          "done": true,
+          "evidence": [
+            {
+              "file": "OBD_STATUS.md",
+              "locator": "备份失败零写入与重启保留基线"
+            }
+          ],
+          "id": "coding-03"
+        },
+        {
+          "criterion": "已核实具名枚举/有界数值的软件原值目标差异预览、合法输入拒绝与保留位检查通过",
+          "level": "software",
+          "done": true,
+          "evidence": [
+            {
+              "file": "OBD_STATUS.md",
+              "locator": "Mac 与 Windows 当前独立程序实际生产 IPC／界面通过数值 60000"
+            }
+          ],
+          "id": "coding-04"
+        },
+        {
+          "criterion": "当前所选单元恢复方案、另存当前码、模拟修改及完整回读的软件演练通过",
+          "level": "software",
+          "done": true,
+          "evidence": [
+            {
+              "file": "docs/obd-current-guide.md",
+              "locator": "演练先核对模拟身份/当前值"
+            },
+            {
+              "file": "OBD_STATUS.md",
+              "locator": "当前单元设码／恢复模拟"
+            }
+          ],
+          "id": "coding-05"
+        },
+        {
+          "criterion": "完整 X431 设码范围逐功能身份版本、字段含义、合法选项和未知属性资格闭合",
+          "level": "source",
+          "done": false,
+          "evidence": [],
+          "id": "coding-06"
+        },
+        {
+          "criterion": "全部输入/编辑路径含文本、字节、BCD、掩码及原生回调完整核实，原件差异已解释",
+          "level": "source",
+          "done": false,
+          "evidence": [],
+          "id": "coding-07"
+        },
+        {
+          "criterion": "从实际车辆读取各目标单元新鲜完整原码并持久保留首份基线，缺块零修改",
+          "level": "vehicle",
+          "done": false,
+          "evidence": [],
+          "id": "coding-08"
+        },
+        {
+          "criterion": "完整范围读写协议、安全访问、完整性与单次写入配方及恢复定义资格闭合",
+          "level": "source",
+          "done": false,
+          "evidence": [],
+          "id": "coding-09"
+        },
+        {
+          "criterion": "完整适用设码功能逐项实际修改并重新读取核对通过",
+          "level": "vehicle",
+          "done": false,
+          "evidence": [],
+          "id": "coding-10"
+        },
+        {
+          "criterion": "实际车辆恢复当前所选单元首次匹配完整基线，恢复前备份和写后回读通过",
+          "level": "vehicle",
+          "done": false,
+          "evidence": [],
+          "id": "coding-11"
+        },
+        {
+          "criterion": "实际写入掉线、未知结果、禁止自动重放与失败恢复闭环验收通过",
+          "level": "vehicle",
+          "done": false,
+          "evidence": [],
+          "id": "coding-12"
+        }
+      ]
+    },
+    {
+      "id": "x431",
+      "label": "X431 解析",
+      "weightPercent": 25,
+      "milestones": [
+        {
+          "criterion": "原始资料完整哈希、来源位置及具名原件函数审计可追溯",
+          "level": "source",
+          "done": true,
+          "evidence": [
+            {
+              "file": "OBD_STATUS.md",
+              "locator": "完整哈希、三个具名函数区间及 Thumb 入口核对"
+            }
+          ],
+          "id": "x431-01"
+        },
+        {
+          "criterion": "完整菜单、版本、语言及原始记录存储提取保留，缺名及未匹配项明确",
+          "level": "source",
+          "done": true,
+          "evidence": [
+            {
+              "file": "OBD_STATUS.md",
+              "locator": "去重后的车型／ECU／版本组合为 626"
+            }
+          ],
+          "id": "x431-02"
+        },
+        {
+          "criterion": "既有真实捕获容器及 5,594 对应用请求响应完整重组核对通过",
+          "level": "source",
+          "done": true,
+          "evidence": [
+            {
+              "file": "OBD_STATUS.md",
+              "locator": "5,594/5,594 对配对"
+            }
+          ],
+          "id": "x431-03"
+        },
+        {
+          "criterion": "全部 52,299 去重实时参数的请求、字段及公式来源提取并校验通过；不等于全量解码",
+          "level": "source",
+          "done": true,
+          "evidence": [
+            {
+              "file": "OBD_STATUS.md",
+              "locator": "92,634 条实时源记录"
+            },
+            {
+              "file": "OBD_STATUS.md",
+              "locator": "全部 52,299 项单参数读取组"
+            }
+          ],
+          "id": "x431-04"
+        },
+        {
+          "criterion": "全部 59,871 条设码记录原始存储逐条核对，无不一致",
+          "level": "source",
+          "done": true,
+          "evidence": [
+            {
+              "file": "OBD_STATUS.md",
+              "locator": "存储差异为零"
+            }
+          ],
+          "id": "x431-05"
+        },
+        {
+          "criterion": "全量身份及故障码源定义提取核对，历史具名响应离线绑定通过",
+          "level": "source",
+          "done": true,
+          "evidence": [
+            {
+              "file": "OBD_STATUS.md",
+              "locator": "3,920 个身份记录"
+            },
+            {
+              "file": "OBD_STATUS.md",
+              "locator": "74,865 条源记录"
+            }
+          ],
+          "id": "x431-06"
+        },
+        {
+          "criterion": "限定整数位/数值原件 CPU 参考矩阵及全部 404 种有界候选跨平台核对通过",
+          "level": "source",
+          "done": true,
+          "evidence": [
+            {
+              "file": "OBD_STATUS.md",
+              "locator": "全部 404 种有界来源定义的 Windows 复验也已通过"
+            }
+          ],
+          "id": "x431-07"
+        },
+        {
+          "criterion": "全部 ECU 路由和版本选择器的实际运行语义及缺项闭合",
+          "level": "source",
+          "done": false,
+          "evidence": [],
+          "id": "x431-08"
+        },
+        {
+          "criterion": "全部公式、编码及响应类型完整解码资格核对；不能用整数子集代替",
+          "level": "source",
+          "done": false,
+          "evidence": [],
+          "id": "x431-09"
+        },
+        {
+          "criterion": "完整原生输入、编辑与运行时回调链路核实，各异常差异闭合",
+          "level": "source",
+          "done": false,
+          "evidence": [],
+          "id": "x431-10"
+        },
+        {
+          "criterion": "完整 X431/PIWIS 诊断、维护、安全访问、设码与原厂编程协议/流程核实",
+          "level": "source",
+          "done": false,
+          "evidence": [],
+          "id": "x431-11"
+        },
+        {
+          "criterion": "独立 Windows 接管链路的各适用 ECU 实际请求、响应及解码一致性验收通过",
+          "level": "vehicle",
+          "done": false,
+          "evidence": [],
+          "id": "x431-12"
+        }
+      ]
+    },
+    {
+      "id": "adaptation",
+      "label": "其他适配",
+      "weightPercent": 25,
+      "milestones": [
+        {
+          "criterion": "已有诊断头登记、用途能力及不可执行原因的软件门禁通过；不声称所有头已适配",
+          "level": "software",
+          "done": true,
+          "evidence": [
+            {
+              "file": "apps/desktop/electron/obd-device-registry.mjs",
+              "locator": "buildDeviceRegistry"
+            },
+            {
+              "file": "scripts/obd-device-registry.selfcheck.mjs",
+              "locator": "assert"
+            }
+          ],
+          "id": "adaptation-01"
+        },
+        {
+          "criterion": "Windows 独立运行时、完整定义迁移/重复导入及程序文件哈希验收通过",
+          "level": "software",
+          "done": true,
+          "evidence": [
+            {
+              "file": "OBD_STATUS.md",
+              "locator": "完整 1,398 文件哈希核对通过"
+            },
+            {
+              "file": "OBD_STATUS.md",
+              "locator": "重复导入新增 0、相同 660"
+            }
+          ],
+          "id": "adaptation-02"
+        },
+        {
+          "criterion": "VNCI/PT3G 完整驱动配套、签名与实际本地原生函数绑定资料核对通过；不含物理收发",
+          "level": "source",
+          "done": true,
+          "evidence": [
+            {
+              "file": "OBD_STATUS.md",
+              "locator": "## 2026-10-09 当前诊断头配套与新版程序"
+            },
+            {
+              "file": "OBD_STATUS.md",
+              "locator": "## 2026-10-09 PT3G 实际函数绑定与版本错误"
+            }
+          ],
+          "id": "adaptation-03"
+        },
+        {
+          "criterion": "VNCI/PT3G 既有短台架连接、监测和正常释放记录可追溯；无长期或车辆结论",
+          "level": "bench",
+          "done": true,
+          "evidence": [
+            {
+              "file": "OBD_STATUS.md",
+              "locator": "两轮原生释放成功"
+            },
+            {
+              "file": "OBD_STATUS.md",
+              "locator": "两轮均有成功原生释放及正常进程关闭"
+            }
+          ],
+          "id": "adaptation-04"
+        },
+        {
+          "criterion": "已实现运输路径参数独立回读、响应匹配、取消终态和关闭失败的软件规则通过",
+          "level": "software",
+          "done": true,
+          "evidence": [
+            {
+              "file": "OBD_STATUS.md",
+              "locator": "Mac／Windows 各 211 项相关测试无跳过通过"
+            },
+            {
+              "file": "OBD_STATUS.md",
+              "locator": "## 2026-10-09 PT3G 读取传输软件与实际绑定"
+            }
+          ],
+          "id": "adaptation-05"
+        },
+        {
+          "criterion": "原厂 ECU 文件声明/哈希/身份与有线限制的准备软件通过；实际刷写仍禁用",
+          "level": "software",
+          "done": true,
+          "evidence": [
+            {
+              "file": "OBD_STATUS.md",
+              "locator": "固件准备检查原厂来源声明、文件长度/SHA-256"
+            }
+          ],
+          "id": "adaptation-06"
+        },
+        {
+          "criterion": "所有目标诊断头实际身份和固件匹配资格通过，现有证据不足项闭合",
+          "level": "device",
+          "done": false,
+          "evidence": [],
+          "id": "adaptation-07"
+        },
+        {
+          "criterion": "所有目标头在 Windows 的各适用实际车辆传输及读取能力验收通过",
+          "level": "vehicle",
+          "done": false,
+          "evidence": [],
+          "id": "adaptation-08"
+        },
+        {
+          "criterion": "所有适用头持续稳定、重连、待机恢复及物理释放验收通过",
+          "level": "device",
+          "done": false,
+          "evidence": [],
+          "id": "adaptation-09"
+        },
+        {
+          "criterion": "CAN 参考/采集设备含已确认 ESP32/Panda 的适用接收、不发送及独立参考能力验收通过",
+          "level": "device",
+          "done": false,
+          "evidence": [],
+          "id": "adaptation-10"
+        },
+        {
+          "criterion": "X431 Android/ADB 新采集及项目独立 Windows 头接管路径验收通过",
+          "level": "device",
+          "done": false,
+          "evidence": [],
+          "id": "adaptation-11"
+        },
+        {
+          "criterion": "匹配原厂文件及已资格化有线头完成实际 ECU 刷写、核验与失败恢复闭环",
+          "level": "vehicle",
+          "done": false,
+          "evidence": [],
+          "id": "adaptation-12"
+        }
+      ]
+    }
+  ]
+}

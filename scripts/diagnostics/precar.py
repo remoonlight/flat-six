@@ -6,19 +6,151 @@ database mutation. Run from the project root; output is a new private directory.
 from __future__ import annotations
 
 import argparse
+import ctypes
+from importlib import import_module
+import importlib.metadata
+import importlib.util
+import re
 from contextlib import closing
 from datetime import datetime, timezone
 import json
+import os
 from pathlib import Path
 import platform
 import shutil
 import sqlite3
 import subprocess
+import sys
 
 from .field_collection import build_pack
 from .hashutil import sha256_file
 from .realtime_preparation import DEFAULT_OUTPUT, ROOT
 from .realtime_preparation_accept import validate_bundle
+
+
+def serial_runtime():
+    """Check the actual bundled API; portable runtimes may omit dist-info."""
+    if importlib.util.find_spec('serial') is None:
+        raise ValueError('pyserial-runtime-missing')
+    serial = import_module('serial')
+    version = getattr(serial, '__version__', None)
+    if (not isinstance(version, str) or not re.fullmatch(r'\d+\.\d+(?:\.\d+)?', version)
+            or not callable(getattr(serial, 'Serial', None))
+            or not isinstance(getattr(serial, 'SerialException', None), type)
+            or not issubclass(serial.SerialException, Exception)):
+        raise ValueError('pyserial-runtime-api-invalid')
+    try:
+        distribution = importlib.metadata.version('pyserial')
+    except importlib.metadata.PackageNotFoundError:
+        distribution = None
+    if distribution is not None and distribution != version:
+        raise ValueError('pyserial-runtime-version-mismatch')
+    return {'version': version, 'distributionMetadataAvailable': distribution is not None,
+            'portsEnumerated': False, 'portOpened': False}
+
+
+def check_prerequisites(*, bundle=DEFAULT_OUTPUT, env=None, include_all_adapters=False):
+    """Inspect local prerequisites only: no discovery, DLL loading or USB I/O."""
+    from .vnci import vendor_root, verify_vendor_files
+
+    env = dict(os.environ if env is None else env)
+    checks = []
+
+    def check(name, probe):
+        try:
+            detail = probe()
+            checks.append({'id': name, 'ok': True, 'detail': detail})
+        except (OSError, ImportError, ValueError, AssertionError, KeyError, TypeError,
+                subprocess.SubprocessError, RuntimeError) as error:
+            item = {'id': name, 'ok': False, 'error': str(error) or type(error).__name__}
+            if isinstance(error, subprocess.CalledProcessError) and error.stderr:
+                item['stderr'] = error.stderr.strip()[:1000]
+            checks.append(item)
+
+    def python_runtime():
+        if sys.version_info < (3, 11):
+            raise ValueError('python-3.11-or-newer-required')
+        return {'executable': sys.executable, 'version': platform.python_version()}
+
+    def node_runtime():
+        executable = env.get('PORSCHE981_NODE') or 'node'
+        result = subprocess.run([executable, '-e',
+            "require('node:sqlite');process.stdout.write(process.version)"],
+            check=True, capture_output=True, text=True, timeout=10, env=env)
+        return {'executable': executable, 'version': result.stdout.strip(), 'sqliteAvailable': True}
+
+    def windows_runtime():
+        if sys.platform != 'win32':
+            raise ValueError('vnci-native-runtime-requires-Windows')
+        if ctypes.sizeof(ctypes.c_void_p) != 8 or platform.machine().lower() not in ('amd64', 'x86_64'):
+            raise ValueError('vnci-native-runtime-requires-x64-Python')
+        return {'platform': sys.platform, 'architecture': platform.machine()}
+
+    def driver_files():
+        root = vendor_root(env)
+        verify_vendor_files(root)
+        return {'root': str(root), 'hashesVerified': True, 'driverLoaded': False}
+
+    check('python-runtime', python_runtime)
+    check('node-sqlite-runtime', node_runtime)
+    check('realtime-definitions', lambda: validate_bundle(bundle))
+    check('vnci-Windows-x64-runtime', windows_runtime)
+    # Old Python has no hashlib.file_digest; still report missing/drifted files
+    # using the same pinned manifest rather than failing with AttributeError.
+    if sys.version_info >= (3, 11):
+        check('vnci-driver-files', driver_files)
+    else:
+        checks.append({'id': 'vnci-driver-files', 'ok': False,
+                       'error': 'python-runtime-required-before-driver-hash-check'})
+    if include_all_adapters:
+        from .pt3g import vendor_root as pt3g_root, verify_vendor_files as verify_pt3g
+
+        def pt3g_files():
+            root = pt3g_root(env)
+            verify_pt3g(root)
+            return {'root': str(root), 'hashesVerified': True,
+                    'automaticProtocolDetectionDisabled': True, 'driverLoaded': False}
+
+        def adb_runtime():
+            from .x431_reference import check_runtime
+            return check_runtime(env=env)
+
+        check('elm-pyserial-runtime', serial_runtime)
+        if sys.version_info >= (3, 11):
+            check('pt3g-driver-files', pt3g_files)
+        else:
+            checks.append({'id': 'pt3g-driver-files', 'ok': False,
+                           'error': 'python-runtime-required-before-driver-hash-check'})
+        check('x431-adb-capture-runtime', adb_runtime)
+    passed = {item['id'] for item in checks if item['ok']}
+    offline = {'python-runtime', 'node-sqlite-runtime', 'realtime-definitions'} <= passed
+    bench = {'python-runtime', 'node-sqlite-runtime', 'vnci-Windows-x64-runtime', 'vnci-driver-files'} <= passed
+    report = {'schemaVersion': 1, 'createdUtc': datetime.now(timezone.utc).isoformat(),
+            'kind': 'precar-prerequisites', 'ok': offline and bench, 'checks': checks,
+            'offlinePackPrerequisitesReady': offline, 'vnciUsbBenchPrerequisitesReady': bench,
+            'noDeviceIO': True, 'driverLoaded': False, 'hardwarePresenceChecked': False,
+            'vehicleValidated': False, 'manufacturerLiveQualified': False}
+    if include_all_adapters:
+        requirements = {
+            'vlinker': {'python-runtime', 'elm-pyserial-runtime'},
+            'obdlink-mxplus': {'python-runtime', 'elm-pyserial-runtime'},
+            'vnci': {'python-runtime', 'vnci-Windows-x64-runtime', 'vnci-driver-files'},
+            'pt3g': {'python-runtime', 'vnci-Windows-x64-runtime', 'pt3g-driver-files'},
+            'x431': {'python-runtime', 'x431-adb-capture-runtime'},
+        }
+        report['adapters'] = [{'id': name, 'runtimePrerequisitesReady': required <= passed,
+                               'missingChecks': sorted(required - passed),
+                               'hardwarePresenceChecked': False, 'vehicleValidated': False}
+                              for name, required in requirements.items()]
+        report['adapters'][-1].update(captureOnly=True, directProjectTransportImplemented=False)
+        report['referenceCollectors'] = [
+            {'id': name, 'runtimePrerequisitesReady': False,
+             'reason': 'exact-model-firmware-and-interface-unqualified', 'vehicleValidated': False}
+            for name in ('panda-comma4', 'esp32')]
+        report['allAdapterRuntimePrerequisitesReady'] = all(row['runtimePrerequisitesReady'] for row in report['adapters'])
+        report['allAdaptersUsable'] = False
+        report['ok'] = report['ok'] and report['allAdapterRuntimePrerequisitesReady']
+    return report
 
 
 CHECKLIST = '''# 首次接车只读验收清单
@@ -27,7 +159,7 @@ CHECKLIST = '''# 首次接车只读验收清单
 
 ## 出发前
 
-1. 运行 `npm run prepare:obd-precar`，保留输出目录中的 `environment.json`、`db-backup`、编码备份目录（如存在）和 `collection`。脚本核对定义来源及哈希、生成全部 981/982 控制单元的身份/实时/原码采集资料、保留七单元优先批次并制作开发数据库快照；它不连接诊断头。若资料哈希不符，先重新生成定义，不绕过检查。完整运行检查证据另见 `docs/progress.md`。
+1. 先运行 `python -X utf8 -m scripts.diagnostics.precar --check-only`（macOS 开发环境可用明确的 Python 3.11+ 路径），一次查看 Python、Node/SQLite、定义来源及 VNCI 完整配套哈希缺项；安装资料目录可用 `--bundle <实际 realtime-preparation 目录>` 指定，驱动沿用 `PORSCHE981_VNCI_ROOT`，Node 沿用 `PORSCHE981_NODE`。全部头的准备检查用 `npm run check:obd-heads`（加 `--all-adapters`），另查 vLinker/MX+ 的 pyserial、PT3G 配套哈希和禁用自动探测配置、X431 的 ADB 抓包工具；PT3G 路径沿用 `PORSCHE981_PT3G_ROOT`，X431 直接通信及 Panda/ESP32 具体型号仍须资格化。该预检不加载驱动、不枚举或连接设备，条件齐备不等于设备/车辆通过，Mac 不具备 Windows VNCI 原生运行条件。再运行 `npm run prepare:obd-precar`，保留输出目录中的 `environment.json`、`db-backup`、编码备份目录（如存在）和 `collection`。脚本核对定义来源及哈希、生成全部 981/982 控制单元的身份/实时/原码采集资料、保留七单元优先批次并制作开发数据库快照；它不连接诊断头。若资料哈希不符，先重新生成定义，不绕过检查。完整运行检查证据另见 `docs/progress.md`。
 2. 打开 Windows 桌面程序，确认拓扑、标准数据、X431 清单及已有诊断资料能显示。在本机选择保存位置，确认剩余空间够用。跨电脑或全新安装必须另测 Python、诊断头驱动、资料导入和资源路径，不能沿用开发电脑结论。
 3. 带上已核对的诊断头、电脑和线缆。首次独立只读优先使用已有本车记录的 vLinker；MX+ 的车辆与静默接收资格分别核对。VNCI/PT3G 当前只核验诊断头身份、供电查询和释放，不用于本次车辆读取；设备枚举或驱动已安装不能证明 ECU 通信可用。提前核对本次可用设备及正常关闭，不用其他日期的记录填写本次结果。
 4. 关闭程序后另行备份正式安装的 userData：`python -X utf8 -m scripts.diagnostics.user_data_backup backup --user-data <实际用户目录> --output-dir <新的备份目录> --app-closed`。包含业务库、诊断资料、连接设置、原码备份及本地资源；恢复只写新目录，经哈希及 SQLite 一致性核对后再启动。外部另存的捕获/导出文件须另行保留；开发库快照不替代此备份。
@@ -65,15 +197,19 @@ CHECKLIST = '''# 首次接车只读验收清单
 '''
 
 
-def prepare(output, *, repo=ROOT, bundle=DEFAULT_OUTPUT):
+def prepare(output, *, repo=ROOT, bundle=DEFAULT_OUTPUT, logical_sysdata=None, decoded_dsn=None, language_ggp=None):
     output, repo = Path(output).resolve(), Path(repo).resolve()
     if not output.is_relative_to(repo / '.local'):
         raise ValueError('output-must-be-private-local')
     if output.exists():
         raise ValueError('output-already-exists')
+    if language_ggp is not None and (logical_sysdata is None or decoded_dsn is None):
+        raise ValueError('selector-language-requires-SYS_DATA-and-DSN')
     validation = validate_bundle(bundle)
     output.mkdir(parents=True)
-    pack = build_pack(bundle, output / 'collection')
+    sources = {key: value for key, value in {'logical_sysdata': logical_sysdata, 'decoded_dsn': decoded_dsn,
+                                          'language_ggp': language_ggp}.items() if value is not None}
+    pack = build_pack(bundle, output / 'collection', **sources)
     report = {'schemaVersion': 1, 'createdUtc': datetime.now(timezone.utc).isoformat(),
               'platform': platform.platform(), 'python': platform.python_version(),
               'noDeviceIO': True, 'vehicleValidated': False, 'definitions': validation,
@@ -121,12 +257,31 @@ def prepare(output, *, repo=ROOT, bundle=DEFAULT_OUTPUT):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--check-only', action='store_true', help='report prerequisites without device I/O or creating a pack')
+    parser.add_argument('--sysdata-logical', type=Path, help='explicit hash-pinned logical SYS_DATA source for offline diagnostic references')
+    parser.add_argument('--decoded-dsn', type=Path, help='explicit hash-pinned decoded DSN source for offline version rules/routes')
+    parser.add_argument('--language-ggp', type=Path, help='explicit hash-pinned language for selector read-source joins; requires SYS_DATA/DSN')
+    parser.add_argument('--all-adapters', action='store_true', help='include ELM, PT3G and X431 capture prerequisites; requires --check-only')
+    parser.add_argument('--bundle', type=Path, default=Path(os.environ.get('PORSCHE981_REALTIME_PREPARATION') or DEFAULT_OUTPUT))
     parser.add_argument('--output-dir', type=Path, default=ROOT / '.local/diagnostics' /
                         ('precar-' + datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')))
     args = parser.parse_args()
-    report = prepare(args.output_dir)
+    if args.all_adapters and not args.check_only:
+        parser.error('--all-adapters requires --check-only')
+    if args.check_only and (args.sysdata_logical is not None or args.decoded_dsn is not None or args.language_ggp is not None):
+        parser.error('source options generate offline references; cannot be used with --check-only')
+    if args.language_ggp is not None and (args.sysdata_logical is None or args.decoded_dsn is None):
+        parser.error('--language-ggp requires --sysdata-logical and --decoded-dsn')
+    if args.check_only:
+        options = {'include_all_adapters': True} if args.all_adapters else {}
+        report = check_prerequisites(bundle=args.bundle, **options)
+        print(json.dumps(report, ensure_ascii=False, indent=2))
+        return 0 if report['ok'] else 1
+    report = prepare(args.output_dir, bundle=args.bundle, logical_sysdata=args.sysdata_logical,
+                     decoded_dsn=args.decoded_dsn, language_ggp=args.language_ggp)
     print(json.dumps({'ok': True, 'output': str(args.output_dir.resolve()), 'noDeviceIO': True,
                       'dbBackup': report['developmentDb']['present'], 'vehicleValidated': False}))
+    return 0
 
 
-if __name__ == '__main__': main()
+if __name__ == '__main__': raise SystemExit(main())

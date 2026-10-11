@@ -585,6 +585,11 @@ assert.equal(headerTaskState({ apiAvailable: true, overviewOk: false, overviewSt
   assert.equal(topologyCapability(dme, "VNCI").clearable, false);
   assert.equal(topologyCapability(dme, "PT3G").clearable, false);
   assert.equal(topologyCapability(dme, "PT3G").readable, false);
+  for (const family of ["ELM327", "OBDKey", "OBDLink"]) {
+    assert.equal(topologyCapability(dme, family).readable, true);
+    assert.equal(topologyCapability(dme, family).clearable, false);
+    assert.match(topologyCapability(dme, family).readEvidence, /本型号/);
+  }
   assert.match(topologyCapability(dme, "PT3G").readEvidence, /仅支持诊断头/);
   assert.equal(topologyCapability({ id: "dme" }).engine, false);
   assert.equal(topologyCapability({ id: "pdk" }, "vLinker").clearable, false);

@@ -29,6 +29,8 @@
   font-weight: 600;
 }
 
+.eng p[role="status"], .eng .error { overflow-wrap: anywhere; }
+
 .eng-pids {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
@@ -135,3 +137,11 @@
 .offline-selected button { max-width: 100%; overflow-wrap: anywhere; text-align: left; }
 .offline-realtime .eng-unit-select select { max-width: 100%; }
 .offline-realtime .eng-section-head { flex-wrap: wrap; gap: 12px; }
+.replay-series { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+.replay-series article { min-width: 0; }
+.replay-time { flex: 1; min-width: 160px; }
+.replay-time input { width: 100%; }
+.replay-table { overflow: auto; max-height: 420px; }
+.replay-table table { width: 100%; font-size: 12px; }
+.replay-table th, .replay-table td { padding: 6px; text-align: left; white-space: nowrap; }
+.acquisition-replay .eng-parameters { max-height: 320px; overflow-y: auto; }

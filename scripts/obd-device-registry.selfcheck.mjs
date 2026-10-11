@@ -21,6 +21,8 @@ assert.equal(fresh.registry[0].connectable, true);
 assert.equal(fresh.registry[1].present, false);
 assert.equal(fresh.registry[1].connectable, false);
 assert.equal(fresh.registry[1].driverInstalled, true);
+assert.deepEqual(fresh.registry[1].routes, ["session", "live"]);
+assert.ok(fresh.registry[1].features.includes("发动机参数"));
 assert.equal(fresh.registry[2].state, "USB 在线");
 assert.equal(fresh.registry[2].serviceState, "Running");
 assert.equal(fresh.registry[2].connectable, false);
@@ -34,6 +36,37 @@ assert(offline.registry.every((d) => !("voltageVolts" in d)), "historical voltag
 const otherNic = buildDeviceRegistry({ known, host: { usb: [{ InstanceId: "USB\\VID_0BDA&PID_8152\\OTHER", Status: "OK" }] } });
 assert.equal(otherNic.registry[2].present, false);
 assert.equal(buildDeviceRegistry({ host: { usb: [{ InstanceId: "USB\\VID_0BDA&PID_8152\\OTHER", Status: "OK" }] } }).registry.length, 0);
+
+const usbAdapter = { id: "usb:" + "a".repeat(64), brand: "vLinker", transport: "usb-serial", available: true,
+  paired: false, comPort: "COM21", usbInstanceId: "USB\\VID_0403&PID_6001\\SYNTHETIC01" };
+const usbRegistry = buildDeviceRegistry({ devices: [usbAdapter] });
+assert.equal(usbRegistry.registry[0].connection, "USB / 串口");
+assert.equal(usbRegistry.registry[0].connectable, true);
+assert.equal(usbRegistry.registry[0].usbInstanceId, usbAdapter.usbInstanceId);
+assert.equal(usbRegistry.registry[0].comPort, "COM21");
+assert.equal(buildDeviceRegistry({ known: usbRegistry.known }).registry[0].connectable, false);
+assert.equal(buildDeviceRegistry({ known: usbRegistry.known }).registry[0].connection, "USB / 串口");
+
+const failedHost = { ...host, drivers: { ...host.drivers, VNCI: { installed: true, version: "29.0.0", supportFilesQualified: false } } };
+const vnciDevice = { id: known[1].id, brand: "VNCI", available: true };
+const failed = buildDeviceRegistry({ devices: [vnciDevice], host: failedHost, known });
+assert.equal(failed.registry[1].present, true);
+assert.equal(failed.registry[1].state, "驱动配套未通过");
+assert.equal(failed.registry[1].connectable, false);
+assert.equal(failed.registry[1].driverVersion, null);
+assert.match(failed.registry[1].note, /配套未通过/);
+const blockedStateRoot = path.resolve(".local/device-settings-check");
+fs.mkdirSync(blockedStateRoot, { recursive: true });
+const blockedManager = createObdConnectionManager({ repoRoot: process.cwd(),
+  env: { PORSCHE981_CONNECTION_STATE: path.join(blockedStateRoot, `blocked-${process.pid}.json`) },
+  listFn: async () => ({ devices: [vnciDevice], host: failedHost }),
+  spawnFn: () => { throw new Error("failed support must not open hardware"); } });
+try {
+  const blocked = await blockedManager.handle({ action: "list" });
+  assert.equal(blocked.devices.length, 0);
+  assert.equal(blocked.deviceRegistry.find((r) => r.id === vnciDevice.id).present, true);
+  assert.equal((await blockedManager.handle({ action: "select", deviceId: vnciDevice.id })).error, "unknown_device");
+} finally { await blockedManager.shutdown(); }
 
 const scratch = path.resolve(".local/device-settings-check");
 fs.mkdirSync(scratch, { recursive: true });

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import math
 import os
 import re
@@ -14,7 +15,7 @@ from typing import Any
 from . import BAUD, VLIKER_MAC
 from .elm import ElmClient, ElmError
 
-DEVICE_ID_RE = re.compile(r"^(?:bt:[0-9A-F]{12}|(?:vnci|pt3g):[0-9]{1,16})$")
+DEVICE_ID_RE = re.compile(r"^(?:bt:[0-9A-F]{12}|usb:[0-9a-f]{64}|(?:vnci|pt3g):[0-9]{1,16})$")
 VOLT_RE = re.compile(r"(\d+(?:\.\d+)?)\s*V", re.I)
 VOLT_MIN = 6.0
 VOLT_MAX = 20.0
@@ -24,9 +25,11 @@ MONITOR_AT_TIMEOUT_S = 4.0
 RAW_LOG_CAP = 8
 KNOWN_VLIKER = VLIKER_MAC.upper().replace(":", "")
 PS_TIMEOUT_S = 8.0
+ELM_MODELS = frozenset({'vLinker', 'OBDLink MX+', 'ELM327', 'OBDKey', 'OBDLink'})
+ELM_BAUDS = {'vLinker': BAUD, 'OBDLink MX+': BAUD, 'ELM327': 38400, 'OBDKey': 9600, 'OBDLink': 115200}
 
 GUIDANCE_NO_COM = "已配对，但没有可用的 Bluetooth SPP 串口。请在 Windows 蓝牙设置中为该适配器打开串行端口后再刷新。"
-UNRESOLVED_HINT = "系统未给出可识别的适配器名称。连接前请选择实际型号（vLinker 或 OBDLink MX+）。"
+UNRESOLVED_HINT = "系统未给出可识别的适配器名称。连接前请选择实际诊断头型号；普通串口不代表诊断头。"
 
 
 def _utc() -> str:
@@ -82,12 +85,16 @@ def is_amt_sol(row: dict) -> bool:
 
 def classify_brand(name: str | None, mac: str | None) -> str:
     n = (name or "").upper()
-    if "VLINKER" in n or (mac and mac == KNOWN_VLIKER):
+    if "VLINKER" in n or "V-LINKER" in n or (mac and mac == KNOWN_VLIKER):
         return "vLinker"
     if "OBDLINK" in n and re.search(r"\bMX\s*\+", n):
         return "OBDLink MX+"
     if "OBDLINK" in n:
-        return "unresolved"
+        return "OBDLink"
+    if "OBDKEY" in n:
+        return "OBDKey"
+    if "ELM327" in n or "ELM 327" in n:
+        return "ELM327"
     if mac == KNOWN_VLIKER:
         return "vLinker"
     return "unresolved"
@@ -95,7 +102,7 @@ def classify_brand(name: str | None, mac: str | None) -> str:
 
 def is_obd_name(name: str | None) -> bool:
     n = (name or "").upper()
-    return "VLINKER" in n or "OBDLINK" in n
+    return classify_brand(n, None) in ELM_MODELS or bool(re.search(r"\bOBD(?:II|2)\b", n))
 
 
 def device_id_for_mac(mac: str) -> str:
@@ -104,6 +111,17 @@ def device_id_for_mac(mac: str) -> str:
 
 def valid_device_id(value: str | None) -> bool:
     return isinstance(value, str) and bool(DEVICE_ID_RE.fullmatch(value))
+
+
+def usb_device_id(instance: str | None) -> str | None:
+    """Bind to the complete OS USB instance, never a COM number or VID/PID alone."""
+    if not isinstance(instance, str) or len(instance) > 200:
+        return None
+    value = instance.upper()
+    if not (re.fullmatch(r"USB\\VID_[0-9A-F]{4}&PID_[0-9A-F]{4}(?:&MI_[0-9A-F]{2})?\\[A-Z0-9&_.+-]{1,128}", value)
+            or re.fullmatch(r"FTDIBUS\\VID_[0-9A-F]{4}\+PID_[0-9A-F]{4}\+[A-Z0-9_.-]{1,128}\\[0-9A-F]{4}", value)):
+        return None
+    return 'usb:' + hashlib.sha256(value.encode('ascii')).hexdigest()
 
 
 def _ps_json(script: str, runner=None) -> tuple[Any, str | None]:
@@ -316,6 +334,8 @@ def enumerate_devices(snapshot: dict | None = None, **collect_kw) -> dict:
         for row in snap.get(src_key) or []:
             if is_amt_sol(row):
                 continue
+            if usb_device_id(row.get("pnp")):
+                continue
             com = (row.get("device") or "").upper()
             mac = extract_bt_mac((row.get("pnp") or "") + " " + (row.get("hwid") or ""))
             if not mac:
@@ -353,7 +373,7 @@ def enumerate_devices(snapshot: dict | None = None, **collect_kw) -> dict:
 
     devices = []
     for rec in by_mac.values():
-        known = rec["brand"] in ("vLinker", "OBDLink MX+") or rec["mac"] == KNOWN_VLIKER or is_obd_name(rec["name"])
+        known = rec["brand"] in ELM_MODELS or rec["mac"] == KNOWN_VLIKER or is_obd_name(rec["name"])
         if not known and not rec["paired"] and not rec["comPort"]:
             continue
         if not known and rec["comPort"] and not rec["paired"] and rec["mac"] != KNOWN_VLIKER:
@@ -368,6 +388,49 @@ def enumerate_devices(snapshot: dict | None = None, **collect_kw) -> dict:
             rec["guidance"] = rec.get("guidance") or UNRESOLVED_HINT
         rec["identitySource"] = sorted(set(rec["identitySource"]))
         devices.append(rec)
+    # Generic USB UARTs remain unresolved candidates until the user selects
+    # their actual model and ATI succeeds. Refresh never probes any port.
+    by_usb = {}
+    usb_port_claims = {}
+    for src_key in ("serial", "pyserial"):
+        for row in snap.get(src_key) or []:
+            instance = row.get("pnp")
+            did = usb_device_id(instance)
+            com = row.get("device")
+            brand = classify_brand(row.get("name") or row.get("description"), None)
+            if not did or not isinstance(com, str) or not re.fullmatch(r"COM[1-9][0-9]{0,3}", com.upper()):
+                continue
+            usb_port_claims.setdefault(com.upper(), set()).add(did)
+            if is_amt_sol(row) or re.match(r"USB\\VID_303A&", instance.upper()):
+                continue
+            rec = by_usb.setdefault(did, {"id": did, "brand": brand, "name": row.get("name") or row.get("description"),
+                "usbInstanceId": instance.upper(), "comPort": com.upper(), "available": True, "paired": False,
+                "transport": "usb-serial", "guidance": UNRESOLVED_HINT if brand == 'unresolved' else None, "identitySource": []})
+            rec["identitySource"].append(src_key)
+            if rec['brand'] == 'unresolved' and brand in ELM_MODELS:
+                rec.update(brand=brand, name=row.get('name') or row.get('description'), guidance=None)
+            if rec["comPort"] != com.upper() or (brand != 'unresolved' and rec["brand"] != brand):
+                rec["available"] = False
+                rec["guidance"] = "同一 USB 设备出现多个串口或型号，已拒绝猜测。"
+    devices.extend(by_usb.values())
+    ports = {}
+    for rec in devices:
+        if rec.get("comPort"):
+            ports.setdefault(rec["comPort"].upper(), []).append(rec)
+    for rows in ports.values():
+        if len(rows) > 1:
+            for rec in rows:
+                rec["available"] = False
+                rec["guidance"] = "同一串口对应多个适配器身份，已拒绝猜测。"
+    for rec in devices:
+        com = rec.get("comPort")
+        if com in usb_port_claims and (com in seen_ports or len(usb_port_claims[com]) > 1):
+            rec["available"] = False
+            rec["guidance"] = "同一串口对应多个适配器身份，已拒绝猜测。"
+    for rec in devices:
+        rec["identitySource"] = sorted(set(rec.get("identitySource", [])))
+        if not rec["available"]:
+            rec["comPort"] = None
     devices.sort(key=lambda d: d["id"])
     devices.extend(snap.get("vnci") or [])
     devices.extend(snap.get("pt3g") or [])
@@ -380,8 +443,8 @@ def enumerate_devices(snapshot: dict | None = None, **collect_kw) -> dict:
     }
 
 
-def resolve_port(device_id: str, snapshot: dict | None = None, **collect_kw) -> str:
-    if not valid_device_id(device_id) or not device_id.startswith("bt:"):
+def resolve_device(device_id: str, snapshot: dict | None = None, **collect_kw) -> dict:
+    if not valid_device_id(device_id) or not device_id.startswith(("bt:", "usb:")):
         raise ElmError("device-id-invalid")
     listed = enumerate_devices(snapshot, **collect_kw)
     hits = [d for d in listed["devices"] if d["id"] == device_id]
@@ -393,17 +456,30 @@ def resolve_port(device_id: str, snapshot: dict | None = None, **collect_kw) -> 
     others = [d for d in listed["devices"] if d["id"] != device_id and d.get("comPort") == rec["comPort"]]
     if others:
         raise ElmError("device-port-not-unique")
-    return rec["comPort"]
+    return rec
 
 
-def open_selected_port(device_id: str, *, serial_module=None, snapshot=None, **collect_kw):
-    com = resolve_port(device_id, snapshot, **collect_kw)
+def resolve_port(device_id: str, snapshot: dict | None = None, **collect_kw) -> str:
+    return resolve_device(device_id, snapshot, **collect_kw)['comPort']
+
+
+def open_selected_port(device_id: str, *, serial_module=None, snapshot=None, adapter_model=None,
+                       require_clear_qualified=False, **collect_kw):
+    rec = resolve_device(device_id, snapshot, **collect_kw)
+    model = adapter_model or rec['brand']
+    if model not in ELM_MODELS:
+        raise ElmError('device-model-required')
+    if rec['brand'] != 'unresolved' and model != rec['brand']:
+        raise ElmError('adapter-model-mismatch')
+    if require_clear_qualified and rec['brand'] not in ('vLinker', 'OBDLink MX+'):
+        raise ElmError('adapter-clear-not-qualified')
+    com = rec['comPort']
     if serial_module is None:
         import serial as serial_module  # lazy
-    return serial_module.Serial(com, BAUD, timeout=0.05, exclusive=True), com
+    return serial_module.Serial(com, ELM_BAUDS[model], timeout=0.05, exclusive=True), com
 
 
-def probe_adapter(device_id: str, *, kind: str = "connect", serial_module=None, snapshot=None, port=None, **collect_kw) -> dict:
+def probe_adapter(device_id: str, *, kind: str = "connect", serial_module=None, snapshot=None, port=None, adapter_model=None, **collect_kw) -> dict:
     own = port is None
     client = None
     opened = None
@@ -426,14 +502,14 @@ def probe_adapter(device_id: str, *, kind: str = "connect", serial_module=None, 
     }
     try:
         if port is None:
-            port, com = open_selected_port(device_id, serial_module=serial_module, snapshot=snapshot, **collect_kw)
+            port, com = open_selected_port(device_id, serial_module=serial_module, snapshot=snapshot, adapter_model=adapter_model, **collect_kw)
             opened = port
             out["comPort"] = com
             out["openedPort"] = True
         else:
             out["comPort"] = "injected"
             out["openedPort"] = True
-        client = ElmClient(port, timeout_s=8.0)
+        client = ElmClient(port, timeout_s=8.0, expected_model=adapter_model)
         if kind == "voltage":
             atrv = client.send_at("ATRV")
             out["atrv"] = atrv
@@ -454,16 +530,22 @@ def probe_adapter(device_id: str, *, kind: str = "connect", serial_module=None, 
         out["error"] = str(e)
         return out
     finally:
+        restoration = {"errors": []}
         if client is not None:
             try:
-                client.close_restore()
-            except Exception:  # noqa: BLE001
-                pass
+                restoration = client.close_restore()
+            except Exception as exc:  # noqa: BLE001
+                restoration = {"errors": [f"close:{exc}"]}
         elif own and opened is not None:
             try:
                 opened.close()
-            except Exception:  # noqa: BLE001
-                pass
+            except Exception as exc:  # noqa: BLE001
+                restoration = {"errors": [f"close:{exc}"]}
+        out["restoration"] = restoration
+        if restoration["errors"]:
+            out["ok"] = False
+            out["operationError"] = out["error"]
+            out["error"] = "elm-cleanup-failed"
 
 
 def _live_probe_blocked() -> bool:
@@ -543,6 +625,7 @@ def run_voltage_monitor(
     interval_s: float = ATRV_INTERVAL_S,
     stop_event=None,
     max_samples: int | None = None,
+    adapter_model=None,
     **collect_kw,
 ) -> int:
     """Persistent ATRV on one serial open. Identity once. No ECU bytes."""
@@ -577,82 +660,94 @@ def run_voltage_monitor(
         _emit(outf, {"ok": False, "type": "error", "error": err, "serialOpens": serial_opens, **flags, **(extra or {})})
         return 1
 
-    try:
-        if port is None:
-            com = resolve_port(device_id, snapshot, **collect_kw)
-            if stop.is_set():
-                _emit(outf, {"ok": True, "type": "stopped", "serialOpens": serial_opens, **flags})
-                return 0
-            if serial_module is None:
-                import serial as serial_module  # lazy
-            port = serial_module.Serial(com, BAUD, timeout=0.05, exclusive=True)
-            opened = port
-            serial_opens += 1
-        else:
-            com = "injected"
-            serial_opens = 1
-        client = ElmClient(port, timeout_s=MONITOR_AT_TIMEOUT_S, clock=clock, sleeper=sleeper, cancel_event=stop)
-        ident = client.validate_adapter(10.0)
-        _trim_raw(client)
-        volts = parse_voltage_volts(ident.get("atrv"))
-        samples = 1
-        _emit(
-            outf,
-            {
-                "ok": True,
-                "type": "handshake",
-                "deviceId": device_id,
-                "comPort": com,
-                "ati": ident.get("ati"),
-                "atdpn": ident.get("atdpn"),
-                "atrv": ident.get("atrv"),
-                "volts": volts,
-                "voltageSource": "atrv",
-                "serialOpens": serial_opens,
-                "identityOnce": True,
-                "commOk": True,
-                "at": _utc(),
-                **flags,
-            },
-        )
-        while not stop.is_set() and (max_samples is None or samples < max_samples):
-            _wait_interval(interval_s, stop, sleeper, time.sleep)
-            if stop.is_set():
-                break
-            atrv = client.send_at("ATRV")
+    def collect():
+        nonlocal port, opened, client, serial_opens, serial_module
+        try:
+            if port is None:
+                if stop.is_set():
+                    return 0
+                port, com = open_selected_port(device_id, serial_module=serial_module, snapshot=snapshot,
+                    adapter_model=adapter_model, **collect_kw)
+                opened = port
+                serial_opens += 1
+            else:
+                com = "injected"
+                serial_opens = 1
+            client = ElmClient(port, timeout_s=MONITOR_AT_TIMEOUT_S, clock=clock, sleeper=sleeper, cancel_event=stop,
+                expected_model=adapter_model)
+            ident = client.validate_adapter(10.0)
             _trim_raw(client)
-            volts = parse_voltage_volts(atrv)
-            samples += 1
+            volts = parse_voltage_volts(ident.get("atrv"))
+            samples = 1
             _emit(
                 outf,
                 {
                     "ok": True,
-                    "type": "reading",
-                    "commOk": True,
+                    "type": "handshake",
                     "deviceId": device_id,
-                    "atrv": atrv,
+                    "comPort": com,
+                    "ati": ident.get("ati"),
+                    "atdpn": ident.get("atdpn"),
+                    "atrv": ident.get("atrv"),
                     "volts": volts,
                     "voltageSource": "atrv",
                     "serialOpens": serial_opens,
+                    "identityOnce": True,
+                    "commOk": True,
                     "at": _utc(),
                     **flags,
                 },
             )
-        _emit(outf, {"ok": True, "type": "stopped", "serialOpens": serial_opens, **flags})
-        return 0
-    except Exception as e:  # noqa: BLE001
-        return fail(_monitor_error(e))
+            while not stop.is_set() and (max_samples is None or samples < max_samples):
+                _wait_interval(interval_s, stop, sleeper, time.sleep)
+                if stop.is_set():
+                    break
+                atrv = client.send_at("ATRV")
+                _trim_raw(client)
+                volts = parse_voltage_volts(atrv)
+                samples += 1
+                _emit(
+                    outf,
+                    {
+                        "ok": True,
+                        "type": "reading",
+                        "commOk": True,
+                        "deviceId": device_id,
+                        "atrv": atrv,
+                        "volts": volts,
+                        "voltageSource": "atrv",
+                        "serialOpens": serial_opens,
+                        "at": _utc(),
+                        **flags,
+                    },
+                )
+            return 0
+        except Exception as e:  # noqa: BLE001
+            return fail(_monitor_error(e))
+
+    status = 1
+    try:
+        status = collect()
     finally:
+        restoration = {"errors": []}
         if client is not None:
             try:
-                client.close_restore()
-            except Exception:  # noqa: BLE001
-                pass
+                restoration = client.close_restore()
+            except Exception as exc:
+                restoration = {"errors": [f"close:{exc}"]}
         elif own and opened is not None:
             try:
                 opened.close()
-            except Exception:  # noqa: BLE001
-                pass
+            except Exception as exc:
+                restoration = {"errors": [f"close:{exc}"]}
+        if restoration["errors"]:
+            status = 1
+            _emit(outf, {"ok": False, "type": "error", "error": "elm-cleanup-failed",
+                "restoration": restoration, "deviceId": device_id, "serialOpens": serial_opens, **flags})
+        else:
+            _emit(outf, {"ok": True, "type": "stopped", "restoration": restoration,
+                "deviceId": device_id, "serialOpens": serial_opens, **flags})
+    return status
 
 
 def stdio_loop(stdin=None, stdout=None) -> int:
@@ -669,11 +764,18 @@ def stdio_loop(stdin=None, stdout=None) -> int:
     if not isinstance(req, dict):
         outf.write(json.dumps({"ok": False, "error": "stdin-not-object", "liveVerified": False, "writePayload": None}) + "\n")
         return 2
-    extra = set(req) - {"action", "deviceId", "kind", "purpose", "canNetwork"}
+    extra = set(req) - {"action", "deviceId", "kind", "purpose", "canNetwork", "receiveMilliseconds", "receiveBatchId", "adapterModel"}
     if extra:
         outf.write(json.dumps({"ok": False, "error": "unexpected-keys", "liveVerified": False, "writePayload": None}) + "\n")
         return 2
     action = req.get("action")
+    if 'adapterModel' in req and (not isinstance(req['adapterModel'], str) or req['adapterModel'] not in ELM_MODELS | {'VNCI', 'PT3G'}):
+        _emit(outf, {"ok": False, "type": "error", "error": "adapter-model-invalid"})
+        return 2
+    if ({"receiveMilliseconds", "receiveBatchId"} & set(req)
+            and (action != "monitor" or req.get("purpose") != "internal")):
+        outf.write(json.dumps({"ok": False, "error": "unexpected-keys", "liveVerified": False, "writePayload": None}) + "\n")
+        return 2
     if action == "list":
         from .host_devices import collect_host_devices
         from concurrent.futures import ThreadPoolExecutor
@@ -697,8 +799,9 @@ def stdio_loop(stdin=None, stdout=None) -> int:
             return 2
         if req.get("purpose") == "internal":
             from .internal_stream import run_internal_monitor
-            return run_internal_monitor(did, req.get("canNetwork"), stdout=outf, stdin=inf)
-        return run_voltage_monitor(did, stdout=outf, stdin=inf)
+            return run_internal_monitor(did, req.get("canNetwork"), stdout=outf, stdin=inf,
+                receive_ms=req.get("receiveMilliseconds", 600000), batch_id=req.get("receiveBatchId", "standalone"))
+        return run_voltage_monitor(did, stdout=outf, stdin=inf, adapter_model=req.get('adapterModel'))
     if action == "probe":
         did = req.get("deviceId")
         kind = req.get("kind") or "connect"
@@ -711,7 +814,7 @@ def stdio_loop(stdin=None, stdout=None) -> int:
                 + "\n"
             )
             return 2
-        out = probe_adapter(did, kind=kind)
+        out = probe_adapter(did, kind=kind, adapter_model=req.get('adapterModel'))
         outf.write(json.dumps(out, ensure_ascii=False) + "\n")
         return 0 if out.get("ok") else 1
     outf.write(json.dumps({"ok": False, "error": "invalid-action", "liveVerified": False, "writePayload": None}) + "\n")

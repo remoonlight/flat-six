@@ -10,6 +10,9 @@ const id = "vnci:10001";
 const context = { deviceId: id, now: 1000, freshMs: 6000 };
 const handshake = { ok: true, simulation: false, type: "handshake", deviceId: id,
   volts: 12.6, voltageSource: "d-pdu-vbatt", at: 1000 };
+const adapterInfo = { serial: "10001", driverVersion: "29.0.0", firmwareImage: "29.0r00-14769-2964",
+  managementSerialMatched: true, driverFirmwareMatched: true, vehicleQualified: false,
+  identityPageSha256: "a".repeat(64), versionPageSha256: "b".repeat(64) };
 assert.equal(validateConnectionRequest({ action: "select", deviceId: id }), null);
 assert.equal(validateConnectionRequest({ action: "connect", model: "VNCI" }), null);
 assert.equal(validateConnectionRequest({ action: "connect", deviceId: "vnci:../bad" }).error, "malformed_device_id");
@@ -58,14 +61,16 @@ try {
   await manager.handle({ action: "list" });
   assert.equal((await manager.handle({ action: "select", deviceId: id })).model, "VNCI");
   await manager.handle({ action: "connect" });
-  child.stdout.write(JSON.stringify({ ...handshake, at: 1001 }) + "\n");
+  child.stdout.write(JSON.stringify({ ...handshake, adapterInfo: { ...adapterInfo, ignored: "not forwarded" }, at: 1001 }) + "\n");
   assert.equal(manager.snapshot().connected, true);
   assert.equal(manager.snapshot().voltageSource, "d-pdu-vbatt");
   assert.equal(manager.snapshot().voltageVolts, 12.6);
+  assert.deepEqual(manager.snapshot().adapterInfo, { ...adapterInfo, observedAt: 1000 });
   child.stdout.write(JSON.stringify({ ...handshake, type: "reading", at: 1002, volts: null, commOk: true }) + "\n");
   assert.equal(manager.snapshot().connected, true);
   assert.equal(manager.snapshot().voltageVolts, null);
   assert.equal(manager.snapshot().voltageLabel, "电压 -- V");
+  assert.deepEqual(manager.snapshot().adapterInfo, { ...adapterInfo, observedAt: 1000 }, "voltage absence does not erase matched head information");
   child.stdout.write(JSON.stringify({ ...handshake, type: "reading", volts: 12.7, commOk: true }) + "\n");
   assert.equal(manager.snapshot().connected, true);
   assert.equal(manager.snapshot().voltageVolts, 12.7);
@@ -73,6 +78,7 @@ try {
   assert.equal((await manager.suspendForSession()).ok, true);
   assert.equal(manager.snapshot().connected, false);
   assert.equal(manager.snapshot().voltageVolts, null);
+  assert.equal(manager.snapshot().adapterInfo, null, "session handoff removes current monitor metadata");
   await manager.handle({ action: "disconnect" });
 } finally { await manager.shutdown(); }
 const restored = createObdConnectionManager(options);
@@ -80,8 +86,39 @@ try {
   assert.equal(restored.selectedId(), id);
   assert.equal(restored.snapshot().model, "VNCI");
   assert.equal(restored.snapshot().connected, false);
+  assert.equal(restored.snapshot().adapterInfo, null, "saved device selection does not restore old firmware qualification");
 } finally { await restored.shutdown(); }
 console.log("VNCI connection selfcheck passed: USB identity, voltage provenance, persistence and exclusive session handoff (synthetic)");
+
+for (const [index, invalid] of [
+  { ...adapterInfo, serial: "99999" }, { ...adapterInfo, managementSerialMatched: false },
+  { ...adapterInfo, driverFirmwareMatched: false }, { ...adapterInfo, vehicleQualified: true },
+  { ...adapterInfo, identityPageSha256: "bad" }, { ...adapterInfo, firmwareImage: "\nmalformed" },
+].entries()) {
+  const worker = new EventEmitter();
+  Object.assign(worker, { stdin: new PassThrough(), stdout: new PassThrough(), stderr: new PassThrough(), exitCode: null });
+  worker.kill = () => { worker.exitCode = 0; worker.emit("close", 0); return true; };
+  worker.stdin.on("data", bytes => {
+    if (String(bytes).includes('"stop"')) {
+      worker.stdout.write(JSON.stringify({ type: "stopped", restoration: { errors: [] } }) + "\n");
+      worker.exitCode = 0; worker.emit("close", 0);
+    }
+  });
+  const conn = createObdConnectionManager({ ...options,
+    env: { PORSCHE981_CONNECTION_STATE: path.join(scratch, `metadata-${process.pid}-${index}.json`) },
+    monitorSpawnFn: () => worker });
+  try {
+    await conn.handle({ action: "list" }); await conn.handle({ action: "select", deviceId: id });
+    await conn.handle({ action: "connect" });
+    worker.stdout.write(JSON.stringify({ ...handshake, adapterInfo: invalid }) + "\n");
+    assert.equal(conn.snapshot().connected, false);
+    assert.equal(conn.snapshot().adapterInfo, null);
+    assert.equal(conn.snapshot().connectionError, "vnci-management-metadata-invalid");
+    worker.stdout.write(JSON.stringify({ ...handshake, adapterInfo }) + "\n");
+    assert.equal(conn.snapshot().connected, false, "late metadata must not revive a failed worker");
+  } finally { await conn.shutdown(); }
+}
+console.log("VNCI metadata selfcheck passed: current serial/firmware details, bounded fields, handoff/restart clearing and six inconsistent-metadata failures (synthetic)");
 
 // A native worker's first error ends its readings, but it still owns the
 // adapter until cleanup finishes. Late output must not revive that worker or

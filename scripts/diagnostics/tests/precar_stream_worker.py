@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import sys
 import time
+import types
 from unittest import mock
 
 from scripts.diagnostics.can_monitor import ALLOWED
@@ -74,6 +75,8 @@ class FixturePort:
             "synthetic": True, "serialOpens": 0, "ecuRequestsSent": 0,
             "closed": self.closed, "framesGenerated": self.frames,
             "adapterLocalCommands": self.writes,
+            "productionInternalStreamPath": sys.modules['scripts.diagnostics.internal_stream'].__file__,
+            "productionCanMonitorPath": sys.modules['scripts.diagnostics.can_monitor'].__file__,
         }), encoding="utf-8")
 
 
@@ -88,10 +91,13 @@ def main():
     port = FixturePort(directory)
     # Guards are relaxed only inside this child with an explicit fake port and
     # independent assertions preventing fallback to any physical transport.
+    serial_guard = types.ModuleType('serial')
+    serial_guard.Serial = mock.Mock(side_effect=AssertionError('physical serial forbidden'))
     with mock.patch.dict(os.environ, {"PORSCHE981_HEADLESS": "0", "PORSCHE981_SESSION_DENY_LIVE": "0"}), \
-            mock.patch("serial.Serial", side_effect=AssertionError("physical serial forbidden")), \
+            mock.patch.dict(sys.modules, {'serial': serial_guard}), \
             mock.patch("scripts.diagnostics.internal_stream.open_selected_port", side_effect=AssertionError("physical port forbidden")):
-        return run_internal_monitor(request["deviceId"], "drive", stdout=sys.stdout, stdin=sys.stdin, port=port)
+        return run_internal_monitor(request["deviceId"], "drive", stdout=sys.stdout, stdin=sys.stdin, port=port,
+                                    receive_ms=request.get('receiveMilliseconds'), batch_id=request.get('receiveBatchId'))
 
 
 if __name__ == "__main__":

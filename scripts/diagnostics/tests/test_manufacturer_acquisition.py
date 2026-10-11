@@ -17,6 +17,21 @@ def profile():
 
 
 class AcquisitionTests(unittest.TestCase):
+    def test_conflicting_request_metadata_is_rejected_before_provider(self):
+        def forbidden(_):raise AssertionError('provider called')
+        for change in ({'pid':0xF101},{'wireSID':0x21},{'rawSID':0x2E},{'read_request_candidate_hex':'22F101'}):
+            with self.subTest(change=change):
+                p=profile();p['parameters'][0].update(change)
+                result=acquire_cycle(p,['a'*64],forbidden)
+                self.assertFalse(result['ok']);self.assertEqual(result['error'],'manufacturer-definition-incomplete');self.assertEqual(result['transactions'],[])
+
+    def test_embedded_record_request_and_span_must_match_selected_parameter(self):
+        def forbidden(_):raise AssertionError('provider called')
+        for record in (field('a',request='22F101'),field('a',offset=3)):
+            p=profile();p['parameters'][0]['record']=record
+            result=acquire_cycle(p,['a'*64],forbidden)
+            self.assertFalse(result['ok']);self.assertEqual(result['transactions'],[])
+
     def test_group_once_values_and_no_vehicle_claim(self):
         requests = []
         def receive(hx):
@@ -29,6 +44,36 @@ class AcquisitionTests(unittest.TestCase):
         self.assertEqual(out['completedCycles'], 1)
         self.assertFalse(out['vehicleDataCollected'])
         self.assertTrue(all(s['synthetic'] for s in out['samples']))
+
+    def test_shared_response_observation_precedes_field_decoding(self):
+        from scripts.diagnostics import manufacturer_acquisition as acquisition
+        original = acquisition.decode_application_response
+        clock = [100.0]
+        def decode(*args, **kwargs):
+            clock[0] += 10  # Decoding work must not change either field's observation.
+            return original(*args, **kwargs)
+        def receive(_):
+            clock[0] = 102.5
+            return bytes.fromhex('62F1002A07')
+        with patch.object(acquisition.time, 'monotonic', side_effect=lambda: clock[0]), \
+             patch.object(acquisition, 'decode_application_response', side_effect=decode):
+            out = acquire_cycle(profile(), ['a' * 64, 'b' * 64], receive)
+        self.assertTrue(out['ok'], out)
+        self.assertEqual([s['elapsedMs'] for s in out['samples']], [2500, 2500])
+        self.assertEqual(out['samples'][0]['processedUtc'], out['samples'][1]['processedUtc'])
+
+    def test_connection_change_between_groups_in_one_cycle_uses_each_response_epoch(self):
+        from scripts.diagnostics.manufacturer_acquisition import _decode_cycle
+        p = profile(); p['parameters'][1] = field('b', '22F101')
+        epoch = [0]
+        def receive(hx):
+            epoch[0] += 1
+            return bytes.fromhex('62F1002A' if hx == '22F100' else '62F10107')
+        out = _decode_cycle(p, ['a' * 64, 'b' * 64], receive, cancelled=lambda: False,
+                            source='synthetic-ecu', synthetic=True, connection_epoch=lambda: epoch[0])
+        self.assertTrue(out['ok'], out)
+        self.assertEqual([s['connectionEpoch'] for s in out['samples']], [1, 2])
+        self.assertEqual([t['connectionEpoch'] for t in out['transactions']], [1, 2])
 
     def test_live_and_wrong_profile_never_touch_provider(self):
         def forbidden(_): raise AssertionError('provider called')

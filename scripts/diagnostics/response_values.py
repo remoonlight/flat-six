@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from .x431_formula import formula_from_record
 from .x431_values import _is_bytes_type, classify_decode, decode_record
+from scripts.x431_re.request_fields import CODING_DATA_SHA256, coding_profile_request
 
 READ_SIDS = frozenset({0x21, 0x22, 0x1A})
 NRC_PENDING = 0x78
@@ -37,9 +38,36 @@ def _pid_from_request(sid: int, payload: bytes) -> int | None:
 def request_from_record(rec: dict) -> dict:
     if not isinstance(rec, dict):
         return {"ok": False, "reason": "malformed_record"}
+    if 'codingReadOrigin' in rec:
+        try:
+            payload = coding_profile_request(rec)
+        except (ValueError, TypeError, KeyError, AttributeError) as error:
+            return {'ok': False, 'reason': str(error) or 'coding-read-origin-invalid'}
+        return {'ok': True, 'sid': payload[0], 'request': payload, 'headerLen': len(payload),
+            'rawSID': rec['readSID'], 'alias31to22': False,
+            'schema': 'coding-profile-first-record', 'readOrigin': dict(rec['codingReadOrigin'])}
+    source = rec.get('source') or {}
+    if (isinstance(source, dict) and str(source.get('sha256', '')).lower() == CODING_DATA_SHA256
+            and 'propertyByte' in rec and isinstance(rec.get('suffix_hex'), str)
+            and len(rec['suffix_hex']) == 16):
+        return {'ok': False, 'reason': 'coding-profile-read-origin-required'}
     payload = _payload_from_record(rec)
     if payload is None:
         return {"ok": False, "reason": "no_read_candidate"}
+    candidates = []
+    nested = rec.get("disabledreadrequestcandidate")
+    if nested is not None:
+        if not isinstance(nested, dict) or _hex(nested.get("payload_hex")) is None:
+            return {"ok": False, "reason": "malformed_read_candidate"}
+        candidates.append(_hex(nested["payload_hex"]))
+    for key in ("read_request_candidate_hex", "requestHex"):
+        if rec.get(key) is not None:
+            candidate = _hex(rec[key])
+            if candidate is None:
+                return {"ok": False, "reason": "malformed_read_candidate"}
+            candidates.append(candidate)
+    if any(candidate != payload for candidate in candidates):
+        return {"ok": False, "reason": "read_candidate_conflict"}
     raw = rec.get("rawSID")
     wire = rec.get("wireSID")
     if wire is not None or raw is not None:
@@ -57,6 +85,23 @@ def request_from_record(rec: dict) -> dict:
                 return {"ok": False, "reason": "request_len_not_single_did"}
         elif len(payload) != 2:
             return {"ok": False, "reason": "request_len_not_single_lid"}
+        if raw is not None:
+            if type(raw) is not int:
+                return {"ok": False, "reason": "malformed_read_sid"}
+            if raw not in READ_SIDS and raw != 0x31:
+                return {"ok": False, "reason": "unsupported_raw_read_sid"}
+            if raw != wire and not (raw == 0x31 and wire == 0x22):
+                return {"ok": False, "reason": "raw-wire-sid-inconsistent"}
+        if rec.get("readSID") is not None:
+            if type(rec["readSID"]) is not int:
+                return {"ok": False, "reason": "malformed_read_sid"}
+            if rec["readSID"] != wire:
+                return {"ok": False, "reason": "read_sid_payload_mismatch"}
+        if rec.get("pid") is not None:
+            if type(rec["pid"]) is not int:
+                return {"ok": False, "reason": "malformed_pid"}
+            if rec["pid"] != _pid_from_request(wire, payload):
+                return {"ok": False, "reason": "pid_mismatch"}
         return {
             "ok": True,
             "sid": wire,

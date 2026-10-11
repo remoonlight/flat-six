@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { validCaptureClock } from "./capture-clock.mjs";
 
 // PCAPNG SHB/IDB/EPB/ISB; LINKTYPE_CAN_SOCKETCAN=227. The CAN header ID
 // is big endian even in a little endian capture. Timestamps are host arrival.
@@ -20,7 +21,7 @@ export function validCanFrame(frame) {
   return frame && Number.isSafeInteger(frame.canId) && frame.canId >= 0 && typeof frame.extended === "boolean" &&
     frame.canId <= (frame.extended ? 0x1fffffff : 0x7ff) && typeof frame.dataHex === "string" &&
     /^(?:[0-9A-F]{2}){0,8}$/.test(frame.dataHex) && Number.isSafeInteger(frame.timestampUs) && frame.timestampUs > 0 &&
-    frame.timestampSource === "host-chunk-arrival";
+    frame.timestampSource === "host-chunk-arrival" && validCaptureClock(frame);
 }
 
 export function createCanPcapWriter(file, network, { open = fs.openSync, write = fs.writeSync, close = fs.closeSync,
@@ -54,7 +55,9 @@ export function createCanPcapWriter(file, network, { open = fs.openSync, write =
         Buffer.from(frame.dataHex, "hex").copy(packet, 8);
         const header = Buffer.alloc(20); header.writeUInt32LE(Number(timestamp >> 32n), 4);
         header.writeUInt32LE(Number(timestamp & 0xffffffffn), 8); header.writeUInt32LE(16, 12); header.writeUInt32LE(16, 16);
-        const context = frame.captureContext ? JSON.stringify(frame.captureContext) : null;
+        const context = frame.captureContext || frame.monotonicClock ? JSON.stringify({ ...frame.captureContext,
+          ...(frame.monotonicClock ? { monotonicClock: frame.monotonicClock, monotonicTimestampUs: frame.monotonicTimestampUs,
+            startedMonotonicTimestampUs: frame.startedMonotonicTimestampUs, startedTimestampUs: frame.startedTimestampUs } : {}) }) : null;
         if (context && Buffer.byteLength(context) > 2048) throw new Error("pcap-context-limit");
         return block(6, Buffer.concat([header, packet, ...(context ? [option(1, context), endOptions] : [])]));
       });
@@ -75,31 +78,53 @@ export function createCanPcapWriter(file, network, { open = fs.openSync, write =
   };
 }
 
-// A bounded acquisition batch ends at the limit while the bus keeps receiving.
-// It never drops an earlier batch frame and claims the export is complete.
-export function createCanFrameBatch({ limit = 25000, now = () => new Date().toISOString() } = {}) {
-  let frames = [], latest = new Map(), total = 0, endedAt = null, interruptions = [], omittedInterruptions = 0;
+// The connection manager owns the ten-minute deadline. Store canonical received
+// frames in volatile packed pages; a display window is never a retention limit.
+const FRAME_BYTES = 21, PAGE_FRAMES = 4096;
+const FRAME_KEYS = new Set(["canId", "extended", "dataHex", "timestampUs", "timestampSource"]);
+export function createCanFrameBatch({ now = () => new Date().toISOString() } = {}) {
+  let pages = [], latest = new Map(), total = 0, endedAt = null, interruptions = [], omittedInterruptions = 0, stopped = false, stopReason = null;
   const startedAt = now();
+  function captureFrames() {
+    const count = total, capturedPages = pages.slice();
+    return (function* () {
+      for (let index = 0; index < count; index++) {
+        const page = capturedPages[Math.floor(index / PAGE_FRAMES)], at = index % PAGE_FRAMES * FRAME_BYTES;
+        const id = page.readUInt32LE(at), length = page[at + 12];
+        yield { canId: id & 0x1fffffff, extended: !!(id & 0x80000000),
+          dataHex: page.subarray(at + 13, at + 13 + length).toString("hex").toUpperCase(),
+          timestampUs: page.readDoubleLE(at + 4), timestampSource: "host-chunk-arrival" };
+      }
+    })();
+  }
   return {
     ingest(input) {
-      if (!Array.isArray(input) || input.length > 512 || !input.every(validCanFrame)) throw new Error("internal-frame-invalid");
+      if (!Array.isArray(input) || input.length > 512 || !input.every(frame => validCanFrame(frame)
+        && Object.keys(frame).every(key => FRAME_KEYS.has(key)))) throw new Error("internal-frame-invalid");
+      if (stopped) return;
       for (const frame of input) {
+        const index = Math.floor(total / PAGE_FRAMES), at = total % PAGE_FRAMES * FRAME_BYTES;
+        if (!pages[index]) pages[index] = Buffer.alloc(PAGE_FRAMES * FRAME_BYTES);
+        const page = pages[index];
+        page.writeUInt32LE((frame.canId | (frame.extended ? 0x80000000 : 0)) >>> 0, at);
+        page.writeDoubleLE(frame.timestampUs, at + 4);
+        page[at + 12] = frame.dataHex.length / 2;
+        Buffer.from(frame.dataHex, "hex").copy(page, at + 13);
         total++;
         const key = `${frame.canId}:${frame.extended}`;
         if (latest.has(key)) latest.delete(key);
         latest.set(key, frame);
         if (latest.size > 256) latest.delete(latest.keys().next().value);
-        if (!endedAt) {
-          frames.push(frame);
-          if (frames.length >= limit) endedAt = now();
-        }
       }
     },
+    stop(reason) { stopped = true; endedAt ||= now(); stopReason = reason; },
     interrupt(reason) { if (!endedAt) { interruptions.push({ at: now(), reason: String(reason).slice(0, 160) }); if (interruptions.length > 128) { interruptions.shift(); omittedInterruptions++; } } },
-    view() { return { startedAt, endedAt, frameCount: total, retainedFrames: frames.length, frameLimit: limit,
-      batchComplete: true, batchClosed: !!endedAt, interruptions, omittedInterruptions, latest: [...latest.values()], verifiedSignalCount: 0 }; },
-    export() { const { latest: _latest, ...summary } = this.view();
-      return { kind: "internal-can-acquisition", ...summary, frameCount: frames.length, receivedTotal: total,
-        endedAt: endedAt || now(), frames, timestampSource: "host-chunk-arrival", physicalSilenceVerified: false }; },
+    view() { return { startedAt, endedAt, frameCount: total, retainedFrames: total, frameLimit: null,
+      retainedBytes: total * FRAME_BYTES, allocatedBytes: pages.length * PAGE_FRAMES * FRAME_BYTES, retentionComplete: true,
+      batchComplete: true, batchClosed: !!endedAt, stopReason, interruptions, omittedInterruptions, latest: [...latest.values()], verifiedSignalCount: 0 }; },
+    export({ stream = false } = {}) { const { latest: _latest, ...summary } = this.view();
+      const frames = captureFrames();
+      return { kind: "internal-can-acquisition", ...summary, interruptions: interruptions.map(entry => ({ ...entry })), receivedTotal: total,
+        endedAt: endedAt || now(), frames: stream ? frames : Array.from(frames), timestampSource: "host-chunk-arrival", physicalSilenceVerified: false }; },
   };
 }

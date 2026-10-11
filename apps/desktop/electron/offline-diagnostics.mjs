@@ -19,6 +19,8 @@ export const ACTIONS = Object.freeze([
   "replay",
   "ready-units", "ready-parameters", "ready-plan", "ready-replay", "ready-acquire",
   "catalog-units", "catalog-parameters", "catalog-plan", "catalog-replay", "catalog-coding-plan",
+  "source-catalogs", "source-units", "source-profile",
+  "firmware-container",
 ]);
 
 const ACTION_SET = new Set(ACTIONS);
@@ -69,8 +71,17 @@ export function validateRequest(req) {
   const bad = Object.keys(req).filter((k) => FORBIDDEN.has(k));
   if (bad.length) return fail("forbidden_field", { fields: bad });
   if (!ACTION_SET.has(req.action)) return fail("invalid_action", { action: req.action });
+  if (req.action === "firmware-container" && Object.keys(req).some(key => key !== "action")) return fail("forbidden_field");
+  if (req.action.startsWith("source-")) {
+    const expected = req.action === "source-catalogs" ? ["action"] : req.action === "source-units"
+      ? ["action", "generation", "sourceCatalogId"] : ["action", "generation", "sourceCatalogId", "ecuId", "profileId"];
+    if (Object.keys(req).length !== expected.length || expected.some(key => !Object.hasOwn(req, key))) return fail("source-catalog-request-invalid");
+    if (req.action !== "source-catalogs" && (typeof req.sourceCatalogId !== "string" || !/^[a-f0-9]{64}$/.test(req.sourceCatalogId))) return fail("source-catalog-id-invalid");
+  } else if (Object.hasOwn(req, "sourceCatalogId")) return fail("forbidden_field");
   if (req.action === "ready-acquire" && Object.keys(req).some((key) =>
-    !["action", "generation", "ecuId", "profileId", "parameterIds"].includes(key))) return fail("forbidden_field");
+    !["action", "generation", "ecuId", "profileId", "parameterIds", "cycleCount"].includes(key))) return fail("forbidden_field");
+  if (Object.hasOwn(req, "cycleCount") && (req.action !== "ready-acquire" || !isInt(req.cycleCount)
+    || req.cycleCount < 1 || req.cycleCount > 3)) return fail("invalid_cycle_count");
   if (req.groupId != null && (typeof req.groupId !== "string" || !/^(?:[0-9A-F]{8}|ungrouped)$/.test(req.groupId))) return fail("invalid_group_id");
   if (req.parameterIds != null && (!Array.isArray(req.parameterIds) || req.parameterIds.length > 12
     || req.parameterIds.some((id) => typeof id !== "string" || !/^[a-f0-9]{64}$/.test(id))
@@ -108,6 +119,9 @@ export function validateRequest(req) {
     return fail("invalid_response_mode", { responseMode: req.responseMode });
   }
   if (req.rawValue != null && !isInt(req.rawValue)) return fail("malformed_raw_value");
+  if (Object.hasOwn(req, "physicalValue") && (req.action !== "preview" || req.category !== "coding"
+    || !req.expectedReadRequestHex || Object.hasOwn(req, "rawValue")
+    || typeof req.physicalValue !== "string" || !req.physicalValue.length || req.physicalValue.length > 128)) return fail("numeric-target-invalid");
   if (req.identity != null) {
     if (typeof req.identity !== "object" || Array.isArray(req.identity)) {
       return fail("malformed_identity");
@@ -123,26 +137,26 @@ export function validateRequest(req) {
 
 export function resolvePython(env = process.env) {
   const pinned = (env.PORSCHE981_PYTHON || "").trim();
-  if (pinned) return { exe: pinned, prefix: ["-X", "utf8"] };
-  if (process.platform === "win32") return { exe: "py", prefix: ["-3"] };
-  return { exe: "python3", prefix: [] };
+  if (pinned) return { exe: pinned, prefix: ["-B", "-X", "utf8"] };
+  if (process.platform === "win32") return { exe: "py", prefix: ["-3", "-B"] };
+  return { exe: "python3", prefix: ["-B"] };
 }
 
 export function resolvePythonCandidates(env = process.env) {
   const pinned = (env.PORSCHE981_PYTHON || "").trim();
-  // An isolated bundled Python ignores PYTHONUTF8/PYTHONIOENCODING.
-  // Use the interpreter flag so Chinese JSON works on non-UTF8 Windows too.
-  if (pinned) return [{ exe: pinned, prefix: ["-X", "utf8"] }];
+  // The isolated bundled interpreter ignores environment flags. Keep its
+  // program tree immutable and Chinese JSON UTF-8 via interpreter options.
+  if (pinned) return [{ exe: pinned, prefix: ["-B", "-X", "utf8"] }];
   if (process.platform === "win32") {
     return [
-      { exe: "py", prefix: ["-3"] },
-      { exe: "python", prefix: [] },
-      { exe: "python3", prefix: [] },
+      { exe: "py", prefix: ["-3", "-B"] },
+      { exe: "python", prefix: ["-B"] },
+      { exe: "python3", prefix: ["-B"] },
     ];
   }
   return [
-    { exe: "python3", prefix: [] },
-    { exe: "python", prefix: [] },
+    { exe: "python3", prefix: ["-B"] },
+    { exe: "python", prefix: ["-B"] },
   ];
 }
 
@@ -169,6 +183,7 @@ function killChild(child) {
  *   maxStdout?: number,
  *   spawnFn?: typeof spawn,
  *   env?: NodeJS.ProcessEnv,
+ *   firmwareFile?: string,
  * }} opts
  */
 export function runWorkbench(request, opts) {
@@ -185,6 +200,11 @@ export function runWorkbench(request, opts) {
   const maxStdout = opts.maxStdout ?? MAX_STDOUT;
   const spawnFn = opts.spawnFn ?? spawn;
   const env = { ...(opts.env || process.env), PYTHONIOENCODING: "utf-8", PYTHONUTF8: "1" };
+  // Only a main-process file picker supplies this private option. Never inherit
+  // a file selection into the public offline IPC or another worker action.
+  delete env.PORSCHE981_FIRMWARE_FILE;
+  if (request.action === "firmware-container" && typeof opts.firmwareFile === "string"
+    && opts.firmwareFile.length <= 32768 && path.isAbsolute(opts.firmwareFile)) env.PORSCHE981_FIRMWARE_FILE = opts.firmwareFile;
   if (opts.variantsPath) env.PORSCHE981_VARIANTS = opts.variantsPath;
 
   const payload = JSON.stringify(request);

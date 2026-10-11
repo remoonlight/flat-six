@@ -223,7 +223,7 @@ class Monitor:
             raise RuntimeError(f"adapter-command-rejected:{command}:{response!r}")
         return b"\n".join(lines).decode("ascii", errors="strict")
 
-    def start(self, filter_profile="all"):
+    def start(self, filter_profile="all", *, listen=True):
         identity = {command: self.command(command) for command in ("ATI", "STI", "STDI")}
         if not re.fullmatch(r"STN225[56] v\d+\.\d+\.\d+", identity["STI"], re.I) or not re.fullmatch(
             r"OBDLink MX\+ r\d+\.\d+(?:\.\d+)?", identity["STDI"], re.I
@@ -243,12 +243,18 @@ class Monitor:
         identity["bitrate"] = self.command("STPBRR")
         if identity["protocol"] != "31" or identity["bitrate"] != "500000":
             raise RuntimeError("monitor-protocol-mismatch")
+        if listen:
+            self.begin_monitoring()
+        return identity
+
+    def begin_monitoring(self):
+        if not self.mx_verified or not self.prompt_ready or self.monitoring:
+            raise RuntimeError("monitor-start-state-invalid")
         self.prompt_ready = False
         self.guard()
         self.monitoring = True  # cleanup also handles a partially transmitted start
         self.recorder.monitor_started = self.clock()
         self.write(b"STM\r")
-        return identity
 
     def stop(self):
         self.cleaning = True

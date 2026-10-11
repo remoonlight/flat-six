@@ -72,6 +72,50 @@ def _flags_ok(d: dict) -> None:
 
 
 class TestFormulaParse(unittest.TestCase):
+    def test_direct_text_and_id_namespaces_stay_separate(self):
+        formula = ('TEXTTABLE:DataType=A_UINT32,[0x00]->nein;[0x01]->ja;'
+                   '[0x02]->0xF0000110;LengthInfo=Standard,BitLength=2,BitMask=0,HighLow=1;')
+        parsed = parse_formula_text(formula)
+        self.assertTrue(parsed['ok'])
+        self.assertEqual(parsed['literalMaps'], [(0, 0, 'nein'), (1, 1, 'ja')])
+        self.assertEqual(parsed['maps'], [(2, 2, 'F0000110')])
+        record = dict(EU5_CRUISE, formula=formula)
+        for raw, text, tid, status in [(0, 'nein', None, 'formula_literal'),
+                                       (1, 'ja', None, 'formula_literal'),
+                                       (2, '是', 'F0000110', 'resolved')]:
+            with self.subTest(raw=raw):
+                result = decode_record(record, bytes([raw]))
+                self.assertTrue(result['ok'])
+                self.assertEqual((result['text'], result['textId'], result['textStatus']),
+                                 (text, tid, status))
+                _flags_ok(result)
+        self.assertEqual(decode_record(record, b'\3')['reason'], 'texttable_unmapped')
+        self.assertEqual(classify_preview(parsed, 0, 0)['reason'], 'preview_literal_enum_unqualified')
+        self.assertEqual(preview_coding(record, b'\0', 1)['reason'], 'preview_literal_enum_unqualified')
+
+    def test_literal_ranges_use_hex_endpoints_and_reject_conflicting_targets(self):
+        suffix = ';BitLength=8,BitMask=0,HighLow=1;'
+        prefix = 'TEXTTABLE:DataType=A_UINT32,'
+        parsed = parse_formula_text(prefix + '[10,12]->ready' + suffix)
+        self.assertEqual(parsed['literalMaps'], [(16, 18, 'ready')])
+        self.assertEqual(decode_record({'formula': prefix + '[10,12]->ready' + suffix,
+                                        'byteOffset': 0, 'bitOffset': 0}, b'\x11')['text'], 'ready')
+        for body in ['[1,2]->ja;[2]->nein', '[1]->F0000110;[1]->0xF0000110']:
+            self.assertEqual(parse_formula_text(prefix + body + suffix)['reason'], 'malformed_map_overlap')
+        self.assertEqual(parse_formula_text(prefix + '[2,1]->ja' + suffix)['reason'],
+                         'malformed_range_reversed')
+
+    def test_unqualified_literal_syntax_and_ic_are_rejected(self):
+        for word in ['contains0x123', 'contains0X123', 'a=b', 'a,b', 'a->b', 'a[b]',
+                     'two words', '是', '', 'a' * 129]:
+            formula = f'TEXTTABLE:DataType=A_UINT32,[1]->{word};BitLength=8,HighLow=1;'
+            with self.subTest(word=word):
+                self.assertFalse(parse_formula_text(formula)['ok'])
+        self.assertFalse(parse_formula_text(
+            'TEXTTABLE:DataType=A_UINT32,Ic:[1]->ja;BitLength=8,HighLow=1;')['ok'])
+        self.assertFalse(parse_formula_text(
+            'IDENTICAL:DataType=A_UINT32,[1]->ja;BitLength=8,HighLow=1;')['ok'])
+
     def test_linear_coeffs(self):
         p = parse_formula_text(LINEAR_V["formula"])
         self.assertTrue(p["ok"])
@@ -214,7 +258,7 @@ class TestEu5Coding(unittest.TestCase):
         self.assertIsNone(out0["writePayload"])
         self.assertFalse(out0["executionEnabled"])
 
-    def test_preview_rejects_range_and_bad_raw(self):
+    def test_preview_bounded_range_and_bad_raw(self):
         rec = dict(EU5_CRUISE)
         rec["formula"] = dict(rec["formula"])
         rec["formula"]["text"] = (
@@ -222,8 +266,11 @@ class TestEu5Coding(unittest.TestCase):
         )
         rec["bitOffset"] = 0
         bad = preview_coding(rec, b"\x00", 1)
-        self.assertFalse(bad["ok"])
-        self.assertEqual(bad["reason"], "preview_range_enum")
+        self.assertTrue(bad["ok"])
+        self.assertEqual(bad['afterHex'], '01')
+        rec['formula']['text'] = rec['formula']['text'].replace('0x03', '0xFFFF').replace('BitLength=2', 'BitLength=16')
+        huge = preview_coding(rec, b'\x00\x00', 1)
+        self.assertEqual(huge['reason'], 'preview_range_enum')
         no = preview_coding(EU5_CRUISE, b"\x00", 2)
         self.assertFalse(no["ok"])
         self.assertEqual(no["reason"], "preview_raw_not_allowed_singleton")
@@ -444,6 +491,87 @@ class TestStrictApiAndLabels(unittest.TestCase):
 
 
 class AcceptanceBoundaryTests(unittest.TestCase):
+    def test_digit_only_map_endpoints_use_native_hexadecimal(self):
+        record = {
+            "formula": "TEXTTABLE:DataType=A_UINT32,[09,10]->0xF1;BitLength=8,BitMask=0,HighLow=1;",
+            "byteOffset": 0, "bitOffset": 0, "enumText": {"F1": "selected"},
+        }
+        for value in (9, 10, 15, 16):
+            result = decode_record(record, bytes([value]))
+            self.assertTrue(result["ok"])
+            self.assertEqual(result["textId"], "F1")
+        for value in (8, 17):
+            self.assertEqual(decode_record(record, bytes([value]))["reason"], "texttable_unmapped")
+        parsed = parse_formula_text(record["formula"])
+        self.assertEqual(parsed["maps"], [(9, 16, "F1")])
+        reserved = {**record, "formula": "IDENTICAL:BitLength=8,BitMask=0,HighLow=1;Ic:[10]->0xF1;"}
+        self.assertEqual(decode_record(reserved, b"\x10")["reason"], "invalid_reserved")
+        self.assertTrue(decode_record(reserved, b"\x0a")["ok"])
+
+    def test_byte_table_hex_ranges_preserve_real_boundaries(self):
+        record = {
+            "formula": "TEXTTABLE:DataType=A_BYTEFIELD,[000000,03FFFF]->0xF1;"
+                       "[040000]->0xF2;[040001,FFFFFF]->0xF1;"
+                       "LengthInfo=Standard,BitLength=24,BitMask=0,HighLow=1;",
+            "byteOffset": 0, "bitOffset": 0, "enumText": {"F1": "range", "F2": "point"},
+        }
+        from scripts.diagnostics.decoder_reference import reference_value
+        for value in (0, 39999, 40000, 0x3FFFE, 0x3FFFF, 0x40000, 0x40001, 0x40002, 0xFFFFFF):
+            payload = value.to_bytes(3, "big")
+            result = decode_record(record, payload)
+            self.assertTrue(result["ok"])
+            self.assertEqual(result["textId"], "F2" if value == 0x40000 else "F1")
+            self.assertEqual(result["textId"], reference_value(record, payload)["textId"])
+        self.assertEqual(decode_record(record, b"\x04\x00")["reason"], "truncated")
+        single = {**record, "formula": "TEXTTABLE:DataType=A_BYTEFIELD,[040000]->0xF2;"
+                  "LengthInfo=Standard,BitLength=24,BitMask=0,HighLow=1;"
+                  "Ic:[0x000000,0x03FFFF]->0xF1;[0x040001,0xFFFFFF]->0xF1;"}
+        self.assertEqual(decode_record(single, b"\x04\x00\x00")["textId"], "F2")
+        self.assertEqual(decode_record(single, (40000).to_bytes(3, "big"))["reason"], "invalid_reserved")
+        self.assertEqual(decode_record(single, b"\x04\x00\x01")["reason"], "invalid_reserved")
+
+    def test_native_empty_mask_keeps_unmasked_source_value(self):
+        for width in (1, 2, 5, 6, 7, 8, 13, 16):
+            record = {
+                "formula": f"IDENTICAL:Standar,BitMask=,BitLength={width},Encoding=Undefined,"
+                           f"HighLow=1,ubytes={'30' * width};",
+                "byteOffset": 0, "bitOffset": 0,
+            }
+            for raw in (0, 1, (1 << width) - 1):
+                data = raw.to_bytes((width + 7) // 8, "big")
+                result = decode_record(record, data)
+                self.assertTrue(result["ok"])
+                self.assertEqual(result["raw"], raw)
+                bits = sum(((data[-1 - bit // 8] >> (bit % 8)) & 1) * (2 ** bit)
+                           for bit in range(width))
+                self.assertEqual(result["raw"], bits)
+                self.assertFalse(result["liveVerified"])
+                self.assertFalse(result["executionEnabled"])
+
+    def test_empty_mask_is_limited_to_proven_families(self):
+        record = {
+            "formula": "TEXTTABLE:DataType=A_UINT32,[10]->0xF1;BitLength=8,BitMask=,HighLow=1;",
+            "byteOffset": 0, "bitOffset": 0, "enumText": {"F1": "selected"},
+        }
+        self.assertTrue(decode_record(record, b"\x10")["ok"])
+        for token in ("", "xyz", "-1"):
+            formula = f"LINEAR:BitLength=8,BitMask={token},HighLow=1,Xa=0,Xb=1,Xc=1;"
+            self.assertEqual(parse_formula_text(formula)["reason"], "malformed_bitmask")
+        bad = record["formula"].replace("BitMask=,", "BitMask=xyz,")
+        self.assertEqual(parse_formula_text(bad)["reason"], "malformed_bitmask")
+
+    def test_map_radix_does_not_change_decimal_fields_or_conflict_checks(self):
+        formula = "TEXTTABLE:DataType=A_UINT32,[10]->0xF1;BitLength=16,BitMask=0,HighLow=1,Lower=10,Upper=20;"
+        parsed = parse_formula_text(formula)
+        self.assertEqual((parsed["bitLength"], parsed["lower"], parsed["upper"]), (16, 10, 20))
+        self.assertEqual(parsed["maps"], [(16, 16, "F1")])
+        conflict = formula.replace("[10]->0xF1", "[10,1F]->0xF1;[15,20]->0xF2")
+        self.assertEqual(parse_formula_text(conflict)["reason"], "malformed_map_overlap")
+        self.assertFalse(parse_formula_text(formula.replace("[10]", "[-10]"))["ok"])
+        wide = {"formula": formula.replace("A_UINT32", "A_BYTEFIELD").replace("BitLength=16", "BitLength=40"),
+                "byteOffset": 0, "bitOffset": 0}
+        self.assertEqual(decode_record(wide, bytes(5))["reason"], "width_gt_32_unproven")
+
     def test_unconsumed_formula_text_is_rejected(self):
         formula = "TEXTTABLE:BitLength=1,Encoding=Undefined;[0]->0xF1;[1]->0xF2"
         for bad in (formula + ";garbage", formula + "ZZ"):

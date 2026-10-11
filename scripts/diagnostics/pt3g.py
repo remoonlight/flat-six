@@ -5,6 +5,8 @@ installer. Firmware/vehicle transport remain unqualified. Only enumeration,
 module connection, battery voltage and release are exposed here.
 """
 import ctypes as c
+import configparser
+from copy import deepcopy
 import hashlib
 import json
 import os
@@ -16,6 +18,10 @@ from .elm import ElmError
 from .vnci import DataItem, ModuleItem, U32, PTR, UNDEF, ID_UNDEF, _check, _display_voltage
 
 DEVICE_RE = re.compile(r'^pt3g:([0-9]{1,16})$')
+# Pinned PDU_VCI.dll's config builder (RVA 0x17f30) appends this name
+# to its own directory; 15765StartDetect is read through GetPrivateProfileIntA.
+# Checking the vendor's legacy PDU_VCI.ini alone does not cover that read.
+ACTIVE_CONFIG = 'PDU_Eucleia_VCI.ini'
 SUPPORT_SHA256 = {
     'PDU_VCI.dll': '3ef53a849b98bdbbcf46038c9c89e2a409b0ad63c853563d5990c9e1cb169e15',
     'pdu2.dll': '0ff808bf02b7df3f21dca777ba2b5d3fc546048fdd2e3fc34d4aa7757c441dba',
@@ -24,13 +30,15 @@ SUPPORT_SHA256 = {
     'PassthruManage.dll': 'de733647636ffdba4f2282be7cddba3f95b171baa377b0dcb3586a80d5e072af',
     'MDF_VCI.xml': '51b3c90527d6c200bffd47f9556c542122dc50eafdf49c81068f18ac69ecae64',
     'PDU_VCI.ini': '1628c12f271911cdb7eeb91aceeb94f96e3db24835e552cf3f593fc673aea4d3',
+    ACTIVE_CONFIG: '1628c12f271911cdb7eeb91aceeb94f96e3db24835e552cf3f593fc673aea4d3',
     '../E70_PT3G_SERVICE.exe': '7851c4b999ab7b74f7c6278f653900120c04da61635bf454e277d39b48b1e432',
 }
 
 
 def vendor_root(env=None):
     env = os.environ if env is None else env
-    return Path(env.get('PORSCHE981_PT3G_ROOT') or 'C:/ProgramData/PORSCHE-VCI/X64').expanduser().resolve()
+    return Path(env.get('PORSCHE981_PT3G_ROOT') or
+                Path(env.get('ProgramData') or 'C:/ProgramData') / 'PORSCHE-VCI/X64').expanduser().resolve()
 
 
 def verify_vendor_files(root):
@@ -42,9 +50,49 @@ def verify_vendor_files(root):
             raise ElmError('pt3g-driver-support-missing:' + name) from None
         if actual != expected:
             raise ElmError('pt3g-driver-support-not-qualified:' + name)
-    ini = (root / 'PDU_VCI.ini').read_text(encoding='utf-8-sig')
-    if re.findall(r'^\s*15765StartDetect\s*=\s*(\d+)\s*$', ini, re.M) != ['0']:
-        raise ElmError('pt3g-automatic-protocol-detection-not-disabled')
+    for name in ('PDU_VCI.ini', ACTIVE_CONFIG):
+        ini = (root / name).read_text(encoding='utf-8-sig')
+        if re.findall(r'^\s*15765StartDetect\s*=\s*(\d+)\s*$', ini, re.M) != ['0']:
+            raise ElmError('pt3g-automatic-protocol-detection-not-disabled:' + name)
+
+
+def _windows_ini_path(root):
+    try:
+        dll = str(root / 'PDU_VCI.dll').encode('mbcs', errors='strict')
+        filename = str(root / ACTIVE_CONFIG).encode('mbcs', errors='strict')
+    except (UnicodeError, LookupError):
+        raise ElmError('pt3g-driver-config-path-not-qualified') from None
+    # Pinned config builder uses a 1024-byte GetModuleFileNameA buffer.
+    if len(dll) >= 1024:
+        raise ElmError('pt3g-driver-config-path-not-qualified')
+    return filename
+
+
+def verify_windows_config(root):
+    """Read through the same OS API as the DLL before loading that DLL.
+
+    Windows may redirect profile reads through IniFileMapping; disk hashes
+    alone cannot establish the effective configuration seen by the driver.
+    This loads only Kernel32, not a diagnostic driver, and never writes.
+    """
+    root = Path(root)
+    filename = _windows_ini_path(root)
+    parser = configparser.ConfigParser()
+    parser.optionxform = str
+    parser.read(root / ACTIVE_CONFIG, encoding='ascii')
+    if parser.sections() != ['T6CONFIG'] or not parser['T6CONFIG']:
+        raise ElmError('pt3g-driver-active-config-not-qualified')
+    kernel = c.WinDLL('kernel32', use_last_error=True)
+    read = kernel.GetPrivateProfileIntA
+    read.argtypes, read.restype = [c.c_char_p, c.c_char_p, c.c_int32, c.c_char_p], U32
+    count = 0
+    for key, raw in parser['T6CONFIG'].items():
+        if not raw.isdecimal() or not 0 <= int(raw) < 0x7fffffff:
+            raise ElmError('pt3g-driver-active-config-not-qualified')
+        if read(b'T6CONFIG', key.encode('ascii'), -1, filename) != int(raw):
+            raise ElmError('pt3g-driver-effective-config-mismatch:' + key)
+        count += 1
+    return {'windowsProfileApiVerified': True, 'verifiedKeys': count, 'activeConfig': ACTIVE_CONFIG}
 
 
 def module_device(row):
@@ -70,7 +118,9 @@ class NativeAdapter:
             raise ElmError('pt3g-requires-windows-x64-python')
         root = Path(root if root is not None else vendor_root()).resolve()
         verify_vendor_files(root)
+        self.configuration = verify_windows_config(root)
         self.module, self.constructed = None, False
+        self._close_report = None
         self._voltage_oid = None
         self._directory = os.add_dll_directory(str(root))
         try:
@@ -88,11 +138,17 @@ class NativeAdapter:
                 fn.argtypes, fn.restype = args, U32
             self.call('PDUConstruct', None, None)
             self.constructed = True
-        except Exception:
-            self._directory.close()
+        except Exception as error:
+            try:
+                self._directory.close()
+            except Exception as cleanup:
+                raise ElmError('pt3g-initialization-cleanup-failed:' + str(error)
+                               + ';dll-directory-close:' + str(cleanup)) from error
             raise
 
     def call(self, name, *args):
+        if getattr(self, '_close_report', None) is not None:
+            raise ElmError('pt3g-adapter-closed')
         if name not in self._allowed:
             raise ElmError('pt3g-adapter-only-api')
         if name == 'PDUGetObjectId' and (args[0] != 0x8023 or args[1] != b'PDU_IOCTL_READ_VBATT'):
@@ -138,6 +194,12 @@ class NativeAdapter:
             self.call('PDUDestroyItem', ptr)
 
     def close(self):
+        if getattr(self, '_close_report', None) is not None:
+            return deepcopy(self._close_report)
+        if getattr(self, '_closing', False):
+            return {'errors': ['pt3g-close-in-progress'], 'adapterClose': 'D-PDU module disconnect/destruct',
+                    'ecuRestorationProven': False}
+        self._closing = True
         errors = []
         actions = [('PDUModuleDisconnect', (self.module,))] if self.module is not None else []
         if self.constructed:
@@ -148,9 +210,14 @@ class NativeAdapter:
             except Exception as error:
                 errors.append(str(error))
         self.module, self.constructed = None, False
-        self._directory.close()
-        return {'errors': errors, 'adapterClose': 'D-PDU module disconnect/destruct',
-                'ecuRestorationProven': False}
+        try:
+            self._directory.close()
+        except Exception as error:
+            errors.append('dll-directory-close:' + str(error))
+        self._close_report = {'errors': errors, 'adapterClose': 'D-PDU module disconnect/destruct',
+                              'ecuRestorationProven': False}
+        self._closing = False
+        return deepcopy(self._close_report)
 
 
 def discover():
@@ -169,9 +236,12 @@ class AdapterClient:
         if not isinstance(device_id, str) or not DEVICE_RE.fullmatch(device_id):
             raise ElmError('pt3g-device-id-invalid')
         self.device_id, self.cancel_event = device_id, cancel_event
+        self._closed, self._close_report = False, None
         self.native = native if native is not None else NativeAdapter()
 
     def validate_adapter(self):
+        if self._closed:
+            raise ElmError('pt3g-adapter-closed')
         if self.cancel_event is not None and self.cancel_event.is_set():
             raise ElmError('cancelled')
         matches = [(row, device) for row in self.native.modules()
@@ -188,7 +258,19 @@ class AdapterClient:
                 'transport': 'd-pdu-usb', 'vehicleTransportQualified': False}
 
     def close_restore(self):
-        return self.native.close()
+        if self._close_report is not None:
+            return deepcopy(self._close_report)
+        self._closed = True
+        try:
+            report = self.native.close()
+            if (not isinstance(report, dict) or not isinstance(report.get('errors'), list)
+                    or any(not isinstance(error, str) for error in report['errors'])):
+                raise ElmError('pt3g-close-report-invalid')
+        except Exception as error:
+            report = {'errors': [str(error)], 'adapterClose': 'D-PDU module close failed',
+                      'ecuRestorationProven': False}
+        self._close_report = deepcopy(report)
+        return deepcopy(self._close_report)
 
 
 def run_monitor(device_id, **kwargs):

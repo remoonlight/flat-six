@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { api, callOfflineDiagnostics, type OfflineDiagnosticsRequest, type OfflineDiagnosticsResult } from "../api";
 import { ManufacturerRehearsalPanel } from "../obd/ManufacturerRehearsalPanel";
+import { obdFunctionLabel } from "../obd/function-label";
 
 type Variant = { profileId: string; name: string; status: string; parameterCount: number; replayParameterCount: number; identityCount: number; identityDecoderCount: number };
 type Unit = { systemId: string; ecuId: number; label: string; variants: Variant[] };
@@ -20,7 +21,7 @@ function ReplayGraph({ series, name }: { series: ReplayParameter["series"][numbe
   </svg>;
 }
 
-export function OfflineRealtimePanel({ systemId, locked, onBusyChange }: { systemId: string; locked: boolean; onBusyChange?: (busy: boolean) => void }) {
+export function OfflineRealtimePanel({ systemId, locked, onBusyChange, adapterModel = null }: { systemId: string; locked: boolean; onBusyChange?: (busy: boolean) => void; adapterModel?: string | null }) {
   const [manufacturerBusy, setManufacturerBusy] = useState(false);
   useEffect(() => { onBusyChange?.(manufacturerBusy); }, [manufacturerBusy, onBusyChange]);
   const [units, setUnits] = useState<Unit[]>([]);
@@ -149,6 +150,9 @@ export function OfflineRealtimePanel({ systemId, locked, onBusyChange }: { syste
     finally { if (mounted.current) setSaving(false); }
   }
   const disabled = locked || busy || saving || manufacturerBusy;
+  const profileImplemented = generation === "981" && variant?.status === "identity-matched" &&
+    ["9x1:DME_BDE_Continental:SDI9_1_981_3_4L_EU5", "9x1:CAN_CAN_Gateway:CAN_CAN_Gateway_A7_1"].includes(profileId);
+  const liveImplemented = profileImplemented && (adapterModel === null || ["vLinker", "OBDLink MX+", "VNCI"].includes(adapterModel));
   const planBody = plan?.plan as { requestCountPerCycle: number; groups: { requestHex: string; parameterIds: string[]; minimumDataBytes: number; spanKind: string }[]; blocked: unknown[] } | undefined;
   return <div className="offline-realtime" data-testid="offline-realtime">
     {present === null ? <p className="muted">正在读取本地清单…</p> : !present ? <p className="muted">本机尚未生成离线数据清单。</p> : !unit ? <p className="muted">此节点没有独立的 X431 参数定义。</p> : <>
@@ -164,16 +168,16 @@ export function OfflineRealtimePanel({ systemId, locked, onBusyChange }: { syste
           {parameters.map((p) => <label key={p.id} className="eng-parameter" title={`${p.name} · ${p.requestHex || "请求未解析"} · 字节 ${p.byteOffset} / 位 ${p.bitOffset}`}>
             <input type="checkbox" data-testid={`offline-select-${p.id}`} checked={selected.some((s) => s.id === p.id)} disabled={disabled || !p.decoderReady || (!selected.some((s) => s.id === p.id) && selected.length >= 12)}
               onChange={(e) => { resetResults(); setSelected(e.target.checked ? [...selected, p] : selected.filter((s) => s.id !== p.id)); }} />
-            <span className="offline-parameter-name">{p.name}</span><small className="offline-parameter-unit">{p.unit || "—"}</small>
+            <span className="offline-parameter-name">{obdFunctionLabel(p.name, liveImplemented && p.decoderReady && !!p.requestHex)}</span><small className="offline-parameter-unit">{p.unit || "—"}</small>
             <small className="offline-parameter-status">{p.decoderReady ? p.decodedSampleCount ? "有历史响应" : "待采集响应" : "定义待补"}</small>
           </label>)}
         </div>
         {loading ? <p className="muted">正在载入参数…</p> : !parameters.length ? <p className="muted">没有符合条件的参数。</p> : null}
         <div className="eng-selection-actions"><button disabled={disabled || loading || offset === 0} onClick={() => setOffset(Math.max(0, offset - 40))}>上一页</button><span>{total ? offset + 1 : 0}–{Math.min(offset + 40, total)} / {total}</span><button disabled={disabled || loading || offset + 40 >= total} onClick={() => setOffset(offset + 40)}>下一页</button></div>
         {selected.length ? <div className="offline-selected" data-testid="offline-selected">{selected.map((p) => <button key={p.id} disabled={disabled} onClick={() => { resetResults(); setSelected(selected.filter((s) => s.id !== p.id)); }}>{p.name} ×</button>)}</div> : null}
-        {systemId === "dme" && variant.status === "identity-matched" &&
+        {profileImplemented &&
           <ManufacturerRehearsalPanel profileId={profileId} parameters={selected}
-            locked={locked || busy || saving} onBusyChange={setManufacturerBusy} />}
+            locked={locked || busy || saving} onBusyChange={setManufacturerBusy} liveImplemented={liveImplemented} />}
         <div className="eng-selection-actions">
           <button data-testid="offline-plan" disabled={disabled || loading || !selected.length} onClick={() => void start()}>生成离线读取计划</button>
           <button data-testid="offline-replay" disabled={disabled || loading || !selected.length} onClick={() => void loadReplay()}>查看已记录的历史车辆数值</button>
@@ -195,7 +199,7 @@ export function OfflineRealtimePanel({ systemId, locked, onBusyChange }: { syste
             </div>)}
           </section>)}
         </div>}
-      </> : <p className="muted" data-testid="offline-version-unmatched">尚未匹配到本车的唯一版本。</p>}
+      </> : <p className="muted" data-testid="offline-version-unmatched">{obdFunctionLabel("厂商实时读取", false)}：尚未匹配到本车的唯一版本。</p>}
     </>}
     {error ? <p role="alert" data-testid="offline-error">{error}</p> : null}
   </div>;

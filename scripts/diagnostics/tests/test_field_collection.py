@@ -4,11 +4,12 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from scripts.diagnostics import field_collection
-from scripts.diagnostics.field_collection import decode_recorded_cycle, request_groups
+from scripts.diagnostics.field_collection import decode_recorded_cycle, request_groups, capture_batches
 from scripts.diagnostics.offline_match import FLAGS, sha
-from scripts.diagnostics.all_unit_collection import build_all_unit_pack
+from scripts.diagnostics.all_unit_collection import build_all_unit_pack, read_groups
 
 
 def parameter(key, request='2110', offset=0, historical=0):
@@ -22,6 +23,54 @@ def parameter(key, request='2110', offset=0, historical=0):
 
 
 class TestFieldCollection(unittest.TestCase):
+    def test_short_session_prefers_missing_response_yield_without_truncation(self):
+        params = [parameter('old', '2100', historical=1), parameter('small', '2101')]
+        params += [parameter('large-' + str(i), '2120', offset=i) for i in range(4)]
+        params += [parameter('extra-' + str(i), f'21{0x30+i:02X}') for i in range(13)]
+        groups = request_groups({'parameters': params})
+        self.assertEqual(groups[0]['requestHex'], '2120')
+        self.assertEqual(groups[-1]['requestHex'], '2100')
+        batches = capture_batches(groups)
+        selections = [item for batch in batches for item in batch['selections']]
+        self.assertTrue(all(len(batch['selections']) <= 12 for batch in batches))
+        self.assertEqual(len(selections), 16)
+        self.assertEqual(len({item['requestHex'] for item in selections}), 16)
+        self.assertEqual(sum(batch['potentialOfflineFields'] for batch in batches), len(params))
+        self.assertEqual(sum(batch['missingHistoricalFields'] for batch in batches), len(params)-1)
+        self.assertFalse(any(item['executionEnabled'] for item in selections))
+        self.assertEqual(selections[0]['fieldsInResponse'], 4)
+
+    def test_explicit_language_source_is_used_and_drift_cannot_fall_back(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp);language=root/'explicit-language';language.write_bytes(b'explicit source fixture')
+            (root/'index.json').write_text(json.dumps({'profiles':[],'counts':{}}))
+            (root/'manifest.json').write_text(json.dumps({'inputs':[],'code':[],
+                'outputs':[{'path':str(root/'index.json'),'sha256':sha(root/'index.json')}]}))
+            with patch.object(field_collection,'GGP_PATH',root/'missing-default'), \
+                 patch.object(field_collection,'REVIEWED_LANGUAGE_SHA256',sha(language)), \
+                 patch.object(field_collection,'GgpLanguage') as loader:
+                result=field_collection.verified_profiles(root,language_ggp=language)
+                loader.assert_called_once_with(language)
+                self.assertEqual(result[2][-1]['path'],str(language.resolve()))
+                language.write_bytes(b'drift')
+                with self.assertRaisesRegex(ValueError,'hash-mismatch'):
+                    field_collection.verified_profiles(root,language_ggp=language)
+                self.assertEqual(loader.call_count,1)
+
+    def test_exported_all_unit_definitions_decode_the_same_complete_response(self):
+        from scripts.diagnostics.response_values import decode_application_response
+        records = [parameter('first')['record'], parameter('second', offset=1)['record']]
+        records[1]['unit'] = 'source-unit'
+        groups, missing = read_groups(records)
+        self.assertEqual(missing, [])
+        exported = [field['decodingDefinition'] for field in groups[0]['fields']]
+        values = [decode_application_response(record, bytes.fromhex('61100509'), mode='pdu') for record in exported]
+        self.assertTrue(all(value['ok'] for value in values))
+        self.assertEqual([value['value'] for value in values], [5, 9])
+        self.assertEqual(exported[1]['unit'], 'source-unit')
+        self.assertEqual(exported[0]['formula'], records[0]['formula'])
+        self.assertTrue(all(not record['executionEnabled'] and record['writePayload'] is None for record in exported))
+
     def test_shared_response_decodes_multiple_fields_once(self):
         profile = {'parameters': [parameter('a', historical=1), parameter('b', offset=1), parameter('c', '2111')]}
         groups = request_groups(profile)
@@ -117,6 +166,39 @@ class TestFieldCollection(unittest.TestCase):
 
 
 class TestAllUnitCollection(unittest.TestCase):
+    def test_original_identity_prefix_suffix_produce_real_request_and_span(self):
+        record = {'at': 123, 'name': 'independent source identity',
+            'request_prefix_hex': '22000090f10000', 'suffix_hex': '020003010000f0',
+            'formula': {'text': 'IDENTICAL:BitMask=0,BaseDataType=A_UINT32,BitLength=1,HighLow=1,Radix=10,DataType=A_UINT32;'}}
+        groups, missing = read_groups([record], identity=True)
+        self.assertEqual(missing, [])
+        self.assertEqual(groups[0]['requestHex'], '22F190')
+        self.assertEqual(groups[0]['minimumKnownBytes'], 3)
+        self.assertEqual(groups[0]['fields'][0]['bitOffset'], 3)
+        self.assertIsNone(groups[0]['expectedTotalBytes'])
+        self.assertFalse(groups[0]['executionEnabled'])
+
+    def test_malformed_identity_does_not_fallback_to_other_preparsed_values(self):
+        record = parameter('identity', '22F190')['record']
+        record.update(at=456, request_prefix_hex='00', suffix_hex='00')
+        groups, missing = read_groups([record], identity=True)
+        self.assertEqual(groups, [])
+        self.assertEqual(missing, [{'sourceOffset':456, 'reason':'identity-layout-or-request-unresolved'}])
+
+    def test_duplicate_menu_references_are_retained_but_not_duplicate_versions(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory);variants = root/'variants.jsonl'
+            variants.write_text(json.dumps({'profile_id':'shared', 'name':'Shared', 'module':'M',
+                'generation':None, 'on_target_menu':True, 'pool_records':{}}))
+            coverage = {'menu_ecus':[{'ecu_id':87, 'label':'source', 'dsn_modules':['M', 'M']}]}
+            result = build_all_unit_pack(root/'pack', variants=variants, coverage=coverage, expected_sha256=sha(variants))
+            self.assertEqual(result['ecuVersionBindingCounts'], {'981':1, '982':1})
+            self.assertEqual(result['sourceMenuBindingReferenceCounts'], {'981':2, '982':2})
+            doc = json.loads((root/'pack/all-units.json').read_text())
+            self.assertTrue(all(unit['variantCount']==1 for unit in doc['units']))
+            self.assertTrue(all(unit['variants'][0]['sourceMenuReferenceCount']==2 for unit in doc['units']))
+            self.assertFalse(doc['diagnosticSource']['present'])
+
     def test_all_menus_versions_and_coding_gaps_retained_without_fit_claims(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -152,6 +234,11 @@ class TestAllUnitCollection(unittest.TestCase):
                     self.assertFalse(profile['coding']['completeVehicleCodingScopeQualified'])
                     self.assertFalse(profile['executionEnabled'])
             manifest = json.loads((root / 'pack/manifest.json').read_text(encoding='utf8'))
+            from scripts.x431_re import gag_lib
+            reader = Path(gag_lib.__file__).resolve()
+            reader_rows = [item for item in manifest['code'] if Path(item['path']).resolve() == reader]
+            self.assertEqual(len(reader_rows), 1)
+            self.assertEqual(reader_rows[0]['sha256'], sha(reader))
             self.assertTrue(all(sha(Path(item['path'])) == item['sha256'] for item in manifest['outputs']))
             with self.assertRaisesRegex(ValueError, 'already-exists'):
                 build_all_unit_pack(root / 'pack', variants=variants, coverage=coverage, expected_sha256=sha(variants))

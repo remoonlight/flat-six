@@ -5,6 +5,7 @@ import {
   type WorkshopPreviewInput, type WorkshopSection,
 } from "@porsche981/domain";
 import { api, hasDesktopApi } from "../api";
+import { obdFunctionLabel } from "../obd/function-label";
 import "../piwis-workshop.css";
 
 const FIELDS: Record<string, string> = { PRODUKTSCHLUESSEL: "产品键", AUSSTATTUNG: "配置码条件", MODELLJAHR: "年款条件（原文）", PTNR: "当前软件号条件", HWTNR: "当前硬件号条件", SWVERSION: "当前软件版本条件" };
@@ -92,10 +93,10 @@ export function PiwisWorkshopPage({ section: selectedSection, embedded = false, 
         {functions.map((fn) => <button key={fn.id} className={`workshop-function${active?.id === fn.id ? " active" : ""}`}
           aria-pressed={active?.id === fn.id} disabled={busy} data-function-id={fn.id} onClick={() => {
             setActiveId(fn.id); setRuleId(""); setRuleQuery(""); clearPreview();
-          }}><strong>{fn.name}</strong><span>{fn.ecu} · {fn.german}</span></button>)}
+          }}><strong>{obdFunctionLabel(fn.name, false)}</strong><span>{fn.ecu} · {fn.german}</span></button>)}
       </section>}
       {active && <section className="panel workshop-detail" data-testid="workshop-detail">
-        <span className="workshop-module">{active.ecu} · {combined ? "981 / 982" : generation}</span><h3>{active.name}</h3>
+        <span className="workshop-module">{active.ecu} · {combined ? "981 / 982" : generation}</span><h3>{obdFunctionLabel(active.name, false)}</h3>
         <p className="muted">{active.german} · {EVIDENCE[active.evidence]}</p>
         <p>{active.summary}</p>
         {combined ? (["981", "982"] as const).map((family) => active.familyNotes?.[family] && <p key={family} className="workshop-status" data-testid="workshop-family-note">{family}：{active.familyNotes[family]}</p>) : active.familyNotes?.[generation] && <p className="workshop-status" data-testid="workshop-family-note">{active.familyNotes[generation]}</p>}
@@ -108,7 +109,7 @@ export function PiwisWorkshopPage({ section: selectedSection, embedded = false, 
             <option value="ignition-cycle">下次点火周期／软件复位／退出客户诊断时结束</option><option value="persistent">跨点火周期保持</option>
           </select></label>
           <p className="muted">保持方式来自 PSM 配置；启用前需核实当前版本支持，结束后需读取并确认退出状态。</p>
-          <div className="row"><button disabled>启用滚筒模式</button><button disabled>读取滚筒状态</button><button disabled>退出滚筒模式</button></div>
+          <div className="row">{["启用滚筒模式", "读取滚筒状态", "退出滚筒模式"].map(name => <button key={name} disabled>{obdFunctionLabel(name, false)}</button>)}</div>
         </div>}
         {!!active.dependencies.length && <div className="workshop-dependencies"><strong>流程依赖</strong><ul>{active.dependencies.map((s) => <li key={s}>{s}</li>)}</ul></div>}
         {section === "programming" && <div className="workshop-flash" data-testid="workshop-flash">
@@ -138,7 +139,7 @@ export function PiwisWorkshopPage({ section: selectedSection, embedded = false, 
         <h4>执行前需要核实</h4><ul>{active.prerequisites.map((s) => <li key={s}>{s}</li>)}</ul>
         <h4>{rule?.kind === "blocked" ? "限制核验流程" : "待验证流程"}</h4><ol>{currentPreview?.steps.map((s) => <li key={s}>{s}</li>)}</ol>
         <div className="row"><button disabled={busy} onClick={() => { if (currentPreview) { setPreview(currentPreview); setError(""); setMessage(""); } }}>生成准备清单</button>
-          {section === "programming" && <button disabled>执行控制单元编程</button>}</div>
+          {section === "programming" && <button disabled>{obdFunctionLabel("执行控制单元编程", false)}</button>}</div>
         <details className="workshop-source"><summary>来源与证据范围</summary>
           <p>{active.source}</p><p>来源：用户本机 PIWIS 安装数据，2026-10-01 只读研究。菜单与规则证据尚未通过独立实车验证。</p>
           {rule && flash?.index?.sources.filter((s) => s.file === rule.source).map((s) => <p key={s.file}>{s.file}<br />SHA-256：{s.sha256}</p>)}

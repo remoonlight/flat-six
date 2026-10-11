@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { obdFunctionLabel } from "../obd/function-label";
 import {
   coding981Applicability,
   codingStepModule,
@@ -100,7 +101,7 @@ export function CodingGuidePanel({ focusId }: { focusId: number }) {
                   <p className="muted">
                     {active.module} / 社区项目 #{active.id}
                   </p>
-                  <h3>{active.name}</h3>
+                  <h3>{obdFunctionLabel(active.name, false)}</h3>
                   <p className="muted">{active.nameEn}</p>
                   <div className="callout">
                     {coding981Applicability(active).reason}

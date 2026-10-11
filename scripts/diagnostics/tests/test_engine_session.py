@@ -100,12 +100,14 @@ class TestEngineSession(unittest.TestCase):
         self.assertEqual(out["engine"]["unsupportedPids"], ["0C"])
         self.assertEqual([p for p in port.ecu_payloads if p.startswith("01")], ["0100", "0104"])
 
-    def test_unvalidated_vnci_route_refused_before_native_constructor(self):
+    def test_vnci_engine_refuses_serial_injection_before_native_constructor(self):
         with mock.patch("scripts.diagnostics.vnci.DpuClient") as native:
-            out = run_session(profile_id="porsche-981-2014-dme", mode="live", device_id="vnci:6055836",
-                session_task="engine", confirmed_read_only=True, x431_inactive=True, artifact_root=_root())
-            self.assertEqual(out["error"], "vnci-engine-route-not-validated")
+            port = SessionSimPort("porsche-981-2014-dme")
+            out = run_session(profile_id="porsche-981-2014-dme", mode="live", device_id="vnci:10001",
+                session_task="engine", confirmed_read_only=True, x431_inactive=True, port=port, artifact_root=_root())
+            self.assertEqual(out["error"], "vnci-serial-injection-forbidden")
             native.assert_not_called()
+            self.assertEqual(port.writes, [])
 
     def test_mode01_switches_to_qualified_standard_route(self):
         class RoutePort(SessionSimPort):

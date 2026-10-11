@@ -7,7 +7,7 @@ import os from "node:os";
 import { readWorkshopFlashIndex } from "../apps/desktop/electron/piwis-workshop.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
-const scratch = path.join(root, ".local", "piwis-workshop-accept");
+const scratch = path.resolve(process.env.PORSCHE981_ACCEPT_OUTPUT || path.join(root, ".local", "piwis-workshop-accept"));
 await fs.mkdir(scratch, { recursive: true });
 const exported = path.join(scratch, "exported-preview.json");
 const temp = await fs.mkdtemp(path.join(os.tmpdir(), "porsche-piwis-ui-"));
@@ -31,7 +31,7 @@ try {
   assert.equal(await page.getByLabel("准备清单车系").inputValue(), "981");
   await page.getByText("当前滚筒状态：").waitFor();
   assert.match(await page.locator('.workshop-roller').innerText(), /未读取/);
-  for (const name of ["启用滚筒模式", "读取滚筒状态", "退出滚筒模式"]) assert.equal(await page.getByRole("button", { name, exact: true }).isDisabled(), true);
+  for (const name of ["启用滚筒模式", "读取滚筒状态", "退出滚筒模式"]) assert.equal(await page.getByRole("button", { name: `${name}(未完成)`, exact: true }).isDisabled(), true);
   await page.getByLabel("滚筒保持方式").selectOption("persistent");
   await page.getByRole("button", { name: "生成准备清单", exact: true }).click();
   await page.locator('[data-testid="workshop-preview"]').getByText("保持方式：跨点火周期保持").waitFor();
@@ -57,7 +57,7 @@ try {
   await page.locator('[data-coding-system="dme"]').click();
   await page.locator('[data-coding-category="programming"]').click();
   assert.equal(await page.locator('[data-testid="workshop-preview"]').count(), 0);
-  assert.equal(await page.getByRole("button", { name: "执行控制单元编程", exact: true }).isDisabled(), true);
+  assert.equal(await page.getByRole("button", { name: "执行控制单元编程(未完成)", exact: true }).isDisabled(), true);
   const local = await readWorkshopFlashIndex(path.join(root, ".local/diagnostics/piwis-workshop/flash-index.json"));
   if (local.status === "loaded") {
     const allDmeRules = local.index.rules.filter((r) => r.ecu === "DME");
@@ -127,7 +127,7 @@ try {
   await page.locator('[data-coding-system="psm"]').click();
   await page.locator('[data-coding-category="maintenance"]').click();
   await page.locator('[data-coding-function="workshop-brake-bleed"]').click();
-  await page.getByRole("heading", { name: "刹车排气", exact: true }).waitFor();
+  await page.getByRole("heading", { name: "刹车排气(未完成)", exact: true }).waitFor();
   assert.equal(await page.getByLabel("搜索功能").count(), 0);
   assert.equal(await page.locator('[data-coding-system="can-adapter"]').count(), 0, "empty control unit is hidden");
   await page.locator('[data-coding-system="psm"]').click();

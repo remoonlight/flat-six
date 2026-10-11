@@ -10,11 +10,12 @@ export function topologyCapability(node, adapterModel) {
   const originals = ORIGINALS[node?.id] || 0;
   return {
     readable,
-    clearable: readable && adapterModel !== "VNCI" && adapterModel !== "PT3G",
+    clearable: readable && !["VNCI", "PT3G", "ELM327", "OBDKey", "OBDLink"].includes(adapterModel),
     engine,
     referenceOnly,
     diagnostic: readable ? "身份与故障码已接入" : "诊断待适配",
     readEvidence: adapterModel === "PT3G" ? "PT3G 仅支持诊断头连接与供电监测，车辆读取尚未资格化。"
+      : ["ELM327", "OBDKey", "OBDLink"].includes(adapterModel) ? "已接入具名只读路径；本型号、车辆读取和持续采集待验收。"
       : readable ? "vLinker CLI 本车已验证；桌面读取待实车验收。" : "仅参考拓扑，尚未接入本项目诊断；装配情况需按本车核实。",
     coding: originals ? `X431 设码原值已核对 ${originals} 项` : node?.id === "pcm" ? "PCM 设码原值待补" : "设码原值与版本资格待核实",
     codingDetail: node?.id === "bcm-rear" ? "另有 2 项重名字段待唯一定位；独立写入、回读和恢复待验证。"
@@ -29,5 +30,8 @@ export function topologyAdapterProgress(model) {
     "OBDLink MX+": "已有广播记录；出现 CAN ERROR 和打开失败，诊断口读取待验证。",
     VNCI: "已接入具名只读路径，本车读取待验收；此设备暂不支持清码。",
     PT3G: "诊断头连接与供电监测已接入，车辆通信尚未资格化。",
+    ELM327: "具名只读路径已接入；本型号及车辆待验收，清码和内网未完成。",
+    OBDKey: "具名只读路径已接入；须通过所需 AT 设置，本型号及车辆待验收，清码和内网未完成。",
+    OBDLink: "具名只读路径已接入；不等同 MX+，本型号及车辆待验收，清码和内网未完成。",
   })[model] || "在连接设置选择设备；历史设备档案不代表当前在线。";
 }

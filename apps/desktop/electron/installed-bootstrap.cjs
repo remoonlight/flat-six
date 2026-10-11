@@ -15,4 +15,7 @@ function failed(error) {
   } catch { /* stderr remains available */ }
   app.exit(1);
 }
-import("./main.mjs").catch(failed);
+import("./installed-entry.mjs").then(({ verifyInstalledEntry }) => {
+  verifyInstalledEntry(path.resolve(__dirname, "../../.."));
+  return import("./main.mjs");
+}).catch(failed);

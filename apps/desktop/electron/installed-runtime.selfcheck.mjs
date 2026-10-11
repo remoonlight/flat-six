@@ -2,11 +2,16 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
-import { installedRuntime } from "./installed-runtime.mjs";
+import { installedRuntime, definitionLibraryRoot } from "./installed-runtime.mjs";
 import { resolvePythonCandidates } from "./offline-diagnostics.mjs";
 const root = fs.mkdtempSync(path.join(os.tmpdir(), "flat-six-runtime-"));
 const repoRoot = path.join(root, "app"), userData = path.join(root, "user");
 const devEnv = { CUSTOM: "unchanged" };
+assert.equal(definitionLibraryRoot("C:\\Users\\a\\AppData\\Roaming\\flat-six", "win32"),
+  "\\\\?\\C:\\Users\\a\\AppData\\Roaming\\flat-six\\diagnostic-library");
+assert.equal(definitionLibraryRoot("\\\\server\\share\\flat-six", "win32"),
+  "\\\\?\\UNC\\server\\share\\flat-six\\diagnostic-library");
+assert.equal(definitionLibraryRoot("/tmp/flat-six", "darwin"), "/tmp/flat-six/diagnostic-library");
 assert.equal(installedRuntime({ packaged: false, repoRoot, userData, env: devEnv }).env, devEnv);
 assert.throws(() => installedRuntime({ packaged: true, repoRoot, userData, env: {} }), /runtime-missing/);
 fs.mkdirSync(path.join(repoRoot, "runtime/python"), { recursive: true });
@@ -16,10 +21,10 @@ fs.mkdirSync(path.join(repoRoot, "data/seed/diagnostics"), { recursive: true });
 fs.writeFileSync(path.join(repoRoot, "data/seed/diagnostics/source.json"), "original");
 const runtime = installedRuntime({ packaged: true, repoRoot, userData, env: {} });
 assert.ok(runtime.env.PORSCHE981_PYTHON.startsWith(repoRoot));
-assert.ok(runtime.env.PORSCHE981_VARIANTS.startsWith(userData));
+assert.ok(runtime.env.PORSCHE981_VARIANTS.startsWith(runtime.definitionsRoot + path.sep));
 for (const key of ["PORSCHE981_CONNECTION_STATE", "PORSCHE981_SESSION_ARTIFACT_ROOT", "PORSCHE981_CAN_CAPTURE_ROOT", "PORSCHE981_LOCAL_ROOT"])
   assert.ok(runtime.env[key].startsWith(userData), key);
-assert.deepEqual(resolvePythonCandidates(runtime.env)[0].prefix, ["-X", "utf8"]);
+assert.deepEqual(resolvePythonCandidates(runtime.env)[0].prefix, ["-B", "-X", "utf8"]);
 const destination = path.join(runtime.definitionsRoot, "data/seed/diagnostics/source.json");
 fs.writeFileSync(destination, "user's imported contents");
 installedRuntime({ packaged: true, repoRoot, userData, env: {} });

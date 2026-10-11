@@ -6,7 +6,7 @@ import { EventEmitter } from "node:events";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { fail, runWorkbench, validateRequest, createOfflineOperations } from "./offline-diagnostics.mjs";
+import { fail, runWorkbench, validateRequest, createOfflineOperations, resolvePython, resolvePythonCandidates } from "./offline-diagnostics.mjs";
 import { createScopeTokens } from "./offline-scope-guard.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -14,6 +14,11 @@ const repoRoot = path.resolve(__dirname, "../../..");
 
 function assert(cond, msg) {
   if (!cond) throw new Error(msg);
+}
+
+for (const env of [{}, { PORSCHE981_PYTHON: "bundled-python" }]) {
+  assert(resolvePython(env).prefix.includes("-B"), "single interpreter must not write program bytecode");
+  assert(resolvePythonCandidates(env).every(p => p.prefix.includes("-B")), "every candidate must suppress bytecode");
 }
 
 function mockChild({
@@ -54,6 +59,9 @@ function mockChild({
 }
 
 const bad = validateRequest({ action: "explode" });
+assert(validateRequest({ action: "preview", category: "coding", expectedReadRequestHex: "22F100", physicalValue: "0.1" }) === null, "exact numeric value accepted");
+for (const change of [{ rawValue: 1 }, { expectedReadRequestHex: undefined }, { physicalValue: 1 }, { action: "decode" }])
+  assert(validateRequest({ action: "preview", category: "coding", expectedReadRequestHex: "22F100", physicalValue: "0.1", ...change }).error === "numeric-target-invalid", "ambiguous or unbound numeric request rejected");
 assert(validateRequest({ action: "ready-plan", parameterIds: ["../path"] }).error === "invalid_parameter_selection", "ready path rejected");
 assert(validateRequest({ action: "ready-parameters", groupId: "../../db" }).error === "invalid_group_id", "ready group path rejected");
 assert(validateRequest({ action: "ready-plan", parameterIds: Array(13).fill("a".repeat(64)) }).error === "invalid_parameter_selection", "ready cap");
@@ -169,6 +177,9 @@ const fallback = await runWorkbench(
   { action: "summary" },
   {
     repoRoot,
+    // This case exercises default candidates independently of the caller's
+    // explicitly pinned runtime. Real roundtrips still use the caller's env.
+    env: {},
     spawnFn: () => {
       n += 1;
       if (n === 1) {
@@ -186,6 +197,22 @@ const fallback = await runWorkbench(
   },
 );
 assert(fallback.ok === true && fallback.menuEcuCount === 35, `fallback ${JSON.stringify(fallback)}`);
+
+let pinnedAttempts = 0;
+const pinnedMissing = await runWorkbench({ action: "summary" }, {
+  repoRoot, env: { PORSCHE981_PYTHON: "/private/pinned-python" },
+  spawnFn: () => {
+    pinnedAttempts += 1;
+    const child = mockChild({ hang: true });
+    queueMicrotask(() => {
+      const error = new Error("enoent"); error.code = "ENOENT";
+      child.emit("error", error); child.emit("close", 1);
+    });
+    return child;
+  },
+});
+assert(pinnedMissing.error === "python_runtime_missing" && pinnedAttempts === 1,
+  "An explicit runtime must not fall back to another interpreter");
 
 const noClose = await runWorkbench(
   { action: "summary" },
@@ -292,3 +319,10 @@ assert(prev.ok === true && prev.afterHex === "A4", `preview ${JSON.stringify(pre
 fs.rmSync(td, { recursive: true, force: true });
 
 console.log("offline-diagnostics.selfcheck: ok");
+assert(validateRequest({ action: "source-catalogs" }) === null, "source catalog list request");
+assert(validateRequest({ action: "source-profile", generation: "981", sourceCatalogId: "a".repeat(64), ecuId: 47, profileId: "9x1:LED:Reviewed" }) === null, "typed source profile request");
+for (const request of [
+  { action: "source-catalogs", path: "private" },
+  { action: "source-units", generation: "981", sourceCatalogId: "../private" },
+  { action: "source-profile", generation: "981", sourceCatalogId: "a".repeat(64), ecuId: 47, profileId: "9x1:LED:Reviewed", liveVerified: true },
+]) assert(validateRequest(request) !== null, "source paths/authority/extra fields blocked");

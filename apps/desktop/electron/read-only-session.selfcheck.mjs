@@ -32,6 +32,9 @@ import {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "../../..");
+const scratch = path.resolve(process.env.PORSCHE981_SELFCHECK_OUTPUT || path.join(repoRoot, ".local/selfchecks/read-only-session"));
+fs.mkdirSync(scratch, { recursive: true });
+if (process.env.PORSCHE981_SELFCHECK_OUTPUT) process.env.PORSCHE981_SESSION_ARTIFACT_ROOT = path.join(scratch, "sessions");
 const DME = "porsche-981-2014-dme";
 const GW = "porsche-981-2014-gateway";
 
@@ -305,6 +308,8 @@ assert(liveClearDeny.error === "live_not_enabled" && spawned === 0, "deny clear 
 let written = "";
 const probe = createReadOnlySessionManager({
   repoRoot,
+  getLiveDeviceId: () => "usb:" + "a".repeat(64),
+  getLiveAdapterModel: () => "OBDKey",
   allowInjectedLive: true,
   env: envAllowInjectedLive,
   spawnFn: () => {
@@ -340,7 +345,10 @@ assert(liveMap.ok, "live probe start");
 await waitJob(probe, liveMap.jobId, 1);
 const sent = JSON.parse(written.trim().split("\n")[0]);
 assert(sent.action === "run" && sent.mode === "live" && sent.confirmedReadOnly === true && sent.x431Inactive === true, `map ${written}`);
-assert(!("port" in sent) && !("path" in sent) && !("deviceId" in sent), "no port");
+assert(!("port" in sent) && !("path" in sent), "no caller-selected port");
+assert(sent.deviceId === "usb:" + "a".repeat(64), "selected USB identity reaches worker");
+assert(sent.adapterModel === "OBDKey", "selected model reaches worker");
+assert(validateSessionRequest({ action: "start", profileId: DME, mode: "live", adapterModel: "vLinker" }), "renderer cannot override connection model");
 
 let clearWritten = "";
 const clearProbe = createReadOnlySessionManager({
@@ -972,7 +980,7 @@ if (fs.existsSync(sessionsPy)) {
 
 {
   const gate = createTransportGate();
-  const connFile = path.join(repoRoot, ".local", "selfchecks", "read-only-session", "conn-state.json");
+  const connFile = path.join(scratch, "conn-state.json");
   try {
     fs.unlinkSync(connFile);
   } catch {
@@ -1077,6 +1085,12 @@ if (fs.existsSync(sessionsPy)) {
     }),
     monitorSpawnFn: () => {
       const c = mockChild({ hang: true, emitCloseOnKill: true });
+      c.stdin.write = bytes => {
+        if (!String(bytes).includes('"stop"')) return true;
+        c.stdout.emit("data", Buffer.from(JSON.stringify({ type: "stopped", ok: true, restoration: { errors: [] } }) + "\n"));
+        c.exitCode = 0; c.emit("close", 0);
+        return true;
+      };
       queueMicrotask(() => {
         c.stdout.emit(
           "data",
@@ -1107,7 +1121,7 @@ if (fs.existsSync(sessionsPy)) {
 
 {
   const gate = createTransportGate();
-  const connFile = path.join(repoRoot, ".local", "selfchecks", "read-only-session", "handoff.json");
+  const connFile = path.join(scratch, "handoff.json");
   const devices = [{ id: "bt:0425E85BD4CB", brand: "vLinker", available: true, paired: true, comPort: "COM9" }];
   let monitorAlive = false;
   let overlap = false;
@@ -1118,6 +1132,13 @@ if (fs.existsSync(sessionsPy)) {
     listFn: async () => ({ ok: true, devices, errors: [] }),
     monitorSpawnFn: () => {
       const c = mockChild({ hang: true });
+      c.stdin.write = bytes => {
+        if (!String(bytes).includes('"stop"')) return true;
+        monitorAlive = false;
+        c.stdout.emit("data", Buffer.from(JSON.stringify({ type: "stopped", ok: true, restoration: { errors: [] } }) + "\n"));
+        c.exitCode = 0; c.emit("close", 0);
+        return true;
+      };
       monitorAlive = true;
       const kill = c.kill;
       c.kill = () => {
@@ -1190,7 +1211,7 @@ if (fs.existsSync(sessionsPy)) {
 
 {
   const gate = createTransportGate();
-  const connFile = path.join(repoRoot, ".local", "selfchecks", "read-only-session", "handoff-delay.json");
+  const connFile = path.join(scratch, "handoff-delay.json");
   let monitor;
   const conn = createObdConnectionManager({
     repoRoot,
@@ -1251,6 +1272,153 @@ if (fs.existsSync(sessionsPy)) {
   monitor.exitCode = 0;
   monitor.emit("close", 0);
   await conn.shutdown();
+}
+
+// Full application bytes go only to the recorder callback, including an EOF
+// without newline. They must never become renderer session-history events.
+{
+  const pduEvent = { type: "diagnostic-pdu", profileId: DME, runId: "simokrunidxxxxxxxx", simulation: true,
+    pdu: { requestHex: "1800FF00", pduHex: "5802C44728C41221", timestampUs: 1000000,
+      startedTimestampUs: 999999, timestampSource: "host-pdu-observed", transportKind: "elm-iso-tp",
+      observation: "reassembled-complete-pdu", duringCleanup: false } };
+  const cases = [
+    { name: "full", lines: [JSON.stringify(pduEvent), okResult()], count: 1, state: "completed" },
+    { name: "unterminated", raw: JSON.stringify(pduEvent), count: 1, error: "missing_result" },
+    { name: "foreign-profile", event: { ...pduEvent, profileId: GW } },
+    { name: "foreign-source", event: { ...pduEvent, simulation: false } },
+    { name: "bad-run", event: { ...pduEvent, runId: "!" } },
+    { name: "bad-pdu", event: { ...pduEvent, pdu: { ...pduEvent.pdu, pduHex: "580" } } },
+    { name: "after-result", lines: [okResult(), JSON.stringify(pduEvent)] },
+  ];
+  for (const test of cases) {
+    const observed = [];
+    const manager = createReadOnlySessionManager({ repoRoot, onDiagnosticPdu: e => observed.push(e),
+      spawnFn: () => mockChild(test.raw ? { raw: test.raw } : { lines: test.lines || [JSON.stringify(test.event), okResult()] }) });
+    const start = await manager.handle({ action: "start", profileId: DME, mode: "simulation" }, { ownerId: 99 });
+    const result = await waitJob(manager, start.jobId, 99);
+    assert(observed.length === (test.count || 0), `${test.name}: capture count`);
+    if (observed.length) assert(observed[0].pdu.pduHex === pduEvent.pdu.pduHex, `${test.name}: complete bytes`);
+    assert(!JSON.stringify(result.events).includes("diagnostic-pdu"), `${test.name}: raw PDU leaked to renderer`);
+    assert(!JSON.stringify(await manager.handle({ action: "overview" }, { ownerId: 99 })).includes("5802C44728C41221"), `${test.name}: overview leaked PDU`);
+    if (test.state) assert(result.state === test.state, `${test.name}: ${result.state}`);
+    else assert(result.error === (test.error || "protocol_error"), `${test.name}: ${result.error}`);
+    await manager.shutdown();
+  }
+}
+
+// One standard-data batch spans child processes, adapter handoffs and idle gaps.
+for (const invalid of [{ engine: engineBlob({ samples: [null] }) }, { runId: {} }]) {
+  const manager = createReadOnlySessionManager({ repoRoot, spawnFn: () => mockChild({
+    lines: [okEngineResult({ ok: false, status: "failed", error: "synthetic-read-error", ...invalid })], code: 1 }) });
+  const start = await manager.handle({ action: "start", profileId: DME, mode: "simulation", sessionTask: "engine" });
+  assert((await waitJob(manager, start.jobId, 0)).error === "protocol_error", "invalid failed/partial results never enter retained batch");
+  await manager.shutdown();
+}
+// Retention outlives the bounded job history, remains owner-only, and is saved
+// by ID. Saving/cancelling/failing must neither consume it nor reset its clock.
+{
+  let round = 0, saved, saves = 0, finishSave;
+  const owner = { ownerId: 456 };
+  const manager = createReadOnlySessionManager({ repoRoot, nowFn: () => 1000,
+    saveEngineRecording: async recording => { saves++; saved = recording; return new Promise(resolve => { finishSave = resolve; }); },
+    spawnFn: () => {
+      const id = round++;
+      const samples = Array.from({ length: 60 }, (_, i) => ({ ...engineBlob().samples[0],
+        pid: ["04", "05", "0C", "0D", "0F", "11"][i % 6], cycle: Math.floor(i / 6) + 1, value: id * 60 + i,
+        capturedUtc: new Date(1700000000000 + id * 5000 + Math.floor(i / 6) * 500).toISOString() }));
+      return mockChild({ lines: [okEngineResult({ runId: `synthetic_run_${id}`, engine: engineBlob({ samples,
+        completedCycles: 10, sampleCycles: 10, intervalMs: 500 }) })] });
+    } });
+  const request = { action: "start", profileId: DME, mode: "simulation", sessionTask: "engine", sampleCycles: 10, intervalMs: 500 };
+  let batchId;
+  for (let i = 0; i < 100; i++) {
+    const start = await manager.handle({ ...request, ...(batchId ? { engineBatchId: batchId } : {}) }, owner);
+    batchId = start.engineBatchId;
+    assert(start.ok, `large batch child ${i}`);
+    assert((await waitJob(manager, start.jobId, owner.ownerId)).state === "completed", `large batch completion ${i}`);
+  }
+  assert(manager._jobs.size === 8, "old job history is still bounded");
+  const save = { action: "saveEngine", engineBatchId: batchId };
+  assert((await manager.handle({ ...save, recording: {} }, owner)).error === "forbidden_field", "renderer cannot submit arrays");
+  assert((await manager.handle({ ...save, filePath: "injected.json" }, owner)).error === "forbidden_field", "renderer cannot choose destination");
+  assert((await manager.handle(save, { ownerId: 457 })).error === "invalid_engine_batch" && saves === 0, "foreign save opens no dialog");
+  for (const result of [{ ok: true, saved: false, canceled: true }, { ok: false, saved: false, error: "EIO" }, { ok: true, saved: true }]) {
+    const pending = manager.handle(save, owner);
+    assert(saved.samples.length === 6000 && saved.runs.length === 100, "save retains every result beyond history and old sample cap");
+    assert(saved.samples.every((value, i) => value.value === i), "whole batch values and ordering");
+    assert(saved.samples.at(-1).cycle === 1000 && saved.samples.at(-1).elapsedMs === 499500, "cycles and actual timestamps span all children");
+    assert((await manager.handle(request, owner)).error === "engine_batch_saving", "next batch cannot replace a pending save");
+    assert((await manager.handle({ action: "discardEngine", engineBatchId: batchId }, owner)).error === "engine_batch_saving", "pending save owns its frozen snapshot");
+    finishSave(result); assert((await pending).saved === result.saved, "save result forwarded");
+  }
+  assert((await manager.handle({ action: "discardEngine", engineBatchId: batchId }, owner)).ok, "selection change discards only owned inactive batch");
+  assert((await manager.handle(save, owner)).error === "invalid_engine_batch", "discarded batch cannot be exported again");
+  await manager.shutdown();
+}
+// Inject only the acquisition clock/deadline timer; actual-close handling stays real.
+{
+  let clock = 0, spawned = 0, cancelled = 0, exported;
+  const deadlines = [], children = [];
+  const gate = createTransportGate();
+  const manager = createReadOnlySessionManager({ repoRoot, gate, nowFn: () => clock,
+    saveEngineRecording: async recording => { exported = recording; return { ok: true, saved: true }; },
+    setDeadlineTimeoutFn: (fn, ms) => { const timer = { fn, ms }; deadlines.push(timer); return timer; },
+    clearDeadlineTimeoutFn: timer => { timer.cleared = true; },
+    spawnFn: () => {
+      spawned++;
+      const child = mockChild(spawned === 2 ? { hang: true } : { lines: [okEngineResult({ runId: "synthetic_deadline_first" })] });
+      child.stdin.write = text => { if (JSON.parse(text).action === "cancel") cancelled++; return true; };
+      children.push(child); return child;
+    } });
+  const request = { action: "start", profileId: DME, mode: "simulation", sessionTask: "engine" };
+  const owner = { ownerId: 123 };
+  const first = await manager.handle(request, owner);
+  await waitJob(manager, first.jobId, 123);
+  assert(deadlines[0].ms === 600000 && deadlines[0].cleared, "first job gets complete batch duration");
+  const changedOptions = await manager.handle({ ...request, engineBatchId: first.engineBatchId, intervalMs: 500 }, owner);
+  assert(changedOptions.error === "invalid_engine_batch" && spawned === 1, "changed options cannot reuse a batch");
+  assert(!manager._jobs.get(first.jobId).backendPayload.includes("engineBatchId"), "batch token is main-only");
+  clock = 599999;
+  const next = await manager.handle({ ...request, engineBatchId: first.engineBatchId }, owner);
+  assert(next.engineBatchId === first.engineBatchId && deadlines[1].ms === 1, "child restart cannot reset deadline");
+  deadlines[0].fn();
+  assert(cancelled === 0, "stale completed-job timer cannot cancel next child");
+  assert((await manager.handle({ action: "status", jobId: next.jobId }, owner)).state === "running", "599999 allowed");
+  deadlines[1].fn();
+  assert(deadlines[2].ms === 1 && cancelled === 0, "early timer rearms remaining duration");
+  clock = 600000;
+  deadlines[2].fn();
+  const stopping = await manager.handle({ action: "status", jobId: next.jobId }, owner);
+  assert(stopping.state === "cancelling" && stopping.stopReason === "time-limit" && cancelled === 1, "600000 stops once");
+  assert(gate.owner() === "session", "deadline does not release a still-open child");
+  assert((await manager.handle({ action: "saveEngine", engineBatchId: first.engineBatchId }, owner)).error === "busy", "do not save before actual process close");
+  children[1].stdout.emit("data", Buffer.from(okEngineResult({ runId: "synthetic_deadline_partial", ok: false, status: "cancelled", error: "cancelled" }) + "\n"));
+  children[1].exitCode = 0; children[1].emit("close", 0);
+  const done = await manager.handle({ action: "status", jobId: next.jobId }, owner);
+  assert(done.stopReason === "time-limit" && done.final.engine.samples.length === 1 && !gate.owner(), "partial results survive actual close");
+  await manager.handle({ action: "saveEngine", engineBatchId: first.engineBatchId }, owner);
+  assert(exported.samples.length === 2 && exported.stopReason === "time-limit" && !exported.batchComplete, "deadline saves previous and partial actual results together");
+  const denied = await manager.handle({ ...request, engineBatchId: first.engineBatchId }, owner);
+  assert(denied.error === "engine_batch_time_limit" && spawned === 2, "expired continuation opens no new child");
+  const foreign = await manager.handle({ ...request, engineBatchId: first.engineBatchId }, { ownerId: 124 });
+  assert(foreign.error === "invalid_engine_batch" && spawned === 2, "batch belongs to its owner");
+  const fresh = await manager.handle(request, owner);
+  assert(fresh.engineBatchId !== first.engineBatchId && deadlines.at(-1).ms === 600000, "manual next batch gets new deadline");
+  await waitJob(manager, fresh.jobId, 123);
+  deadlines[1].fn();
+  assert(cancelled === 1, "old batch cannot cancel a fresh batch");
+  await manager.shutdown();
+}
+{
+  let clock = 0, spawned = 0, resumed = 0;
+  const conn = { setSessionStop() {}, reserveDispatch: () => true, releaseDispatch() {},
+    suspendForSession: async () => { clock = 600000; return { ok: true }; },
+    resumeAfterSession: async () => { resumed++; } };
+  const mgr = attachSessionHandoff(conn, createReadOnlySessionManager({ repoRoot, nowFn: () => clock,
+    spawnFn: () => { spawned++; throw new Error("expired handoff must not open a worker"); } }));
+  const out = await mgr.handle({ action: "start", profileId: DME, sessionTask: "engine", mode: "simulation" });
+  assert(out.error === "engine_batch_time_limit" && spawned === 0 && resumed === 1, "handoff time counts toward batch");
+  await mgr.shutdown();
 }
 
 console.log("read-only-session.selfcheck: ok");

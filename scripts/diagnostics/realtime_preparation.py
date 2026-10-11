@@ -11,7 +11,7 @@ import hashlib
 import json
 import math
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 import re
 import struct
 
@@ -128,9 +128,11 @@ def display_name(rec, lookup=None):
 def record_from_parameter(p):
     # The matcher preserved the explicit wire request and source formula.
     request = bytes.fromhex(p['requestHex']) if p.get('requestHex') else b''
-    return {**p, 'wireSID': request[0] if request else None,
-        'rawSID': request[0] if request else None,
-        'disabledreadrequestcandidate': {'payload_hex': p.get('requestHex')}}
+    record = dict(p)
+    record.setdefault('wireSID', request[0] if request else None)
+    record.setdefault('rawSID', request[0] if request else None)
+    record.setdefault('disabledreadrequestcandidate', {'payload_hex': p.get('requestHex')})
+    return record
 
 
 def replay_series(rec, groups, times):
@@ -207,6 +209,22 @@ def plan_for(profile, selected):
         if not p.get('decoderReady') or not p.get('requestHex'):
             blocked.append({'parameterId': key, 'reason': p.get('decoderIssue') or 'request-unresolved'})
             continue
+        try:
+            record = p.get('record') or record_from_parameter(p)
+            request = request_from_record(record)
+            if not request.get('ok'):
+                blocked.append({'parameterId': key, 'reason': request.get('reason') or 'request-unresolved'})
+                continue
+            if request['request'].hex().upper() != p['requestHex']:
+                blocked.append({'parameterId': key, 'reason': 'parameter-record-request-mismatch'})
+                continue
+            span = data_span(record)
+            if span is None or span != p.get('dataSpan'):
+                blocked.append({'parameterId': key, 'reason': 'parameter-record-span-mismatch'})
+                continue
+        except (ValueError, TypeError, KeyError):
+            blocked.append({'parameterId': key, 'reason': 'parameter-record-invalid'})
+            continue
         g = groups.setdefault(p['requestHex'], {'requestHex': p['requestHex'], 'parameterIds': [],
             'minimumDataBytes': 0, 'spanKind': 'exact', **FLAGS})
         g['parameterIds'].append(key)
@@ -233,21 +251,79 @@ def plan_for(profile, selected):
         **FLAGS}
 
 
-def compile_bundle(match_dir, output, variants_path=DEFAULT_VARIANTS, hci_path=SOURCE_PATH):
+def resolve_source_reference(recorded_path, *, original_source_root=None, destination_root=ROOT):
+    """Map an explicitly named old checkout to this checkout, before hash checks.
+
+    Parse the recorded platform's paths without opening its drive or share.
+    Original manifests stay unchanged; no basename search or guessed root.
+    """
+    if not isinstance(recorded_path, str) or not recorded_path or '\x00' in recorded_path:
+        raise ValueError('manifest-source-path-invalid')
+    if original_source_root is None:
+        return Path(recorded_path)
+    original_text = str(original_source_root)
+    if not original_text or '\x00' in original_text:
+        raise ValueError('manifest-original-root-invalid')
+    flavor = PureWindowsPath if PureWindowsPath(original_text).drive else PurePosixPath
+    original = flavor(original_text)
+    if not original.is_absolute() or '..' in original.parts:
+        raise ValueError('manifest-original-root-invalid')
+    if flavor is PurePosixPath and (PureWindowsPath(recorded_path).drive or '\\' in recorded_path):
+        raise ValueError('manifest-source-path-platform-mismatch')
+    recorded = flavor(recorded_path)
+    if '..' in recorded.parts:
+        raise ValueError('manifest-source-path-invalid')
+    if recorded.is_absolute():
+        try:
+            relative = recorded.relative_to(original)
+        except ValueError as error:
+            raise ValueError('manifest-source-outside-original-root') from error
+    elif recorded.drive or recorded.root:
+        raise ValueError('manifest-source-path-platform-mismatch')
+    else:
+        relative = recorded
+    if not relative.parts:
+        raise ValueError('manifest-source-path-invalid')
+    destination = Path(destination_root).resolve()
+    mapped = destination.joinpath(*relative.parts)
+    if not mapped.resolve().is_relative_to(destination):
+        raise ValueError('manifest-source-outside-destination-root')
+    return mapped
+
+
+def compile_bundle(match_dir, output, variants_path=DEFAULT_VARIANTS, hci_path=SOURCE_PATH,
+                   *, original_source_root=None, source_root=ROOT):
     match_dir, output = Path(match_dir), Path(output)
     if output.exists():
         raise ValueError('output-already-exists')
     manifest = load(match_dir / 'manifest.json')
     # Reuse verified results only after proving their sources and generated outputs unchanged.
     inputs = [verify_source(match_dir / 'manifest.json')]
+    references = []
     for item in manifest['inputs'] + manifest['outputs']:
-        inputs.append(verify_source(Path(item['path']), item['sha256']))
-    inputs.append(verify_source(variants_path, next(i['sha256'] for i in manifest['inputs'] if Path(i['path']).name == 'variants.jsonl')))
-    inputs.append(verify_source(hci_path, next(i['sha256'] for i in manifest['inputs'] if Path(i['path']).name == 'btsnoop_hci.log')))
-    inputs.append(verify_source(ROOT / '.local/x431-re/2026-09-27-protocol/package/libPORSCHE_VERF.so',
+        path = resolve_source_reference(item['path'], original_source_root=original_source_root,
+                                        destination_root=source_root)
+        verified = verify_source(path, item['sha256'])
+        if original_source_root is not None:
+            verified.update(recordedPath=item['path'], originalSourceRoot=str(original_source_root),
+                            sourceReferenceMapped=True)
+        inputs.append(verified)
+        references.append((item, path))
+    input_refs = references[:len(manifest['inputs'])]
+    for name in ('variants.json', 'request-groups.json', 'parameters.jsonl', 'units.json'):
+        matches = [item for item, path in references[len(manifest['inputs']):] if path.name == name]
+        if len(matches) != 1:
+            raise ValueError(f'manifest-output-binding-unresolved:{name}')
+        inputs.append(verify_source(match_dir / name, matches[0]['sha256']))
+    inputs.append(verify_source(variants_path, next(item['sha256'] for item, path in input_refs if path.name == 'variants.jsonl')))
+    inputs.append(verify_source(hci_path, next(item['sha256'] for item, path in input_refs if path.name == 'btsnoop_hci.log')))
+    address_path = Path(source_root) / ADDRESS_PATH.relative_to(ROOT)
+    inputs.append(verify_source(address_path, next(item['sha256'] for item, path in input_refs if path.name == 'definitions.json')))
+    inputs.append(verify_source(Path(source_root) / '.local/x431-re/2026-09-27-protocol/package/libPORSCHE_VERF.so',
         '92acc9fb3178fc4595abcb44c1925951426d0cd43ceee4cbba83e1319165d0eb'))
-    inputs.append(verify_source(GGP_PATH, '7caf1c27e475511e4a75db8fe92008684f5632eeb9fbb4484cbc16fa0eec7de3'))
-    language = GgpLanguage(GGP_PATH)
+    language_path = GGP_PATH if os.environ.get('PORSCHE981_LANGUAGE') else Path(source_root) / '.local/x431-re/2026-09-27-protocol/package/PORSCHE_CN.GGP'
+    inputs.append(verify_source(language_path, '7caf1c27e475511e4a75db8fe92008684f5632eeb9fbb4484cbc16fa0eec7de3'))
+    language = GgpLanguage(language_path)
     def lookup_name(key):
         return compact_text(language.lookup_id('DSTREAM_CN.GAG', key))
     def category_for(p):
@@ -259,7 +335,7 @@ def compile_bundle(match_dir, output, variants_path=DEFAULT_VARIANTS, hci_path=S
     summaries = {v['profileId']: v for v in load(match_dir / 'variants.json')}
     groups = {g['groupId']: g for g in load(match_dir / 'request-groups.json')}
     times = hci_times(hci_path)
-    pairs = explicit_address_pairs(load(ADDRESS_PATH))
+    pairs = explicit_address_pairs(load(address_path))
     parameters = defaultdict(dict)
     total = 0
     with (match_dir / 'parameters.jsonl').open(encoding='utf-8') as f:
@@ -375,17 +451,24 @@ def compile_bundle(match_dir, output, variants_path=DEFAULT_VARIANTS, hci_path=S
     # Derived application PDUs are explicitly private rehearsal material. The
     # original capture stays outside the distributable definition directories.
     dump(output / 'rehearsal-fixtures.json', [g for g in groups.values() if
-        g['txId'] == 0x7E0 and g['rxId'] == 0x7E8 and g['adapterStream'] == [2, 2]
+        (g['txId'], g['rxId']) in ((0x7E0, 0x7E8), (0x710, 0x77A)) and g['adapterStream'] == [2, 2]
         and g['capturePhase'] == 'before-coding'])
     code = [verify_source(Path(__file__)), *[verify_source(ROOT / 'scripts' / file) for file in (
         'x431_re/request_fields.py', 'x431_re/gag_lib.py', 'x431_re/gag_codec.py', 'x431_re/ggp_index.py',
         'diagnostics/response_values.py', 'diagnostics/x431_values.py', 'diagnostics/x431_formula.py',
         'diagnostics/manufacturer_acquisition.py', 'diagnostics/manufacturer_transport.py',
+        'diagnostics/manufacturer_stream.py',
         'diagnostics/elm.py', 'diagnostics/sessions.py', 'diagnostics/catalog.py',
         'diagnostics/qualification.py', 'diagnostics/session_simulator.py')]]
+    from .manufacturer_read import READ_CODE, CATALOG_FILE
+    known_code = {Path(item['path']).resolve() for item in code}
+    code.extend(verify_source(ROOT / file) for file in READ_CODE
+                if (ROOT / file).resolve() not in known_code)
     outputs = [verify_source(p) for p in sorted(output.rglob('*')) if p.is_file()]
     dump(output / 'manifest.json', {'schemaVersion': 2, 'inputs': inputs,
         'inputsAreProvenanceOnlyAtRuntime': True,
+        'manufacturerRead': {'schemaVersion': 1, 'catalogPath': CATALOG_FILE,
+            'catalogSha256': sha(ROOT / CATALOG_FILE)},
         'code': [{**item, 'path': Path(item['path']).relative_to(ROOT).as_posix()} for item in code],
         'outputs': [{**item, 'path': Path(item['path']).relative_to(output.resolve()).as_posix()} for item in outputs], **FLAGS})
     return {**stats, 'units': len(unit_index), 'sourceMeasurements': total, 'output': str(output.resolve()), **FLAGS}
@@ -476,7 +559,7 @@ def handle_catalog(req):
     return result(source='definition-only-no-vehicle-response', parameters=[{**slim_parameter(p), 'series': [], 'missingResponse': True} for p in parameters if p['id'] in selected])
 
 
-def handle_ready(req, root=None):
+def handle_ready(req, root=None, *, cancel_event=None, on_cycle=None, on_connection=None, streaming=False):
     root = Path(root) if root is not None else Path(os.environ.get('PORSCHE981_REALTIME_PREPARATION') or DEFAULT_OUTPUT)
     def result(**value):
         return {'ok': True, 'liveVerified': False, **value, **FLAGS}
@@ -527,8 +610,11 @@ def handle_ready(req, root=None):
                 checklist=profile['checklist'], identityReplay=profile.get('identityReplay', []))
         plan = plan_for(profile, req.get('parameterIds'))
         if req['action'] == 'ready-acquire':
-            if set(req) - {'action', 'generation', 'ecuId', 'profileId', 'parameterIds'}:
+            if set(req) - {'action', 'generation', 'ecuId', 'profileId', 'parameterIds', 'cycleCount'}:
                 raise ValueError('manufacturer-forbidden-field')
+            cycles = req.get('cycleCount', 1)
+            if type(cycles) is not int or not 1 <= cycles <= 3:
+                raise ValueError('manufacturer-cycle-count-invalid')
             # Production ELM framing runs against a private fixture BytePort.
             # Stale code or changed evidence fails before opening that fixture.
             from .manufacturer_transport import transport_rehearsal
@@ -550,10 +636,13 @@ def handle_ready(req, root=None):
             if not expected:
                 raise ValueError('manufacturer-response-source-missing')
             verify_source(groups_path, expected)
-            return transport_rehearsal(profile, req.get('parameterIds'), load(groups_path))
+            return transport_rehearsal(profile, req.get('parameterIds'), load(groups_path),
+                cycles=(3000 // len(req['parameterIds']) if streaming and cycles > 1 else cycles),
+                on_cycle=on_cycle, on_connection=on_connection, cancel_event=cancel_event, streaming=streaming)
         if req['action'] == 'ready-plan':
-            from .manufacturer_transport import DME_PROFILE, prepared_read_contract
-            if profile.get('profileId') == DME_PROFILE:
+            from .manufacturer_acquisition import READ_PROFILES
+            from .manufacturer_transport import prepared_read_contract
+            if profile.get('profileId') in READ_PROFILES:
                 try:
                     plan['preparedTransport'] = prepared_read_contract(profile, req.get('parameterIds'))
                 except ValueError as error:
@@ -573,11 +662,16 @@ def handle_ready(req, root=None):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--match-dir', type=Path, default=DEFAULT_MATCH)
+    parser.add_argument('--match-dir', type=Path)
     parser.add_argument('--output-dir', type=Path, default=DEFAULT_OUTPUT)
-    parser.add_argument('--variants', type=Path, default=DEFAULT_VARIANTS)
+    parser.add_argument('--variants', type=Path)
+    parser.add_argument('--source-root', type=Path, default=ROOT, help='explicit root containing retained private sources')
+    parser.add_argument('--original-source-root', help='old checkout root recorded in source manifests; all hashes remain required')
     args = parser.parse_args()
-    print(json.dumps(compile_bundle(args.match_dir, args.output_dir, args.variants), ensure_ascii=False))
+    source = args.source_root.resolve()
+    print(json.dumps(compile_bundle(args.match_dir or source / DEFAULT_MATCH.relative_to(ROOT), args.output_dir,
+        args.variants or source / DEFAULT_VARIANTS.relative_to(ROOT), source / SOURCE_PATH.relative_to(ROOT),
+        original_source_root=args.original_source_root, source_root=source), ensure_ascii=False))
 
 
 if __name__ == '__main__':

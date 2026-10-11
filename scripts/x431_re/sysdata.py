@@ -128,35 +128,29 @@ def parse_family_index(blob: bytes) -> list[dict]:
 
 
 def parse_cmd(blob: bytes, off: int) -> dict | None:
-    """FromAddrGetCommand: SID, b1, n, n payload bytes; wire omits n. n=0xFF unsupported."""
+    """Pinned offline FILE conversion; 0xFF uses only SID, never 255 payload bytes."""
     if off < 0:
         raise ValueError(f"negative offset {off}")
     if off + 3 > len(blob):
         return None
     sid, b1, n = blob[off], blob[off + 1], blob[off + 2]
-    if n == 0xFF:
-        return {
-            "off": off,
-            "sid": sid,
-            "b1": b1,
-            "payloadLen": n,
-            "class": "unsupported-structured",
-            "reason": "n=0xFF sentinel; no huge read",
-            **DISABLED,
-        }
-    if n > CMD_LEN_MAX or off + 3 + n > len(blob):
+    if n != 0xFF and (n > CMD_LEN_MAX or off + 3 + n > len(blob)):
         return {"off": off, "class": "not-confirmed", "reason": "cmd length oob", "sid": sid, "n": n}
-    payload = blob[off + 3 : off + 3 + n]
-    wire = bytes([sid, b1]) + payload
-    role = "sessionPrecondition" if sid == 0x10 else "dtcRead" if sid in (0x18, 0x19) else "dtcClear" if sid == 0x14 else "other"
+    from scripts.diagnostics.x431_file_command import convert_source_command
+    end = off + (3 if n == 0xFF else 3 + n)
+    converted = convert_source_command(blob[off:end])
+    role = "sessionPrecondition" if sid == 0x10 else "dtcRead" if sid in (0x18, 0x19) else "dtcClear" if sid in (0x04, 0x14) else "other"
     return {
         "off": off,
         "sid": sid,
         "b1": b1,
         "payloadLen": n,
-        "payloadHex": payload.hex().upper(),
-        "tableHex": blob[off : off + 3 + n].hex().upper(),
-        "wireHex": wire.hex().upper(),
+        "payloadHex": blob[off + 3:end].hex().upper(),
+        "tableHex": converted["sourceTableHex"],
+        "wireHex": converted["requestHexCandidate"],
+        "commandFormat": converted["status"],
+        "nativeDescriptorHexCandidate": converted["nativeDescriptorHexCandidate"],
+        "runtimeReadSequenceQualified": False,
         "role": role,
         "class": "static-source-confirmed",
         **DISABLED,
@@ -495,14 +489,18 @@ def parse_systems(blob: bytes, table_off: int, *, target_names: set[str] | None 
     return out
 
 
-def find_named_variant(sys_rec: dict | None, name: str) -> dict | None:
+def find_named_variants(sys_rec: dict | None, name: str) -> list[dict]:
+    """Retain every exact source name/link match; names do not choose a link."""
     if not sys_rec or not name:
-        return None
-    for ln in sys_rec.get("links") or []:
-        for v in ((ln.get("service") or {}).get("variants") or []):
-            if v.get("name") == name:
-                return {**v, "linkIndex": ln.get("index"), "comm": ln.get("comm")}
-    return None
+        return []
+    return [{**v, "linkIndex": ln.get("index"), "comm": ln.get("comm")}
+            for ln in sys_rec.get("links") or []
+            for v in ((ln.get("service") or {}).get("variants") or []) if v.get("name") == name]
+
+
+def find_named_variant(sys_rec: dict | None, name: str) -> dict | None:
+    matches = find_named_variants(sys_rec, name)
+    return matches[0] if len(matches) == 1 else None
 
 
 def iter_subsys_variants(sys_rec: dict | None):
@@ -565,7 +563,7 @@ def parse_payload(
             "layout": "style u8, u32+1, meta +5..+10, readCount u8+11, read u32[], clearType, clearCount, clear u32[], u16 otherCount, array",
             "TOKEN+0x60c": "GetSubSys slot2 DTC table file offset",
             "TOKEN+0x6860": "destination buffer in TOKEN, not a SYS file offset",
-            "FromAddrGetCommand": "SID,b1,n,payload[n]; wire=SID+b1+payload; n=0 ok; n=0xFF unsupported",
+            "FromAddrGetCommand": "SID,b1,n,payload[n]; n=0..16 candidate=SID+b1+payload; n=0xFF candidate=SID only; offline FILE model",
             "class": "static-source-confirmed",
         },
         **DISABLED,

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import ast
+import hashlib
 import functools
 import io
 import json
@@ -15,8 +16,8 @@ from unittest import mock
 from scripts.diagnostics.workbench import DEFAULT_VARIANTS, FLAGS, handle, main, load_or_build_index
 from scripts.diagnostics.catalog import load_catalog, profile_by_id
 
-REPO = Path(__file__).resolve().parents[3]
-WB_PY = REPO / "scripts" / "diagnostics" / "workbench.py"
+WB_PY = Path(handle.__code__.co_filename).resolve()
+REPO = WB_PY.parents[2]
 EU5 = "9x1:DME_BDE_Continental:SDI9_1_981_3_4L_EU5"
 CRUISE = {
     "at": 4047899,
@@ -84,6 +85,74 @@ def _flags(d):
 
 
 class TestIndexProvenance(unittest.TestCase):
+    def test_same_size_and_mtime_in_place_edit_rebuilds_from_current_contents(self):
+        with tempfile.TemporaryDirectory() as temp:
+            variants=_fixture(Path(temp));before=load_or_build_index(variants,{})
+            old_stat=variants.stat();old=variants.read_bytes();new=old.replace(b'SDI9_1_981_3_4L_EU5',b'SDI9_1_981_3_4L_EU6')
+            self.assertEqual(len(old),len(new));variants.write_bytes(new)
+            os.utime(variants,ns=(old_stat.st_atime_ns,old_stat.st_mtime_ns))
+            after=load_or_build_index(variants,{})
+            self.assertEqual(before['stat']['size'],after['stat']['size'])
+            self.assertEqual(before['stat']['mtimeNs'],after['stat']['mtimeNs'])
+            self.assertEqual(before['stat']['inode'],after['stat']['inode'])
+            self.assertNotEqual(before['stat']['sha256'],after['stat']['sha256'])
+            self.assertTrue(after['rows'][0]['profileId'].endswith('EU6'))
+            self.assertEqual(after['stat']['sha256'],hashlib.sha256(new).hexdigest().upper())
+
+    def test_same_metadata_atomic_replacement_and_unicode_offsets(self):
+        with tempfile.TemporaryDirectory() as temp:
+            variants=Path(temp)/'variants.jsonl'
+            variants.write_text('\n'+json.dumps({'profile_id':'OLD','name':'甲'},ensure_ascii=False)+'\r\n'+
+                json.dumps({'profile_id':'TWO','name':'乙'},ensure_ascii=False)+'\n',encoding='utf-8')
+            before=load_or_build_index(variants,{});st=variants.stat();new=variants.read_bytes().replace(b'OLD',b'NEW')
+            replacement=variants.with_suffix('.pending');replacement.write_bytes(new)
+            os.utime(replacement,ns=(st.st_atime_ns,st.st_mtime_ns));os.replace(replacement,variants)
+            after=load_or_build_index(variants,{})
+            self.assertEqual(after['rows'][0]['profileId'],'NEW')
+            from scripts.diagnostics.workbench import _load_variant
+            self.assertEqual([_load_variant(variants,row)['profile_id'] for row in after['rows']],['NEW','TWO'])
+            self.assertNotEqual(before['stat']['sha256'],after['stat']['sha256'])
+
+    def test_legacy_index_cannot_be_reused_and_valid_index_is_not_rewritten(self):
+        with tempfile.TemporaryDirectory() as temp:
+            variants=_fixture(Path(temp));before=load_or_build_index(variants,{})
+            index=variants.with_name('workbench-index.v1.json');legacy=json.loads(index.read_text())
+            legacy.pop('schemaVersion');legacy['stat'].pop('sha256');legacy['rows'][0]['name']='STALE'
+            index.write_text(json.dumps(legacy),encoding='utf-8')
+            after=load_or_build_index(variants,{})
+            self.assertEqual(after['rows'],before['rows']);self.assertEqual(after['schemaVersion'],2)
+            stamp=index.stat().st_mtime_ns
+            self.assertEqual(load_or_build_index(variants,{}),after)
+            self.assertEqual(index.stat().st_mtime_ns,stamp)
+
+    def test_same_inode_alias_does_not_return_another_selected_source_path(self):
+        with tempfile.TemporaryDirectory() as temp:
+            variants=_fixture(Path(temp));before=load_or_build_index(variants,{})
+            alias=variants.with_name('alias.jsonl');os.link(variants,alias)
+            after=load_or_build_index(alias,{})
+            self.assertEqual(before['stat'],after['stat']);self.assertEqual(after['path'],str(alias))
+
+    def test_content_changed_after_fingerprint_does_not_publish_an_index(self):
+        with tempfile.TemporaryDirectory() as temp:
+            variants=_fixture(Path(temp));st=variants.stat();original=variants.read_bytes()
+            from scripts.diagnostics.workbench import _stat
+            fingerprint=_stat(variants)
+            def changed(path):
+                path.write_bytes(original.replace(b'EU5',b'EU6'));os.utime(path,ns=(st.st_atime_ns,st.st_mtime_ns))
+                return fingerprint
+            with mock.patch('scripts.diagnostics.workbench._stat',side_effect=changed):
+                with self.assertRaisesRegex(ValueError,'changed-during-index-build'):
+                    load_or_build_index(variants,{})
+            self.assertFalse(variants.with_name('workbench-index.v1.json').exists())
+
+    def test_record_replaced_after_index_selection_cannot_return_another_profile(self):
+        with tempfile.TemporaryDirectory() as temp:
+            variants=_fixture(Path(temp));index=load_or_build_index(variants,{})
+            variants.write_bytes(variants.read_bytes().replace(b'EU5',b'EU6'))
+            from scripts.diagnostics.workbench import _load_variant
+            with self.assertRaisesRegex(ValueError,'source-row-mismatch'):
+                _load_variant(variants,index['rows'][0])
+
     def test_changed_menu_mapping_invalidates_cache_without_variant_changes(self):
         with tempfile.TemporaryDirectory() as temp:
             variants = _fixture(Path(temp))
@@ -246,6 +315,32 @@ class TestFixturePools(unittest.TestCase):
         self.assertEqual(doc["options"], [{"rawValue": 0, "label": "否"}, {"rawValue": 1, "label": "是"}])
         self.assertEqual(doc["decoded"]["text"], "是")
         self.assertFalse(doc["executionEnabled"])
+
+    @_with_fixture
+    def test_numeric_domain_preview_and_failure_keep_block_binding(self, _p):
+        from scripts.diagnostics.tests.test_coding_numeric import linear
+        record = linear(); record['at'] = 4047899
+        variant = json.loads(_p.read_text(encoding='utf8')); variant['pool_records']['coding']['records'] = [record]
+        _p.write_text(json.dumps(variant), encoding='utf8')
+        request = {'generation':'981', 'profileId':EU5,'category':'coding','recordAt':4047899,
+                   'dataHex':'FAA5000AFFFF','expectedReadRequestHex':'22F100'}
+        domain = handle({**request,'action':'coding-options'})
+        self.assertTrue(domain['ok'], domain); self.assertEqual(domain['options'], [])
+        result = handle({**request,'action':'preview','physicalValue':'60000'})
+        self.assertTrue(result['ok'], result); self.assertEqual(result['afterHex'],'FAA5EA60FFFF')
+        self.assertEqual(result['effects'][0]['after']['phys'],'60000')
+        self.assertFalse(result['editorEnabled']); self.assertFalse(result['executionEnabled'])
+        for change, reason in (({'physicalValue':'1/2'},'numeric-target-not-representable'),
+                ({'physicalValue':'65536'},'numeric-target-out-of-source-bounds'),
+                ({'physicalValue':'3','expectedReadRequestHex':'22F101'},'coding_field_block_mismatch'),
+                ({'physicalValue':'3','rawValue':3},'numeric-target-invalid'),
+                ({'physicalValue':'3','expectedReadRequestHex':None},'numeric-target-invalid')):
+            with self.subTest(change=change):
+                bad = handle({**request,'action':'preview',**change})
+                self.assertEqual(bad['error'], reason); self.assertNotIn('afterHex', bad)
+        variant['pool_records']['coding']['records'].append({**record, 'at':4047900, 'byteOffset':None})
+        _p.write_text(json.dumps(variant), encoding='utf8')
+        self.assertEqual(handle({**request,'action':'preview','physicalValue':'15'})['error'],'coding-overlapping-layout-unresolved')
 
     @_with_fixture
     def test_full_catalogue_has_no_invented_match_or_vehicle_response(self, _p):

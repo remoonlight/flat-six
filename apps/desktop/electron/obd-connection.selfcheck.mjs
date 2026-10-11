@@ -24,6 +24,7 @@ function manager(extra = {}) {
     listFn: async () => ({ devices: [device] }),
     handshakeMs: extra.handshakeMs ?? 60_000,
     livenessMs: extra.livenessMs ?? 60_000,
+    gracefulMs: 20, killWaitMs: 20,
     ...extra,
   });
 }
@@ -31,7 +32,7 @@ async function select(m) {
   await m.handle({ action: "list" });
   assert.equal((await m.handle({ action: "select", deviceId: device.id })).ok, true);
 }
-function fakeChild() {
+function fakeChild(graceful = true) {
   const child = new EventEmitter();
   child.stdin = new PassThrough();
   child.stdout = new PassThrough();
@@ -41,7 +42,18 @@ function fakeChild() {
     return true;
   };
   child.exitCode = null;
+  if (graceful) child.stdin.on("data", bytes => {
+    if (!String(bytes).includes('"stop"')) return;
+    cleanStopped(child);
+    queueMicrotask(() => {
+      if (child._exited) return;
+      child.exitCode = 0; child.emit("close", 0);
+    });
+  });
   return child;
+}
+function cleanStopped(child) {
+  child.stdout.write(JSON.stringify({ type: "stopped", ok: true, restoration: { errors: [] } }) + "\n");
 }
 const hs = (volts = 12.6, at = 1000) =>
   JSON.stringify({
@@ -53,6 +65,48 @@ const hs = (volts = 12.6, at = 1000) =>
     deviceId: device.id,
     at,
   }) + "\n";
+
+// Exercise the real selection/monitor/handoff route using an OS USB instance ID.
+// No serial or native API is opened by this injected worker.
+{
+  const usb = { id: "usb:" + "a".repeat(64), brand: "vLinker", available: true, paired: false,
+    transport: "usb-serial", comPort: "COM21", usbInstanceId: "USB\\VID_0403&PID_6001\\SYNTHETIC01" };
+  const children = [], requests = [];
+  const m = manager({ listFn: async () => ({ devices: [usb] }), monitorSpawnFn: () => {
+    const child = fakeChild(); child.stdin.on("data", bytes => requests.push(JSON.parse(String(bytes))));
+    children.push(child); return child;
+  } });
+  try {
+    assert.equal((await m.handle({ action: "list" })).devices.length, 1);
+    assert.equal((await m.handle({ action: "select", deviceId: usb.id })).model, "vLinker");
+    assert.equal((await m.handle({ action: "connect" })).ok, true);
+    assert.equal(children.length, 1);
+    assert.equal(requests[0].deviceId, usb.id);
+    children[0].stdout.write(JSON.stringify({ ok: true, type: "handshake", simulation: false,
+      deviceId: usb.id, volts: 12.6, voltageSource: "atrv", at: Date.now() }) + "\n");
+    assert.equal(m.snapshot().connected, true);
+    assert.equal(m.snapshot().deviceRegistry[0].connection, "USB / 串口");
+    assert.equal((await m.suspendForSession()).ok, true);
+    assert.equal(children[0].exitCode, 0);
+    assert.equal(m.snapshot().connected, false);
+  } finally { await m.shutdown(); }
+}
+
+for (const model of ["ELM327", "OBDKey", "OBDLink"]) {
+  const usb = { id: "usb:" + "b".repeat(64), brand: "unresolved", available: true, transport: "usb-serial" };
+  const requests = [];
+  const m = manager({ listFn: async () => ({ devices: [usb] }), monitorSpawnFn: () => {
+    const child = fakeChild(); child.stdin.on("data", bytes => requests.push(JSON.parse(String(bytes)))); return child;
+  } });
+  try {
+    await m.handle({ action: "list" }); await m.handle({ action: "select", deviceId: usb.id });
+    assert.equal((await m.handle({ action: "connect" })).error, "device_model_required");
+    assert.equal((await m.handle({ action: "select", deviceId: usb.id, model })).model, model);
+    assert.equal((await m.handle({ action: "connect" })).ok, true);
+    assert.equal(requests[0].adapterModel, model);
+    assert.equal((await m.handle({ action: "disconnect" })).ok, true);
+  } finally { await m.shutdown(); }
+}
 
 assert.equal(acceptMonitorReading({ ok: true, simulation: false, type: "handshake", volts: 12.6, voltageSource: "atrv", deviceId: device.id, at: 1000 }, { deviceId: device.id, now: 1000, freshMs: 6000 }).volts, 12.6);
 assert.equal(acceptMonitorReading({ ok: true, simulation: false, type: "handshake", volts: 12.6, voltageSource: "atrv", deviceId: "bt:000000000000", at: 1000 }, { deviceId: device.id, now: 1000, freshMs: 6000 }).reject, "device_mismatch");
@@ -107,7 +161,7 @@ await processManager.shutdown();
     gracefulMs: 20,
     killWaitMs: 20,
     monitorSpawnFn: () => {
-      stuck = fakeChild();
+      stuck = fakeChild(false);
       stuck.kill = () => {
         stuck.killed = true;
         return false;
@@ -180,23 +234,27 @@ const retryer = manager({
 });
 await select(retryer);
 await retryer.handle({ action: "connect" });
+child2.stdout.write(JSON.stringify({ type: "error", ok: false, error: "port-io" }) + "\n");
+cleanStopped(child2);
 child2.exitCode = 1;
-child2._exited = true;
 child2.emit("close", 1);
 assert.equal(retryer.snapshot().linkState, "reconnecting");
 assert.ok(delays.includes(5000));
 const retryFns = timers.filter((t) => t.ms === 5000 || t.ms === 10000 || t.ms === 20000 || t.ms === 30000);
 retryFns[0].fn();
+child2.stdout.write(JSON.stringify({ type: "error", ok: false, error: "port-io" }) + "\n");
+cleanStopped(child2);
 child2.exitCode = 1;
-child2._exited = true;
 child2.emit("close", 1);
 retryFns[1]?.fn?.();
+child2.stdout.write(JSON.stringify({ type: "error", ok: false, error: "port-io" }) + "\n");
+cleanStopped(child2);
 child2.exitCode = 1;
-child2._exited = true;
 child2.emit("close", 1);
 retryFns[2]?.fn?.();
+child2.stdout.write(JSON.stringify({ type: "error", ok: false, error: "port-io" }) + "\n");
+cleanStopped(child2);
 child2.exitCode = 1;
-child2._exited = true;
 child2.emit("close", 1);
 const retryDelays = delays.filter((d) => d === 5000 || d === 10000 || d === 20000 || d === 30000);
 assert.deepEqual(retryDelays.slice(0, 4), [5000, 10000, 20000, 30000]);
@@ -230,7 +288,7 @@ await syn.shutdown();
     gate: g,
     handshakeMs: 30,
     monitorSpawnFn: () => {
-      child = fakeChild();
+      child = fakeChild(false);
       child.kill = () => {
         child.killed = true;
         return false;
@@ -257,7 +315,7 @@ await syn.shutdown();
     gracefulMs: 20,
     killWaitMs: 20,
     monitorSpawnFn: () => {
-      child = fakeChild();
+      child = fakeChild(false);
       child.kill = () => {
         child.killed = true;
         return false;
@@ -327,7 +385,7 @@ await syn.shutdown();
     gracefulMs: 20,
     killWaitMs: 20,
     monitorSpawnFn: () => {
-      stuck = fakeChild();
+      stuck = fakeChild(false);
       stuck.kill = () => {
         stuck.killed = true;
         return false;
@@ -472,7 +530,7 @@ console.log("obd-connection selfcheck PASS: close-timeout quarantine, cadence, b
   let child;
   const g = createTransportGate();
   const conn = manager({ gate: g, now: () => 1000, gracefulMs: 15, killWaitMs: 15,
-    monitorSpawnFn: () => { child = fakeChild(); return child; } });
+    monitorSpawnFn: () => { child = fakeChild(false); return child; } });
   await select(conn);
   await conn.handle({ action: "connect" });
   child.stdout.emit("data", Buffer.from(JSON.stringify({ ok: true, type: "handshake", deviceId: device.id,
@@ -486,7 +544,7 @@ console.log("obd-connection selfcheck PASS: close-timeout quarantine, cadence, b
   assert.equal(conn.snapshot().linkState, "close_failed");
   assert.ok(g.owner(), "failed close retains port ownership");
   child.exitCode = 0; child.emit("close", 0);
-  assert.equal(conn.snapshot().linkState, "idle");
+  assert.equal(conn.snapshot().linkState, "close_failed", "late unverified close cannot erase the release failure");
   assert.equal(g.owner(), null);
   await conn.shutdown();
 }
@@ -516,7 +574,7 @@ console.log("obd-connection convergence checks PASS: settings, current devices, 
       child = fakeChild();
       child.stdin.on("data", (data) => {
         if (String(data).includes('"stop"')) {
-          child.stdout.emit("data", Buffer.from('{"type":"stopped"}\n'));
+          cleanStopped(child);
           child.exitCode = 0; child.emit("close", 0);
         }
       });

@@ -8,10 +8,12 @@ from __future__ import annotations
 import argparse
 from collections import defaultdict
 import json
+import os
 from pathlib import Path
 
-from .offline_match import FLAGS, sha, verify_source
+from .offline_match import DEFAULT_VARIANTS, FLAGS, sha, verify_source
 from .realtime_preparation import DEFAULT_OUTPUT, GGP_PATH, load, record_from_parameter
+from .x431_variant_selection import REVIEWED_LANGUAGE_SHA256
 from .response_values import decode_application_response, request_from_record
 from .all_unit_collection import build_all_unit_pack
 from scripts.x431_re.gag_lib import GgpLanguage, compact_text
@@ -56,11 +58,26 @@ def request_groups(profile):
                 g['historicalResponseReferences'].append(ref)
     for g in groups.values():
         g['parameterCount'] = len(g['parameters'])
+        g['missingHistoricalParameterCount'] = g['parameterCount'] - g['historicalParameterCount']
         g['representative'] = next((p for p in g['parameters'] if p['nameResolved']), g['parameters'][0])
         g['capturePriority'] = 'missing-response-first' if not g['historicalParameterCount'] else 'repeat-for-timing-and-reference'
         # A lower bound is enough to extract these fields, not a full PDU length claim.
         g['lengthClaim'] = 'minimum-for-selected-fields-only'
-    return sorted(groups.values(), key=lambda g: (bool(g['historicalParameterCount']), g['requestHex']))
+    # Limited car time: first obtain unseen complete responses, preferring groups
+    # that can supply more missing fields offline. No timing/speed claim is made.
+    return sorted(groups.values(), key=lambda g: (bool(g['historicalParameterCount']),
+        -g['missingHistoricalParameterCount'], -g['parameterCount'], g['requestHex']))
+
+
+def capture_batches(groups):
+    """One menu selection per response group, without truncating the catalog."""
+    return [{'batch': offset // 12 + 1,
+        'selectionBasis': 'one representative per request; 12 is a UI planning budget, not proven ECU capacity',
+        'potentialOfflineFields': sum(g['parameterCount'] for g in groups[offset:offset + 12]),
+        'missingHistoricalFields': sum(g['missingHistoricalParameterCount'] for g in groups[offset:offset + 12]),
+        'selections': [{'requestHex': g['requestHex'], 'representative': g['representative'],
+            'fieldsInResponse': g['parameterCount'], 'priority': g['capturePriority'], **FLAGS}
+            for g in groups[offset:offset + 12]], **FLAGS} for offset in range(0, len(groups), 12)]
 
 
 def decode_recorded_cycle(profile, selected, responses, *, source_kind):
@@ -99,7 +116,7 @@ def decode_recorded_cycle(profile, selected, responses, *, source_kind):
             'sourceKind': source_kind, **FLAGS}
 
 
-def verified_profiles(bundle):
+def verified_profiles(bundle, *, language_ggp=None):
     root = Path(bundle).resolve()
     manifest_path = root / 'manifest.json'
     manifest = load(manifest_path)
@@ -130,8 +147,9 @@ def verified_profiles(bundle):
             profiles.append(profile)
     # Retain source gaps as source gaps; do not send the user to another ECU
     # solely to repair a blank static label in an unmatched variant.
-    inputs.append(verify_source(GGP_PATH, '7caf1c27e475511e4a75db8fe92008684f5632eeb9fbb4484cbc16fa0eec7de3'))
-    language = GgpLanguage(GGP_PATH)
+    language_path = Path(language_ggp) if language_ggp is not None else GGP_PATH
+    inputs.append(verify_source(language_path, REVIEWED_LANGUAGE_SHA256))
+    language = GgpLanguage(language_path)
     blank_components = {}
     for gap in name_gaps:
         for token in (gap['originalName'] or '').split('#')[1:]:
@@ -145,11 +163,13 @@ def verified_profiles(bundle):
         'collectionPriority': 'source-research-first; capture UI labels only if the actual ECU/version is encountered', **FLAGS}
 
 
-def build_pack(bundle, output):
+def build_pack(bundle, output, *, logical_sysdata=None, decoded_dsn=None, language_ggp=None):
     output = Path(output)
     if output.exists():
         raise ValueError('output-already-exists')
-    index, profiles, inputs, name_gaps = verified_profiles(bundle)
+    if language_ggp is not None and (logical_sysdata is None or decoded_dsn is None):
+        raise ValueError('selector-language-requires-SYS_DATA-and-DSN')
+    index, profiles, inputs, name_gaps = verified_profiles(bundle, language_ggp=language_ggp)
     units = []
     for p in profiles:
         groups = request_groups(p)
@@ -167,11 +187,7 @@ def build_pack(bundle, output):
             'unresolvedNameCount': sum(not v.get('nameResolved') for v in p['parameters']),
             'identityGroups': [{'requestHex': hx, 'fields': fields, **FLAGS} for hx, fields in identity.items()],
             'groups': groups,
-            'captureBatches': [{'batch': offset // 12 + 1,
-                'selectionBasis': 'one representative per request; 12 is a UI planning budget, not proven ECU capacity',
-                'selections': [{'requestHex': g['requestHex'], 'representative': g['representative'],
-                    'fieldsInResponse': g['parameterCount'], 'priority': g['capturePriority'], **FLAGS}
-                    for g in groups[offset:offset + 12]], **FLAGS} for offset in range(0, len(groups), 12)],
+            'captureBatches': capture_batches(groups),
             'remainingChecklist': p['checklist'], **FLAGS})
     priority = {1: 0, 9: 1, 2: 2, 32: 3, 35: 4, 4: 5, 70: 6}
     units.sort(key=lambda u: min(priority.get(eid, 99) for eid in u['ecuIds']))
@@ -184,12 +200,20 @@ def build_pack(bundle, output):
             'measurement selection names/units and timestamps', 'vehicle condition and adapter/software version',
             'raw serial trace and result/manifest for independent project runs',
             'clock basis/offset uncertainty, errors, partial results and close state'],
+        'shortSessionPolicy': {'collectionFirst': True, 'decodeAndCompareAfterDisconnect': True,
+            'firstPass': 'one complete response per missing group; more missing fields first',
+            'repeatOnlyAfterFirstPass': True, 'continuousRawRecordingIncludesEntryAndExit': True,
+            'partialResultsMustBeRetained': True, 'durationEstimate': None,
+            'minimumOnCarChecks': ['identity/version association', 'communication termination and close state',
+                                   'recording time coverage and retrievable nonempty originals'], **FLAGS},
         'procedure': ['Collect identity before measurements; keep one active diagnostic client.',
             'Capture via existing X431 read-only menus; static request groups are not approved sends.',
             'Prefer missing response groups, then repeated stable samples; stop at the time budget.',
             'Preserve raw files and hashes. Decode, compare and investigate after disconnecting.'], **FLAGS}
     output.mkdir(parents=True)
-    all_units = build_all_unit_pack(output / 'all-control-units')
+    all_units = build_all_unit_pack(output / 'all-control-units',
+        variants=Path(os.environ.get('PORSCHE981_VARIANTS') or DEFAULT_VARIANTS), logical_sysdata=logical_sysdata,
+        decoded_dsn=decoded_dsn, language_ggp=language_ggp)
     pack['allControlUnits'] = {'register': 'all-control-units/all-units.json', **all_units}
     target = output / 'collection-pack.json'
     target.write_text(json.dumps(pack, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
@@ -197,6 +221,12 @@ def build_pack(bundle, output):
         '请求仅供 X431 已有只读菜单的离线关联；不改变 vLinker 白名单，也不授权设码或清码。', '',
         '完整目标为 981/982 所有控制单元及设码；下面七个重点单元仅为已有匹配资料的优先批次。',
         '全量逐版本身份、实时请求组及原码范围见 [全控制单元采集](all-control-units/全控制单元采集.md)。', '',
+        '## 极短接车窗口', '',
+        '出发前完成软件/定义核对及录制取回演练。现场从进入系统前连续录到正常退出后。',
+        '先保存实际身份/版本；首轮每个缺响应请求组取得一份完整原始响应，同组只选一个代表参数。',
+        '同优先级内按可补缺字段数排序，先广度采集；还有时间再短时重复记录周期/工况。',
+        '到时保留部分结果并正常关闭，不在车上逐字段核对、调公式或重复验收已取得的组。',
+        '现场保留身份关联、通信终结/关闭、录制跨度及可取回原件检查；哈希、解码和完整对照在断车后完成。', '',
         '## 按请求组采集，回家再解码', '']
     for unit in units:
         missing = unit['requestGroupCount'] - unit['historicalRequestGroupCount']
@@ -209,7 +239,7 @@ def build_pack(bundle, output):
             lines.append(f"- `{group['requestHex']}`：{group['parameterCount']} 项，数据长度下限 {group['minimumDataBytes']} 字节；{state}。")
         lines += ['', '建议选参批次（仅当 X431 实际版本/菜单相符时使用）：']
         for batch in unit['captureBatches']:
-            lines.append(f"- 第 {batch['batch']} 批：" + '；'.join(
+            lines.append(f"- 第 {batch['batch']} 批（完整响应可供离线分析 {batch['potentialOfflineFields']} 项，其中历史缺响应 {batch['missingHistoricalFields']} 项）：" + '；'.join(
                 f"{s['representative']['name']}（{s['requestHex']}）" for s in batch['selections']))
         lines.append('')
     lines += ['', '完整名称、单位、位置、响应前缀与来源引用见 collection-pack.json。',
@@ -230,8 +260,12 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--bundle', type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument('--output-dir', type=Path, required=True)
+    parser.add_argument('--sysdata-logical', type=Path, help='explicit hash-pinned logical SYS_DATA for offline source references')
+    parser.add_argument('--decoded-dsn', type=Path, help='explicit hash-pinned decoded DSN for offline version rules/routes')
+    parser.add_argument('--language-ggp', type=Path, help='explicit hash-pinned language for selector read-source joins')
     args = parser.parse_args()
-    print(json.dumps(build_pack(args.bundle, args.output_dir), ensure_ascii=False))
+    print(json.dumps(build_pack(args.bundle, args.output_dir, logical_sysdata=args.sysdata_logical,
+                              decoded_dsn=args.decoded_dsn, language_ggp=args.language_ggp), ensure_ascii=False))
 
 
 if __name__ == '__main__':

@@ -1,7 +1,9 @@
 from copy import deepcopy
 import hashlib
 import threading
+import time
 import unittest
+from unittest import mock
 
 from scripts.diagnostics.manufacturer_transport import transport_rehearsal, prepared_read_contract, CATALOG_PROFILE
 from scripts.diagnostics.session_simulator import SessionSimPort, ath1_prompt, isotp_ath1_lines
@@ -70,6 +72,87 @@ class TransportTests(unittest.TestCase):
         self.assertTrue(out['transport']['qualification']['observedProfileMatch'])
         self.assertTrue(ports[0].closed)
         self.assertFalse(out['vehicleDataCollected'])
+
+    def test_continuous_session_identity_once_events_keep_every_cycle(self):
+        events = []
+        out, ports = self.run_case(cycles=3, streaming=True, on_cycle=events.append)
+        self.assertTrue(out['ok'], out)
+        self.assertEqual(len(ports), 1)
+        self.assertEqual(ports[0].ecu_payloads.count('1089'), 1)
+        self.assertEqual(ports[0].ecu_payloads.count('22F100'), 3)
+        self.assertEqual([e['cycle'] for e in events], [1, 2, 3])
+        self.assertEqual(out['samples'], [sample for e in events for sample in e['samples']])
+        self.assertEqual(out['transactions'], [item for e in events for item in e['transactions']])
+        self.assertEqual(out['completedCycles'], 3)
+        self.assertTrue(out['transport']['closed'])
+
+    def test_stream_retains_more_than_old_sample_cycle_and_log_limits(self):
+        events = []
+        cancel = threading.Event()
+        # Exercise production framing/retention, not 3001 seconds of UI cadence.
+        with mock.patch.object(cancel, 'wait', return_value=False):
+            out, ports = self.run_case(cycles=3001, streaming=True, on_cycle=events.append, cancel_event=cancel)
+        self.assertTrue(out['ok'], out.get('error'))
+        self.assertEqual(out['completedCycles'], 3001)
+        self.assertEqual(len(out['samples']), 6002)
+        self.assertEqual(len(events), 3001)
+        self.assertEqual(out['samples'], [s for e in events for s in e['samples']])
+        self.assertGreater(len(__import__('json').dumps(out['transport']['rawLog']).encode()), 1024 * 1024)
+        self.assertEqual(ports[0].ecu_payloads.count('22F100'), 3001)
+        self.assertTrue(ports[0].closed)
+
+    def test_stop_between_cycles_retains_values_and_reports_cancelled_failure(self):
+        event = threading.Event()
+        def stop(_): event.set()
+        out, ports = self.run_case(cycles=3, streaming=True, on_cycle=stop, cancel_event=event)
+        self.assertFalse(out['ok'], out)
+        self.assertEqual(out['error'], 'cancelled')
+        self.assertEqual(out['completedCycles'], 1)
+        self.assertEqual(len(out['samples']), 2)
+        self.assertEqual(ports[0].ecu_payloads.count('22F100'), 1)
+        self.assertTrue(out['transport']['closed'])
+        self.assertEqual(out['transport']['closeErrors'], [])
+        self.assertTrue(ports[0].closed)
+
+    def test_ten_minute_deadline_stops_before_next_cycle_and_closes_transport(self):
+        actual_clock = time.monotonic
+        elapsed = [0]
+        events = []
+        def completed(value):
+            events.append(value)
+            elapsed[0] = 600
+        with mock.patch('scripts.diagnostics.manufacturer_transport.time.monotonic',
+                        side_effect=lambda: actual_clock() + elapsed[0]):
+            out, ports = self.run_case(cycles=None, streaming=True, on_cycle=completed)
+        self.assertTrue(out['ok'], out)
+        self.assertEqual(out['stopReason'], 'time-limit')
+        self.assertEqual(out['completedCycles'], 1)
+        self.assertEqual(ports[0].ecu_payloads.count('22F100'), 1)
+        self.assertEqual(out['samples'], events[0]['samples'])
+        self.assertTrue(out['transport']['closed'])
+        self.assertEqual(out['transport']['closeErrors'], [])
+        self.assertTrue(ports[0].closed)
+
+    def test_later_negative_response_retains_first_cycle_and_emits_failed_cycle(self):
+        events = []
+        def modify(port):
+            original = port.write
+            calls = 0
+            def write(data):
+                nonlocal calls
+                if data.startswith(b'03 22 F1 00'):
+                    calls += 1
+                    if calls == 2:
+                        port.ecu_map['22F100'] = ath1_prompt(isotp_ath1_lines(0x7E8, bytes.fromhex('7F2231')))
+                return original(data)
+            port.write = write
+        out, ports = self.run_case(modify, cycles=3, streaming=True, on_cycle=events.append)
+        self.assertFalse(out['ok'])
+        self.assertEqual(out['completedCycles'], 1)
+        self.assertEqual(len(out['samples']), 2)
+        self.assertEqual([e['ok'] for e in events], [True, False])
+        self.assertEqual(ports[0].ecu_payloads.count('22F100'), 2)
+        self.assertTrue(out['transport']['closed'])
 
     def test_live_denied_before_factory(self):
         p, groups, _ = fixtures()

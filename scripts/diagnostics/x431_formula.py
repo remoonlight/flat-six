@@ -9,6 +9,11 @@ _KV = re.compile(r"([A-Za-z][A-Za-z0-9]*)=(.*?)(?=,(?:[A-Za-z][A-Za-z0-9]*=)|;|$
 _HEX_LIT = r"0x-[0-9A-Fa-f]+|0x[0-9A-Fa-f]+|-?\d+|[0-9A-Fa-f]+"
 _MAP = re.compile(rf"\[({_HEX_LIT})\]->(0x[0-9A-Fa-f]+)")
 _RANGE = re.compile(rf"\[({_HEX_LIT}),({_HEX_LIT})\]->(0x[0-9A-Fa-f]+)")
+# Qualified direct ASCII words only. Hex-marked outputs still use GetIDText;
+# more elaborate text syntax remains unsupported rather than guessed.
+_LITERAL_MAP = re.compile(
+    rf"\[({_HEX_LIT})(?:,({_HEX_LIT}))?\]->([A-Za-z][A-Za-z0-9_./()+-]{{0,127}})$"
+)
 _HEX_NEG = re.compile(r"^0x-([0-9A-Fa-f]+)$", re.I)
 _HEX_POS = re.compile(r"^0x([0-9A-Fa-f]+)$", re.I)
 _DEC_INT = re.compile(r"^-?\d+$")
@@ -22,6 +27,16 @@ _MAX_DEC_DIGITS = 24
 _MAX_DEC_ADJ = 40
 _MAX_PREC = 18
 _TERMINATIONS = frozenset({"ZERO", "END-OF-PDU"})
+# Only these two complete retained formulas have an original ARM reference.
+# CALC GetTEXTTABLE@0x2c6f4 (5dca9047...) -> GetIDText@0x38a4c
+# (5506e785...) passes the complete target to bounded strtoul(base16),
+# which stops at the second x. Both bit values query 310007B4 (text "0").
+# The suffix is retained as evidence and never supplies a named edit option.
+_COMPOUND_FORMULAS = {
+    f"TEXTTABLE:DataType=A_UINT32,[0x00]->0x310007B4x{suffix};[0x01]->0x310007B4;"
+    "LengthInfo=Standard,BitLength=1,BitMask=0,HighLow=1;": f"0x310007B4x{suffix}"
+    for suffix in ("F0002A75", "8181003A")
+}
 
 
 def _num_token(tok: str) -> tuple[int | None, str]:
@@ -60,10 +75,14 @@ def _mask_token(tok: str) -> tuple[int | None, str]:
 
 
 def _map_token(tok: str) -> tuple[int | None, str]:
+    """Native TEXTTABLE / GetIc endpoints use base 16, including digit-only text."""
     s = tok.strip()
-    n, st = _num_token(s)
-    if st == "ok":
-        return n, st
+    negative = _HEX_NEG.fullmatch(s)
+    if negative:
+        return -int(negative.group(1), 16), "ok"
+    positive = _HEX_POS.fullmatch(s)
+    if positive:
+        return int(positive.group(1), 16), "ok"
     if _BARE_HEX.fullmatch(s):
         return int(s, 16), "ok"
     return None, "bad"
@@ -126,8 +145,12 @@ def parse_formula_text(text: str) -> dict:
     if kind not in _KNOWN_KINDS:
         return {"ok": False, "reason": f"kind_{kind}", "kind": kind}
     body = text.strip()[m.end() :]
+    compound_target = _COMPOUND_FORMULAS.get(text.strip())
+    if compound_target is not None:
+        body = body.replace(compound_target, "0x310007B4")
     fields: dict[str, str] = {}
     maps: list[tuple[int, int, str]] = []
+    literal_maps: list[tuple[int, int, str]] = []
     ic: list[tuple[int, int, str]] = []
     segments: list[dict] = []
     in_ic = False
@@ -151,6 +174,17 @@ def parse_formula_text(text: str) -> dict:
                 return {"ok": False, "reason": "malformed_formula", "kind": kind}
             dest.append((a, a, _tid(sm.group(2))))
         rest = _MAP.sub("", rest)
+        if kind == "TEXTTABLE" and not in_ic:
+            lm = _LITERAL_MAP.search(rest)
+            if lm and "0x" not in lm.group(3) and "0X" not in lm.group(3):
+                a, sa = _map_token(lm.group(1))
+                b, sb = _map_token(lm.group(2) or lm.group(1))
+                if sa != "ok" or sb != "ok" or a is None or b is None:
+                    return {"ok": False, "reason": "malformed_mapping", "kind": kind}
+                if a > b:
+                    return {"ok": False, "reason": "malformed_range_reversed", "kind": kind}
+                literal_maps.append((a, b, lm.group(3)))
+                rest = rest[:lm.start()]
         if kind in {"IDENTICAL", "COMPUCODE"}:
             if rest.startswith("Standar,"):
                 rest = rest[len("Standar,") :]
@@ -180,7 +214,9 @@ def parse_formula_text(text: str) -> dict:
                 if key in fields and fields[key] != val:
                     return {"ok": False, "reason": "duplicate_key", "kind": kind}
                 fields[key] = val
-    if _overlap_conflict(maps) or _overlap_conflict(ic):
+    targets = [(a, b, "id:" + value) for a, b, value in maps]
+    targets += [(a, b, "literal:" + value) for a, b, value in literal_maps]
+    if _overlap_conflict(targets) or _overlap_conflict(ic):
         return {"ok": False, "reason": "malformed_map_overlap", "kind": kind}
 
     def _req_int(key: str, default_absent):
@@ -199,7 +235,9 @@ def parse_formula_text(text: str) -> dict:
     bit_mask = 0
     if "BitMask" in fields:
         bit_mask, st_bm = _mask_token(fields["BitMask"])
-        if st_bm == "null":
+        # The pinned IDENTICAL / TEXTTABLE paths skip an empty mask. Other
+        # families retain their rejection until their empty-mask path is proven.
+        if st_bm == "null" or (st_bm == "empty" and kind in {"IDENTICAL", "TEXTTABLE"}):
             bit_mask = 0
         elif st_bm != "ok":
             return {"ok": False, "reason": "malformed_bitmask", "kind": kind}
@@ -300,7 +338,7 @@ def parse_formula_text(text: str) -> dict:
     if dt is not None and not re.fullmatch(r"A_[A-Z0-9]+", dt):
         return {"ok": False, "reason": "malformed_formula", "kind": kind}
 
-    signed_literals = any(a < 0 or b < 0 for a, b, _ in maps + ic)
+    signed_literals = any(a < 0 or b < 0 for a, b, _ in maps + literal_maps + ic)
     if lower is not None and lower < 0:
         signed_literals = True
     if upper is not None and upper < 0:
@@ -315,6 +353,13 @@ def parse_formula_text(text: str) -> dict:
         "kind": kind,
         "fields": fields,
         "maps": maps,
+        **({"compoundTextMapping": {
+            "sourceTarget": compound_target, "nativeTextId": "310007B4",
+            "ignoredSuffix": compound_target.split("x", 2)[2],
+            "behavior": "reviewed-native-integer-prefix",
+            "namedOptionsQualified": False,
+        }} if compound_target is not None else {}),
+        **({"literalMaps": literal_maps} if literal_maps else {}),
         "ic": ic,
         "xa": xa,
         "xb": xb,

@@ -1,6 +1,8 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { createHash } from "node:crypto";
+import { createCodingBackupStore } from "./coding-backup-store.mjs";
+import { createCodingOperationJournal, codingJournalHash } from "./coding-operation-journal.mjs";
 
 const hash = (value) => createHash("sha256").update(value).digest("hex");
 const hex = (value, max = 8192) => typeof value === "string" && value.length <= max && /^(?:[0-9A-F]{2})+$/.test(value);
@@ -65,7 +67,7 @@ export function codingRestorePlan(original, current) {
 /** Executable offline state machine. Dependencies are application-owned simulation
  * objects, never a renderer command, live adapter or imported write recipe. */
 export async function runCodingRehearsal(plan, dependencies) {
-  const stages = [], readbacks = []; let writeAttemptCount = 0, backupId = null;
+  const stages = [], readbacks = []; let writeAttemptCount = 0, backupId = null, operationId = null, operationState = null;
   if (dependencies.simulation !== true || plan.executionEnabled !== false || !Array.isArray(plan.blocks) || !plan.blocks.length || plan.blocks.length > 256
     || !plan.blocks.every((block) => hex(block.beforeHex) && hex(block.targetHex) && block.beforeHex.length === block.targetHex.length)) throw new Error("rehearsal-only");
   const keys = plan.blocks.map(codingBlockKey);
@@ -78,18 +80,39 @@ export async function runCodingRehearsal(plan, dependencies) {
     const current = normalizeCodingBackup(await dependencies.readCurrent());
     if (!same(current.identity, plan.identity) || current.profileId !== plan.profileId
       || !same(current.blocks.map((block) => [codingBlockKey(block), block.dataHex]), plan.blocks.map((block) => [codingBlockKey(block), block.beforeHex]))) throw new Error("pre-write-coding-changed");
+    stages.push("read-identity-after-complete-read");
+    const identityAfterRead = await dependencies.readIdentity();
+    if (!idFields.every((key) => identityAfterRead?.[key] === plan.identity?.[key])) throw new Error("pre-write-identity-mismatch");
     stages.push("persist-complete-current-backup");
     const persisted = await dependencies.persistBackup(current);
     if (!persisted?.id) throw new Error("pre-write-backup-failed");
     backupId = persisted.id;
+    if (dependencies.journal) {
+      stages.push("persist-operation-after-backup");
+      const operation = await dependencies.journal.begin({ mode: "simulation", ecu: plan.identity.ecu,
+        scopeKey: hash(JSON.stringify({ identity: plan.identity, profileId: plan.profileId })), backupId,
+        targets: plan.blocks.map(block => ({ key: codingBlockKey(block), changed: !!block.changed,
+          sha256: codingJournalHash(Buffer.from(block.targetHex, "hex")) })) });
+      operationId = operation.operationId; operationState = operation.phase;
+    }
     for (const block of plan.blocks) {
       if (!block.changed) continue;
       const key = codingBlockKey(block);
+      stages.push(`read-identity-before-write:${key}`);
+      const identityBeforeWrite = await dependencies.readIdentity();
+      if (!idFields.every((field) => identityBeforeWrite?.[field] === plan.identity?.[field])) throw new Error("pre-write-identity-mismatch");
+      const targetSha256 = codingJournalHash(Buffer.from(block.targetHex, "hex"));
+      if (operationId) {
+        stages.push(`persist-write-intent:${key}`);
+        operationState = (await dependencies.journal.append(operationId, "write-intent", { key, targetSha256 })).phase;
+      }
       stages.push(`write-once:${key}`); writeAttemptCount++;
       await dependencies.writeBlock(key, block.targetHex);
+      if (operationId) operationState = (await dependencies.journal.append(operationId, "write-returned", { key, targetSha256 })).phase;
       stages.push(`readback-immediate:${key}`);
       const read = await dependencies.readBlock(key);
       if (read !== block.targetHex) throw new Error("readback-mismatch");
+      if (operationId) operationState = (await dependencies.journal.append(operationId, "block-verified", { key, targetSha256 })).phase;
     }
     // Final full-scope reread also catches a later write altering an earlier block.
     for (const block of plan.blocks) {
@@ -98,33 +121,65 @@ export async function runCodingRehearsal(plan, dependencies) {
       readbacks.push({ ...blockLocator(block), dataHex: read });
       if (read !== block.targetHex) throw new Error("readback-mismatch");
     }
-    return { ok: true, simulation: true, liveVerified: false, stages, readbacks, backupId, writeAttemptCount, automaticWriteRetry: false };
+    stages.push("read-identity-after-complete-readback");
+    const finalIdentity = await dependencies.readIdentity();
+    if (!idFields.every(field => finalIdentity?.[field] === plan.identity?.[field])) throw new Error("post-write-identity-mismatch");
+    if (operationId) {
+      stages.push("persist-complete-readback-result");
+      const scopeTargetSha256 = hash(JSON.stringify(readbacks.map(block => ({ key: codingBlockKey(block),
+        sha256: codingJournalHash(Buffer.from(block.dataHex, "hex")) }))));
+      operationState = (await dependencies.journal.append(operationId, "completed", { scopeTargetSha256 })).phase;
+    }
+    return { ok: true, simulation: true, liveVerified: false, stages, readbacks, backupId, writeAttemptCount,
+      operationId, operationState, automaticWriteRetry: false };
   } catch (error) {
+    let journalError = null;
+    if (operationId) {
+      try {
+        const current = await dependencies.journal.inspect(operationId);
+        operationState = current.phase;
+        operationState = (await dependencies.journal.append(operationId, current.intended.length ? "outcome-unknown" : "failed-before-write",
+          { error: String(error.message || error).slice(0, 4000) || "operation-failed" })).phase;
+      } catch (failure) { journalError = String(failure.message || failure); }
+    }
     return { ok: false, error: String(error.message || error), simulation: true, liveVerified: false,
-      stages, readbacks, backupId, writeAttemptCount, automaticWriteRetry: false, recoveryRequired: writeAttemptCount > 0 };
+      stages, readbacks, backupId, writeAttemptCount, operationId, operationState, journalError,
+      automaticWriteRetry: false, recoveryRequired: writeAttemptCount > 0 || ["write-intent", "write-returned", "block-verified", "outcome-unknown"].includes(operationState) };
   }
 }
 
-export function firmwarePreparation(manifest, file, current, transport) {
+export function firmwarePreparation(manifest, file, current, transport, container = null) {
   if (!manifest || manifest.schemaVersion !== 1 || manifest.kind !== "oem-ecu-firmware-manifest"
     || manifest.origin !== "original" || !/^[a-f0-9]{64}$/.test(manifest.sha256) || !Number.isSafeInteger(manifest.bytes)
     || manifest.bytes <= 0 || !text(manifest.manufacturerSource) || !text(manifest.targetSoftware)
     || !manifest.identity || !idFields.every((key) => text(manifest.identity[key]))
     || !["981", "982"].includes(manifest.identity.generation) || !/^[A-HJ-NPR-Z0-9]{17}$/.test(manifest.identity.vin)) throw new Error("firmware-manifest-invalid");
   const blockers = [];
+  const selectedDeviceId = typeof transport?.selectedDeviceId === "string" ? transport.selectedDeviceId : "";
+  const selectedFamily = /^vnci:[0-9]{1,16}$/.test(selectedDeviceId) ? "VNCI"
+    : /^pt3g:[0-9]{1,16}$/.test(selectedDeviceId) ? "PT3G" : null;
+  const transportRequirement = { targetFamilies: ["VNCI", "PT3G"], selectedFamily,
+    targetFamilySelected: selectedFamily !== null,
+    connectedForDiagnostics: transport?.connected === true && transport?.commOk === true && transport?.purpose === "diagnostic",
+    connectionType: /^bt:[0-9A-F]{12}$/.test(selectedDeviceId) ? "bluetooth" : "unverified",
+    // Current connection status has no evidence of the physical link type.
+    // A module ID, registry label or supplied Boolean cannot prove a wired link.
+    wiredConnectionVerified: false };
   if (file.sha256 !== manifest.sha256 || file.bytes !== manifest.bytes) blockers.push("固件内容与清单哈希或长度不匹配");
   if (!current || !idFields.every((key) => current[key] === manifest.identity[key])) blockers.push("车辆、控制单元或当前硬件软件版本不匹配");
-  if (!transport?.connected || !transport.commOk || transport.purpose !== "diagnostic") blockers.push("尚未连接并核实诊断头");
-  if (!transport?.selectedDeviceId?.startsWith("vnci:")) blockers.push("需要已核实的有线诊断头；蓝牙及连接类型未知均不允许刷写");
+  if (!transportRequirement.connectedForDiagnostics) blockers.push("尚未连接并核实诊断头");
+  if (!transportRequirement.targetFamilySelected) blockers.push("原厂控制单元固件刷写目标诊断头为 VNCI 或 PT3G");
+  blockers.push("尚未核实本次实际有线连接；蓝牙及连接类型未知均不允许刷写");
+  if (!container?.complete) blockers.push(container?.recognized ? "固件容器的引用、载荷或格式尚未完整核对" : "固件文件格式尚未解析，不能建立容器准备结果");
   // A self-supplied manifest and matching hash do not prove manufacturer authenticity.
   blockers.push("需要核实原厂来源与文件适用规则", "需要本次车辆身份、电压及会话检查", "需要该文件已核实的刷写、校验和故障恢复定义", "需要实车验收");
   return { kind: "oem-ecu-firmware-preparation", file, targetSoftware: manifest.targetSoftware,
     manufacturerSource: manifest.manufacturerSource, identity: manifest.identity,
     hashMatches: file.sha256 === manifest.sha256 && file.bytes === manifest.bytes, origin: "original-declared",
-    executionEnabled: false, writePayload: null, blockers };
+    container, transportRequirement, executionEnabled: false, writePayload: null, blockers };
 }
 
-export function createDiagnosticPreparation({ directory, chooseOpenFile, saveFile, connectionStatus, previewField }) {
+export function createDiagnosticPreparation({ directory, chooseOpenFile, saveFile, connectionStatus, previewField, inspectFirmware }) {
   let firmware = null;
   let serial = Promise.resolve();
   const queued = (fn) => { const next = serial.then(fn, fn); serial = next.catch(() => {}); return next; };
@@ -133,46 +188,36 @@ export function createDiagnosticPreparation({ directory, chooseOpenFile, saveFil
     try { if ((await h.stat()).size > 4 * 1024 * 1024) throw new Error("preparation-file-too-large"); return JSON.parse(await h.readFile("utf8")); }
     finally { await h.close(); }
   }
-  async function load(id) {
-    if (!/^[a-f0-9]{64}$/.test(id || "")) throw new Error("backup-id-invalid");
-    const stored = await readJson(path.join(directory, `${id}.json`));
-    const backup = normalizeCodingBackup(stored.backup);
-    if (hash(JSON.stringify(backup)) !== stored.sha256 || stored.sha256 !== id
-      || hash(JSON.stringify({ identity: backup.identity, profileId: backup.profileId })) !== stored.identityKey) throw new Error("backup-integrity-failed");
-    return { ...stored, backup };
-  }
-  async function persist(backup) {
-    await fs.mkdir(directory, { recursive: true });
-    const sha256 = hash(JSON.stringify(backup)), identityKey = hash(JSON.stringify({ identity: backup.identity, profileId: backup.profileId }));
-    const stored = { backup, sha256, identityKey };
-    async function durableExclusive(file, content) {
-      const handle = await fs.open(file, "wx");
-      try { await handle.writeFile(content); await handle.sync(); } finally { await handle.close(); }
-    }
-    try { await durableExclusive(path.join(directory, `${sha256}.json`), JSON.stringify(stored)); }
-    catch (error) { if (error.code !== "EEXIST") throw error; await load(sha256); }
-    // First complete imported baseline is immutable; later imports only add snapshots.
-    try { await durableExclusive(path.join(directory, `baseline-${identityKey}.json`), JSON.stringify({ id: sha256 })); }
-    catch (error) { if (error.code !== "EEXIST") throw error; }
-    return { id: sha256, identityKey };
-  }
-  async function list(ecu) {
-    let files; try { files = await fs.readdir(directory); } catch (error) { if (error.code === "ENOENT") return []; throw error; }
-    const rows = [];
-    for (const name of files.filter((n) => /^[a-f0-9]{64}\.json$/.test(n))) {
-      const stored = await load(name.slice(0, -5));
-      if (ecu && stored.backup.identity.ecu !== ecu) continue;
-      const baseline = await readJson(path.join(directory, `baseline-${stored.identityKey}.json`));
-      rows.push({ id: name.slice(0, -5), identity: stored.backup.identity, profileId: stored.backup.profileId,
-        capturedUtc: stored.backup.capturedUtc, blockCount: stored.backup.blocks.length,
-        original: baseline.id === name.slice(0, -5), provenance: stored.backup.provenance, freshReadProven: false });
-    }
-    return rows.sort((a, b) => b.capturedUtc.localeCompare(a.capturedUtc));
-  }
+  const store = createCodingBackupStore({ directory, normalizeBackup: normalizeCodingBackup });
+  const journal = createCodingOperationJournal({ directory: path.join(directory, "operations") });
+  const { load, persist, list } = store;
   async function perform(req) {
     if (!req || typeof req !== "object" || Array.isArray(req) || Object.keys(req).some((k) =>
-      !["action", "ecu", "id", "did", "blockKey", "recordAt", "rawValue", "scenario"].includes(k))) throw new Error("preparation-request-invalid");
+      !["action", "ecu", "id", "did", "blockKey", "recordAt", "rawValue", "physicalValue", "scenario", "offset"].includes(k))) throw new Error("preparation-request-invalid");
+    if (Object.hasOwn(req, "offset") && req.action !== "operation-history") throw new Error("preparation-request-invalid");
+    if (Object.hasOwn(req, "physicalValue") && (!["coding-preview", "simulate-coding"].includes(req.action)
+      || Object.hasOwn(req, "rawValue") || typeof req.physicalValue !== "string" || !req.physicalValue.length
+      || req.physicalValue.length > 128)) throw new Error("numeric-target-invalid");
     if (req.ecu !== undefined && !text(req.ecu)) throw new Error("preparation-ecu-invalid");
+    if (req.action === "operation-history") {
+      if (!text(req.ecu) || Object.keys(req).some(k => !["action", "ecu", "offset"].includes(k))
+        || (req.offset !== undefined && (!Number.isSafeInteger(req.offset) || req.offset < 0))) throw new Error("preparation-history-request-invalid");
+      const offset = req.offset ?? 0;
+      const rows = (await journal.list()).filter(row => row.integrityError || row.metadata.ecu === req.ecu).map(row => row.integrityError
+        ? { operationId: row.operationId, scope: "unassigned", integrityError: row.integrityError,
+          requiresReconciliation: true, automaticWriteRetry: false, executionEnabled: false }
+        : { operationId: row.operationId, scope: "current-ecu", ecu: row.metadata.ecu, mode: row.metadata.mode,
+          phase: row.phase, backupId: row.metadata.backupId, createdUtc: row.createdUtc, updatedUtc: row.updatedUtc,
+          targetBlocks: row.metadata.targets.length, changedBlocks: row.metadata.targets.filter(t => t.changed).length,
+          intendedBlocks: row.intended.length, verifiedBlocks: row.verified.length,
+          requiresReconciliation: row.requiresReconciliation, automaticWriteRetry: false, executionEnabled: false });
+      rows.sort((a, b) => Number(b.requiresReconciliation) - Number(a.requiresReconciliation)
+        || (b.updatedUtc || "").localeCompare(a.updatedUtc || "") || a.operationId.localeCompare(b.operationId));
+      return { ok: true, operations: rows.slice(offset, offset + 40), history: { offset, limit: 40, total: rows.length,
+        currentEcuTotal: rows.filter(row => row.scope === "current-ecu").length,
+        unassignedTotal: rows.filter(row => row.scope === "unassigned").length,
+        requiresReconciliation: rows.filter(row => row.requiresReconciliation).length } };
+    }
     if (req.action === "list") return { ok: true, backups: await list(req.ecu) };
     if (req.action === "import-backup") {
       const file = await chooseOpenFile("backup"); if (!file) return { ok: true, canceled: true };
@@ -190,27 +235,31 @@ export function createDiagnosticPreparation({ directory, chooseOpenFile, saveFil
           || req.did !== undefined)) throw new Error("coding-field-invalid");
         const selectedKey = req.blockKey ?? (req.did !== undefined ? codingBlockKey({ did: req.did }) : null);
         const block = stored.backup.blocks.find((b) => codingBlockKey(b) === selectedKey);
-        if (!block || !Number.isInteger(req.recordAt) || req.recordAt < 0 || (req.action !== "coding-options" && !Number.isInteger(req.rawValue))) throw new Error("coding-field-invalid");
+        if (!block || !Number.isInteger(req.recordAt) || req.recordAt < 0 || (req.action !== "coding-options"
+          && !Number.isInteger(req.rawValue) && req.physicalValue === undefined)) throw new Error("coding-field-invalid");
         const result = await previewField({ action: req.action === "coding-options" ? "coding-options" : "preview", category: "coding",
           generation: stored.backup.identity.generation, profileId: stored.backup.profileId, recordAt: req.recordAt,
           dataHex: block.dataHex, expectedReadRequestHex: blockReadRequest(block),
-          ...(req.action !== "coding-options" ? { rawValue: req.rawValue } : {}) });
+          ...(req.action !== "coding-options" ? req.physicalValue !== undefined
+            ? { physicalValue: req.physicalValue } : { rawValue: req.rawValue } : {}) });
         if (req.action === "simulate-coding" && result.ok) {
           if (result.beforeHex !== block.dataHex || !hex(result.afterHex) || result.afterHex.length !== block.dataHex.length) throw new Error("coding-preview-invalid");
           const target = { ...stored.backup, blocks: stored.backup.blocks.map((item) => codingBlockKey(item) === selectedKey ? { ...item, dataHex: result.afterHex } : item) };
           const { originalHash, ...base } = codingRestorePlan(target, stored.backup);
           const plan = { ...base, kind: "current-ecu-coding-preview-plan", targetHash: originalHash };
-          return { ok: true, plan, result: await rehearse(plan, stored.backup, req.scenario) };
+          return { ...result, ...blockLocator(block), backupId: req.id, ok: true, plan,
+            result: await rehearse(plan, stored.backup, req.scenario), executionEnabled: false, writePayload: null };
         }
         return { ...result, ...blockLocator(block), backupId: req.id, executionEnabled: false, writePayload: null };
       }
-      const baseId = (await readJson(path.join(directory, `baseline-${stored.identityKey}.json`))).id;
-      const baseline = (await load(baseId)).backup;
-      const plan = codingRestorePlan(baseline, stored.backup);
+      const baseline = await store.baseline(stored.identityKey);
+      if (!baseline) throw new Error("backup-baseline-missing");
+      const plan = codingRestorePlan(baseline.backup, stored.backup);
       if (req.action === "simulate-restore") return { ok: true, plan, result: await rehearse(plan, stored.backup, req.scenario) };
       return { ok: true, plan };
     }
     if (req.action === "prepare-firmware") {
+      firmware = null;
       const mf = await chooseOpenFile("manifest"); if (!mf) return { ok: true, canceled: true };
       const manifest = await readJson(mf);
       firmwarePreparation(manifest, { sha256: manifest.sha256, bytes: manifest.bytes }, null, null);
@@ -224,7 +273,14 @@ export function createDiagnosticPreparation({ directory, chooseOpenFile, saveFil
       } finally { await handle.close(); }
       const current = req.id ? (await load(req.id)).backup.identity : null;
       if (manifest.identity?.ecu !== req.ecu || (current && current.ecu !== req.ecu)) throw new Error("firmware-current-ecu-mismatch");
-      firmware = firmwarePreparation(manifest, { name: path.basename(file), bytes, sha256: digest.digest("hex") }, current, connectionStatus());
+      const inspected = await inspectFirmware?.(file);
+      if (!inspected?.ok || !inspected.container) throw new Error(inspected?.error || "firmware-container-inspector-unavailable");
+      const selected = { name: path.basename(file), bytes, sha256: digest.digest("hex") };
+      if (inspected.container.kind !== "ecu-firmware-container-inspection" || inspected.container.schemaVersion !== 1
+        || inspected.container.file?.sha256 !== selected.sha256 || inspected.container.file?.bytes !== bytes
+        || inspected.container.file?.name !== selected.name || inspected.container.executionEnabled !== false
+        || inspected.container.writePayload !== null) throw new Error("firmware-container-file-changed");
+      firmware = firmwarePreparation(manifest, selected, current, connectionStatus(), inspected.container);
       return { ok: true, preparation: firmware };
     }
     if (req.action === "export-firmware") {
@@ -236,7 +292,7 @@ export function createDiagnosticPreparation({ directory, chooseOpenFile, saveFil
   async function rehearse(plan, current, scenario = "success") {
     if (!["success", "readback-mismatch", "disconnect", "identity-mismatch", "backup-failed"].includes(scenario)) throw new Error("simulation-scenario-invalid");
     const memory = new Map(current.blocks.map((block) => [codingBlockKey(block), block.dataHex]));
-    return runCodingRehearsal(plan, { simulation: true,
+    return runCodingRehearsal(plan, { simulation: true, journal,
       readIdentity: async () => scenario === "identity-mismatch" ? { ...current.identity, software: "mismatch-simulated" } : current.identity,
       readCurrent: async () => ({ ...current, capturedUtc: new Date().toISOString(), provenance: "simulation" }),
       persistBackup: async (backup) => { if (scenario === "backup-failed") throw new Error("pre-write-backup-failed"); return persist(backup); },

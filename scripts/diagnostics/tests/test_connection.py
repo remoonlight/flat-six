@@ -16,12 +16,16 @@ from scripts.diagnostics.connection import (
     probe_adapter,
     resolve_port,
     run_voltage_monitor,
+    usb_device_id,
+    open_selected_port,
     stdio_loop,
     valid_device_id,
     _wait_interval,
 )
+from scripts.diagnostics import BAUD
 from scripts.diagnostics.elm import ElmError, adapter_identity_ok
 from scripts.diagnostics.sessions import run_session
+from scripts.diagnostics.bench import VirtualElmPort
 from scripts.diagnostics.tests.test_diagnostics import FakePort, _ok_prompt
 
 HOST_SERIAL = {
@@ -100,7 +104,7 @@ class TestEnumerate(unittest.TestCase):
         self.assertEqual(classify_brand("OBDLink MX+", None), "OBDLink MX+")
         self.assertEqual(classify_brand("obdlink mx + (COM12)", None), "OBDLink MX+")
         for name in ("OBDLink MX", "OBDLink LX", "OBDLink CX", "OBDLink"):
-            self.assertEqual(classify_brand(name, None), "unresolved")
+            self.assertEqual(classify_brand(name, None), "OBDLink")
 
     def test_ambiguity_stays_rejected_after_duplicate_source_rows(self):
         other_port = {**HOST_SERIAL, "device": "COM10"}
@@ -188,9 +192,174 @@ class TestEnumerate(unittest.TestCase):
         self.assertEqual(out["devices"], [])
 
 
+class TestUsbIdentity(unittest.TestCase):
+    USB = {"device": "COM21", "name": "vLinker FS USB", "pnp": r"USB\VID_0403&PID_6001\SYNTHETIC01"}
+
+    def snap(self, rows=None, **kwargs):
+        return _snap(serial=rows if rows is not None else [self.USB], bluetooth=[], **kwargs)
+
+    def test_full_instance_identity_is_stable_and_never_a_port_or_vid_pid(self):
+        did = usb_device_id(self.USB['pnp'])
+        self.assertTrue(valid_device_id(did))
+        self.assertEqual(did, usb_device_id(self.USB['pnp'].lower()))
+        self.assertNotEqual(did, usb_device_id(self.USB['pnp'] + '2'))
+        for value in ('COM21', r'USB\VID_0403&PID_6001', r'BTHENUM\DEV_AABBCCDDEEFF',
+                r'USB\VID_0403&PID_6001\../../COM21', None):
+            self.assertIsNone(usb_device_id(value))
+
+    def test_refresh_only_enumerates_and_resolves_current_port(self):
+        with mock.patch('scripts.diagnostics.connection.open_selected_port', side_effect=AssertionError('must not open')):
+            out = enumerate_devices(self.snap(pyserial=[self.USB]))
+        rec, = out['devices']
+        self.assertFalse(out['openedPort'])
+        self.assertEqual(rec['transport'], 'usb-serial')
+        self.assertEqual(rec['identitySource'], ['pyserial', 'serial'])
+        self.assertFalse(rec['paired'])
+        self.assertEqual(resolve_port(rec['id'], self.snap()), 'COM21')
+        self.assertEqual(resolve_port(rec['id'], self.snap([{**self.USB, 'device': 'COM24'}])), 'COM24')
+
+    def test_reused_port_cannot_substitute_a_different_usb_device(self):
+        other = {**self.USB, 'pnp': self.USB['pnp'] + '2'}
+        with self.assertRaisesRegex(ElmError, 'device-identity-missing'):
+            resolve_port(usb_device_id(self.USB['pnp']), self.snap([other]))
+
+    def test_multiple_ports_for_same_instance_remain_ambiguous_after_duplicate_rows(self):
+        for rows in ([self.USB, {**self.USB, 'device': 'COM24'}],
+                [{**self.USB, 'device': 'COM24'}, self.USB]):
+            snap = self.snap(rows, pyserial=[self.USB])
+            rec, = enumerate_devices(snap)['devices']
+            self.assertFalse(rec['available'])
+            self.assertIsNone(rec['comPort'])
+            with self.assertRaisesRegex(ElmError, 'device-port-unavailable'):
+                resolve_port(rec['id'], snap)
+
+    def test_conflicting_usb_instances_block_known_adapter_even_if_other_model_unknown(self):
+        for name in ('vLinker FS USB', 'Unknown UART'):
+            other = {**self.USB, 'pnp': self.USB['pnp'] + '2', 'name': name}
+            recs = enumerate_devices(self.snap([self.USB, other]))['devices']
+            self.assertTrue(recs)
+            self.assertTrue(all(not rec['available'] and rec['comPort'] is None for rec in recs))
+
+    def test_usb_and_bluetooth_cannot_claim_the_same_port(self):
+        for name, count in (('vLinker FS USB', 2), ('Unknown UART', 2)):
+            snap = _snap(serial=[{**self.USB, 'name': name, 'device': 'COM9'}, HOST_SERIAL])
+            recs = enumerate_devices(snap)['devices']
+            self.assertEqual(len(recs), count)
+            self.assertTrue(all(not rec['available'] and rec['comPort'] is None for rec in recs))
+
+    def test_missing_instance_and_invalid_ports_are_not_candidates(self):
+        for row in ({**self.USB, 'pnp': r'USB\VID_0403&PID_6001'},
+                {**self.USB, 'device': 'COM0'}, {**self.USB, 'device': 'COM21;COM9'}):
+            self.assertEqual(enumerate_devices(self.snap([row]))['devices'], [])
+
+    def test_usb_monitor_opens_selected_current_port_once_and_releases_before_stopped(self):
+        did, port, opens = usb_device_id(self.USB['pnp']), VirtualElmPort(ecu_map={}), []
+        class Serial:
+            @staticmethod
+            def Serial(com, baud, **kwargs):
+                opens.append((com, baud)); return port
+        stdout = io.StringIO()
+        status = run_voltage_monitor(did, snapshot=self.snap(), serial_module=Serial,
+            stdout=stdout, stop_event=threading.Event(), max_samples=1)
+        events = [json.loads(line) for line in stdout.getvalue().splitlines()]
+        self.assertEqual(status, 0, events)
+        self.assertEqual([event['type'] for event in events], ['handshake', 'stopped'])
+        self.assertTrue(all(event['deviceId'] == did for event in events))
+        self.assertEqual(events[-1]['restoration'], {'errors': []})
+        self.assertEqual(opens, [('COM21', BAUD)])
+        self.assertTrue(port.closed)
+        self.assertEqual(port.writes, [b'ATI\r', b'ATDPN\r', b'ATRV\r', b'ATPC\r'])
+
+    def test_session_port_opener_uses_same_usb_identity_resolution(self):
+        from scripts.diagnostics.sessions import _open_live_port
+        serial = mock.Mock()
+        port = _open_live_port(serial_module=serial, device_id=usb_device_id(self.USB['pnp']), discovery=self.snap())
+        self.assertIs(port, serial.Serial.return_value)
+        self.assertEqual(serial.Serial.call_args.args[0], 'COM21')
+        serial.Serial.assert_called_once()
+
+
+class TestElmFamilies(unittest.TestCase):
+    # Reuse the explicit OS fixture helpers, not physical enumeration.
+    USB = TestUsbIdentity.USB
+    snap = TestUsbIdentity.snap
+    def test_family_defaults_are_used_by_monitor_and_session_port_open(self):
+        from scripts.diagnostics.sessions import _open_live_port
+        for model, baud, ati in (('ELM327', 38400, 'ELM327 v1.5'),
+                ('OBDKey', 9600, 'OBDKey 1.40'), ('OBDLink', 115200, 'STN1170 v4.0')):
+            with self.subTest(model=model):
+                row = {**self.USB, 'name': model + ' USB'}
+                port = VirtualElmPort(ecu_map={}, identity=ati)
+                serial = mock.Mock(); serial.Serial.return_value = port
+                sink = io.StringIO()
+                status = run_voltage_monitor(usb_device_id(row['pnp']), adapter_model=model,
+                    snapshot=self.snap([row]), serial_module=serial, stdout=sink,
+                    stop_event=threading.Event(), max_samples=1)
+                self.assertEqual(status, 0, sink.getvalue())
+                self.assertEqual(serial.Serial.call_args.args, ('COM21', baud))
+                self.assertEqual(port.writes, [b'ATI\r', b'ATDPN\r', b'ATRV\r', b'ATPC\r'])
+                serial.reset_mock()
+                _open_live_port(serial_module=serial, device_id=usb_device_id(row['pnp']),
+                    discovery=self.snap([row]), adapter_model=model)
+                self.assertEqual(serial.Serial.call_args.args, ('COM21', baud))
+
+    def test_generic_usb_requires_explicit_model_before_opening(self):
+        row = {**self.USB, 'name': 'USB Serial Port'}
+        snap, serial = self.snap([row]), mock.Mock()
+        rec, = enumerate_devices(snap)['devices']
+        self.assertEqual(rec['brand'], 'unresolved')
+        with self.assertRaisesRegex(ElmError, 'device-model-required'):
+            open_selected_port(rec['id'], snapshot=snap, serial_module=serial)
+        serial.Serial.assert_not_called()
+        open_selected_port(rec['id'], snapshot=snap, serial_module=serial, adapter_model='OBDKey')
+        self.assertEqual(serial.Serial.call_args.args, ('COM21', 9600))
+
+    def test_new_family_and_unknown_usb_never_gain_clear_permission(self):
+        for name, model in (('ELM327', None), ('OBDKey', 'OBDKey'), ('OBDLink SX', None), ('USB Serial Port', 'vLinker')):
+            row = {**self.USB, 'name': name}; serial = mock.Mock()
+            with self.assertRaisesRegex(ElmError, 'adapter-clear-not-qualified'):
+                open_selected_port(usb_device_id(row['pnp']), snapshot=self.snap([row]), serial_module=serial,
+                    adapter_model=model, require_clear_qualified=True)
+            serial.Serial.assert_not_called()
+
+    def test_known_model_cannot_be_overridden_before_port_open(self):
+        serial = mock.Mock()
+        with self.assertRaisesRegex(ElmError, 'adapter-model-mismatch'):
+            open_selected_port(usb_device_id(self.USB['pnp']), snapshot=self.snap(), serial_module=serial, adapter_model='OBDKey')
+        serial.Serial.assert_not_called()
+
+    def test_full_ftdi_instance_is_supported_without_using_com_as_identity(self):
+        instance = r'FTDIBUS\VID_0403+PID_6001+SYNTHETIC01A\0000'
+        did = usb_device_id(instance)
+        self.assertTrue(valid_device_id(did))
+        self.assertEqual(did, usb_device_id(instance.lower()))
+        rec, = enumerate_devices(self.snap([{**self.USB, 'pnp': instance, 'name': 'OBDLink SX'}]))['devices']
+        self.assertEqual(rec['id'], did); self.assertEqual(rec['brand'], 'OBDLink')
+
+    def test_selected_family_is_checked_against_actual_ati_before_any_can_request(self):
+        for model, ati in (('OBDKey', 'ELM327 v2.3'), ('OBDLink', 'OBDKey 1.4')):
+            port = VirtualElmPort(ecu_map={}, identity=ati); sink = io.StringIO()
+            self.assertEqual(run_voltage_monitor(VLIKER, port=port, adapter_model=model, stdout=sink,
+                stop_event=threading.Event(), max_samples=1), 1)
+            events = [json.loads(line) for line in sink.getvalue().splitlines()]
+            self.assertEqual(events[0]['error'], 'adapter-model-mismatch')
+            self.assertNotIn('handshake', [event['type'] for event in events])
+            self.assertEqual(port.ecu_payloads, [])
+
+    def test_ati_cannot_borrow_identity_from_voltage_or_protocol_response(self):
+        port = FakePort([b'UNKNOWN\r>', b'ELM327\r>', b'12.0V\r>', b'OK\r>'])
+        out = probe_adapter(VLIKER, port=port)
+        self.assertFalse(out['ok']); self.assertEqual(out['error'], 'adapter-identity-mismatch')
+        self.assertEqual(port.writes, [b'ATI\r', b'ATDPN\r', b'ATRV\r', b'ATPC\r'])
+
+    def test_native_debug_usb_does_not_appear_as_unknown_obd_candidate(self):
+        row = {**self.USB, 'pnp': r'USB\VID_303A&PID_1001\SYNTHETIC01', 'name': 'USB Serial Device'}
+        self.assertEqual(enumerate_devices(self.snap([row]))['devices'], [])
+
+
 class TestProbeAndSession(unittest.TestCase):
     def test_atrv_probe_no_ecu(self):
-        port = FakePort([_ok_prompt("ATRV\r13.1V\r\r")])
+        port = FakePort([_ok_prompt("ATRV\r13.1V\r\r"), _ok_prompt("OK\r")])
         out = probe_adapter(VLIKER, kind="voltage", port=port)
         self.assertTrue(out["ok"], out)
         self.assertEqual(out["volts"], 13.1)
@@ -198,6 +367,33 @@ class TestProbeAndSession(unittest.TestCase):
         self.assertFalse(out["simulation"])
         self.assertTrue(any(w == b"ATRV\r" for w in port.writes))
         self.assertFalse(any(b"14FF" in w or b"10 89" in w for w in port.writes))
+
+    def test_probe_never_reports_success_when_protocol_or_port_release_fails(self):
+        for protocol, close in ((True, False), (False, True), (True, True)):
+            with self.subTest(protocol=protocol, close=close):
+                class Port(VirtualElmPort):
+                    closes = 0
+                    def close(self):
+                        self.closes += 1
+                        super().close()
+                        if close:
+                            raise OSError('SYNTHETIC close failure')
+                port = Port(ecu_map={}, atpc_body=b'?\r>' if protocol else b'OK\r>')
+                out = probe_adapter(VLIKER, kind='voltage', port=port)
+                self.assertFalse(out['ok'])
+                self.assertEqual(out['error'], 'elm-cleanup-failed')
+                self.assertIsNone(out['operationError'])
+                self.assertEqual(len(out['restoration']['errors']), int(protocol) + int(close))
+                self.assertEqual(port.closes, 1)
+                self.assertEqual(port.writes, [b'ATRV\r', b'ATPC\r'])
+
+    def test_probe_retains_operation_failure_and_cleanup_failure(self):
+        port = FakePort([b'invalid\r>', b'?\r>'])
+        out = probe_adapter(VLIKER, kind='voltage', port=port)
+        self.assertFalse(out['ok'])
+        self.assertEqual(out['operationError'], 'atrv-unparsed')
+        self.assertEqual(out['error'], 'elm-cleanup-failed')
+        self.assertTrue(out['restoration']['errors'])
 
     def test_simulation_does_not_open(self):
         with mock.patch("scripts.diagnostics.sessions._open_live_port", side_effect=AssertionError("hw")):
@@ -298,6 +494,51 @@ class FakeClock:
 
 
 class TestVoltageMonitor(unittest.TestCase):
+    def test_stopped_is_emitted_only_after_confirmed_serial_close(self):
+        stdout = io.StringIO()
+        port = RepeatAtrvPort()
+        original = port.close
+        def close():
+            self.assertNotIn('"type": "stopped"', stdout.getvalue())
+            original()
+        port.close = close
+        rc = run_voltage_monitor(VLIKER, port=port, stdout=stdout, max_samples=1)
+        self.assertEqual(rc, 0)
+        final = json.loads(stdout.getvalue().splitlines()[-1])
+        self.assertEqual(final['type'], 'stopped')
+        self.assertEqual(final['restoration']['errors'], [])
+        self.assertEqual(final['deviceId'], VLIKER)
+
+    def test_serial_and_protocol_release_failures_exit_nonzero_without_stopped(self):
+        for failure in ('serial', 'protocol', 'both'):
+            with self.subTest(failure=failure):
+                class Port(RepeatAtrvPort):
+                    def write(inner, data):
+                        if failure in ('protocol', 'both') and data.strip() == b'ATPC':
+                            inner.writes.append(data); inner._rx.extend(b'ERROR\r\r>')
+                            return len(data)
+                        return super().write(data)
+                    def close(inner):
+                        if failure in ('serial', 'both'):
+                            raise OSError('SYNTHETIC close failed')
+                        super().close()
+                stdout = io.StringIO()
+                rc = run_voltage_monitor(VLIKER, port=Port(), stdout=stdout, max_samples=1)
+                rows = [json.loads(line) for line in stdout.getvalue().splitlines()]
+                self.assertEqual(rc, 1)
+                self.assertFalse(any(row['type'] == 'stopped' for row in rows))
+                self.assertEqual(rows[-1]['error'], 'elm-cleanup-failed')
+                self.assertEqual(len(rows[-1]['restoration']['errors']), 2 if failure == 'both' else 1)
+
+    def test_operation_failure_and_successful_release_remain_distinct(self):
+        stdout = io.StringIO()
+        rc = run_voltage_monitor(VLIKER, port=RepeatAtrvPort('UNKNOWN'), stdout=stdout, max_samples=1)
+        rows = [json.loads(line) for line in stdout.getvalue().splitlines()]
+        self.assertEqual(rc, 1)
+        self.assertEqual(rows[0]['error'], 'adapter-identity-mismatch')
+        self.assertEqual(rows[-1]['type'], 'stopped')
+        self.assertEqual(rows[-1]['restoration']['errors'], [])
+
     def test_unknown_voltage_keeps_independently_verified_link(self):
         class UnknownVoltage(RepeatAtrvPort):
             def write(inner, data):

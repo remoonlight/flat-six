@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { api } from "../api";
 import type { ArchiveEvidence, MenuEntry } from "../coding-workspace";
+import { obdFunctionLabel } from "../obd/function-label";
 
 export function CodingMenuDetail({ entry, archive }: { entry: MenuEntry; archive?: ArchiveEvidence }) {
   const [family, setFamily] = useState(entry.evidence[0].generation);
@@ -24,10 +25,10 @@ export function CodingMenuDetail({ entry, archive }: { entry: MenuEntry; archive
   }
   return <section className="panel coding-detail" data-testid="coding-menu-detail">
     <p className="muted">{entry.system} · X431 原始菜单</p>
-    <h3>{entry.subFunction ?? entry.function}</h3>
+    <h3>{obdFunctionLabel(entry.subFunction ?? entry.function, false)}</h3>
     <p>{entry.evidence.map((e) => e.generation).join(" / ")} · 来源菜单证据，年款、参数和具体 ECU 适用性待核实。</p>
     <p>此条目仅保留菜单入口。尚无经核实的执行步骤、参数或写入流程。</p>
-    <button type="button" disabled>实车执行待验证</button>
+    <button type="button" disabled>{obdFunctionLabel("执行当前功能", false)}</button>
     <details><summary>来源与年款标签</summary>{entry.evidence.map((e) => <div key={e.generation}>
       <p>{e.generation} · 原始年款标签：{e.years.join("、")}（未核实）</p><code>{e.source}</code>
       <p>来源行号：{e.rowIds.join("、")}</p>

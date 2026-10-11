@@ -944,7 +944,7 @@ class TestStdio(unittest.TestCase):
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            cwd=str(Path(__file__).resolve().parents[3]),
+            cwd=str(Path(run_session.__code__.co_filename).resolve().parents[2]),
         )
         chunks: list[bytes] = []
         err_chunks: list[bytes] = []
@@ -1017,7 +1017,8 @@ class TestDesktopReadLifecycle(unittest.TestCase):
     def test_reopen_same_head_requalifies_before_retrying_unfinished_read(self):
         first = self.breaking_port()
         recovered = SessionSimPort(self.PROFILE)
-        out, opener = self.live([first, recovered])
+        events = []
+        out, opener = self.live([first, recovered], progress_sink=events.append)
         self.assertTrue(out["ok"], out)
         self.assertEqual(opener.call_count, 2)
         self.assertTrue(first.closed and recovered.closed)
@@ -1026,6 +1027,10 @@ class TestDesktopReadLifecycle(unittest.TestCase):
         self.assertEqual(recovered.ecu_payloads[0], "1089")
         self.assertEqual(recovered.ecu_payloads[-1], "1800FF00")
         self.assertGreater(len(recovered.ecu_payloads), 2)
+        pdus = [e for e in events if e["type"] == "diagnostic-pdu"]
+        self.assertEqual([e["pdu"]["requestHex"] for e in pdus], first.ecu_payloads + recovered.ecu_payloads)
+        self.assertEqual(len({e["runId"] for e in pdus}), 1)
+        self.assertTrue(all(e["simulation"] is False for e in pdus))  # injected live lifecycle only
         self.assertEqual(recovered.clear_tx_count, 0)
         self.assertTrue(all(call.kwargs["device_id"] == "bt:0425E85BD4CB" for call in opener.call_args_list))
 
@@ -1094,3 +1099,32 @@ class TestRawCanStreaming(unittest.TestCase):
         self.assertEqual(frames[0]["canId"], 0x7E8)
         self.assertEqual(frames[0]["timestampSource"], "host-chunk-arrival")
         self.assertGreater(frames[0]["timestampUs"], 0)
+
+
+class TestNewElmFamilyReadOnlyBoundary(unittest.TestCase):
+    def test_new_families_read_named_profile_with_fresh_identity_and_close(self):
+        for model, ati in (('ELM327', b'ELM327 v1.5\r>'), ('OBDKey', b'OBDKey 1.4\r>'), ('OBDLink', b'STN1170 v4.0\r>')):
+            port = SessionSimPort('porsche-981-2014-dme')
+            original = port.write
+            def write(data):
+                result = original(data)
+                if data == b'ATI\r':
+                    port._rx[:] = ati
+                return result
+            port.write = write
+            with tempfile.TemporaryDirectory() as directory:
+                out = run_session(profile_id='porsche-981-2014-dme', mode='live', adapter_model=model,
+                    port=port, confirmed_read_only=True, x431_inactive=True, artifact_root=Path(directory))
+            self.assertTrue(out['ok'], out.get('error'))
+            self.assertTrue(port.closed)
+            self.assertEqual(port.clear_tx_count, 0)
+
+    def test_new_families_cannot_clear_even_with_confirmation_and_injected_link(self):
+        for model in ('ELM327', 'OBDKey', 'OBDLink'):
+            port = SessionSimPort('porsche-981-2014-dme')
+            with tempfile.TemporaryDirectory() as directory:
+                out = run_session(profile_id='porsche-981-2014-dme', mode='live', session_task='clear',
+                    adapter_model=model, port=port, confirmed_clear_dtc=True, x431_inactive=True,
+                    artifact_root=Path(directory))
+            self.assertEqual(out['error'], 'adapter-clear-not-qualified')
+            self.assertEqual(port.writes, [])

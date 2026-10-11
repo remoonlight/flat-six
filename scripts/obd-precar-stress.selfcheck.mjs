@@ -35,12 +35,18 @@ for (let offset = 0; offset < total; offset += 500) {
   }
 }
 writer.finish("injected-test-completed");
-const view = batch.view(), exported = batch.export();
-assert.equal(view.frameCount, total); assert.equal(exported.frames.length, 25000);
-assert.equal(view.latest.length, 256); assert.equal(view.batchClosed, true);
-assert.equal(exported.frames[0].timestampUs, 1000000);
-assert.equal(exported.frames.at(-1).timestampUs, 1024999);
-assert.equal(writer.count, total, "file recording continues after in-memory batch closes");
+const view = batch.view(), exported = batch.export({ stream: true });
+assert.equal(view.frameCount, total); assert.equal(exported.retainedFrames, total);
+assert.equal(view.latest.length, 256); assert.equal(view.batchClosed, false);
+assert.equal(view.retainedBytes, total * 21);
+assert.ok(view.allocatedBytes - view.retainedBytes < 4096 * 21);
+let decoded = 0;
+for (const frame of exported.frames) {
+  assert.deepEqual(frame, { canId: decoded % 512, extended: false, dataHex: "0102030405060708",
+    timestampUs: 1000000 + decoded, timestampSource: "host-chunk-arrival" }); decoded++;
+}
+assert.equal(decoded, total, "every packed frame decodes in original order");
+assert.equal(writer.count, total, "explicit PCAP and volatile result both retain every received frame");
 assert.equal(exported.physicalSilenceVerified, false);
 // Verify each block from disk, including total packet count and bounded size.
 const fileBytes = fs.statSync(file).size; let packets = 0;
@@ -60,12 +66,13 @@ try {
 }
 assert.equal(packets, total);
 const heapGrowthBytes = Math.max(...heapSamples.map((s) => s.heapBytes)) - heapSamples[0].heapBytes;
-if (global.gc) assert.ok(heapGrowthBytes < 8 * 1024 * 1024, "retained heap must stabilize after the first complete batch");
+if (global.gc) assert.ok(heapGrowthBytes < 8 * 1024 * 1024, "frame payloads live in packed buffers rather than growing the object heap");
 const result = { ok: true, simulation: true, noDeviceIO: true, framesReceived: total,
-  retained: exported.frames.length, latest: view.latest.length, pcapFrames: packets,
+  retained: exported.retainedFrames, retainedBytes: view.retainedBytes, allocatedBytes: view.allocatedBytes,
+  latest: view.latest.length, pcapFrames: packets,
   pcapBytes: fileBytes, elapsedMs: performance.now() - started, durationMs,
   heapSamples, forcedGcForMeasurement: !!global.gc, heapGrowthBytes,
-  tested: ["batch-bound", "latest-bound", "earliest-samples-preserved", "recording-continues", "packet-block-integrity"],
+  tested: ["all-frames-preserved", "packed-memory", "latest-bound", "explicit-recording-complete", "packet-block-integrity"],
   untested: [...(durationMs < 8 * 3600000 ? ["overnight-endurance"] : []), "physical-silence", "host-sleep", "driver-release", "vehicle-load"] };
 fs.writeFileSync(path.join(output, "result.json"), JSON.stringify(result, null, 2));
 console.log(JSON.stringify(result));

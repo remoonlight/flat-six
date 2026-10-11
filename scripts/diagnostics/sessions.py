@@ -42,6 +42,7 @@ ALLOWED_KEYS = frozenset(
         "intervalMs",
         "selectedPids",
         "deviceId",
+        "adapterModel",
     }
 )
 RUN_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{7,63}$")
@@ -548,7 +549,7 @@ def _utc() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def _open_live_port(serial_module=None, list_ports=None, *, device_id=None, discovery=None):
+def _open_live_port(serial_module=None, list_ports=None, *, device_id=None, discovery=None, adapter_model=None, require_clear_qualified=False):
     from .connection import KNOWN_VLIKER, open_selected_port, pyserial_rows
 
     if not device_id:
@@ -557,7 +558,8 @@ def _open_live_port(serial_module=None, list_ports=None, *, device_id=None, disc
     if snapshot is None and list_ports is not None:
         rows, _err = pyserial_rows(list_ports)
         snapshot = {"platform": "win32", "serial": [], "bluetooth": [], "pyserial": rows, "errors": []}
-    port, _com = open_selected_port(device_id, serial_module=serial_module, snapshot=snapshot)
+    port, _com = open_selected_port(device_id, serial_module=serial_module, snapshot=snapshot,
+        adapter_model=adapter_model, require_clear_qualified=require_clear_qualified)
     return port
 
 
@@ -611,6 +613,7 @@ def run_session(
     serial_module=None,
     list_ports=None,
     device_id=None,
+    adapter_model=None,
     discovery=None,
     retain_artifacts: bool = True,
 ) -> dict:
@@ -830,6 +833,13 @@ def run_session(
                 except Exception as ce:  # noqa: BLE001
                     restoration["errors"] = [str(ce)]
             result["restoration"] = restoration
+            if restoration["errors"]:
+                result["ok"] = False
+                if status == "completed":
+                    status = "failed"
+                    error = error or "cleanup-failed"
+                result["status"] = status
+                result["error"] = error
             try:
                 persist()
             except Exception as pe:  # noqa: BLE001
@@ -859,8 +869,12 @@ def run_session(
     dest = root / run_id
     result["artifactDir"] = None
 
+    pdu_sink = (lambda pdu: _emit(progress_sink, {"type": "diagnostic-pdu", "runId": run_id,
+        "profileId": profile_id, "simulation": simulation, "pdu": pdu})) if progress_sink else None
     vnci_live = mode == "live" and isinstance(device_id, str) and device_id.startswith("vnci:")
     try:
+        if mode == 'live' and session_task == 'clear' and adapter_model in ('ELM327', 'OBDKey', 'OBDLink'):
+            raise ElmError('adapter-clear-not-qualified')
         if retain_artifacts:
             dest.mkdir(parents=True, exist_ok=True)
             result["artifactDir"] = str(dest)
@@ -870,12 +884,10 @@ def run_session(
         if vnci_live:
             if session_task == "clear":
                 raise ElmError("vnci-clear-not-validated")
-            if session_task == "engine":
-                raise ElmError("vnci-engine-route-not-validated")
             if port is not None:
                 raise ElmError("vnci-serial-injection-forbidden")
             from .vnci import DpuClient
-            client = DpuClient(device_id, cancel_event=cancel)
+            client = DpuClient(device_id, cancel_event=cancel, pdu_sink=pdu_sink)
         elif port is None:
             if simulation:
                 port = SessionSimPort(profile_id, scenario)
@@ -885,9 +897,11 @@ def run_session(
                     list_ports,
                     device_id=device_id,
                     discovery=discovery,
+                    adapter_model=adapter_model,
+                    require_clear_qualified=session_task == 'clear',
                 )
         if client is None:
-            client = ElmClient(port, timeout_s=min(8.0, budget_s), cancel_event=cancel,
+            client = ElmClient(port, timeout_s=min(8.0, budget_s), cancel_event=cancel, pdu_sink=pdu_sink, expected_model=adapter_model,
                 frame_sink=(lambda frame: _emit(progress_sink, {"type": "can-frame", "runId": run_id, "profileId": profile_id,
                     "simulation": simulation, "frame": frame})) if progress_sink else None)
         end = time.monotonic() + budget_s
@@ -953,8 +967,8 @@ def run_session(
                     entry = {"attempt": attempt, "ok": False}
                     episode["attempts"].append(entry)
                     try:
-                        port = _open_live_port(serial_module, list_ports, device_id=device_id, discovery=None)
-                        client = ElmClient(port, timeout_s=min(8.0, budget_s), cancel_event=cancel,
+                        port = _open_live_port(serial_module, list_ports, device_id=device_id, discovery=None, adapter_model=adapter_model)
+                        client = ElmClient(port, timeout_s=min(8.0, budget_s), cancel_event=cancel, pdu_sink=pdu_sink, expected_model=adapter_model,
                             frame_sink=(lambda frame: _emit(progress_sink, {"type": "can-frame", "runId": run_id, "profileId": profile_id,
                                 "simulation": simulation, "frame": frame})) if progress_sink else None)
                         client.raw_log.extend(prior_raw)
@@ -1098,7 +1112,8 @@ def run_session(
             # 01 is a separate, fixed functional route: the old 1089/7E0 route
             # returned 7F0111 on this car. Never retry or guess another session.
             stage_guard()
-            client.send_at("ATPC", end, require_ok=True)
+            if not vnci_live:
+                client.send_at("ATPC", end, require_ok=True)
             client.configure_standard_engine(end)
             engine_state["acquisitionRoute"] = plan["engine"]["acquisitionRoute"]
             persist()
@@ -1570,6 +1585,10 @@ def _parse_request(raw: str) -> dict:
 
         if obj["deviceId"] is not None and not valid_device_id(obj["deviceId"]):
             raise SessionError("deviceId-invalid")
+    if 'adapterModel' in obj:
+        from .connection import ELM_MODELS
+        if not isinstance(obj['adapterModel'], str) or obj['adapterModel'] not in ELM_MODELS | {'VNCI', 'PT3G'}:
+            raise SessionError('adapterModel-invalid')
     return obj
 
 
@@ -1682,6 +1701,7 @@ def stdio_loop(stdin=None, stdout=None, *, artifact_root: Path | None = None) ->
             progress_sink=sink,
             artifact_root=artifact_root,
             device_id=req.get("deviceId"),
+            adapter_model=req.get('adapterModel'),
             retain_artifacts=req.get("sessionTask") == "clear" or os.environ.get("PORSCHE981_SESSION_TRANSIENT") != "1",
         )
         _print_ndjson(out, outf)

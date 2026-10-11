@@ -78,6 +78,8 @@ def decode_payload(payload_hex: str, spec: dict) -> dict:
     if kind == "kwp-dtc-18":
         if len(payload) < 2:
             return _fail(kind, "truncated-dtc", rawHex=payload.hex().upper(), records=[])
+        if payload[0] != 0x58:
+            return _fail(kind, "positive-prefix-mismatch", rawHex=payload.hex().upper(), records=[])
         count = payload[1]
         need = 2 + count * 3
         if len(payload) != need:
@@ -105,6 +107,8 @@ def decode_payload(payload_hex: str, spec: dict) -> dict:
     if kind == "uds-dtc-19-02":
         if len(payload) < 3:
             return _fail(kind, "truncated-dtc", rawHex=payload.hex().upper(), records=[])
+        if payload[:2] != b'\x59\x02':
+            return _fail(kind, "positive-prefix-mismatch", rawHex=payload.hex().upper(), records=[])
         avail = f"{payload[2]:02X}"
         body = payload[3:]
         if len(body) % 4 != 0:

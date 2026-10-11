@@ -404,6 +404,62 @@ export type ObdLiveSnapshot = {
   vehicleCommunicating: boolean;
 };
 
+export type CodingCaptureRequest = { clientId: string } & (
+  { action: "open" | "cancel" | "discard" | "clear" }
+  | { action: "analyze"; captureId: string; generation: "981" | "982"; profileId: string; runId: string }
+  | { action: "page"; analysisId: string; cursor: number; stream?: "responses" | "values" | "faults" | "blocks" }
+  | { action: "save"; analysisId: string });
+export type CodingSourceCaptureRequest = Exclude<CodingCaptureRequest, { action: "analyze" }>
+  | { action: "units"; clientId: string; generation: "981" | "982"; sourceCatalogId: string; systemId: string }
+  | { action: "scope"; clientId: string; generation: "981" | "982"; profileId: string; sourceCatalogId: string; ecuId: number }
+  | { action: "analyze"; clientId: string; captureId: string; generation: "981" | "982"; profileId: string; runId: string; sourceCatalogId: string; ecuId: number; captureTargetProfileId: string };
+export type DtcCaptureRequest = Exclude<CodingCaptureRequest, { action: "analyze" }>
+  | { action: "scope"; clientId: string; generation: "981" | "982"; profileId: string; sourceCatalogId: string; ecuId: number }
+  | { action: "analyze"; clientId: string; captureId: string; generation: "981" | "982"; profileId: string; runId: string; sourceCatalogId: string; ecuId: number; linkIndex: number; captureTargetProfileId: string };
+export type IdentityCaptureRequest = Exclude<CodingCaptureRequest, { action: "analyze" }>
+  | { action: "scope"; clientId: string; generation: "981" | "982"; sourceCatalogId: string; ecuId: number }
+  | { action: "analyze"; clientId: string; captureId: string; generation: "981" | "982"; runId: string; sourceCatalogId: string; ecuId: number; captureTargetProfileId: string };
+export type CodingCaptureResult = {
+  ok: boolean; error?: string; canceled?: boolean; saved?: boolean; filePath?: string; fileName?: string;
+  captureId?: string; analysisId?: string; nextCursor?: number | null;
+  captureTargets?: { targetProfileId: string; association: string }[];
+  unit?: { ecuId: number; variants: { profileId: string; name: string }[] } | null; plan?: unknown;
+  links?: { linkIndex: number; requests: string[]; missing: { reason: string }[] }[];
+  sessions?: { targetProfileId: string; runId: string; synthetic: boolean; packets: number }[];
+  capture?: { packets: number; prefixComplete: boolean; error: string | null; packetErrors: number; sha256: string };
+  report?: { profileId?: string; runId: string; definitionFieldCount: number; requestGroupCount: number;
+    blockSet?: { captureIntegrityComplete: boolean; reports: { source: "observed" | "synthetic"; counts: Record<string, number>; consistentReadSetAvailable: boolean }[] };
+    versionRuleComparison?: { routeCount: number; reports: {
+      routeIndexOffset: number; definitionOffset: number; source: "observed" | "synthetic";
+      sourceVariantCount: number; calculationComplete: boolean;
+      missingRequests: string[]; conflictingRequests: string[]; failedRequests: string[];
+      status: string; error: string | null;
+      matchingCandidates: { variant: string; matchingRules: { allFieldsCompared: boolean }[] }[];
+    }[] };
+    missingReadRequests: string[]; definitionMissing: { reason: string; sourceOffset?: number }[];
+    counts: Record<string, number>; changedGroups: { requestHex: string; distinctValues: number }[];
+    sourceGeneration?: string | null; sourceFieldCount?: number; decodedSourceFieldCount?: number;
+    syntheticDecodedSourceFieldCount?: number; nameMissing?: unknown[]; fieldCounts?: Record<string, number>;
+    recordCounts?: Record<string, number>; definitionCount?: number;
+    candidateVersionCount?: number; fieldObservationCounts?: Record<string, number>;
+    profiles?: { sourceProfileId: string; sourceFieldCount: number; observedFieldsWithAgreement: number;
+      syntheticFieldsWithAgreement: number; missingObservedFields: { requestHex: string; fieldIndex: number }[];
+      conflictingFields: { source: string; requestHex: string; fieldIndex: number }[]; sourceMissing: unknown[] }[];
+    captureTargetProfileId?: string; sourceProfileId?: string;
+    reviewContext?: { association: string; sourceSelectionIsVersionProof: false; identityQualified: false };
+    capture: { packets: number; prefixComplete: boolean; error: string | null; packetErrors: number; sha256: string } };
+  rows?: { packet: number; requestHex?: string; status?: string; pduHex?: string; dataHex?: string;
+    source?: "observed" | "synthetic"; observations?: number; validResponses?: number; failures?: Record<string, number>; conflicting?: boolean;
+    representative?: { packet: number; timestampUs: number; pduHex: string; dataHex: string; dataSha256: string } | null;
+    minimumKnownBytes?: number; expectedTotalBytes?: number | null;
+    decodedObservation?: { ok: boolean; recordCount: number } | null;
+    recordIndex?: number; dtcHex?: string; statusHex?: string; sourceDisplayCode?: string | null; sourceText?: string | null; sourceTextState?: string | null; definitionBindingStatus?: string;
+    parameterId?: string; name?: string; unit?: string | null; elapsedHostMs?: number;
+    result?: { ok: boolean; value?: unknown; display?: string; text?: string; reason?: string };
+    sourceProfileId?: string; sourceFieldIndex?: number; sourceName?: string | null; independentDecoderAgreement?: boolean; issue?: string | null;
+    value?: { ok: boolean; value?: unknown; phys?: unknown; text?: string; hex?: string; reason?: string };
+    timestampUs: number; synthetic?: boolean; error?: string }[];
+};
 export type PorscheApi = {
   workshopFlashIndex?: () => Promise<WorkshopFlashResult>;
   workshopExportPreview?: (input: WorkshopPreviewInput) => Promise<{ saved: boolean }>;
@@ -575,17 +631,27 @@ export type PorscheApi = {
   modelOemCatalog?: () => Promise<ModelOemCatalog>;
   getBridgeStatus?: () => Promise<BridgeStatus>;
   onBridgeStatus?: (cb: (status: BridgeStatus) => void) => () => void;
+  manufacturerStream?: (request: { action: "start" | "start-read" | "status" | "stop" | "save" | "discard"; profileId?: string; parameterIds?: string[]; continuous?: boolean; confirmedReadOnly?: boolean; x431Inactive?: boolean; sessionId?: string; cursor?: number; connectionCursor?: number }) => Promise<{
+    ok: boolean; error?: string | null; sessionId?: string; state?: string; stopReason?: string | null; cursor?: number; hasMore?: boolean; events?: OfflineDiagnosticsResult[]; result?: OfflineDiagnosticsResult | null;
+    saved?: boolean; canceled?: boolean; filePath?: string;
+    connectionEvents?: ManufacturerConnectionEvent[]; connectionCursor?: number; hasMoreConnectionEvents?: boolean;
+  }>;
   offlineDiagnostics?: (
     request: OfflineDiagnosticsRequest,
     operationId?: string,
   ) => Promise<OfflineDiagnosticsResult>;
-  diagnosticPreparation?: (request: { action: string; ecu: string; id?: string; did?: string; blockKey?: string; recordAt?: number; rawValue?: number; scenario?: string }) => Promise<DiagnosticPreparationResult>;
+  diagnosticPreparation?: (request: { action: string; ecu: string; id?: string; did?: string; blockKey?: string; recordAt?: number; rawValue?: number; physicalValue?: string; scenario?: string; offset?: number }) => Promise<DiagnosticPreparationResult>;
+  codingCapture?: (request: CodingCaptureRequest | CodingSourceCaptureRequest) => Promise<CodingCaptureResult>;
+  measurementCapture?: (request: CodingCaptureRequest) => Promise<CodingCaptureResult>;
+  dtcCapture?: (request: DtcCaptureRequest) => Promise<CodingCaptureResult>;
+  identityCapture?: (request: IdentityCaptureRequest) => Promise<CodingCaptureResult>;
   diagnosticDefinitionBundle?: (request: { action: "export" | "import" }) => Promise<{ ok: boolean; error?: string; canceled?: boolean; files?: number; imported?: number }>;
-  diagnosticCanRecording?: (request: { action: "status" | "start" | "stop"; simulation?: boolean }) => Promise<{ ok: boolean; error?: string; canceled?: boolean;
-    recording?: { active: boolean; simulation: boolean; frameCount: number; file: string; error?: string; reason?: string } | null }>;
+  diagnosticCanRecording?: (request: { action: "status" | "start" | "stop"; simulation?: boolean; layer?: "can" | "application" }) => Promise<{ ok: boolean; error?: string; canceled?: boolean;
+    recording?: { active: boolean; simulation: boolean; layer?: "can" | "application"; frameCount: number; file: string; error?: string; reason?: string } | null }>;
   cancelOfflineDiagnostics?: (operationId: string) => Promise<OfflineDiagnosticsResult>;
   saveDiagnosticRecording?: (input: { fileName: string; recording: object }) =>
     Promise<{ ok: boolean; saved: boolean; canceled?: boolean; filePath?: string; error?: string }>;
+  acquisitionReplay?: (request: ReplayRequest) => Promise<ReplayResult>;
   readOnlySession?: (
     request: ReadOnlySessionRequest,
   ) => Promise<ReadOnlySessionResult>;
@@ -595,15 +661,62 @@ export type PorscheApi = {
   canCapture?: (request: CanCaptureRequest) => Promise<CanCaptureResult>;
 }
 
+export type ReplayRequest = { action: "open" } | { action: "discard"; recordingId: string }
+  | { action: "view"; recordingId: string; parameterIds: string[]; positionMs: number; offset: number; seriesOffset?: number; connectionOffset?: number };
+export type ReplayRow = { index: number; parameterId: string; name: string; unit: string; value: number | string;
+  display: string; numeric: boolean; timeMs: number; sourceElapsedMs: number | null; timestamp: string;
+  timestampKind: string; timestampUs?: number; connectionEpoch?: number; cycle: number | null; synthetic: boolean; sourceKind: string };
+export type ReplayConnectionEvent = ManufacturerConnectionEvent & { timeMs: number };
+export type ReplaySummary = { fileName: string; kind: string; sourceKind: string; profileId: string; simulation: boolean;
+  vehicleDataCollected: boolean; retentionComplete: boolean; timeRegressed: boolean; sampleCount: number; durationMs: number;
+  startedUtc: string; endedUtc: string; stopReason: string; error: string; connectionEventCount: number; sourceStartElapsedMs: number | null;
+  parameters: { id: string; name: string; unit: string; count: number }[] };
+export type ReplaySeries = { id: string; name: string; unit: string; current: ReplayRow | null;
+  numericCount: number; plottedCount: number; points: ReplayRow[] };
+export type ReplayResult = { ok: boolean; canceled?: boolean; error?: string; recordingId?: string; summary?: ReplaySummary;
+  rows?: ReplayRow[]; offset?: number; nextOffset?: number; total?: number; positionMs?: number; series?: ReplaySeries[];
+  seriesOffset?: number; nextSeriesOffset?: number; seriesTotal?: number;
+  connectionEvents?: ReplayConnectionEvent[]; connectionOffset?: number; nextConnectionOffset?: number; connectionTotal?: number;
+  currentConnectionEvent?: ReplayConnectionEvent | null };
+
 export type CodingBlockIdentifier = { did?: string; identifierKind?: "LID" | "DID"; identifierHex?: string };
+export type CodingFieldEffect = { sourceOffset: number; selected: boolean; name: string;
+  before: { raw?: number | null; value?: number | string | null; text?: string | null; phys?: string | null; display?: string | null; unit?: string | null };
+  after: { raw?: number | null; value?: number | string | null; text?: string | null; phys?: string | null; display?: string | null; unit?: string | null } };
+export type CodingNumericDomain = { kind: "source-bounded-linear-candidate"; unit?: string;
+  physicalEnvelope: { numerator: string; denominator: string }[]; physicalStepMagnitude: { numerator: string; denominator: string };
+  editorEnabled: false; nativeEditingBehaviorVerified: false };
+export type CodingOperationSummary = { operationId: string; scope: "current-ecu" | "unassigned";
+  ecu?: string; mode?: "simulation" | "vehicle"; phase?: string; backupId?: string; createdUtc?: string; updatedUtc?: string;
+  targetBlocks?: number; changedBlocks?: number; intendedBlocks?: number; verifiedBlocks?: number; integrityError?: string;
+  requiresReconciliation: boolean; automaticWriteRetry: false; executionEnabled: false };
+export type FirmwareContainerInspection = {
+  schemaVersion: 1; kind: "ecu-firmware-container-inspection";
+  file: { name: string; bytes: number; sha256: string }; recognized: boolean; complete: boolean;
+  counts: { documents: number; sessions: number; blocks: number; flashdata: number; externalPayloads: number; inlinePayloads: number; issues: number };
+  documents: { member: string; modelVersion: string | null; partNumbers: string[];
+    sessions: { id: string | null; name: string | null }[];
+    flashdata: { id: string | null; name: string | null; encryptCompressMethod: { text: string } | null;
+      payload: { kind: string; resolved: boolean; bytes?: number; sha256?: string; declaredName?: string } | null }[] }[];
+  issues: { reason: string; member?: string; declaredName?: string }[];
+  executionEnabled: false; liveVerified: false; writePayload: null;
+};
 export type DiagnosticPreparationResult = { ok: boolean; error?: string; canceled?: boolean; saved?: boolean;
+  operations?: CodingOperationSummary[];
+  history?: { offset: number; limit: number; total: number; currentEcuTotal: number; unassignedTotal: number; requiresReconciliation: number };
   backups?: { id: string; identity: Record<string, string>; profileId: string; capturedUtc: string; original: boolean; blockCount: number; provenance?: string }[];
   backup?: { identity: Record<string, string>; profileId: string; blocks: (CodingBlockIdentifier & { dataHex: string })[] };
-  options?: { rawValue: number; label: string }[]; decoded?: { text?: string; raw?: number };
+  options?: { rawValue: number; label: string }[]; numericDomain?: CodingNumericDomain;
+  decoded?: { text?: string; raw?: number; value?: number | string; phys?: string; display?: string; unit?: string };
+  targetDecoded?: { phys?: string; display?: string; unit?: string };
   beforeHex?: string; afterHex?: string; changedBitMaskHex?: string;
+  effects?: CodingFieldEffect[];
   plan?: { kind?: string; changedBlocks: number; blockers: string[]; blocks: (CodingBlockIdentifier & { beforeHex: string; targetHex: string; changed: boolean })[] };
-  result?: { ok: boolean; simulation: boolean; error?: string; stages: string[] };
-  preparation?: { hashMatches: boolean; targetSoftware: string; file: { name: string; sha256: string; bytes: number }; blockers: string[] };
+  result?: { ok: boolean; simulation: boolean; error?: string; stages: string[];
+    operationId?: string | null; operationState?: string | null; journalError?: string | null; recoveryRequired?: boolean };
+  preparation?: { hashMatches: boolean; targetSoftware: string; file: { name: string; sha256: string; bytes: number }; blockers: string[]; container?: FirmwareContainerInspection | null;
+    transportRequirement: { targetFamilies: ("VNCI" | "PT3G")[]; selectedFamily: "VNCI" | "PT3G" | null;
+      targetFamilySelected: boolean; connectedForDiagnostics: boolean; connectionType: "bluetooth" | "unverified"; wiredConnectionVerified: false } };
 };
 
 export type CanCaptureRequest = { action: "list" | "start" | "status" | "cancel" | "replay";
@@ -626,6 +739,7 @@ export type OfflineDiagnosticsAction =
   | "preview"
   | "coding-options"
   | "catalog-units" | "catalog-parameters" | "catalog-plan" | "catalog-replay" | "catalog-coding-plan"
+  | "source-catalogs" | "source-units" | "source-profile"
   | "replay"
   | "ready-units" | "ready-parameters" | "ready-plan" | "ready-replay" | "ready-acquire";
 
@@ -643,9 +757,17 @@ export type OfflineDiagnosticsRequest = {
   expectedReadRequestHex?: string;
   responseMode?: "data" | "pdu";
   rawValue?: number;
+  physicalValue?: string;
   identity?: Record<string, unknown>;
   parameterIds?: string[];
+  cycleCount?: number;
   groupId?: string;
+  sourceCatalogId?: string;
+};
+
+export type ManufacturerConnectionEvent = {
+  sequence: number; episode: number; phase: "interrupted" | "retrying" | "qualified" | "recovered" | "retry-failed" | "failed";
+  attempt: number; connectionEpoch: number; elapsedMs: number; observedUtc: string; reason: string | null;
 };
 
 export type OfflineDiagnosticsResult = {
@@ -676,7 +798,7 @@ export type ObdCanNetwork = "drive" | "chassis" | "comfort" | "crash" | "adas";
 export type ObdConnectionRequest = {
   action: ObdConnectionAction;
   deviceId?: string;
-  model?: "vLinker" | "OBDLink MX+" | "VNCI" | "PT3G";
+  model?: "vLinker" | "OBDLink MX+" | "ELM327" | "OBDKey" | "OBDLink" | "VNCI" | "PT3G";
   purpose?: "diagnostic" | "internal";
   canNetwork?: ObdCanNetwork;
 };
@@ -690,7 +812,7 @@ export type ObdConnectionDevice = {
   paired?: boolean;
   osStatus?: string | null;
   guidance?: string | null;
-  transport?: "d-pdu-usb" | "bluetooth-spp";
+  transport?: "d-pdu-usb" | "bluetooth-spp" | "usb-serial";
   serial?: string;
   address?: string | null;
 };
@@ -699,6 +821,9 @@ export type ObdConnectionResult = {
   ok: boolean;
   error?: string | null;
   connectionError?: string | null;
+  adapterInfo?: { serial: string; driverVersion: string; firmwareImage: string;
+    managementSerialMatched: true; driverFirmwareMatched: true; vehicleQualified: false;
+    identityPageSha256: string; versionPageSha256: string; observedAt: number } | null;
   executionEnabled: boolean;
   liveVerified: boolean;
   writePayload: null;
@@ -707,8 +832,9 @@ export type ObdConnectionResult = {
   purpose?: "diagnostic" | "internal";
   canNetwork?: ObdCanNetwork | null;
   internalSupported?: boolean;
-  internal?: { startedAt: string; endedAt: string | null; frameCount: number; retainedFrames: number; frameLimit: number;
-    batchClosed: boolean; interruptions: { at: string; reason: string }[]; verifiedSignalCount: number;
+  internal?: { startedAt: string; endedAt: string | null; frameCount: number; retainedFrames: number; frameLimit: number | null;
+    retainedBytes?: number; allocatedBytes?: number; retentionComplete?: boolean;
+    batchClosed: boolean; stopReason?: string | null; receiveBatchId?: string; receiveState?: "idle" | "starting" | "receiving" | "stopping" | "standby"; interruptions: { at: string; reason: string }[]; verifiedSignalCount: number;
     latest: { canId: number; extended: boolean; dataHex: string; timestampUs: number; timestampSource: string }[] } | null;
   recording?: { active: boolean; file: string; startedAt: string; frameCount: number; error?: string; reason?: string } | null;
   connected?: boolean;
@@ -748,7 +874,7 @@ export type ObdRegisteredDevice = {
   checkedAt: string;
 };
 
-export type ReadOnlySessionAction = "prepare" | "start" | "status" | "cancel" | "overview";
+export type ReadOnlySessionAction = "prepare" | "start" | "status" | "cancel" | "overview" | "saveEngine" | "discardEngine";
 
 export type ReadOnlySessionRequest = {
   action: ReadOnlySessionAction;
@@ -770,6 +896,7 @@ export type ReadOnlySessionRequest = {
   sampleCycles?: number;
   intervalMs?: number;
   selectedPids?: string[];
+  engineBatchId?: string;
   jobId?: string;
 };
 
@@ -787,6 +914,8 @@ export type ReadOnlySessionResult = {
   latest?: Record<string, unknown> | null;
   final?: Record<string, unknown> | null;
   resumed?: boolean;
+  engineBatchId?: string;
+  stopReason?: string | null;
   [key: string]: unknown;
 };
 

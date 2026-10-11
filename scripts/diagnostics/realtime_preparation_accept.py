@@ -1,24 +1,58 @@
 """Validate the entire prepared bundle and its provenance without a device or database."""
 from __future__ import annotations
 import argparse
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 import json
-from .realtime_preparation import DEFAULT_OUTPUT, load, verify_source, plan_for, FLAGS, POINT_LIMIT
+from .realtime_preparation import DEFAULT_OUTPUT, ROOT, load, verify_source, plan_for, FLAGS, POINT_LIMIT
+
+
+def runtime_path(root, reference):
+    """Resolve portable manifest paths without accepting drives or escaping roots."""
+    if not isinstance(reference, str) or not reference or '\\' in reference or '\x00' in reference:
+        raise ValueError('invalid-runtime-manifest-path')
+    relative = PurePosixPath(reference)
+    if (relative.is_absolute() or PureWindowsPath(reference).drive
+            or any(part in ('', '.', '..') for part in reference.split('/'))):
+        raise ValueError('invalid-runtime-manifest-path')
+    root = Path(root).resolve()
+    result = root.joinpath(*relative.parts).resolve()
+    if not result.is_relative_to(root):
+        raise ValueError('runtime-manifest-path-outside-root')
+    return result
 
 
 def validate_bundle(root):
     root = Path(root)
-    index, manifest = load(root / 'index.json'), load(root / 'manifest.json')
-    for item in manifest['inputs'] + manifest['code']:
-        verify_source(Path(item['path']), item['sha256'])
+    manifest = load(root / 'manifest.json')
+    portable = manifest.get('schemaVersion') == 2
+    if portable:
+        if manifest.get('inputsAreProvenanceOnlyAtRuntime') is not True:
+            raise ValueError('runtime-provenance-contract-missing')
+        for item in manifest['code']:
+            if not item['path'].startswith('scripts/'):
+                raise ValueError('runtime-code-outside-scripts')
+            verify_source(runtime_path(ROOT, item['path']), item['sha256'])
+    else:
+        for item in manifest['inputs'] + manifest['code']:
+            verify_source(Path(item['path']), item['sha256'])
+    outputs = {}
     for item in manifest['outputs']:
         original = Path(item['path'])
-        relative = 'profiles/' + original.name if original.parent.name == 'profiles' else original.name
-        verify_source(root / relative, item['sha256'])
+        relative = item['path'] if portable else ('profiles/' + original.name if original.parent.name == 'profiles' else original.name)
+        if relative in outputs:
+            raise ValueError('duplicate-runtime-output')
+        outputs[relative] = item['sha256']
+        verify_source(runtime_path(root, relative), item['sha256'])
+    if portable and 'index.json' not in outputs:
+        raise ValueError('runtime-index-not-bound')
+    index = load(root / 'index.json')
     counts = {'parameters': 0, 'identity': 0, 'plans': 0, 'requestGroups': 0, 'sourceLabelsMissing': 0}
     for row in index['profiles']:
-        profile = load(root / row['file'])
-        verify_source(root / row['file'], row['sha256'])
+        profile_path = runtime_path(root, row['file'])
+        if portable and outputs.get(row['file']) != row['sha256']:
+            raise ValueError('runtime-profile-not-bound')
+        verify_source(profile_path, row['sha256'])
+        profile = load(profile_path)
         keys = [p['id'] for p in profile['parameters']]
         assert len(keys) == len(set(keys)), 'duplicate logical parameter'
         for p in profile['parameters']:

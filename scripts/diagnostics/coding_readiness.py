@@ -73,7 +73,8 @@ def audit(output):
         inputs.append(verify_source(DEFAULT_CAPTURE / name, expected))
         files[name] = load(DEFAULT_CAPTURE / name)
     with DEFAULT_VARIANTS.open(encoding='utf-8') as stream:
-        variants = [json.loads(line) for line in stream]
+        from scripts.x431_re.request_fields import coding_profile_variant
+        variants = [coding_profile_variant(json.loads(line)) for line in stream]
     candidates = reserved_candidates(variants, files['original-comparisons.json'], files['read-pairs.json'])
     selectors = selector_hits(DSN_PATH.read_bytes(), 'EV_MUHig6C3Gen2AW7_001')
     result = {'reservedCandidates': candidates,

@@ -4,11 +4,13 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
-const root = path.resolve(import.meta.dirname, "..");
-const scratch = path.join(root, ".local/coding-system-rework");
+const root = path.resolve(process.env.PORSCHE981_ACCEPT_APP_ROOT || path.join(import.meta.dirname, ".."));
+const scratch = path.resolve(process.env.PORSCHE981_ACCEPT_OUTPUT || path.join(root, ".local/coding-system-rework"));
 await fs.mkdir(scratch, { recursive: true });
 const temp = await fs.mkdtemp(path.join(os.tmpdir(), "porsche-coding-workspace-"));
-const env = { ...process.env, PORSCHE981_DB: path.join(temp, "ui.db"), PORSCHE981_HEADLESS: "1", PORSCHE981_OBD_SMOKE: "1", PORSCHE981_SESSION_DENY_LIVE: "1" };
+const env = { ...process.env, PORSCHE981_DB: path.join(temp, "ui.db"), PORSCHE981_USER_DATA: path.join(temp, "user-data"),
+  PORSCHE981_LOCAL_ROOT: path.join(temp, "local-assets"), PORSCHE981_CAN_CAPTURE_ROOT: path.join(temp, "raw-captures"),
+  PORSCHE981_HEADLESS: "1", PORSCHE981_OBD_SMOKE: "1", PORSCHE981_SESSION_DENY_LIVE: "1" };
 delete env.ELECTRON_RUN_AS_NODE;
 delete env.VITE_DEV_SERVER_URL;
 const read = async (name) => JSON.parse(await fs.readFile(path.join(root, name), "utf8"));
@@ -18,7 +20,7 @@ const marker = "isolated UI record, not vehicle evidence";
 let app;
 const errors = [];
 async function open() {
-  app = await electron.launch({ args: [path.join(root, "apps/desktop")], env, timeout: 30000 });
+  app = await electron.launch({ args: [process.env.PORSCHE981_ACCEPT_APP_ROOT ? path.join(root, "apps/desktop/electron/main.mjs") : path.join(root, "apps/desktop")], env, timeout: 30000 });
   const page = await app.firstWindow();
   page.on("pageerror", (e) => errors.push(e.message));
   await page.locator('nav.side button[data-tab="obd"]').click();
@@ -44,11 +46,15 @@ try {
     await page.locator('[data-coding-system]').nth(index).click();
     assert.equal(await page.locator('[data-coding-category]').count(), 4);
     const counts = await page.locator('[data-coding-category]').allTextContents();
+    assert.ok(counts.every(text => !text.includes("未完成") && !text.includes("完成未测试")), "parent categories retain plain names");
+    assert.doesNotMatch(await page.locator('[data-coding-system]').nth(index).innerText(), /未完成|完成未测试/);
     assert.ok(counts.some((text) => Number(text.match(/（(\d+)）/)?.[1]) > 0), "a visible system must have content in at least one category");
     for (const category of ["maintenance", "coding", "special", "programming"]) {
       await page.locator(`[data-coding-category="${category}"]`).click();
       const functions = await page.locator('[data-coding-function]').evaluateAll((els) => els.flatMap((el) => el.dataset.codingSourceIds.split(" ")));
       functions.forEach((f) => found.add(f));
+      const names = await page.locator('[data-coding-function] strong').allTextContents();
+      assert.ok(names.every(name => name.endsWith("(未完成)") && !name.includes("完成未测试")), "unimplemented vehicle functions carry only the leaf suffix");
       if (!functions.length) assert.equal(await page.getByRole("heading", { name: "暂无内容", exact: true }).count(), 1);
     }
   }
@@ -75,6 +81,7 @@ try {
   assert.match(await button.innerText(), /981 \/ 982/);
   await button.click();
   const detail = page.locator('[data-testid="coding-menu-detail"]');
+  assert.match(await detail.locator("h3").innerText(), /\(未完成\)$/);
   assert.equal(await detail.getByLabel("实际原值", { exact: true }).inputValue(), "");
   assert.equal(await detail.getByLabel("操作后实测值", { exact: true }).inputValue(), "");
   await detail.getByRole("button", { name: "保存实测记录", exact: true }).click();
@@ -86,6 +93,7 @@ try {
   await detail.getByRole("button", { name: "保存实测记录", exact: true }).click();
   await detail.getByRole("status").waitFor();
   let saved = await page.evaluate(() => window.porsche981.listCoding());
+  assert.ok(saved.filter(row => row.after_value.includes(marker)).every(row => !row.function_name.includes("未完成") && !(row.sub_function || "").includes("未完成")), "display status never changes stored original function names");
   assert.ok(saved.some((s) => s.note.includes("来源菜单：982") && s.after_value.includes(marker)));
   await app.close(); app = undefined;
   page = await open();
@@ -105,5 +113,5 @@ try {
 } finally {
   await app?.close();
   for (const name of ["ui.db", "ui.db-wal", "ui.db-shm", "ui.db-journal"]) await fs.unlink(path.join(temp, name)).catch((e) => { if (e.code !== "ENOENT") throw e; });
-  await fs.rmdir(temp);
+  await fs.rm(temp, { recursive: true, force: true });
 }

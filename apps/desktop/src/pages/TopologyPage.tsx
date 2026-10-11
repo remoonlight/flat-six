@@ -18,6 +18,7 @@ import {
   statusText,
 } from "../can-topology-logic.mjs";
 import { topologyCapability } from "../can-topology-capabilities.mjs";
+import { obdFunctionLabel } from "../obd/function-label";
 import { persistTopologySnapshot } from "../obd-diag-persist";
 import "../can-topology.css";
 
@@ -434,9 +435,9 @@ export function TopologyPage({
                 <h3>{selected.short} · {selected.label}</h3>
                 <div className="topo-secondary">
                   <button type="button" className="btn" data-testid="topo-read-all" disabled={actionsOff || !supported.length}
-                    onClick={() => requestTask("read", supported)}>读取所有单元故障码</button>
+                    onClick={() => requestTask("read", supported)}>{obdFunctionLabel("读取所有单元故障码", nodes.every(n => canTransmit(n) && topologyCapability(n, adapterModel).readable))}</button>
                   <button type="button" className="btn" data-testid="topo-clear-all" disabled={actionsOff || !canClearAll}
-                    onClick={() => requestTask("clear", clearTargets)}>清除所有单元故障码</button>
+                    onClick={() => requestTask("clear", clearTargets)}>{obdFunctionLabel("清除所有单元故障码", nodes.every(n => canTransmit(n) && topologyCapability(n, adapterModel).clearable))}</button>
                 </div>
               </>
             ) : selected ? (
@@ -475,7 +476,7 @@ export function TopologyPage({
                     disabled={selectedOff}
                     onClick={() => selected && requestTask("read", [selected])}
                   >
-                    读取故障码
+                    {obdFunctionLabel("读取故障码", capability.readable)}
                   </button>
                   <button
                     type="button"
@@ -484,7 +485,7 @@ export function TopologyPage({
                     disabled={selectedOff || !selected || !clearEligible(selected)}
                     onClick={() => selected && requestTask("clear", [selected])}
                   >
-                    清除故障码
+                    {obdFunctionLabel("清除故障码", capability.clearable)}
                   </button>
                 </div>
                 {selectedAdapted && capability.readable ? <p className="muted topo-note" data-testid="topo-clear-scope">{capability.clearable ? "受限清码仅用于当前 DME / Gateway，实车清码与复读待验收。" : "当前设备未开放清故障码；仍可进行具名只读诊断。"}</p> : null}

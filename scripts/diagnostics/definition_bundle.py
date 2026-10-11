@@ -4,6 +4,7 @@ Derived replay values and source metadata may be private; export is explicit.
 Hash integrity never promotes an offline definition to a live qualification.
 """
 from __future__ import annotations
+from contextlib import ExitStack
 import hashlib
 import json
 import os
@@ -16,11 +17,12 @@ import zipfile
 ROOT = Path(os.environ.get('PORSCHE981_DEFINITION_ROOT') or Path(__file__).resolve().parents[2])
 SEEDS = ("data/seed/diagnostics", "data/seed/obd", "data/seed/x431/plaintext-archive", "data/seed/piwis",
     "data/seed/coding-guide", "data/seed/diagnostic-reference-981")
-LOCAL = (".local/diagnostics/realtime-preparation", ".local/diagnostics/piwis-workshop")
+LOCAL = (".local/diagnostics/realtime-preparation", ".local/diagnostics/piwis-workshop",
+         ".local/diagnostics/x431-source-references")
 VARIANTS = ".local/x431-re/2026-09-27-981982/expansion/variants.jsonl"
 LANGUAGE = ".local/x431-re/2026-09-27-protocol/package/PORSCHE_CN.GGP"
 EXTENSIONS = {".json", ".jsonl", ".xml", ".ini", ".txt", ".md", ".csv", ".htm", ".html"}
-MAX_TOTAL = 1024 * 1024 * 1024
+MAX_TOTAL = 2 * 1024 * 1024 * 1024
 MAX_FILE = 512 * 1024 * 1024
 MAX_FILES = 25000
 
@@ -80,11 +82,16 @@ def export_bundle(destination, root=ROOT):
             Path(destination).unlink(missing_ok=True)
         raise
 
+class BundleSpaceError(ValueError):
+    def __init__(self, available, required):
+        super().__init__("bundle-insufficient-space")
+        self.available_bytes = available
+        self.required_payload_bytes = required
+
+
 def import_bundle(source, root=ROOT):
     root = Path(root)
-    staging_parent = root / ".local" / "diagnostics" / "bundle-staging"
-    staging_parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.TemporaryDirectory(dir=staging_parent) as temporary, zipfile.ZipFile(source) as archive:
+    with zipfile.ZipFile(source) as archive:
         names = archive.namelist()
         if len(names) > MAX_FILES + 1 or len(set(names)) != len(names) or "manifest.json" not in names:
             raise ValueError("bundle-entries-invalid")
@@ -99,43 +106,77 @@ def import_bundle(source, root=ROOT):
             raise ValueError("bundle-path-invalid")
         if any(type(row.get("bytes")) is not int or not 0 <= row["bytes"] <= MAX_FILE for row in rows) or sum(row["bytes"] for row in rows) > MAX_TOTAL:
             raise ValueError("bundle-size-limit")
-        new = []
+        entries = []
         for row in rows:
-            name = row["name"]; target = root / name; staged = Path(temporary) / name
+            name = row["name"]; target = root / name
             if not target.resolve().is_relative_to(root.resolve()) or target.is_symlink():
                 raise ValueError("bundle-target-outside-root")
             info = archive.getinfo(name)
             if info.file_size != row["bytes"] or info.flag_bits & 1 or (info.external_attr >> 16) & 0o170000 == 0o120000:
                 raise ValueError("bundle-entry-invalid")
-            staged.parent.mkdir(parents=True, exist_ok=True)
-            count = 0
-            with archive.open(info) as incoming, staged.open("xb") as outgoing:
-                while chunk := incoming.read(1024 * 1024):
-                    count += len(chunk)
-                    if count > row["bytes"]:
-                        raise ValueError("bundle-entry-size-invalid")
-                    outgoing.write(chunk)
-            if count != row["bytes"] or digest(staged) != row.get("sha256"):
-                raise ValueError("bundle-integrity-failed")
-            if target.exists():
-                if not target.is_file() or digest(target) != row["sha256"]:
-                    raise ValueError("bundle-existing-file-conflict:" + name)
-            else:
-                new.append((staged, target))
-        # All entries validated before publishing. Never replace an existing file.
-        published = []
-        try:
-            for staged, target in new:
-                if not target.resolve().is_relative_to(root.resolve()):
-                    raise ValueError("bundle-target-outside-root")
-                target.parent.mkdir(parents=True, exist_ok=True)
-                os.link(staged, target)
-                published.append(target)
-        except Exception:
-            for target in published:
-                target.unlink()
-            raise
-        return {"ok": True, "files": len(rows), "imported": len(new), "unchanged": len(rows) - len(new), "liveVerified": False}
+            existing = target.exists()
+            if existing and (not target.is_file() or digest(target) != row["sha256"]):
+                raise ValueError("bundle-existing-file-conflict:" + name)
+            entries.append((row, info, target, existing))
+        required = sum(row["bytes"] for row, _, _, existing in entries if not existing)
+        new_count = sum(not existing for _, _, _, existing in entries)
+        if new_count:
+            probe = root
+            while not probe.exists():
+                probe = probe.parent
+            free = shutil.disk_usage(probe).free
+            if free < required:
+                raise BundleSpaceError(free, required)
+        # Identical installed entries are still read and hashed from the ZIP.
+        # They need no staging file; never skip archive integrity verification.
+        with ExitStack() as stack:
+            temporary = None
+            if new_count:
+                staging_parent = root / ".local" / "diagnostics" / "bundle-staging"
+                staging_parent.mkdir(parents=True, exist_ok=True)
+                temporary = Path(stack.enter_context(tempfile.TemporaryDirectory(dir=staging_parent)))
+            new = []
+            for row, info, target, existing in entries:
+                staged = None if existing else temporary / row["name"]
+                if staged is not None:
+                    staged.parent.mkdir(parents=True, exist_ok=True)
+                count = 0; hasher = hashlib.sha256()
+                with archive.open(info) as incoming, ExitStack() as entry_stack:
+                    outgoing = entry_stack.enter_context(staged.open("xb")) if staged is not None else None
+                    while chunk := incoming.read(1024 * 1024):
+                        count += len(chunk)
+                        if count > row["bytes"]:
+                            raise ValueError("bundle-entry-size-invalid")
+                        hasher.update(chunk)
+                        if outgoing is not None:
+                            outgoing.write(chunk)
+                if count != row["bytes"] or hasher.hexdigest() != row.get("sha256"):
+                    raise ValueError("bundle-integrity-failed")
+                if existing:
+                    if target.is_symlink() or not target.resolve().is_relative_to(root.resolve()):
+                        raise ValueError("bundle-target-outside-root")
+                    if not target.is_file() or digest(target) != row["sha256"]:
+                        raise ValueError("bundle-existing-file-conflict:" + row["name"])
+                else:
+                    # Re-read staged bytes so successful incoming hashing cannot
+                    # hide a changed/damaged staging file before publication.
+                    if digest(staged) != row["sha256"]:
+                        raise ValueError("bundle-integrity-failed")
+                    new.append((staged, target))
+            published = []
+            try:
+                for staged, target in new:
+                    if not target.resolve().is_relative_to(root.resolve()):
+                        raise ValueError("bundle-target-outside-root")
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    os.link(staged, target)
+                    published.append(target)
+            except Exception:
+                for target in published:
+                    target.unlink()
+                raise
+            return {"ok": True, "files": len(rows), "imported": len(new), "unchanged": len(rows) - len(new),
+                    "stagedPayloadBytes": required, "liveVerified": False}
 
 def main():
     request = json.loads(sys.stdin.read(8192))
@@ -144,7 +185,10 @@ def main():
             raise ValueError("bundle-request-invalid")
         result = export_bundle(request["file"]) if request["action"] == "export" else import_bundle(request["file"])
     except Exception as error:
-        result = {"ok": False, "error": str(error), "liveVerified": False}
+        code = {28: "ENOSPC", 13: "EACCES", 1: "EPERM"}.get(error.errno) if isinstance(error, OSError) else None
+        result = {"ok": False, "error": code or str(error), "liveVerified": False}
+        if isinstance(error, BundleSpaceError):
+            result.update(availableBytes=error.available_bytes, requiredPayloadBytes=error.required_payload_bytes)
     print(json.dumps(result, ensure_ascii=False))
     return 0 if result["ok"] else 2
 

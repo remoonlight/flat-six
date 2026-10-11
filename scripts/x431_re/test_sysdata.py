@@ -175,11 +175,25 @@ class SysdataTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             parse_subsys(neg, 0)
 
-    def test_cmd_n_ff_unsupported(self):
+    def test_cmd_n_ff_single_sid_ignores_second_and_tail(self):
         rec = parse_cmd(bytes([0x14, 0xFF, 0xFF, 0x00]), 0)
-        self.assertEqual(rec["class"], "unsupported-structured")
+        self.assertEqual(rec["class"], "static-source-confirmed")
         self.assertEqual(rec["payloadLen"], 0xFF)
-        self.assertNotIn("wireHex", rec)
+        self.assertEqual(rec["wireHex"], "14")
+        self.assertEqual(rec["tableHex"], "14FFFF")
+        self.assertEqual(rec["payloadHex"], "")
+        self.assertEqual(rec["nativeDescriptorHexCandidate"], "010114")
+        self.assertFalse(rec["executionEnabled"])
+        self.assertFalse(rec["runtimeReadSequenceQualified"])
+
+    def test_cmd_single_byte04_is_offline_clear_candidate(self):
+        rec = parse_cmd(bytes.fromhex('AA0400FF'), 1)
+        self.assertEqual(rec['wireHex'], '04')
+        self.assertEqual(rec['tableHex'], '0400FF')
+        self.assertEqual(rec['role'], 'dtcClear')
+        self.assertEqual(rec['commandFormat'], 'single-byte-source-command')
+        self.assertFalse(rec['liveVerified'])
+        self.assertIsNone(rec['writePayload'])
 
     def test_cmd_n0_session(self):
         rec = parse_cmd(bytes([0x10, 0x89, 0x00]), 0)

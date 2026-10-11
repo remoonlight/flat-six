@@ -1,4 +1,4 @@
-"""Prepared manufacturer read transport, exercised with a BytePort, never hardware.
+"""Shared manufacturer read session and isolated historical/synthetic entries.
 
 Uses the production ELM framing/parser and catalog session/identity qualification.
 The public entry rejects live before creating a port. Historical PDUs are private
@@ -11,11 +11,14 @@ import time
 import json
 import hashlib
 import math
+import itertools
+from collections import deque
+from datetime import datetime, timezone
 
 from .catalog import load_catalog, operation, profile_by_id
 from .decode import decode_payload
 from .elm import ElmClient, ElmError
-from .manufacturer_acquisition import DME_PROFILE, acquire_cycle, historical_fixtures
+from .manufacturer_acquisition import DME_PROFILE, matched_read_profile, _decode_cycle, historical_fixtures
 from .qualification import qualify_identity
 from .realtime_preparation import FLAGS, plan_for, record_from_parameter
 from .response_values import request_from_record, data_span
@@ -25,13 +28,15 @@ from .sessions import IDENTITY_FIELDS, SESSION_BY_PROFILE
 CATALOG_PROFILE = 'porsche-981-2014-dme'
 
 
-def prepared_read_contract(profile, selected, catalog=None):
+def prepared_read_contract(profile, selected, catalog=None, *, transport_kind='elm-iso-tp'):
     """Server-owned request/identity contract; does not grant hardware access."""
-    if (profile.get('profileId') != DME_PROFILE or profile.get('generation') != '981'
-            or profile.get('ecuIds') != [1] or profile.get('status') != 'identity-matched'):
-        raise ValueError('manufacturer-profile-unqualified')
+    if transport_kind not in ('elm-iso-tp', 'd-pdu-iso-tp'):
+        raise ValueError('manufacturer-transport-unqualified')
+    ecu_id, catalog_id, _generation = matched_read_profile(profile)
     plan = plan_for(profile, selected)
     if plan['blocked']:
+        if any(row['reason'] == 'parameter-record-span-mismatch' for row in plan['blocked']):
+            raise ValueError('manufacturer-field-span-mismatch')
         raise ValueError('manufacturer-definition-incomplete')
     params = {p['id']: p for p in profile['parameters']}
     for key in selected:
@@ -44,17 +49,18 @@ def prepared_read_contract(profile, selected, catalog=None):
         span = data_span(record)
         if not span or span != parameter.get('dataSpan'):
             raise ValueError('manufacturer-field-span-mismatch')
-    named = profile_by_id(catalog or load_catalog(), CATALOG_PROFILE)
-    hx, positive = SESSION_BY_PROFILE[CATALOG_PROFILE]
+    named = profile_by_id(catalog or load_catalog(), catalog_id)
+    hx, positive = SESSION_BY_PROFILE[catalog_id]
     identity = [dict(field=field, **operation(named, oid))
-                for field, oid in IDENTITY_FIELDS[CATALOG_PROFILE]]
+                for field, oid in IDENTITY_FIELDS[catalog_id]]
     contract = {'schemaVersion': 1, 'kind': 'prepared-manufacturer-read',
-        'profileId': profile['profileId'], 'catalogProfileId': CATALOG_PROFILE,
-        'generation': '981', 'ecuId': 1, 'txId': int(named['txId'], 16), 'rxId': int(named['rxId'], 16),
+        'profileId': profile['profileId'], 'catalogProfileId': catalog_id,
+        'generation': '981', 'ecuId': ecu_id, 'txId': int(named['txId'], 16), 'rxId': int(named['rxId'], 16),
         'session': {'requestHex': hx, 'positivePrefixHex': positive},
         'identityRequests': identity, 'identityConstraints': named['identityConstraints'],
         'groups': plan['groups'], 'selectionLimit': 12, 'intervalClaim': None,
-        'transportKind': 'elm-iso-tp', 'reconnectAttemptsPerInterruption': 3,
+        'transportKind': transport_kind, 'rawCanFramesAvailable': transport_kind == 'elm-iso-tp',
+        'reconnectAttemptsPerInterruption': 3,
         'qualificationRequired': ['independent-adapter/session', 'fresh-complete-identity',
                                   'request-response-and-field-agreement', 'observed-cadence'],
         'executionEnabled': False, 'liveVerified': False, 'writePayload': None}
@@ -64,7 +70,8 @@ def prepared_read_contract(profile, selected, catalog=None):
 
 
 def transport_rehearsal(profile, selected, groups, *, mode='simulation',
-                        port_factory=None, cancel_event=None, budget_s=30):
+                        port_factory=None, cancel_event=None, budget_s=30, cycles=1,
+                        on_cycle=None, on_connection=None, streaming=False):
     # Resolve and validate historical references before opening any port.
     if mode != 'simulation':
         return _transport_cycle(profile, selected, None, mode=mode)
@@ -75,12 +82,16 @@ def transport_rehearsal(profile, selected, groups, *, mode='simulation',
         result['error'] = str(error)
         return result
     def factory():
-        port = SessionSimPort(CATALOG_PROFILE)
+        _ecu, catalog_id, _generation = matched_read_profile(profile)
+        port = SessionSimPort(catalog_id)
+        rx_id = int(profile_by_id(load_catalog(), catalog_id)['rxId'], 16)
         for hx, pdu in fixtures.items():
-            port.ecu_map[hx] = ath1_prompt(isotp_ath1_lines(0x7E8, pdu))
+            port.ecu_map[hx] = ath1_prompt(isotp_ath1_lines(rx_id, pdu))
         return port
     return _transport_cycle(profile, selected, port_factory or factory,
-                            cancel_event=cancel_event, budget_s=budget_s)
+                            cancel_event=cancel_event, budget_s=budget_s, cycles=cycles,
+                            interval_s=1 if type(cycles) is int and cycles > 1 else 0,
+                            on_cycle=on_cycle, on_connection=on_connection, streaming=streaming)
 
 
 def synthetic_transport_cycles(profile, selected, *, port_factory, cycles=1,
@@ -99,6 +110,7 @@ def _empty_result(source='historical-fixture-rehearsal'):
            'simulation': True, 'vehicleDataCollected': False, 'liveVerified': False,
            **FLAGS,
            'samples': [], 'transactions': [], 'completedCycles': 0,
+           'connectionEvents': [], 'connectionEventCount': 0,
            'transport': {'kind': 'injected-byte-port', 'qualification': None,
                          'recovery': [], 'closed': False, 'closeErrors': [], 'rawLog': []}}
     out['sourceKind'] = source
@@ -106,24 +118,44 @@ def _empty_result(source='historical-fixture-rehearsal'):
 
 
 def _transport_cycle(profile, selected, factory, *, mode='simulation', cycles=1,
-                     source='historical-fixture-rehearsal', cancel_event=None, budget_s=30):
-    out = _empty_result(source)
+                     source='historical-fixture-rehearsal', cancel_event=None, budget_s=30,
+                     interval_s=0, on_cycle=None, on_connection=None, streaming=False):
     if mode != 'simulation':
+        out = _empty_result(source)
         out['error'] = 'manufacturer-transport-unqualified'
         return out
+    return _client_cycles(profile, selected, lambda cancel: ElmClient(factory(), cancel_event=cancel),
+        cycles=cycles, source=source, cancel_event=cancel_event, budget_s=budget_s,
+        interval_s=interval_s, on_cycle=on_cycle, on_connection=on_connection, streaming=streaming)
+
+
+def _client_cycles(profile, selected, client_factory, *, cycles=1,
+                   source='synthetic-ecu', physical=False, cancel_event=None, budget_s=30,
+                   interval_s=0, on_cycle=None, on_connection=None, streaming=False, transport_kind='elm-iso-tp'):
+    """Private engine. Physical entry must verify definitions and select its own factory."""
+    out = _empty_result(source)
+    out['simulation'] = not physical
+    if physical:
+        out['transport']['kind'] = transport_kind
     cancel = cancel_event or threading.Event()
     client = None
+    connection_epoch = 0
     try:
         if isinstance(budget_s, bool) or not math.isfinite(float(budget_s)) or not 0 < float(budget_s) <= 60:
             raise ValueError('manufacturer-budget-invalid')
-        if type(cycles) is not int or not 1 <= cycles <= 1000:
+        if ((cycles is None and not streaming) or (cycles is not None
+                and (type(cycles) is not int or cycles < 1 or (not streaming and cycles > 1000)))):
             raise ValueError('manufacturer-cycles-invalid')
+        if isinstance(interval_s, bool) or not math.isfinite(float(interval_s)) or not 0 <= float(interval_s) <= 60:
+            raise ValueError('manufacturer-interval-invalid')
+        interval_s = float(interval_s)
         deadline = time.monotonic() + float(budget_s)
+        session_deadline = time.monotonic() + 10 * 60 if streaming else deadline
         catalog = load_catalog()
-        contract = prepared_read_contract(profile, selected, catalog)
+        contract = prepared_read_contract(profile, selected, catalog, transport_kind=transport_kind)
         out['readContract'] = contract
         authorized = frozenset(g['requestHex'] for g in contract['groups'])
-        named = profile_by_id(catalog, CATALOG_PROFILE)
+        named = profile_by_id(catalog, contract['catalogProfileId'])
         def guard():
             if cancel.is_set(): raise ElmError('cancelled')
             if time.monotonic() >= deadline: raise ElmError('deadline-expired')
@@ -135,30 +167,40 @@ def _transport_cycle(profile, selected, factory, *, mode='simulation', cycles=1,
             if not getattr(client, '_prepared_log_saved', False):
                 out['transport']['rawLog'].extend(client.raw_log)
                 client._prepared_log_saved = True
-                if len(json.dumps(out['transport']['rawLog']).encode()) > 1024 * 1024:
+                if not streaming and len(json.dumps(out['transport']['rawLog']).encode()) > 1024 * 1024:
                     raise ElmError('manufacturer-transport-log-limit')
-            if any(str(e).startswith('close:') for e in errors):
+            if (any(str(e).startswith('close:') for e in errors)
+                    or (transport_kind == 'd-pdu-iso-tp' and errors)):
                 raise ElmError('recovery-close-failed')
             out['transport']['closed'] = True
             if any(not str(e).startswith('poisoned:') for e in errors):
                 raise ElmError('manufacturer-close-failed')
         def open_qualified(expected=None):
-            nonlocal client
+            nonlocal client, connection_epoch
             guard()
-            client = ElmClient(factory(), cancel_event=cancel)
+            client = client_factory(cancel)
+            # Actual RX CAN/PDU recording has its independent explicit sink.
+            # Do not accumulate a duplicate raw byte log for ordinary live values.
+            if streaming and physical and on_cycle is not None:
+                client.raw_log = deque(maxlen=0)
+            out['executionEnabled'] = physical
             out['transport']['closed'] = False
             if source == 'synthetic-ecu' and getattr(client.port, 'trafficKind', None) != 'synthetic-session':
                 # Close without AT/ECU traffic when a test supplied the wrong port.
                 client._poisoned = True
                 raise ElmError('synthetic-port-required')
-            client.validate_adapter(min(10, max(0, deadline - time.monotonic())))
-            client.configure_pair(named['txId'], named['rxId'], deadline)
-            hx, positive = SESSION_BY_PROFILE[CATALOG_PROFILE]
+            adapter = client.validate_adapter(min(10, max(0, deadline - time.monotonic())))
+            out['transport']['adapter'] = adapter
+            if transport_kind == 'd-pdu-iso-tp':
+                client.configure_manufacturer(profile, selected, deadline)
+            else:
+                client.configure_pair(named['txId'], named['rxId'], deadline)
+            hx, positive = SESSION_BY_PROFILE[contract['catalogProfileId']]
             reply = client.request(hx, min(deadline, time.monotonic() + 15))
             if not reply.get('ok') or not (reply.get('payload_hex') or '').startswith(positive):
                 raise ElmError(reply.get('error') or 'session-subfunction-mismatch')
             identity = {}
-            for field, oid in IDENTITY_FIELDS[CATALOG_PROFILE]:
+            for field, oid in IDENTITY_FIELDS[contract['catalogProfileId']]:
                 guard()
                 op = operation(named, oid)
                 response = client.request(op['requestHex'], min(deadline, time.monotonic() + 15))
@@ -167,67 +209,121 @@ def _transport_cycle(profile, selected, factory, *, mode='simulation', cycles=1,
                 decoded = decode_payload(response['payload_hex'], op['decode'])
                 if not decoded.get('ok'): raise ElmError('identity-decode-failed')
                 identity[field] = decoded.get('text')
-            qualified = qualify_identity({'generation': '981', 'ecuId': 1, 'identity': identity}, catalog,
+            qualified = qualify_identity({'generation': '981', 'ecuId': contract['ecuId'], 'identity': identity}, catalog,
                                          expected_generation='981')
-            if not qualified.get('observedProfileMatch') or (expected is not None and identity != expected):
+            if (not qualified.get('observedProfileMatch')
+                    or (qualified.get('variantLink') or {}).get('profile_id') != profile['profileId']
+                    or (expected is not None and identity != expected)):
                 raise ElmError('identity-mismatch')
             out['transport']['qualification'] = qualified
+            connection_epoch += 1
             return identity
         identity = open_qualified()
         def fault(error):
             return isinstance(error, (ConnectionError, OSError)) or str(error).startswith(
                 ('port-io:', 'short-write', 'disconnect'))
+        def reason(error):
+            code = str(error)
+            if fault(error): return 'transport-disconnected'
+            if code in ('cancelled', 'deadline-expired', 'identity-mismatch', 'recovery-close-failed',
+                        'manufacturer-close-failed', 'recovery-exhausted', 'identity-decode-failed',
+                        'identity-request-failed', 'session-subfunction-mismatch'):
+                return code
+            if code.startswith(('negative-response', 'nrc')): return 'response-rejected'
+            return 'recovery-failed'
+        def notify(episode, phase, attempt, error=None):
+            event = {'sequence': len(out['connectionEvents']) + 1, 'episode': episode,
+                     'phase': phase, 'attempt': attempt, 'connectionEpoch': connection_epoch,
+                     'elapsedMs': (time.monotonic() - acquisition_started) * 1000,
+                     'observedUtc': datetime.now(timezone.utc).isoformat(),
+                     'reason': reason(error) if error is not None else None,
+                     'sourceKind': source, 'simulation': not physical,
+                     'executionEnabled': physical, 'liveVerified': False, 'writePayload': None}
+            out['connectionEvents'].append(event)
+            out['connectionEventCount'] += 1
+            if on_connection is not None: on_connection(dict(event))
         def ask(hx):
             guard()
             if hx not in authorized: raise ElmError('manufacturer-request-unqualified')
             return client.request(hx, min(deadline, time.monotonic() + 15))
         def receive(hx):
+            episode = None
+            attempt = 0
             try:
-                response = ask(hx)
-            except (ElmError, OSError) as first:
-                if not fault(first): raise
-                close()
-                episode = {'unfinishedRequestHex': hx, 'attempts': [], 'recovered': False}
-                out['transport']['recovery'].append(episode)
-                for attempt in range(1, 4):
-                    entry = {'attempt': attempt, 'ok': False}
-                    episode['attempts'].append(entry)
-                    try:
-                        open_qualified(identity)
-                        response = ask(hx)
-                        entry['ok'] = True
-                        episode['recovered'] = True
-                        break
-                    except (ElmError, OSError) as error:
-                        entry['error'] = str(error)
-                        close()
-                        if not fault(error): raise
-                        if attempt == 3: raise ElmError('recovery-exhausted') from error
-            if not response.get('ok'):
-                raise ElmError(response.get('error') or 'manufacturer-no-data')
-            guard()
-            return bytes.fromhex(response['payload_hex'])
+                try:
+                    response = ask(hx)
+                except (ElmError, OSError) as first:
+                    if not fault(first): raise
+                    episode = {'unfinishedRequestHex': hx, 'attempts': [], 'recovered': False}
+                    out['transport']['recovery'].append(episode)
+                    number = len(out['transport']['recovery'])
+                    notify(number, 'interrupted', 0, first)
+                    close()
+                    for attempt in range(1, 4):
+                        entry = {'attempt': attempt, 'ok': False}
+                        episode['attempts'].append(entry)
+                        notify(number, 'retrying', attempt)
+                        try:
+                            open_qualified(identity)
+                            notify(number, 'qualified', attempt)
+                            response = ask(hx)
+                            break
+                        except (ElmError, OSError) as error:
+                            entry['error'] = str(error)
+                            if not fault(error): raise
+                            notify(number, 'retry-failed', attempt, error)
+                            close()
+                            if attempt == 3: raise ElmError('recovery-exhausted') from error
+                if not response.get('ok'):
+                    raise ElmError(response.get('error') or 'manufacturer-no-data')
+                guard()
+                pdu = bytes.fromhex(response['payload_hex'])
+                if episode is not None:
+                    episode['attempts'][-1]['ok'] = True
+                    episode['recovered'] = True
+                    notify(number, 'recovered', attempt)
+                return pdu
+            except (ElmError, OSError, ImportError, ValueError) as error:
+                if episode is not None:
+                    if episode['attempts']: episode['attempts'][-1].setdefault('error', str(error))
+                    notify(number, 'failed', attempt, error)
+                raise
         def bounded_receive(hx):
             try: return receive(hx)
-            except (ElmError, OSError) as error: raise ValueError(str(error)) from error
+            except (ElmError, OSError, ImportError) as error: raise ValueError(str(error)) from error
         acquisition_started = time.monotonic()
-        for cycle in range(cycles):
-            elapsed_offset = (time.monotonic() - acquisition_started) * 1000
-            result = acquire_cycle(profile, selected, bounded_receive, cancelled=cancel.is_set)
+        for cycle in (itertools.count() if cycles is None else range(cycles)):
+            if streaming:
+                if time.monotonic() >= session_deadline:
+                    out['stopReason'] = 'time-limit'
+                    break
+                deadline = min(session_deadline, time.monotonic() + float(budget_s))
+            if cycle and interval_s:
+                cancel.wait(min(interval_s, max(0, deadline - time.monotonic())))
+            if streaming and not cancel.is_set() and time.monotonic() >= session_deadline:
+                out['stopReason'] = 'time-limit'
+                break
+            guard()
+            result = _decode_cycle(profile, selected, bounded_receive, cancelled=cancel.is_set,
+                                   source=source, synthetic=not physical,
+                                   elapsed_origin=acquisition_started,
+                                   connection_epoch=lambda: connection_epoch)
             for sample in result['samples']:
                 sample.update(cycle=cycle + 1, sourceKind=source)
-                sample['elapsedMs'] += elapsed_offset
             for transaction in result['transactions']:
                 transaction.update(cycle=cycle + 1, sourceKind=source)
             out['samples'].extend(result['samples'])
             out['transactions'].extend(result['transactions'])
             out['completedCycles'] += result['completedCycles']
+            out['vehicleDataCollected'] |= result['vehicleDataCollected']
             out['requestCount'] = len(out['transactions'])
             out['ok'], out['error'] = result['ok'], result['error']
+            if on_cycle is not None:
+                on_cycle({**result, 'cycle': cycle + 1, 'sourceKind': source})
             if not result['ok']:
                 break
     except (ValueError, KeyError, TypeError, ElmError, OSError) as error:
-        out['error'] = str(error)
+        out.update(ok=False, error=str(error))
     finally:
         if client is not None:
             try: close()

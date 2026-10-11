@@ -35,6 +35,29 @@ class FakeNative:
 
 
 class Pt3gTests(unittest.TestCase):
+    def test_effective_profile_read_cannot_fall_back_or_override_pinned_bytes(self):
+        class Read:
+            def __call__(self, section, key, default, filename):
+                self.args = (section, default, filename)
+                return self.values[key]
+        class Kernel: pass
+        with tempfile.TemporaryDirectory() as scratch:
+            root = Path(scratch)
+            (root / pt3g.ACTIVE_CONFIG).write_text('[T6CONFIG]\n15765StartDetect=0\nSN=10001\n')
+            read = Read(); kernel = Kernel(); kernel.GetPrivateProfileIntA = read
+            with patch.object(pt3g, '_windows_ini_path', return_value=b'absolute-config-path'), \
+                    patch.object(pt3g.c, 'WinDLL', return_value=kernel, create=True) as loader:
+                read.values = {b'15765StartDetect': 0, b'SN': 10001}
+                result = pt3g.verify_windows_config(root)
+                self.assertEqual(result['verifiedKeys'], 2)
+                self.assertTrue(result['windowsProfileApiVerified'])
+                loader.assert_called_once_with('kernel32', use_last_error=True)
+                self.assertEqual(read.args, (b'T6CONFIG', -1, b'absolute-config-path'))
+                for key, value in ((b'15765StartDetect', 1), (b'15765StartDetect', 0xffffffff), (b'SN', 99999)):
+                    read.values = {b'15765StartDetect': 0, b'SN': 10001}; read.values[key] = value
+                    with self.assertRaisesRegex(ElmError, 'effective-config-mismatch'):
+                        pt3g.verify_windows_config(root)
+
     def test_injected_discovery_never_loads_either_native_driver(self):
         with patch('scripts.diagnostics.connection.windows_serial_rows', return_value=([], None)), \
                 patch('scripts.diagnostics.connection.windows_bluetooth_rows', return_value=([], None)), \
@@ -86,7 +109,8 @@ class Pt3gTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as scratch:
             root = Path(scratch)
             manifest = {}
-            for name, content in [('PDU_VCI.dll', b'fixture'), ('PDU_VCI.ini', b'15765StartDetect=0\n')]:
+            for name, content in [('PDU_VCI.dll', b'fixture'), ('PDU_VCI.ini', b'15765StartDetect=0\n'),
+                                  (pt3g.ACTIVE_CONFIG, b'15765StartDetect=0\n')]:
                 (root / name).write_bytes(content)
                 manifest[name] = hashlib.sha256(content).hexdigest()
             with patch.object(pt3g, 'SUPPORT_SHA256', manifest):
@@ -102,6 +126,23 @@ class Pt3gTests(unittest.TestCase):
                 (root / 'PDU_VCI.ini').write_bytes(b'changed')
                 with self.assertRaisesRegex(ElmError, 'support-not-qualified'): pt3g.verify_vendor_files(root)
 
+    def test_active_config_is_required_and_cannot_hide_behind_legacy_zero(self):
+        with tempfile.TemporaryDirectory() as scratch:
+            root = Path(scratch)
+            (root / 'PDU_VCI.ini').write_bytes(b'15765StartDetect=0\n')
+            manifest = {name: hashlib.sha256(b'15765StartDetect=0\n').hexdigest()
+                        for name in ('PDU_VCI.ini', pt3g.ACTIVE_CONFIG)}
+            with patch.object(pt3g, 'SUPPORT_SHA256', manifest):
+                with self.assertRaisesRegex(ElmError, 'support-missing:' + pt3g.ACTIVE_CONFIG):
+                    pt3g.verify_vendor_files(root)
+                (root / pt3g.ACTIVE_CONFIG).write_bytes(b'15765StartDetect=1\n')
+                with self.assertRaisesRegex(ElmError, 'support-not-qualified:' + pt3g.ACTIVE_CONFIG):
+                    pt3g.verify_vendor_files(root)
+                # Even a source manifest accepting this fixture cannot allow detection.
+                manifest[pt3g.ACTIVE_CONFIG] = hashlib.sha256((root / pt3g.ACTIVE_CONFIG).read_bytes()).hexdigest()
+                with self.assertRaisesRegex(ElmError, 'detection-not-disabled:' + pt3g.ACTIVE_CONFIG):
+                    pt3g.verify_vendor_files(root)
+
     def test_native_guard_rejects_links_and_non_voltage_ioctls(self):
         native = pt3g.NativeAdapter.__new__(pt3g.NativeAdapter)
         native._allowed = {'PDUGetObjectId', 'PDUIoCtl'}
@@ -116,6 +157,7 @@ class Pt3gTests(unittest.TestCase):
     def test_cleanup_failure_is_reported_and_discovery_does_not_connect(self):
         native = FakeNative(errors=['native release failed'])
         with patch.object(pt3g, 'NativeAdapter', return_value=native), \
+                patch.object(pt3g.sys, 'platform', 'win32'), \
                 patch.object(pt3g.Path, 'is_file', return_value=True):
             with self.assertRaisesRegex(ElmError, 'discovery-cleanup-failed'): pt3g.discover()
         self.assertEqual(native.connected, [])
@@ -127,6 +169,31 @@ class Pt3gTests(unittest.TestCase):
         self.assertEqual(code, 1)
         docs = [json.loads(line) for line in output.getvalue().splitlines()]
         self.assertEqual(docs[-1]['error'], 'pt3g-cleanup-failed')
+
+    def test_adapter_client_preserves_first_close_failure_and_blocks_validation(self):
+        native = FakeNative(errors=['SYNTHETIC native release failed'])
+        client = pt3g.AdapterClient(ID, native=native)
+        first = client.close_restore(); first['errors'].clear()
+        native.errors.clear()
+        self.assertEqual(client.close_restore()['errors'], ['SYNTHETIC native release failed'])
+        self.assertEqual(native.closed, 1)
+        with self.assertRaisesRegex(ElmError, 'adapter-closed'):
+            client.validate_adapter()
+        self.assertEqual(native.connected, [])
+
+    def test_adapter_client_close_exception_or_invalid_report_stays_failed_on_retry(self):
+        for result in (None, {}, {'errors': None}, {'errors': [None]}, {'errors': 'failed'}, OSError('SYNTHETIC close failed')):
+            with self.subTest(result=result):
+                native = FakeNative()
+                def close():
+                    native.closed += 1
+                    if isinstance(result, Exception): raise result
+                    return result
+                native.close = close
+                client = pt3g.AdapterClient(ID, native=native)
+                first = client.close_restore()
+                self.assertTrue(first['errors']); self.assertEqual(client.close_restore(), first)
+                self.assertEqual(native.closed, 1)
 
     def test_vehicle_read_clear_and_engine_rejected_without_opening_a_port(self):
         with tempfile.TemporaryDirectory() as scratch, patch.dict('os.environ', {}, clear=True), \

@@ -8,6 +8,7 @@ import { CodingGuidePanel } from "./CodingGuidePanel";
 import { CodingMenuDetail } from "./CodingMenuDetail";
 import { PiwisWorkshopPage } from "./PiwisWorkshopPage";
 import { DiagnosticPreparationPanel } from "../obd/DiagnosticPreparationPanel";
+import { obdFunctionLabel } from "../obd/function-label";
 import "../coding-workspace.css";
 
 const systems = CODING_SYSTEMS.filter((system) => WORKSPACE_ENTRIES.some((entry) => entry.systemIds.includes(system.id)));
@@ -47,7 +48,7 @@ export function CodingPage({ initialSystemId = "" }: { initialSystemId?: string 
         <div className={system && functions.length ? "coding-functions-layout" : ""}>
           {system && functions.length > 0 && <section className="panel coding-function-list" aria-label="系统功能列表">
             {functions.map((f) => <button type="button" key={f.id} data-coding-function={f.id} data-coding-source-ids={(f.sourceIds ?? [f.id]).join(" ")} aria-pressed={active?.id === f.id}
-              className={`coding-function${active?.id === f.id ? " active" : ""}`} onClick={() => setActiveId(f.id)}><strong>{f.name}</strong><span>{f.families}</span><small>{f.source}{f.systemIds.length > 1 ? " · 跨系统完整流程" : ""}</small></button>)}
+              className={`coding-function${active?.id === f.id ? " active" : ""}`} onClick={() => setActiveId(f.id)}><strong>{obdFunctionLabel(f.name, false)}</strong><span>{f.families}</span><small>{f.source}{f.systemIds.length > 1 ? " · 跨系统完整流程" : ""}</small></button>)}
           </section>}
           <div className="coding-function-detail">
             {active?.menu && <CodingMenuDetail key={`menu-${active.id}`} entry={active.menu} archive={active.archive} />}

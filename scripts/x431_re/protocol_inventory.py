@@ -10,6 +10,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 if not __package__:
+    sys.path.insert(0, str(HERE.parents[1]))
     sys.path.insert(0, str(HERE))
 
 try:
@@ -481,9 +482,9 @@ def sys_clear_rows(sys_rec: dict | None) -> list[dict]:
 def _prefer_sys_row(ecu_id: int, rows: list[dict]) -> dict | None:
     prefer = {1: EU5, 9: GW_A71}.get(ecu_id)
     if prefer:
-        hit = next((r for r in rows if r.get("name") == prefer), None)
-        if hit:
-            return hit
+        matches = [r for r in rows if r.get("name") == prefer]
+        if len(matches) == 1:
+            return matches[0]
     return None
 
 
@@ -498,7 +499,8 @@ def group_services(ecu_id: int, variants: list[dict], cat_p: dict | None, sys_re
     picked_clear = None
     if sys_clear:
         prefer = {1: EU5, 9: GW_A71}.get(ecu_id)
-        picked_clear = next((r for r in sys_clear if r.get("name") == prefer), None) if prefer else None
+        matches = [r for r in sys_clear if r.get("name") == prefer] if prefer else []
+        picked_clear = matches[0] if len(matches) == 1 else None
     dtc_obs = None
     if ecu_id == 1 and "dme-dtc" in ops:
         dtc_obs = {

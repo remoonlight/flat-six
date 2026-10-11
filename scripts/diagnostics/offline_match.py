@@ -444,7 +444,8 @@ def analyze(output: Path, *, variants_path=DEFAULT_VARIANTS, analysis=DEFAULT_AN
                 if unit["ecuId"] == ecu_id:
                     addresses.update({module: tx for module in unit["dsnModules"]})
     with variants_path.open(encoding="utf-8") as source:
-        variants = [json.loads(line) for line in source]
+        from scripts.x431_re.request_fields import coding_profile_variant
+        variants = [coding_profile_variant(json.loads(line)) for line in source]
     selectors = selector_candidates(variants, groups, DSN_PATH.read_bytes(), addresses)
     by_module = defaultdict(list)
     for group in registry:

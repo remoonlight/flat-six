@@ -1,6 +1,14 @@
 import fs from "node:fs";
 import path from "node:path";
 
+export function definitionLibraryRoot(userData, platform = process.platform) {
+  // Python's Windows file APIs need the extended path form when the OS's
+  // global long-path setting is off. Keep this local to our private library.
+  return platform === "win32"
+    ? path.win32.toNamespacedPath(path.win32.join(userData, "diagnostic-library"))
+    : path.posix.join(userData, "diagnostic-library");
+}
+
 // Unpacked Windows delivery has its own Node/Python and writable definitions.
 // No development checkout, global PATH or private captures are required.
 export function installedRuntime({ packaged, repoRoot, userData, env = process.env }) {
@@ -8,7 +16,7 @@ export function installedRuntime({ packaged, repoRoot, userData, env = process.e
   const node = path.join(repoRoot, "runtime", "node.exe");
   const python = path.join(repoRoot, "runtime", "python", "python.exe");
   for (const file of [node, python]) if (!fs.existsSync(file)) throw new Error(`installed-runtime-missing:${path.basename(file)}`);
-  const definitionsRoot = path.join(userData, "diagnostic-library");
+  const definitionsRoot = definitionLibraryRoot(userData);
   const seed = path.join(repoRoot, "data", "seed", "diagnostics");
   if (fs.existsSync(seed)) {
     fs.mkdirSync(path.join(definitionsRoot, "data", "seed"), { recursive: true });

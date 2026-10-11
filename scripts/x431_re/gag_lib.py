@@ -4,7 +4,7 @@ from __future__ import annotations
 import hashlib
 import re
 from dataclasses import dataclass
-from functools import lru_cache
+from collections import OrderedDict
 from pathlib import Path
 
 try:
@@ -105,6 +105,7 @@ class GgpLanguage:
         self.ggp_sha256 = sha256_path(self.path)
         self.info = parse_header(self.raw)
         self.files: dict[str, GagFile] = {}
+        self._lookup_cache = OrderedDict()
         for e in self.info["entries"]:
             blob = self.raw[e["offset"] : e["offset"] + e["size"]]
             st = parse_text_gag(blob)
@@ -144,10 +145,17 @@ class GgpLanguage:
         }
 
     def lookup_id(self, gag_name: str, id_u32: int) -> dict | None:
-        return self._lookup_id_cached(gag_name, id_u32)
+        key = (gag_name, id_u32)
+        if key in self._lookup_cache:
+            result = self._lookup_cache.pop(key)
+        else:
+            result = self._lookup_id_uncached(gag_name, id_u32)
+        self._lookup_cache[key] = result
+        if len(self._lookup_cache) > 200000:
+            self._lookup_cache.popitem(last=False)
+        return result
 
-    @lru_cache(maxsize=200000)
-    def _lookup_id_cached(self, gag_name: str, id_u32: int) -> dict | None:
+    def _lookup_id_uncached(self, gag_name: str, id_u32: int) -> dict | None:
         gf = self.files[gag_name]
         needle = bytearray(id_u32.to_bytes(4, "big"))
         encrypt_number_strict(needle, gf.st["ctx"])
@@ -190,4 +198,3 @@ def compact_express(row: dict | None) -> dict | None:
     if st.get("express"):
         out["express"] = st["express"]
     return out
-

@@ -8,15 +8,18 @@ import { spawnSync } from "node:child_process";
 import { waitForIpc } from "./obd-accept-helpers.mjs";
 import { resolvePythonCandidates } from "../apps/desktop/electron/offline-diagnostics.mjs";
 
-const root = path.resolve(import.meta.dirname, "..");
+const root = path.resolve(process.env.PORSCHE981_ACCEPT_APP_ROOT || path.join(import.meta.dirname, ".."));
 const durationMs = Number(process.argv[2] || 120000);
-assert.ok(Number.isInteger(durationMs) && durationMs >= 10000 && durationMs <= 3600000, "10 s–1 h bounded duration");
-const base = path.join(root, ".local/obd-precar-followup-20261005"); fs.mkdirSync(base, { recursive: true });
+assert.ok(Number.isInteger(durationMs) && durationMs >= 10000 && durationMs <= 300000, "10 s–5 min receive phase leaves time for recovery/save checks within the ten-minute batch");
+const base = path.resolve(process.env.PORSCHE981_ACCEPT_OUTPUT || path.join(root, ".local/obd-precar-followup-20261005")); fs.mkdirSync(base, { recursive: true });
 const output = fs.mkdtempSync(path.join(base, "desktop-soak-"));
 console.log(JSON.stringify({ phase: "started", output, soakRequestedMs: durationMs, synthetic: true }));
 const fixture = path.join(output, "devices.json"); fs.writeFileSync(fixture, '{"devices":[],"errors":[]}');
 const env = { ...process.env, PORSCHE981_HEADLESS: "1", PORSCHE981_OBD_SMOKE: "1", PORSCHE981_SESSION_DENY_LIVE: "1",
+  PYTHONDONTWRITEBYTECODE: "1",
   PORSCHE981_DB: path.join(output, "isolated.db"), PORSCHE981_CONNECTION_FIXTURE: fixture,
+  PORSCHE981_USER_DATA: path.join(output, "user-data"), PORSCHE981_LOCAL_ROOT: path.join(output, "local-assets"),
+  PORSCHE981_CAN_CAPTURE_ROOT: path.join(output, "raw-captures"),
   PORSCHE981_CONNECTION_STATE: path.join(output, "unused-connection.json"),
   PORSCHE981_SESSION_ARTIFACT_ROOT: path.join(output, "transient-sessions") };
 delete env.ELECTRON_RUN_AS_NODE; delete env.VITE_DEV_SERVER_URL;
@@ -55,7 +58,7 @@ function checkPcap(file, expectedCount) {
   } finally { fs.closeSync(fd); }
 }
 try {
-  app = await electron.launch({ args: [path.join(root, "apps/desktop")], env, timeout: 30000 });
+  app = await electron.launch({ args: [process.env.PORSCHE981_ACCEPT_APP_ROOT ? path.join(root, "apps/desktop/electron/main.mjs") : path.join(root, "apps/desktop")], env, timeout: 30000 });
   const page = await app.firstWindow(); page.setDefaultTimeout(20000); page.on("pageerror", (e) => errors.push(e.message));
   await app.evaluate(async ({ ipcMain }, args) => {
     const vm = process.getBuiltinModule("vm"), fs = process.getBuiltinModule("fs"), cp = process.getBuiltinModule("child_process");
@@ -63,9 +66,11 @@ try {
       `import(${JSON.stringify(args.module)})`, { importModuleDynamically: vm.constants.USE_MAIN_CONTEXT_DEFAULT_LOADER });
     const { createCanPcapWriter } = await vm.runInThisContext(
       `import(${JSON.stringify(args.writerModule)})`, { importModuleDynamically: vm.constants.USE_MAIN_CONTEXT_DEFAULT_LOADER });
+    const { saveInternalCanRecording } = await vm.runInThisContext(
+      `import(${JSON.stringify(args.saveModule)})`, { importModuleDynamically: vm.constants.USE_MAIN_CONTEXT_DEFAULT_LOADER });
     const device = { id: "bt:AABBCCDDEEFF", brand: "OBDLink MX+", label: "SYNTHETIC BytePort", available: true, paired: true };
-    let saveFails = false, recordingFails = false, recordingNumber = 0;
-    const mgr = createObdConnectionManager({ repoRoot: args.root,
+    let saveFails = false, recordingFails = false, recordingNumber = 0, clockOffset = 0;
+    const mgr = createObdConnectionManager({ repoRoot: args.root, elapsedNow: () => performance.now() + clockOffset,
       env: { ...process.env, PORSCHE981_CONNECTION_STATE: args.output + "/connection.json" },
       listFn: async () => ({ devices: [device] }), retryDelayMs: () => 100,
       chooseRecordingFile: async () => args.output + `/SYNTHETIC-${++recordingNumber}.pcapng`,
@@ -80,16 +85,21 @@ try {
       },
       saveResult: async (data) => {
         if (saveFails) return { ok: false, error: "synthetic-write-denied" };
-        fs.writeFileSync(args.output + "/explicit-result.json", JSON.stringify({ ...data, syntheticAcceptance: true }));
-        return { ok: true, saved: true };
+        return saveInternalCanRecording({ ...data, syntheticAcceptance: true }, {
+          dialog: { showSaveDialog: async () => ({ canceled: false, filePath: args.output + "/explicit-result.json" }) },
+          openFile: fs.promises.open,
+        });
       },
       onMonitorEvent: (event) => fs.appendFileSync(args.output + "/lifecycle.jsonl", JSON.stringify(event) + "\n"),
       monitorSpawnFn: (_exe, _argv, opts) => cp.spawn(args.python.exe,
-        [...args.python.prefix, "-m", "scripts.diagnostics.tests.precar_stream_worker", args.output], opts) });
-    globalThis.__soak = { mgr, failSave: (value) => { saveFails = value; }, failRecording: (value) => { recordingFails = value; } };
+        [...args.python.prefix, "-B", args.fixtureWorker, args.output], { ...opts, env: { ...opts.env, PYTHONPATH: args.root } }) });
+    globalThis.__soak = { mgr, failSave: (value) => { saveFails = value; }, failRecording: (value) => { recordingFails = value; },
+      expireBatch: () => { clockOffset += 600000; return mgr.snapshot(); } };
     ipcMain.removeHandler(CONNECTION_CHANNEL); ipcMain.handle(CONNECTION_CHANNEL, (_event, request) => mgr.handle(request));
-  }, { root, output, python, module: pathToFileURL(path.join(root, "apps/desktop/electron/obd-connection.mjs")).href,
-    writerModule: pathToFileURL(path.join(root, "apps/desktop/electron/internal-can-data.mjs")).href });
+  }, { root, output, python, fixtureWorker: path.join(import.meta.dirname, "diagnostics/tests/precar_stream_worker.py"),
+    module: pathToFileURL(path.join(root, "apps/desktop/electron/obd-connection.mjs")).href,
+    writerModule: pathToFileURL(path.join(root, "apps/desktop/electron/internal-can-data.mjs")).href,
+    saveModule: pathToFileURL(path.join(root, "apps/desktop/electron/recording-files.mjs")).href });
   await page.locator('nav.side button[data-tab="obd"]').click();
   await page.locator('[data-obd-tab="connection"]').click();
   await page.getByTestId("obd-conn-refresh").click(); await page.locator('input[name="obd-device"]').check();
@@ -97,12 +107,14 @@ try {
   await waitForIpc(page, async () => (await window.porsche981.obdConnection({ action: "status" })).connected);
   await page.locator('[data-obd-tab="live"]').click(); await page.getByTestId("internal-can-panel").waitFor();
   assert.equal(fs.existsSync(path.join(output, "explicit-result.json")), false);
-  await page.getByTestId("internal-record-start").click();
+  assert.equal((await page.evaluate(() => window.porsche981.obdConnection({ action: "record-start" }))).ok, true);
   const started = Date.now();
   while (Date.now() - started < durationMs) {
     const state = await page.evaluate(() => window.porsche981.obdConnection({ action: "status" }));
     assert.equal(state.connected, true, JSON.stringify(state.monitorDiagnostics));
-    assert.ok(state.internal.retainedFrames <= 25000 && state.internal.latest.length <= 256);
+    assert.equal(state.internal.retainedFrames, state.internal.frameCount);
+    assert.equal(state.internal.frameLimit, null);
+    assert.ok(state.internal.latest.length <= 256);
     const memory = await app.evaluate(() => process.memoryUsage());
     const processes = await app.evaluate(({ app }) => app.getAppMetrics().map((metric) => ({
       type: metric.type, workingSetBytes: metric.memory.workingSetSize * 1024,
@@ -129,29 +141,38 @@ try {
     await waitForIpc(page, async (count) => (await window.porsche981.obdConnection({ action: "status" })).internal.frameCount > count,
       before.internal.frameCount);
   }
-  await waitForIpc(page, async () => (await window.porsche981.obdConnection({ action: "status" })).internal.retainedFrames === 25000);
+  await waitForIpc(page, async () => (await window.porsche981.obdConnection({ action: "status" })).internal.retainedFrames > 25000);
+  const expired = await app.evaluate(() => globalThis.__soak.expireBatch());
+  assert.equal(expired.internal.stopReason, "time-limit");
+  await waitForIpc(page, async () => (await window.porsche981.obdConnection({ action: "status" })).internal.receiveState === "standby");
+  const fullCount = expired.internal.retainedFrames;
+  assert.ok(fullCount > 25000);
+  assert.equal(expired.internal.frameCount, fullCount);
   await app.evaluate(() => globalThis.__soak.failSave(true));
   await page.getByTestId("internal-save").click();
   await page.getByTestId("internal-can-panel").getByText("保存失败：synthetic-write-denied", { exact: true }).waitFor();
   const retained = await page.evaluate(() => window.porsche981.obdConnection({ action: "status" }));
-  assert.equal(retained.internal.retainedFrames, 25000, "failed save retains full batch");
+  assert.equal(retained.internal.retainedFrames, fullCount, "failed save retains full batch after deadline");
+  assert.equal(retained.connected, true, "time limit retains the adapter connection");
   await app.evaluate(() => globalThis.__soak.failSave(false)); await page.getByTestId("internal-save").click();
   await page.waitForFunction(() => document.querySelector('[data-testid="internal-can-panel"]').textContent.includes("已保存本批结果"));
   const saved = JSON.parse(fs.readFileSync(path.join(output, "explicit-result.json"), "utf8"));
-  assert.equal(saved.frames.length, 25000); assert.equal(saved.physicalSilenceVerified, false);
+  assert.equal(saved.frames.length, fullCount); assert.equal(saved.receivedTotal, fullCount);
+  assert.equal(saved.stopReason, "time-limit"); assert.equal(saved.physicalSilenceVerified, false);
   assert.ok(saved.frames.every((frame) => frame.canId === Number(BigInt("0x" + frame.dataHex) % 512n)));
   await page.getByTestId("internal-new-batch").click();
   await waitForIpc(page, async () => {
     const state = await window.porsche981.obdConnection({ action: "status" });
     return state.internal.frameCount > 0 && state.internal.frameCount < 25000;
   });
-  await page.getByTestId("internal-record-stop").click();
   await waitForIpc(page, async () => (await window.porsche981.obdConnection({ action: "status" })).recording?.active === false);
   const end = await page.evaluate(() => window.porsche981.obdConnection({ action: "status" }));
   assert.equal(end.recording.active, false); assert.equal(end.recording.error, undefined);
+  assert.equal(end.recording.reason, "time-limit", "deadline already closed the recording before the manual next batch");
+  assert.equal(await page.getByTestId("internal-record-stop").count(), 0);
   const capture = checkPcap(path.join(output, "SYNTHETIC-1.pcapng"), end.recording.frameCount);
   await app.evaluate(() => globalThis.__soak.failRecording(true));
-  await page.getByTestId("internal-record-start").click();
+  assert.equal((await page.evaluate(() => window.porsche981.obdConnection({ action: "record-start" }))).ok, true);
   await waitForIpc(page, async () => (await window.porsche981.obdConnection({ action: "status" })).recording?.error === "ENOSPC");
   const failedRecording = await page.evaluate(() => window.porsche981.obdConnection({ action: "status" }));
   assert.equal(failedRecording.connected, true); assert.equal(failedRecording.recording.active, false);
@@ -165,6 +186,8 @@ try {
   const workerReports = fs.readdirSync(output).filter((name) => /^worker-\d+\.json$/.test(name)).map((name) => JSON.parse(fs.readFileSync(path.join(output, name))));
   assert.ok(workerReports.length >= 2);
   assert.ok(workerReports.every((report) => report.closed && report.serialOpens === 0 && report.ecuRequestsSent === 0));
+  assert.ok(workerReports.every(report => path.resolve(report.productionInternalStreamPath) === path.join(root, "scripts/diagnostics/internal_stream.py")
+    && path.resolve(report.productionCanMonitorPath) === path.join(root, "scripts/diagnostics/can_monitor.py")), "worker uses the selected source/delivery production modules");
   // Real Python standard-data sessions plus UI cancellation and complete explicit save.
   await page.getByTestId("obd-purpose-diagnostic").check(); await page.locator('[data-obd-tab="live"]').click();
   await page.getByTestId("eng-system").selectOption("dme"); await page.getByTestId("eng-select-0C").check();
@@ -182,7 +205,8 @@ try {
   fs.writeFileSync(path.join(output, "result.json"), JSON.stringify({ ok: true, synthetic: true,
     vehicleVerified: false, physicalSilenceVerified: false, actualOsSleepTested: false,
     durationMs: Date.now() - started, soakRequestedMs: durationMs, pageSwitches: samples.length * 2,
-    samples, capture, monitorDiagnostics: closed.monitorDiagnostics, standardSamples: engine.samples.length,
+    samples, capture, internalSavedFrames: fullCount, internalResultBytes: fs.statSync(path.join(output, "explicit-result.json")).size,
+    injectedDeadline: true, monitorDiagnostics: closed.monitorDiagnostics, standardSamples: engine.samples.length,
     workerReports, errors }, null, 2));
   console.log(JSON.stringify({ ok: true, output, soakRequestedMs: durationMs, capture, standardSamples: engine.samples.length }));
 } catch (error) {

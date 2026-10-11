@@ -1,11 +1,46 @@
 from copy import deepcopy
+import hashlib
+import json
+from pathlib import Path
+import tempfile
 import unittest
+from unittest.mock import patch
 
-from scripts.diagnostics.coverage_readiness import function_rows
+from scripts.diagnostics.coverage_readiness import function_rows, build
+from scripts.diagnostics.historical_coverage import HistoricalCoverage
 from scripts.diagnostics.tests.test_realtime_preparation import field
 
 
 class CoverageReadinessTests(unittest.TestCase):
+    def test_selected_variants_are_rechecked_instead_of_missing_default_source(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp).resolve(); variants = root / 'selected.jsonl'
+            variants.write_text(json.dumps(self.variant()) + '\n')
+            coverage = root / 'coverage.json'
+            coverage.write_text(json.dumps({'menu_ecus': [{'ecu_id': 1, 'dsn_modules': ['test']}]}))
+            language = root / 'language'; language.write_bytes(b'fixture-only')
+            verified = []
+            def verify(path, expected=None):
+                path = Path(path); verified.append(path)
+                data = path.read_bytes()
+                return {'path': str(path.resolve()), 'sha256': hashlib.sha256(data).hexdigest(), 'bytes': len(data)}
+            with patch('scripts.diagnostics.coverage_readiness.ROOT', root), \
+                    patch('scripts.diagnostics.coverage_readiness.DEFAULT_VARIANTS', root / 'missing-default'), \
+                    patch('scripts.diagnostics.coverage_readiness.DEFAULT_COVERAGE', coverage), \
+                    patch('scripts.diagnostics.coverage_readiness.GGP_PATH', language), \
+                    patch('scripts.diagnostics.coverage_readiness.GgpLanguage') as words, \
+                    patch('scripts.diagnostics.coverage_readiness.verify_source', side_effect=verify), \
+                    patch('scripts.diagnostics.coverage_readiness.validate_bundle') as validate, \
+                    patch('scripts.diagnostics.coverage_readiness.HistoricalCoverage.load', return_value=HistoricalCoverage([], [])):
+                words.return_value.lookup_id.return_value = None
+                result = build(root / '.local/matrix', variants=variants, bundle=root / 'explicit-bundle',
+                               match=root / 'explicit-match')
+            self.assertTrue(result['noDeviceIO'])
+            self.assertFalse(result['coverageComplete'])
+            self.assertEqual(verified.count(variants), 2)
+            self.assertNotIn(root / 'missing-default', verified)
+            validate.assert_called_once_with(root / 'explicit-bundle')
+
     def variant(self):
         records = [dict(field('a'), at=10), dict(field('b', offset=1), at=20)]
         return {'profile_id': '9x1:test', 'module': 'test', 'name': 'shared', 'generation': '9x1',

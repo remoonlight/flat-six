@@ -140,6 +140,21 @@ class TestNormalize(unittest.TestCase):
         self.assertEqual(request_from_record(rec)["reason"], "no_read_candidate")
 
 
+class RequestMetadataBindingTests(unittest.TestCase):
+    def test_wire_schema_does_not_hide_conflicting_pid_or_read_sid(self):
+        for metadata,reason in (({'pid':0xF188},'pid_mismatch'),({'pid':True},'malformed_pid'),({'readSID':0x21},'read_sid_payload_mismatch'),({'readSID':True},'malformed_read_sid'),({'rawSID':0x2E},'unsupported_raw_read_sid'),({'rawSID':0x21},'raw-wire-sid-inconsistent'),({'rawSID':'34'},'malformed_read_sid')):
+            with self.subTest(metadata=metadata):self.assertEqual(request_from_record(_rec22(**metadata))['reason'],reason)
+
+    def test_declared_candidates_must_all_agree_and_malformed_primary_not_repaired(self):
+        for change,reason in (({'read_request_candidate_hex':'22F188'},'read_candidate_conflict'),({'requestHex':'22F188'},'read_candidate_conflict'),({'read_request_candidate_hex':'garbage'},'malformed_read_candidate'),({'disabledreadrequestcandidate':{'payload_hex':'garbage'},'read_request_candidate_hex':'22F187'},'malformed_read_candidate')):
+            with self.subTest(change=change):self.assertEqual(request_from_record(_rec22(**change))['reason'],reason)
+
+    def test_consistent_redundant_metadata_and_explicit_source_alias_preserved(self):
+        record=_rec22(rawSID=0x31,readSID=0x22,pid=0xF187,read_request_candidate_hex='22f187',requestHex='22 F1 87')
+        result=request_from_record(record);self.assertTrue(result['ok']);self.assertTrue(result['alias31to22'])
+        self.assertEqual(result['request'],bytes.fromhex('22F187'))
+
+
 @unittest.skipUnless(DEFAULT_VARIANTS.is_file(), "variants.jsonl absent")
 class TestEu5SyntheticPdu(unittest.TestCase):
     def test_real_eu5_record_synthetic_positive_prefix(self):

@@ -14,6 +14,7 @@ from .qualification import ECU_TO_CATALOG, capture_observed_ecu_ids_981, catalog
 from .response_values import data_span, request_from_record
 from .x431_formula import formula_from_record
 from . import x431_values
+from scripts.x431_re.request_fields import coding_profile_variant
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DATA_ROOT = Path(os.environ.get('PORSCHE981_DEFINITION_ROOT') or REPO_ROOT)
@@ -82,7 +83,7 @@ def find_variant(variants_path: Path, profile_id: str) -> dict | None:
                 continue
             o = json.loads(line)
             if o.get("profile_id") == profile_id:
-                return o
+                return coding_profile_variant(o)
     return None
 
 
