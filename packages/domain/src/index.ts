@@ -296,6 +296,7 @@ export {
   resolveBodyPaintPbr,
   resolveInteriorCode,
   resolveInteriorHex,
+  resolveInteriorAppearance,
   resolvePaintCode,
   resolvePaintOemCode,
   resolveSoftTopHex,
@@ -306,6 +307,7 @@ export {
   type SpecColor,
   type TopOption,
   type InteriorOption,
+  type InteriorAppearance,
 } from "./vehicle-paint.js";
 
 export * from './coding-guide.js';

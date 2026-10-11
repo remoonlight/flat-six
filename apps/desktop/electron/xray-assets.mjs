@@ -61,6 +61,7 @@ function absForRel(rel) {
   if (
     !normalized.startsWith("cms-rip/") &&
     !normalized.startsWith("flat-six/") &&
+    !normalized.startsWith("garage-models/") &&
     !normalized.startsWith("petka-models/")
   ) {
     throw new Error("xray_rel_root");
@@ -198,12 +199,17 @@ function sceneFromSeed(seed) {
 
   let bodyShell = null;
   if (seed.bodyShell?.rel) {
-    const { abs, normalized } = absForRel(seed.bodyShell.rel);
+    let { abs, normalized } = absForRel(seed.bodyShell.rel);
+    let attribution = seed.bodyShell.attribution || null;
+    if (!fs.existsSync(abs) && seed.bodyShell.fallbackRel) {
+      ({ abs, normalized } = absForRel(seed.bodyShell.fallbackRel));
+      attribution = seed.bodyShell.fallbackAttribution || null;
+    }
     const present = fs.existsSync(abs);
     bodyShell = {
       rel: normalized,
       opacity: Number(seed.bodyShell.opacity ?? 0.16),
-      attribution: seed.bodyShell.attribution || null,
+      attribution,
       present,
       bytes: present ? fs.statSync(abs).size : 0,
       transform: transforms.layers.body || null,

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "note": "per-mesh TRS/visible; layer × mesh; do not commit",
+  "note": "Bundled garage placement/visibility snapshot; copied only when the local state is missing.",
   "layers": {
     "engine": {
       "visible": false,
@@ -134,9 +134,9 @@
           "visible": true,
           "transform": {
             "position": [
-              0,
-              0,
-              0
+              0.005766039569940715,
+              -8.077935850019097e-28,
+              3.469447029501798e-18
             ],
             "rotationEuler": [
               0,
@@ -551,6 +551,46 @@
           }
         },
         "W2__1529b39_dds_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "SM_SoftTop_0000001_MAT_SoftTop_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "SM_Interior_0000003_MAT_Details_MAT130_0": {
           "visible": true,
           "transform": {
             "position": [
@@ -10322,6 +10362,91 @@
             "rotationEuler": [
               0,
               0.07453727544970619,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        }
+      }
+    },
+    "garage-primary": {
+      "visible": true,
+      "meshes": {
+        "Exterior__soft-top__SM_SoftTop_0000001_MAT_SoftTop_0": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "Cabin__liner__718__GEO_Chassis_SUB5": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "Cabin__liner__981__pdkPaddleDownshift__L": {
+          "visible": true,
+          "transform": {
+            "position": [
+              -0.014133603330033107,
+              0.021242529711124836,
+              -0.026971516272122187
+            ],
+            "rotationEuler": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        "Cabin__liner__981__pdkPaddleUpshift__L": {
+          "visible": true,
+          "transform": {
+            "position": [
+              0.005995792782981901,
+              0.02269373961960941,
+              -0.03607729129084186
+            ],
+            "rotationEuler": [
+              0,
+              0,
               0
             ],
             "scale": [

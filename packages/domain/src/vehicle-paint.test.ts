@@ -10,6 +10,7 @@ import {
   resolveBodyPaintPbr,
   resolveInteriorCode,
   resolveInteriorHex,
+  resolveInteriorAppearance,
   resolvePaintCode,
   resolvePaintOemCode,
   resolveSoftTopHex,
@@ -19,6 +20,27 @@ import {
 } from "./vehicle-paint.js";
 
 describe("vehicle-paint", () => {
+  it("keeps two-tone upholstery regions distinct, including legacy settings", () => {
+    const full = resolveInteriorAppearance("970-BX");
+    expect(full.code).toBe("GNG");
+    expect(full.layout).toBe("two-tone");
+    expect(full.primaryHex).not.toBe(full.secondaryHex);
+    expect(resolveInteriorAppearance("GNJ").layout).toBe("package");
+    const beige = resolveInteriorAppearance("DTO");
+    expect(beige.primaryHex).toBe(resolveInteriorAppearance("A11").primaryHex);
+    expect(beige.secondaryHex).toBe(resolveInteriorAppearance("7J0").primaryHex);
+    expect(beige.carpetHex).toBe(beige.secondaryHex);
+  });
+
+  it("uses Alcantara with contrasting stitches for GTS, rather than red or silver upholstery", () => {
+    const red = resolveInteriorAppearance("DSN"), silver = resolveInteriorAppearance("DJS");
+    expect(red.upholstery).toBe("alcantara");
+    expect(red.primaryHex).toBe(silver.primaryHex);
+    expect(red.secondaryHex).toBe(red.primaryHex);
+    expect(red.stitchHex).not.toBe(silver.stitchHex);
+    expect(resolveInteriorAppearance("DK4").upholstery).toBe("leatherette");
+    expect(resolveInteriorAppearance("A11").upholstery).toBe("leather");
+  });
   it("brochure paint + PET interior counts", () => {
     expect(PAINT_OPTIONS.filter((p) => p.group === "solid")).toHaveLength(4);
     expect(PAINT_OPTIONS.filter((p) => p.group === "metallic")).toHaveLength(8);
@@ -80,8 +102,8 @@ describe("vehicle-paint", () => {
     expect(resolveBodyPaintFinish("Agate Grey Metallic")).toBe("metallic");
     expect(resolveBodyPaintFinish("Carmine Red")).toBe("special");
     expect(resolveBodyPaintPbr("Guards Red")).toEqual({
-      metalness: 0.08,
-      roughness: 0.42,
+      metalness: 0,
+      roughness: 0.3,
     });
     expect(resolveBodyPaintPbr("Agate Grey Metallic").metalness).toBeGreaterThan(
       0.5,

@@ -4,6 +4,8 @@
 node_modules/
 dist/
 out/
+.next-launcher/
+/next-env.d.ts
 *.log
 .DS_Store
 *.db
@@ -16,6 +18,11 @@ release/
 !.local/flat-six/**
 !.local/petka-models/
 !.local/petka-models/**
+# Explicit 2026-10-11 user request: publish the current garage model and portable provenance.
+!.local/garage-models/
+.local/garage-models/*
+!.local/garage-models/boxster-primary.glb
+!.local/garage-models/boxster-primary.manifest.json
 apps/desktop/dist-electron/
 apps/desktop/dist/
 packages/*/dist/

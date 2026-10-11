@@ -241,7 +241,7 @@ export function resolveBodyPaintHex(
 /** Exterior brochure finish bucket (for 3D PBR). */
 export type BodyPaintFinish = "solid" | "metallic" | "special";
 
-/** Three.js-ish car-paint PBR; not a lab measurement. */
+/** Visual basecoat parameters; viewer adds clearcoat. Not a lab measurement. */
 export type BodyPaintPbr = { metalness: number; roughness: number };
 
 export function resolveBodyPaintFinish(
@@ -261,12 +261,12 @@ export function resolveBodyPaintPbr(
 ): BodyPaintPbr {
   const p = paintEntry(paintName);
   const finish = resolveBodyPaintFinish(paintName);
-  if (finish === "metallic") return { metalness: 0.68, roughness: 0.28 };
+  if (finish === "metallic") return { metalness: 0.68, roughness: 0.32 };
   if (finish === "special") {
-    if (/metallic/i.test(p.en)) return { metalness: 0.62, roughness: 0.3 };
-    return { metalness: 0.12, roughness: 0.4 };
+    if (/metallic/i.test(p.en)) return { metalness: 0.62, roughness: 0.32 };
+    return { metalness: 0, roughness: 0.3 };
   }
-  return { metalness: 0.08, roughness: 0.42 };
+  return { metalness: 0, roughness: 0.3 };
 }
 
 export function resolveSoftTopHex(top: string | null | undefined): string {
@@ -289,6 +289,39 @@ export function resolveInteriorCode(
   interior: string | null | undefined,
 ): InteriorOption {
   return interiorEntry(interior).code as InteriorOption;
+}
+
+export type InteriorAppearance = {
+  code: InteriorOption;
+  layout: "solid" | "package" | "two-tone" | "gts";
+  upholstery: "leather" | "leatherette" | "alcantara";
+  primaryHex: string;
+  secondaryHex: string;
+  carpetHex: string;
+  stitchHex: string;
+};
+
+/** Brochure surface layout; colour/finish values remain screen approximations. */
+export function resolveInteriorAppearance(interior: string | null | undefined): InteriorAppearance {
+  const entry = interiorEntry(interior);
+  const code = entry.code;
+  const gts = ["DSP", "DJS", "DSN"].includes(code);
+  const twoTone = entry.group.endsWith("two_tone");
+  const packageOnly = entry.group === "leatherette_two_tone";
+  const secondary: Partial<Record<InteriorOption, string>> = {
+    GMJ: "#B7B2AA", GMG: "#B7B2AA",
+    GNJ: "#B8793B", GNG: "#B8793B",
+    GPJ: "#B7B578", GPG: "#B7B578", DTO: "#C8B8A0",
+  };
+  const primaryHex = gts ? "#141416" : twoTone ? (code === "DTO" ? "#1A1A1C" : "#5A5E64") : entry.hex;
+  return {
+    code, layout: gts ? "gts" : packageOnly ? "package" : twoTone ? "two-tone" : "solid",
+    upholstery: gts ? "alcantara" : entry.group === "leatherette" || packageOnly ? "leatherette" : "leather",
+    primaryHex, secondaryHex: secondary[code] ?? primaryHex,
+    carpetHex: code === "DTO" ? "#C8B8A0" : primaryHex,
+    // GTS red/silver is contrast stitching, not red/silver seat-centre upholstery.
+    stitchHex: code === "DSN" ? "#8A1018" : code === "DJS" ? "#C8CCD2" : primaryHex,
+  };
 }
 
 export function resolvePaintOemCode(

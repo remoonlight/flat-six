@@ -1,5 +1,5 @@
 {
-  "version": 51,
+  "version": 53,
   "note": "车库透视：机械 + 顶栏内饰·内衬(807) + 进排气(燃油+进气+碳罐) + 管路 + 车身。",
   "caveatZh": "807 仅顶栏内饰·内衬；进排气含燃油/进气/活性碳罐；管路 604 制动系统。",
   "axle": {
@@ -10,10 +10,12 @@
     "comment": "原 CMS 锚点；petka 件需手调"
   },
   "bodyShell": {
-    "rel": "flat-six/boxster-real.glb",
+    "rel": "garage-models/boxster-primary.glb",
+    "fallbackRel": "flat-six/boxster-real.glb",
+    "fallbackAttribution": "Ddiaz Design / flat-six.org (CC BY 4.0)，主模型缺失时使用原车库模型。",
     "opacity": 1,
-    "attribution": "「2015 Porsche Boxster GTS」by Ddiaz Design (CC BY 4.0) via flat-six.org",
-    "comment": "外观/内饰；透视隐藏"
+    "attribution": "本机 flat-six 981 车身 + 718 补件 + GT7 内饰合并 Blender 模型的当前保存可见组合。混合车型视觉示意，不证明 OEM 适用性。",
+    "comment": "当前车库主模型及可移植来源清单按 2026-10-11 用户要求提交；保留位置，车漆和包覆跟随车辆设置，不自动补入隐藏替换件。"
   },
   "assemblies": [
     {

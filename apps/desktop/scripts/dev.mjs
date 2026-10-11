@@ -1,55 +1,53 @@
 import { spawn } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { createServer } from "vite";
 import electronPath from "electron";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const appRoot = path.resolve(__dirname, "..");
+const port = Number(process.env.PORSCHE981_DEV_PORT || 5173);
+if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error("Invalid development port");
+const serverUrl = `http://127.0.0.1:${port}`;
 
-// Bind IPv4 explicitly — default localhost can be ::1 while probe uses 127.0.0.1.
-const vite = spawn(
-  "npx",
-  ["vite", "--port", "5173", "--host", "127.0.0.1"],
-  {
-    cwd: appRoot,
-    shell: true,
-    stdio: "inherit",
-  },
-);
+// Listen to our own server before starting Electron; an occupied port must fail
+// rather than attaching a second garage window to another session's server.
+let vite;
+let electron;
+let stopping = false;
 
-function waitForServer(url, tries = 60) {
-  return new Promise(async (resolve, reject) => {
-    for (let i = 0; i < tries; i++) {
-      try {
-        const res = await fetch(url);
-        if (res.ok || res.status === 404) return resolve();
-      } catch {
-        /* retry */
-      }
-      await new Promise((r) => setTimeout(r, 500));
-    }
-    reject(new Error("vite not ready"));
-  });
+async function shutdown(code = 0) {
+  if (stopping) return;
+  stopping = true;
+  electron?.kill();
+  try {
+    await vite?.close();
+  } finally {
+    process.exit(code);
+  }
 }
 
-await waitForServer("http://127.0.0.1:5173/");
+process.on("SIGINT", () => shutdown());
+process.on("SIGTERM", () => shutdown());
 
-const electron = spawn(electronPath, ["."], {
+try {
+  vite = await createServer({ root: appRoot,
+    configFile: path.join(appRoot, "vite.config.ts"),
+    server: { port, strictPort: true, host: "127.0.0.1" },
+  });
+  if (stopping) { await vite.close(); process.exit(0); }
+  await vite.listen();
+  vite.printUrls();
+} catch (error) {
+  console.error(error);
+  await shutdown(1);
+}
+
+electron = spawn(electronPath, ["."], {
   cwd: appRoot,
-  env: { ...process.env, VITE_DEV_SERVER_URL: "http://127.0.0.1:5173" },
+  env: { ...process.env, VITE_DEV_SERVER_URL: serverUrl },
   stdio: "inherit",
 });
 
-function shutdown() {
-  electron.kill();
-  vite.kill();
-  process.exit(0);
-}
-
-process.on("SIGINT", shutdown);
-process.on("SIGTERM", shutdown);
-
-electron.on("exit", () => {
-  vite.kill();
-  process.exit(0);
-});
+electron.on("error", (error) => { console.error(error); shutdown(1); });
+electron.on("exit", (code) => shutdown(code ?? 1));

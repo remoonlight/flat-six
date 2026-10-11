@@ -14,7 +14,7 @@ Codex 直接执行；禁止 Cursor CLI / Grok；仅用户为当前任务明确�
 | `packages/obd`、`scripts/diagnostics/` | OBD 定义、传输、离线研究与诊断 CLI |
 | `data/seed/` | 可提交种子；含 `x431/plaintext-archive/`（设码明文源）、`petka/plaintext-archive/`（EPC OEM/中英文名）；`data/petka/*/parts.csv` 价表可提交 |
 | `docs/research/can-code/` | CAN/X431 研究笔记 |
-| `.local/` | 运行时库、inbox、bulk、研究原件与 CMS 缓存不提交；已有 flat-six/PETKA 模型白名单例外以 `.gitignore` 为准，不扩展到 CMS |
+| `.local/` | 运行时库、inbox、bulk、研究原件与 CMS 缓存不提交；已有 flat-six/PETKA 模型及 2026-10-11 用户明确要求推送的当前 `garage-models/boxster-primary.glb`／可移植 manifest 按 `.gitignore` 精确白名单提交，不扩展到 CMS |
 
 ## 常用命令
 

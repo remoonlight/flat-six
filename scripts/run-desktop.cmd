@@ -2,6 +2,10 @@
 REM One-click start for non-developers. Plain CMD (no hidden PowerShell shortcut).
 chcp 65001 >nul
 setlocal EnableExtensions
+if "%~1"=="--supervised" goto supervised
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0run-desktop-supervised.ps1"
+exit /b %ERRORLEVEL%
+:supervised
 title 981 车库
 cd /d "%~dp0.."
 if not exist "package.json" (
@@ -62,9 +66,6 @@ if %NODEMAJOR% LSS 22 (
   exit /b 1
 )
 echo [981车库] Node.js v%NODEVER%
-
-echo [981车库] 清理上次没关干净的开发进程 ...
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0kill-dev-related.ps1" >nul 2>&1
 
 if not exist ".local\" mkdir ".local" >nul 2>&1
 if not exist ".local\xray-transforms.json" if exist "data\seed\xray\transforms.template.json" (

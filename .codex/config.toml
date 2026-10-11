@@ -1,18 +1,4 @@
 #:schema https://developers.openai.com/codex/config-schema.json
-# Project-only overrides; retain machine-local launchers and credentials globally.
-# Applies on the next trusted-project config load, not to tools already in this turn.
-[mcp_servers.mysql-mcp]
-enabled = false
-
-[mcp_servers.ida-pro-mcp]
-enabled = false
-
-[mcp_servers.ldj-debug]
-enabled = false
-
-[mcp_servers.hcrdi-aichat]
-enabled = false
-
-# The global SSH server targets other debugging machines, not a named PETKA host.
-[mcp_servers.ssh-mcp]
-enabled = false
+# Project-only overrides. Do not declare MCP servers here unless they
+# belong to this repo and include a valid transport (command or url).
+# mysql-mcp / ida / ldj-debug / ssh-mcp are not used in flat-six.

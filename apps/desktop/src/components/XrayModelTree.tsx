@@ -16,7 +16,7 @@ export type XrayModelTreeProps = {
   sections: XrayTreeSection[];
   meshesByAssembly: Record<string, string[]>;
   meshState: XrayMeshState | null;
-  skuByMesh: Record<string, string | null>;
+  oemByMesh: Record<string, string>;
   expandedIds: Set<string>;
   pickedAssemblyId: string | null;
   pickedMesh: string | null;
@@ -29,11 +29,6 @@ export type XrayModelTreeProps = {
     meshName: string,
     visible: boolean,
   ) => void;
-  onSkuSave: (
-    assemblyId: string,
-    meshName: string,
-    sku: string,
-  ) => void | Promise<void>;
 };
 
 export function sectionsFromScene(input: {
@@ -142,7 +137,7 @@ export function XrayModelTree({
   sections,
   meshesByAssembly,
   meshState,
-  skuByMesh,
+  oemByMesh,
   expandedIds,
   pickedAssemblyId,
   pickedMesh,
@@ -151,7 +146,6 @@ export function XrayModelTree({
   onSelectMesh,
   onLayerVisible,
   onMeshVisible,
-  onSkuSave,
 }: XrayModelTreeProps) {
   return (
     <aside className="xray-tune-side panel" aria-label="3D 模型列表">
@@ -217,7 +211,7 @@ export function XrayModelTree({
                     const meshVis = entry?.visible !== false;
                     const selected =
                       pickedAssemblyId === sec.id && pickedMesh === name;
-                    const sku = skuByMesh[`${sec.meshStateId}::${name}`] ?? "";
+                    const oem = oemByMesh[`${sec.id}::${name}`] ?? "未关联";
                     return (
                       <li
                         key={name}
@@ -246,24 +240,9 @@ export function XrayModelTree({
                             }
                           />
                         </label>
-                        <form
-                          className="xray-tree-sku"
-                          onSubmit={(e) => {
-                            e.preventDefault();
-                            const fd = new FormData(e.currentTarget);
-                            const next = String(fd.get("sku") || "").trim();
-                            void onSkuSave(sec.id, name, next);
-                          }}
-                        >
-                          <input
-                            name="sku"
-                            defaultValue={sku}
-                            key={`${name}:${sku}`}
-                            placeholder="OEM"
-                            title="OEM 零件号"
-                          />
-                          <button type="submit">存</button>
-                        </form>
+                        <div className="xray-tree-oem" title={oem}>
+                          <span className="muted">OEM</span> {oem}
+                        </div>
                       </li>
                     );
                   })

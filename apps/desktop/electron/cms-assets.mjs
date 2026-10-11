@@ -70,26 +70,17 @@ function loadPetkaChassisExhaustAssets() {
 }
 
 /**
- * rel is under `.local/` and must start with cms-rip/ / flat-six/ / petka-models/.
+ * rel is under `.local/`: cms-rip/ / flat-six/ / petka-models/ / garage-models/.
  * browseOnly: Locator 单模型可看可点；不得作 zone 默认 / 产品幽灵壳。
  * @type {ReadonlyArray<{ id: string; label_zh: string; rel: string; attribution?: string; browseOnly?: boolean }>}
  */
 export const CMS_ASSETS = [
   {
-    id: "engine",
-    label_zh: "CMS 991.2 引擎 MA1.03",
-    rel: "cms-rip/engine_b61_porsche/engine.glb",
-  },
-  {
-    id: "chassis",
-    label_zh: "CMS 991.2 底盘/制动",
-    rel: "cms-rip/porsche991_chassis/chassis.glb",
-  },
-  {
-    // 对照浏览：非产品幽灵壳（产品车身仍用 flat-six 981）
-    id: "cms991body",
-    label_zh: "CMS 991.2 车身(对照·非产品)",
-    rel: "cms-rip/porsche991_body/body.glb",
+    id: "garage-primary",
+    label_zh: "981 Boxster · 车库外观／内饰主模型",
+    rel: "garage-models/boxster-primary.glb",
+    attribution:
+      "本机 flat-six 981 车身 + 718 补件 + GT7 内饰合并模型；混合车型视觉示意，不证明 OEM 适用性。",
     browseOnly: true,
   },
   {
@@ -138,15 +129,11 @@ export const CMS_ASSETS = [
 
 /** Default asset id per locator zone. */
 export const ZONE_DEFAULT_ASSET = {
-  "engine-bay": "engine",
-  brakes: "chassis",
-  chassis: "chassis",
   interior: "cabin981",
   // 外板示意；与 cabin981 同 flat-six 文件，无独立前备箱 GLB
   "front-trunk": "body",
   // P-Loc-2 草稿：无独立电子/循环 GLB，用现有示意
   electronics: "body",
-  fluids: "engine",
 };
 
 function absForRel(rel) {
@@ -163,6 +150,7 @@ function absForRel(rel) {
   if (
     !normalized.startsWith("cms-rip/") &&
     !normalized.startsWith("flat-six/") &&
+    !normalized.startsWith("garage-models/") &&
     !normalized.startsWith("petka-models/")
   ) {
     throw new Error("cms_rel_root");

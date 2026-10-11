@@ -1,7 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  findModelOemLink,
+  formatModelOemPointer,
+  primarySkuOfLink,
+  resolveBodyPaintHex,
+  resolveBodyPaintPbr,
+  resolveSoftTopHex,
+} from "@porsche981/domain";
+import {
   api,
   type CmsMeshMap,
+  type ModelOemLink,
+  type Part,
+  type Vehicle,
   type XrayMeshState,
   type XrayScene,
   type XrayTransform,
@@ -81,6 +92,11 @@ export function XrayTunePage() {
     Record<string, string[]>
   >({});
   const [meshMap, setMeshMap] = useState<CmsMeshMap | null>(null);
+  const [modelLinks, setModelLinks] = useState<ModelOemLink[]>([]);
+  const [parts, setParts] = useState<Part[]>([]);
+  const [garageBodyRel, setGarageBodyRel] = useState<string | null>(null);
+  const [vehicle, setVehicle] = useState<Vehicle | null>(null);
+  const [oemStatus, setOemStatus] = useState("加载关联信息…");
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set());
   const [ready, setReady] = useState(false);
   const [gizmoMode, setGizmoMode] = useState<GizmoMode>("translate");
@@ -90,6 +106,46 @@ export function XrayTunePage() {
   } | null>(null);
   const persistTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const meshPersistTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const bodyPaintHex = resolveBodyPaintHex(vehicle?.paint_name);
+  const bodyPaintPbr = resolveBodyPaintPbr(vehicle?.paint_name);
+  const softTopHex = resolveSoftTopHex(vehicle?.top);
+
+  const loadVehicle = useCallback(async () => {
+    try {
+      setVehicle(await api().getVehicle());
+    } catch (e) {
+      setMsg("车辆设置读取失败，请刷新");
+      throw e;
+    }
+  }, []);
+
+  const loadOemInfo = useCallback(async () => {
+    try {
+      const [nextParts, links, map, garage] = await Promise.all([
+        api().listParts(),
+        api().modelOemLinksGet!(),
+        api().cmsGetMeshMap(),
+        api().xrayGarageLayers(),
+      ]);
+      setParts(nextParts);
+      setModelLinks(links.links);
+      setMeshMap(map);
+      setGarageBodyRel(garage.bodyShell?.rel ?? null);
+      setOemStatus("");
+    } catch (e) {
+      setOemStatus("关联信息读取失败，请刷新");
+      throw e;
+    }
+  }, []);
+
+  useEffect(() => {
+    const reload = () => {
+      void Promise.all([loadOemInfo(), loadVehicle()]).catch(() => {});
+    };
+    reload();
+    window.addEventListener("focus", reload);
+    return () => window.removeEventListener("focus", reload);
+  }, [loadOemInfo, loadVehicle]);
 
   useEffect(() => {
     const onHash = () => {
@@ -115,9 +171,8 @@ export function XrayTunePage() {
         api().cmsListAssets(),
         api().xrayGetMeshState(),
         api().xrayGetTransforms(),
-        api().cmsGetMeshMap(),
       ])
-        .then(([assets, ms, tf, map]) => {
+        .then(([assets, ms, tf]) => {
           if (cancelled) return;
           const a = assets.find((x) => x.id === tuneAssetId);
           if (!a?.present || !a.rel) {
@@ -127,7 +182,6 @@ export function XrayTunePage() {
           setSingleGlbRel(a.rel);
           setSingleLabelZh(a.label_zh || tuneAssetId);
           setMeshState(ms);
-          setMeshMap(map);
           setXrayScene(null);
           const t = tf.layers?.[tuneAssetId];
           setPreviewTransforms(t ? { [tuneAssetId]: t } : {});
@@ -148,12 +202,11 @@ export function XrayTunePage() {
     const loadScene = garageMode
       ? api().xrayGarageLayers()
       : api().xrayLayers();
-    Promise.all([loadScene, api().xrayGetMeshState(), api().cmsGetMeshMap()])
-      .then(([x, ms, map]) => {
+    Promise.all([loadScene, api().xrayGetMeshState()])
+      .then(([x, ms]) => {
         if (cancelled) return;
         setXrayScene(x);
         setMeshState(ms);
-        setMeshMap(map);
         setShowGhostBody(!garageMode && Boolean(x.bodyShell?.present));
         const first =
           x.layers?.find((l) => l.present)?.id ??
@@ -224,29 +277,40 @@ export function XrayTunePage() {
     });
   }, [tuneAssetId, singleLabelZh, xrayScene, garageMode]);
 
-  const skuByMesh = useMemo(() => {
-    const out: Record<string, string | null> = {};
-    for (const link of meshMap?.links ?? []) {
-      const asset = link.assetId || "";
-      const key = `${asset || "?"}::${link.meshName}`;
-      out[key] = link.sku ?? null;
-      if (
-        asset === "engine" ||
-        asset === "susp" ||
-        asset === "body" ||
-        asset === "cabin981"
-      ) {
-        out[`${asset}::${link.meshName}`] = link.sku ?? null;
-      }
-      out[`susp::${link.meshName}`] =
-        out[`susp::${link.meshName}`] ?? link.sku ?? null;
-      if (tuneAssetId) {
-        out[`${tuneAssetId}::${link.meshName}`] =
-          out[`${tuneAssetId}::${link.meshName}`] ?? link.sku ?? null;
+  const oemByMesh = useMemo(() => {
+    const out: Record<string, string> = {};
+    for (const section of treeSections) {
+      // Only share the garage body association when this is the same GLB.
+      const associationId = tuneAssetId && singleGlbRel === garageBodyRel
+        ? "body" : section.id;
+      const ids = [...new Set([section.id, associationId, section.meshStateId])];
+      const names = meshesByAssembly[section.id]?.length
+        ? meshesByAssembly[section.id] : meshesByAssembly[section.meshStateId] ?? [];
+      for (const name of names) {
+        let sku: string | null = null;
+        const link = ids.map((assemblyId) =>
+          findModelOemLink(modelLinks, "mesh", name, assemblyId),
+        ).find(Boolean);
+        if (link) {
+          sku = primarySkuOfLink(link);
+        } else {
+          for (const assetId of ids) {
+            const legacy = meshMap?.links.find((l) =>
+              l.assetId === assetId && l.meshName === name,
+            );
+            if (legacy) {
+              sku = legacy.sku ?? null;
+              break;
+            }
+          }
+        }
+        out[`${section.id}::${name}`] = oemStatus ||
+          formatModelOemPointer(sku ? [sku] : [], parts);
       }
     }
     return out;
-  }, [meshMap, tuneAssetId]);
+  }, [treeSections, meshesByAssembly, modelLinks, meshMap, parts, oemStatus,
+    tuneAssetId, singleGlbRel, garageBodyRel]);
 
   const gizmoTargetId = pickedAssemblyId;
   const meshMode = Boolean(pickedMesh && gizmoTargetId);
@@ -393,17 +457,16 @@ export function XrayTunePage() {
 
   async function refresh() {
     try {
+      await Promise.all([loadOemInfo(), loadVehicle()]);
       if (tuneAssetId) {
-        const [assets, ms, tf, map] = await Promise.all([
+        const [assets, ms, tf] = await Promise.all([
           api().cmsListAssets(),
           api().xrayGetMeshState(),
           api().xrayGetTransforms(),
-          api().cmsGetMeshMap(),
         ]);
         const a = assets.find((x) => x.id === tuneAssetId);
         if (a?.rel) setSingleGlbRel(a.rel);
         setMeshState(ms);
-        setMeshMap(map);
         const t = tf.layers?.[tuneAssetId];
         if (t) setPreviewTransforms({ [tuneAssetId]: t });
         setMsg("已刷新");
@@ -412,39 +475,13 @@ export function XrayTunePage() {
       const loadScene = garageMode
         ? api().xrayGarageLayers()
         : api().xrayLayers();
-      const [next, ms, map] = await Promise.all([
+      const [next, ms] = await Promise.all([
         loadScene,
         api().xrayGetMeshState(),
-        api().cmsGetMeshMap(),
       ]);
       setXrayScene(next);
       setMeshState(ms);
-      setMeshMap(map);
       setMsg("已刷新");
-    } catch (e) {
-      setMsg(e instanceof Error ? e.message : String(e));
-    }
-  }
-
-  async function saveSku(assemblyId: string, meshName: string, sku: string) {
-    try {
-      const sid = meshStateIdFor(assemblyId, xrayScene, tuneAssetId);
-      let zoneId = assemblyId;
-      let hotspotId = assemblyId;
-      if (!tuneAssetId) {
-        const bridge = await api().xrayBridge(assemblyId);
-        zoneId = bridge?.zoneId || assemblyId;
-        hotspotId = bridge?.hotspotId || assemblyId;
-      }
-      const map = await api().cmsUpsertMeshLink({
-        zoneId,
-        hotspotId,
-        meshName,
-        assetId: sid,
-        sku: sku || null,
-      });
-      setMeshMap(map);
-      setMsg(sku ? `已存 OEM ${meshName} → ${sku}` : `已清空 OEM ${meshName}`);
     } catch (e) {
       setMsg(e instanceof Error ? e.message : String(e));
     }
@@ -579,6 +616,11 @@ export function XrayTunePage() {
             <LocatorGlbViewer
               glbRel={singleGlbRel}
               singleAssetId={tuneAssetId}
+              bodyPaintHex={bodyPaintHex}
+              bodyPaintPbr={bodyPaintPbr}
+              softTopHex={softTopHex}
+              interiorSpec={vehicle?.interior}
+              interiorModelLinks={modelLinks}
               readGlb={readGlb}
               selectedMeshName={pickedMesh}
               selectedAssemblyId={tuneAssetId}
@@ -634,6 +676,11 @@ export function XrayTunePage() {
           ) : (
             <LocatorGlbViewer
               layers={xrayLayers}
+              bodyPaintHex={bodyPaintHex}
+              bodyPaintPbr={bodyPaintPbr}
+              softTopHex={softTopHex}
+              interiorSpec={vehicle?.interior}
+              interiorModelLinks={modelLinks}
               ghostBody={xrayScene?.bodyShell ?? null}
               showGhostBody={showGhostBody}
               readGlb={readGlb}
@@ -703,7 +750,7 @@ export function XrayTunePage() {
           sections={treeSections}
           meshesByAssembly={meshesByAssembly}
           meshState={meshState}
-          skuByMesh={skuByMesh}
+          oemByMesh={oemByMesh}
           expandedIds={expandedIds}
           pickedAssemblyId={pickedAssemblyId}
           pickedMesh={pickedMesh}
@@ -764,7 +811,6 @@ export function XrayTunePage() {
                 setMsg(e instanceof Error ? e.message : String(e)),
               );
           }}
-          onSkuSave={saveSku}
         />
       </div>
 

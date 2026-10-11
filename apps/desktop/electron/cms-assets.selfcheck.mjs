@@ -16,7 +16,7 @@ import {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "../../..");
-const mapPath = path.join(root, ".local", "cms-mesh-map.json");
+const mapPath = path.join(process.env.PORSCHE981_LOCAL_ROOT || path.join(root, ".local"), "cms-mesh-map.json");
 const backup = mapPath + ".selfcheck.bak";
 
 if (fs.existsSync(mapPath)) {
@@ -76,7 +76,7 @@ try {
       throw new Error(`garage_browse_must_not_be_zone_default:${m.id}`);
     }
   }
-  // 981 底盘/排气 PETKA 图号分件：browseOnly，不得进 zone 默认
+  // 981 PETKA 清单含独立浏览件及车库装配；只有 browseOnly 条目进单模型目录。
   const petkaPath = path.join(
     root,
     "data",
@@ -86,9 +86,12 @@ try {
   );
   const petka = JSON.parse(fs.readFileSync(petkaPath, "utf8"));
   const petkaModels = Array.isArray(petka.models) ? petka.models : [];
-  if (petkaModels.length !== 19) throw new Error("petka_chassis_exhaust_incomplete");
+  if (petkaModels.length !== 31) throw new Error("petka_chassis_exhaust_incomplete");
   for (const m of petkaModels) {
-    if (!m?.browseOnly) throw new Error(`petka_must_browse_only:${m?.id}`);
+    if (!m?.browseOnly) {
+      if (assets.some((a) => a.id === m.id)) throw new Error(`petka_assembly_must_not_browse:${m.id}`);
+      continue;
+    }
     if (!assets.some((a) => a.id === m.id && a.rel === m.rel && a.browseOnly)) {
       throw new Error(`petka_browse_missing:${m.id}`);
     }
@@ -97,7 +100,7 @@ try {
     }
   }
   const hint = cmsHintForZone("engine-bay");
-  if (hint.assetId !== "engine") throw new Error("engine-bay default asset");
+  if (hint.assetId !== null) throw new Error("removed CMS engine must not be zone default");
   const interiorHint = cmsHintForZone("interior");
   if (interiorHint.assetId !== "cabin981") {
     throw new Error("interior default asset must be cabin981");
@@ -111,8 +114,8 @@ try {
     throw new Error("electronics default asset must be body");
   }
   const fluidsHint = cmsHintForZone("fluids");
-  if (fluidsHint.assetId !== "engine") {
-    throw new Error("fluids default asset must be engine");
+  if (fluidsHint.assetId !== null) {
+    throw new Error("removed CMS engine must not be fluids default");
   }
 
   const marker = `selfcheck-${Date.now()}`;

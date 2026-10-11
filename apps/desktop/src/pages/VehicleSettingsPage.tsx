@@ -54,7 +54,7 @@ export function VehicleSettingsPage() {
         interior,
         top,
       });
-      setMsg("已落盘；部件定位 X-ray 将跟车漆/软顶/内饰色。");
+      setMsg("已保存；车库、部件定位和模型微调将同步颜色及内饰材质。");
     } catch (e) {
       setError(String(e));
     }

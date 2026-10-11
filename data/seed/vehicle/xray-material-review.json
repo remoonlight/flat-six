@@ -1,0 +1,898 @@
+{
+  "version": 1,
+  "reviewedAt": "2026-10-11",
+  "scope": "Explicit linked mechanical and luggage-compartment meshes. Assembly and mesh keys scope matching; no invented OEM links. Surface classes and PBR values are visual approximations, not measured factory composition or fitment approval.",
+  "sources": {
+    "catalogue": "Bundled explicit plaintext parts catalogue",
+    "frontCarpet": "https://www.porschepartsdepot.com/oem-parts/porsche-luggage-compartment-trim-black-98155104507a31"
+  },
+  "profiles": {
+    "alloy": {
+      "hex": "#A5A9AD",
+      "metalness": 0.75,
+      "roughness": 0.52
+    },
+    "steel": {
+      "hex": "#848A91",
+      "metalness": 0.8,
+      "roughness": 0.38
+    },
+    "painted-steel": {
+      "hex": "#242629",
+      "metalness": 0.15,
+      "roughness": 0.48
+    },
+    "rubber": {
+      "hex": "#18191B",
+      "metalness": 0,
+      "roughness": 0.92
+    },
+    "polymer": {
+      "hex": "#252629",
+      "metalness": 0,
+      "roughness": 0.62
+    },
+    "reservoir": {
+      "hex": "#D6D3C6",
+      "metalness": 0,
+      "roughness": 0.45
+    },
+    "carpet": {
+      "hex": "#202123",
+      "metalness": 0,
+      "roughness": 0.98
+    },
+    "foam": {
+      "hex": "#171719",
+      "metalness": 0,
+      "roughness": 1
+    },
+    "filter-paper": {
+      "hex": "#C4AA76",
+      "metalness": 0,
+      "roughness": 0.96
+    }
+  },
+  "parts": {
+    "981-99134115806": {
+      "finish": "alloy",
+      "description": "Wheel carrier",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99110623701": {
+      "finish": "polymer",
+      "description": "Retaining frame",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "control-arm-front-rr": {
+      "finish": "alloy",
+      "description": "前下摆臂(后向)",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99162413102": {
+      "finish": "polymer",
+      "description": "Cap Fan",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99134148201": {
+      "finish": "polymer",
+      "description": "Spoiler",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99110663802": {
+      "finish": "rubber",
+      "description": "Coolant hose",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98111142201": {
+      "finish": "steel",
+      "description": "Silencer 480,-193, -XLF",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98111142101": {
+      "finish": "steel",
+      "description": "Silencer 480,-193, -XLF",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98111136162": {
+      "finish": "steel",
+      "description": "98111136162",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-98111128000": {
+      "finish": "steel",
+      "description": "clamp",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-9A110092302": {
+      "finish": "alloy",
+      "description": "Replacement engine D - MJ 2013>> - MJ 2013",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-0PB115403A": {
+      "finish": "polymer",
+      "description": "Repair kit for oil filter (complete)",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-9A111021001": {
+      "finish": "rubber",
+      "description": "Rubber sleeve",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99110613103": {
+      "finish": "alloy",
+      "description": "Cooler for coolant",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99134115706": {
+      "finish": "alloy",
+      "description": "Wheel carrier",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99134370511": {
+      "finish": "painted-steel",
+      "description": "Anti-roll bar 250",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98133126113": {
+      "finish": "steel",
+      "description": "98133126113",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-98133370311": {
+      "finish": "painted-steel",
+      "description": "Anti-roll bar 250",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98133353116504": {
+      "finish": "painted-steel",
+      "description": "98133353116504",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-99134719101": {
+      "finish": "rubber",
+      "description": "Bellows",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99134148101": {
+      "finish": "polymer",
+      "description": "Spoiler",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99134713101": {
+      "finish": "polymer",
+      "description": "99134713101",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-99734113100": {
+      "finish": "steel",
+      "description": "retaining bolt",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99134379207": {
+      "finish": "painted-steel",
+      "description": "anti-roll bar bearing bracket 250",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98133304518": {
+      "finish": "steel",
+      "description": "Shock absorbers Rear axle",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99110613702": {
+      "finish": "alloy",
+      "description": "Cooler for coolant",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99162493903": {
+      "finish": "polymer",
+      "description": "Radiator fan",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99110663901": {
+      "finish": "rubber",
+      "description": "Coolant hose",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99110633701": {
+      "finish": "rubber",
+      "description": "Sealing frame",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99110613203": {
+      "finish": "alloy",
+      "description": "Cooler for coolant",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99110615502": {
+      "finish": "polymer",
+      "description": "Console",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-99110615602": {
+      "finish": "polymer",
+      "description": "Console",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-99110634100": {
+      "finish": "polymer",
+      "description": "Air guide",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99110634200": {
+      "finish": "polymer",
+      "description": "Air guide",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98111321106": {
+      "finish": "steel",
+      "description": "Exhaust manifolds Included Catalytic converter",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98111321206": {
+      "finish": "steel",
+      "description": "Exhaust manifolds Included Catalytic converter",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98111127102": {
+      "finish": "steel",
+      "description": "bracket for exhaust silencer",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-9A111012025": {
+      "finish": "polymer",
+      "description": "resonator",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-9A111021201": {
+      "finish": "steel",
+      "description": "Clamp Upper part",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-9A111011530": {
+      "finish": "polymer",
+      "description": "intake air distributor",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98111013300": {
+      "finish": "alloy",
+      "description": "Tube",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-9A110214602": {
+      "finish": "steel",
+      "description": "pulley Included vibration damper",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99760511501": {
+      "finish": "polymer",
+      "description": "throttle valve adapter",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-7PP906270": {
+      "finish": "polymer",
+      "description": "Change-over valve",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-9A111029301": {
+      "finish": "alloy",
+      "description": "Bracket",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99134108116": {
+      "finish": "alloy",
+      "description": "Cross member",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-9P1411063A": {
+      "finish": "alloy",
+      "description": "9P1411063A",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-9P1411318": {
+      "finish": "alloy",
+      "description": "9P1411318",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-9P1411317A": {
+      "finish": "alloy",
+      "description": "9P1411317A",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-9P1407615": {
+      "finish": "alloy",
+      "description": "9P1407615",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-99134700518KPL": {
+      "finish": "alloy",
+      "description": "99134700518KPL",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-99134732200": {
+      "finish": "steel",
+      "description": "Track rod",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98133113106": {
+      "finish": "alloy",
+      "description": "Brace",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98133113206": {
+      "finish": "alloy",
+      "description": "Brace",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98133105108": {
+      "finish": "alloy",
+      "description": "98133105108",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-98133105208": {
+      "finish": "alloy",
+      "description": "98133105208",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-98133105302": {
+      "finish": "alloy",
+      "description": "98133105302",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-99134351300": {
+      "finish": "rubber",
+      "description": "compensation ring",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-982505569": {
+      "finish": "polymer",
+      "description": "982505569",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-99134301502": {
+      "finish": "rubber",
+      "description": "Shock absorber bearing",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99134352502": {
+      "finish": "alloy",
+      "description": "Support element",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-982505099C": {
+      "finish": "alloy",
+      "description": "Cross member",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98133109301": {
+      "finish": "alloy",
+      "description": "Brace",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-982505051J": {
+      "finish": "alloy",
+      "description": "982505051J",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-982505052J": {
+      "finish": "alloy",
+      "description": "982505052J",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-99908413502": {
+      "finish": "steel",
+      "description": "Hexagon nut",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99734306904": {
+      "finish": "steel",
+      "description": "Coupling rod",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99734307004": {
+      "finish": "steel",
+      "description": "Coupling rod",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99633377701": {
+      "finish": "steel",
+      "description": "Clamp",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99633379227": {
+      "finish": "painted-steel",
+      "description": "anti-roll bar bearing bracket 250",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98133202422": {
+      "finish": "steel",
+      "description": "Drive shaft",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99633229300": {
+      "finish": "rubber",
+      "description": "Bellows",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99733295500": {
+      "finish": "rubber",
+      "description": "Bellows Included Cap",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99733226700": {
+      "finish": "polymer",
+      "description": "End cap",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99133203000": {
+      "finish": "steel",
+      "description": "constant velocity joint",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98133305901": {
+      "finish": "rubber",
+      "description": "Shock absorber bearing",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98133350500": {
+      "finish": "rubber",
+      "description": "Bellows",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98133350900": {
+      "finish": "rubber",
+      "description": "Centring ring",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98133350401": {
+      "finish": "rubber",
+      "description": "spring bush",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-9G230001105": {
+      "finish": "alloy",
+      "description": "Gearbox",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98111021203": {
+      "finish": "polymer",
+      "description": "Air filter housing",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98111021103": {
+      "finish": "polymer",
+      "description": "Air filter housing",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98111027000": {
+      "finish": "polymer",
+      "description": "Air guide",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98111013000": {
+      "finish": "filter-paper",
+      "description": "Air filter element",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98110627500": {
+      "finish": "rubber",
+      "description": "Hose Reservoir",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99134702303": {
+      "finish": "steel",
+      "description": "Intermediate steering shaft",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99134701523": {
+      "finish": "alloy",
+      "description": "Steering column",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-7PP905852C": {
+      "finish": "polymer",
+      "description": "Control unit",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99134703700": {
+      "finish": "rubber",
+      "description": "Bellows",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-4H0907705K": {
+      "finish": "polymer",
+      "description": "Control unit for electrically adjustable steering column",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99134350103": {
+      "finish": "rubber",
+      "description": "Mounting",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99134351101": {
+      "finish": "rubber",
+      "description": "Underlay",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98134353112": {
+      "finish": "painted-steel",
+      "description": "Coil spring",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99134350902": {
+      "finish": "rubber",
+      "description": "Bellows",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98733295500": {
+      "finish": "rubber",
+      "description": "Bellows Included terminal",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98133202402": {
+      "finish": "steel",
+      "description": "Drive shaft",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98633203000": {
+      "finish": "steel",
+      "description": "constant velocity joint",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-9G230701700": {
+      "finish": "alloy",
+      "description": "heat exchanger Gear oil cooler",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-9G230701900": {
+      "finish": "alloy",
+      "description": "heat exchanger Gear oil cooler",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-9P1317233": {
+      "finish": "polymer",
+      "description": "regulating valve",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-9G230707601": {
+      "finish": "rubber",
+      "description": "Hose",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-9G230740900": {
+      "finish": "polymer",
+      "description": "Bracket Valve",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-9G230707501": {
+      "finish": "rubber",
+      "description": "Coolant hose",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-9G230708505": {
+      "finish": "alloy",
+      "description": "Oil pipe",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-9G230708705": {
+      "finish": "alloy",
+      "description": "Oil return line",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-9A110702014": {
+      "finish": "alloy",
+      "description": "Oil-conducting housing (complete)",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-9A110745010": {
+      "finish": "alloy",
+      "description": "heat exchanger",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-0PB115466A": {
+      "finish": "filter-paper",
+      "description": "Oil filter insert engine oil",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-9A110661100": {
+      "finish": "rubber",
+      "description": "Coolant hose",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98110727400": {
+      "finish": "rubber",
+      "description": "Hose oil filler pipe",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98110703508": {
+      "finish": "polymer",
+      "description": "End cap engine oil",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-98110716005": {
+      "finish": "polymer",
+      "description": "oil filler support engine oil",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-0PB115099A": {
+      "finish": "polymer",
+      "description": "oil separator",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-9A110701622": {
+      "finish": "polymer",
+      "description": "Filler tube engine oil",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-98110726503": {
+      "finish": "polymer",
+      "description": "oil filler pipe engine oil",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-9A110666902": {
+      "finish": "alloy",
+      "description": "return line heat exchanger",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-9A110721621": {
+      "finish": "polymer",
+      "description": "Bracket",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-98110726401": {
+      "finish": "polymer",
+      "description": "Filler tube engine oil",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-9G230724100": {
+      "finish": "rubber",
+      "description": "Seal heat exchanger",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99150423302": {
+      "finish": "alloy",
+      "description": "Support frame Front end",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98110628801": {
+      "finish": "rubber",
+      "description": "Drain hose",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98110604706": {
+      "finish": "reservoir",
+      "description": "98110604706",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-98110615005": {
+      "finish": "polymer",
+      "description": "drip pan fuel filler neck",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98110624703": {
+      "finish": "polymer",
+      "description": "Bracket Fluid reservoir",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-98110626703": {
+      "finish": "rubber",
+      "description": "Coolant hose",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98110604406": {
+      "finish": "polymer",
+      "description": "End cap",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-7P5121671A": {
+      "finish": "polymer",
+      "description": "Bleed valve",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99610644704": {
+      "finish": "polymer",
+      "description": "cap for expansion tank Fluid reservoir",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-0PB121187": {
+      "finish": "polymer",
+      "description": "0PB121187",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-9A110662001": {
+      "finish": "alloy",
+      "description": "Water pipe",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-9A110655030": {
+      "finish": "polymer",
+      "description": "Breather line",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-9A110662501": {
+      "finish": "alloy",
+      "description": "Water pipe",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-98110653403": {
+      "finish": "alloy",
+      "description": "Bracket",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98110681401": {
+      "finish": "rubber",
+      "description": "Coolant hose",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98110681300": {
+      "finish": "rubber",
+      "description": "Coolant hose",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-0PB121099": {
+      "finish": "rubber",
+      "description": "Bungs",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99135512528": {
+      "finish": "painted-steel",
+      "description": "Brake servo",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99135501302": {
+      "finish": "reservoir",
+      "description": "Reservoir",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99135513029": {
+      "finish": "alloy",
+      "description": "Brake master cylinder without: switch - brake light",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99135557710": {
+      "finish": "polymer",
+      "description": "Vacuum line",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99135590101": {
+      "finish": "rubber",
+      "description": "Seal Brake servo filler plate",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-97035596900": {
+      "finish": "rubber",
+      "description": "Bellows",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99120122102": {
+      "finish": "polymer",
+      "description": "Activated charcoal container",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99120136103": {
+      "finish": "polymer",
+      "description": "Purge-air line Activated charcoal container",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99120125104": {
+      "finish": "polymer",
+      "description": "Breather line Fuel tank",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98155104507A31": {
+      "finish": "carpet",
+      "description": "98155104507A31",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-99155536706": {
+      "finish": "polymer",
+      "description": "Cover",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99155556306": {
+      "finish": "polymer",
+      "description": "Cover Scuttle",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98155105101A31": {
+      "finish": "carpet",
+      "description": "98155105101A31",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-99155576502": {
+      "finish": "polymer",
+      "description": "Cover",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99155546603": {
+      "finish": "polymer",
+      "description": "Cover Wing",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-99155546503": {
+      "finish": "polymer",
+      "description": "Cover Wing",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-991551422001E0": {
+      "finish": "foam",
+      "description": "991551422001E0",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-991555411001E0": {
+      "finish": "polymer",
+      "description": "991555411001E0",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-98155105303A31": {
+      "finish": "carpet",
+      "description": "98155105303A31",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-98155137702": {
+      "finish": "polymer",
+      "description": "Assembly frame Service flap",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-98155125102": {
+      "finish": "polymer",
+      "description": "cover - lock For luggage compartment",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98155138201": {
+      "finish": "polymer",
+      "description": "Cover Service flap",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98155114700": {
+      "finish": "carpet",
+      "description": "Carpet Support",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98155138101": {
+      "finish": "polymer",
+      "description": "Cover Service flap",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98155137802": {
+      "finish": "polymer",
+      "description": "Assembly frame Service flap",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-98155175301": {
+      "finish": "polymer",
+      "description": "Support",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-98155175403": {
+      "finish": "polymer",
+      "description": "Support",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-99134104306": {
+      "finish": "alloy",
+      "description": "99134104306",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    },
+    "981-98134304508": {
+      "finish": "steel",
+      "description": "Shock absorbers Front axle",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98133104303": {
+      "finish": "alloy",
+      "description": "Guide",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98133104502": {
+      "finish": "steel",
+      "description": "Track rod",
+      "evidence": "plaintext catalogue description; surface inferred from function"
+    },
+    "981-98133104503": {
+      "finish": "alloy",
+      "description": "98133104503",
+      "evidence": "explicit visual/functional review; plaintext catalogue where available"
+    }
+  }
+}

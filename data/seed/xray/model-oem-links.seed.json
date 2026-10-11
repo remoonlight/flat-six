@@ -1,7 +1,7 @@
 {
   "version": 1,
   "note": "garage model block → part sku(s); 装配优先，mesh 可补",
-  "updated_at": "2026-08-23T03:19:35.366Z",
+  "updated_at": "2026-10-11T14:21:45.935Z",
   "links": [
     {
       "id": "assembly:engine",
@@ -2500,6 +2500,1856 @@
       "assemblyId": "body",
       "skus": [
         "981-98136216006"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__front-bumper__SM_FrontKit_0000003_MAT_718_Car_Paint_Base_00076_0__part_001__Car_Paint",
+      "kind": "mesh",
+      "ref": "Exterior__front-bumper__SM_FrontKit_0000003_MAT_718_Car_Paint_Base_00076_0__part_001__Car_Paint",
+      "assemblyId": "body",
+      "skus": [
+        "981-98150501150"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__other__718__GEO_Chassis_SUB0_Part_003__Car_Paint",
+      "kind": "mesh",
+      "ref": "Exterior__other__718__GEO_Chassis_SUB0_Part_003__Car_Paint",
+      "assemblyId": "body",
+      "skus": [
+        "981-98150303200"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__front-trunk__718__GEO_Hood_SUB0__Car_Paint",
+      "kind": "mesh",
+      "ref": "Exterior__front-trunk__718__GEO_Hood_SUB0__Car_Paint",
+      "assemblyId": "body",
+      "skus": [
+        "981-99151101104"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__other__718__GEO_Chassis_SUB0_Part_002__Car_Paint",
+      "kind": "mesh",
+      "ref": "Exterior__other__718__GEO_Chassis_SUB0_Part_002__Car_Paint",
+      "assemblyId": "body",
+      "skus": [
+        "981-98150303100"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__other__718__GEO_Chassis_SUB0_Part_009__Car_Paint",
+      "kind": "mesh",
+      "ref": "Exterior__other__718__GEO_Chassis_SUB0_Part_009__Car_Paint",
+      "assemblyId": "body",
+      "skus": [
+        "981-98150303400"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__other__718__GEO_R_door_SUB0__Car_Paint",
+      "kind": "mesh",
+      "ref": "Exterior__other__718__GEO_R_door_SUB0__Car_Paint",
+      "assemblyId": "body",
+      "skus": [
+        "981-98153191204"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__other__718__GEO_L_door_SUB0__Car_Paint",
+      "kind": "mesh",
+      "ref": "Exterior__other__718__GEO_L_door_SUB0__Car_Paint",
+      "assemblyId": "body",
+      "skus": [
+        "981-98153191104"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__other__718__GEO_Chassis_SUB0_Part_005__Car_Paint",
+      "kind": "mesh",
+      "ref": "Exterior__other__718__GEO_Chassis_SUB0_Part_005__Car_Paint",
+      "assemblyId": "body",
+      "skus": [
+        "981-98150466106"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__other__718__GEO_Chassis_SUB0_Part_004__Car_Paint",
+      "kind": "mesh",
+      "ref": "Exterior__other__718__GEO_Chassis_SUB0_Part_004__Car_Paint",
+      "assemblyId": "body",
+      "skus": [
+        "981-98150466206"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__rear-bumper__SM_RearKit_0000003_MAT_718_Car_Paint_Base_00076_0__part_006__Car_Paint",
+      "kind": "mesh",
+      "ref": "Exterior__rear-bumper__SM_RearKit_0000003_MAT_718_Car_Paint_Base_00076_0__part_006__Car_Paint",
+      "assemblyId": "body",
+      "skus": [
+        "981-98150396103"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__rear-bumper__SM_RearKit_0000003_MAT_718_Car_Paint_Base_00076_0__part_005__Car_Paint",
+      "kind": "mesh",
+      "ref": "Exterior__rear-bumper__SM_RearKit_0000003_MAT_718_Car_Paint_Base_00076_0__part_005__Car_Paint",
+      "assemblyId": "body",
+      "skus": [
+        "981-98150396203"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__rear-trunk__718__GEO_Chassis_SUB0__tail_lid__Car_Paint",
+      "kind": "mesh",
+      "ref": "Exterior__rear-trunk__718__GEO_Chassis_SUB0__tail_lid__Car_Paint",
+      "assemblyId": "body",
+      "skus": [
+        "981-98151201106"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__rear-bumper__SM_RearKit_0000003_MAT_718_Car_Paint_Base_00076_0__part_007__Car_Paint",
+      "kind": "mesh",
+      "ref": "Exterior__rear-bumper__SM_RearKit_0000003_MAT_718_Car_Paint_Base_00076_0__part_007__Car_Paint",
+      "assemblyId": "body",
+      "skus": [
+        "981-98150424107"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__rear-bumper__SM_RearKit_0000003_MAT_718_Car_Paint_Base_00076_0__part_001__Car_Paint",
+      "kind": "mesh",
+      "ref": "Exterior__rear-bumper__SM_RearKit_0000003_MAT_718_Car_Paint_Base_00076_0__part_001__Car_Paint",
+      "assemblyId": "body",
+      "skus": [
+        "981-98150502135"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__soft-top__SM_SoftTop_0000001_MAT_SoftTop_0",
+      "kind": "mesh",
+      "ref": "Exterior__soft-top__SM_SoftTop_0000001_MAT_SoftTop_0",
+      "assemblyId": "body",
+      "skus": [
+        "981-98156101500"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__other__718__EXT_GLASS_LEFT",
+      "kind": "mesh",
+      "ref": "Exterior__other__718__EXT_GLASS_LEFT",
+      "assemblyId": "body",
+      "skus": [
+        "981-98154251102"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__other__718__EXT_GLASS_RIGHT",
+      "kind": "mesh",
+      "ref": "Exterior__other__718__EXT_GLASS_RIGHT",
+      "assemblyId": "body",
+      "skus": [
+        "981-98154251202"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__other__718__EXT_GLASS_FRONT",
+      "kind": "mesh",
+      "ref": "Exterior__other__718__EXT_GLASS_FRONT",
+      "assemblyId": "body",
+      "skus": [
+        "981-98154191123"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__liner__718__GEO_Chassis_SUB5",
+      "kind": "mesh",
+      "ref": "Cabin__liner__718__GEO_Chassis_SUB5",
+      "assemblyId": "body",
+      "skus": [
+        "981-98156101500"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__door-trim__718__GEO_INT_LEATHER_SUB1_Part_010",
+      "kind": "mesh",
+      "ref": "Cabin__door-trim__718__GEO_INT_LEATHER_SUB1_Part_010",
+      "assemblyId": "body",
+      "skus": [
+        "981-98155545104"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__door-trim__718__GEO_INT_LEATHER_SUB1_Part_013",
+      "kind": "mesh",
+      "ref": "Cabin__door-trim__718__GEO_INT_LEATHER_SUB1_Part_013",
+      "assemblyId": "body",
+      "skus": [
+        "981-98155521502"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__liner__rearCabin__interior_055__01",
+      "kind": "mesh",
+      "ref": "Cabin__liner__rearCabin__interior_055__01",
+      "assemblyId": "body",
+      "skus": [
+        "981-98155103521"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__liner__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_277",
+      "kind": "mesh",
+      "ref": "Cabin__liner__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_277",
+      "assemblyId": "body",
+      "skus": [
+        "981-98155103904"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__liner__718__GEO_EXT_ROLLCAGE",
+      "kind": "mesh",
+      "ref": "Cabin__liner__718__GEO_EXT_ROLLCAGE",
+      "assemblyId": "body",
+      "skus": [
+        "981-98155533105"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__liner__981__rolloverHoopTrim__C",
+      "kind": "mesh",
+      "ref": "Cabin__liner__981__rolloverHoopTrim__C",
+      "assemblyId": "body",
+      "skus": [
+        "981-98156165003"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__door-trim__leftDoorTrim__interior_065__01",
+      "kind": "mesh",
+      "ref": "Cabin__door-trim__leftDoorTrim__interior_065__01",
+      "assemblyId": "body",
+      "skus": [
+        "981-98155590300"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__door-trim__leftDoorTrim__interior_064__corrected__part_006",
+      "kind": "mesh",
+      "ref": "Cabin__door-trim__leftDoorTrim__interior_064__corrected__part_006",
+      "assemblyId": "body",
+      "skus": [
+        "981-98155590300"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__door-trim__leftDoorTrim__interior_092__01__part_009",
+      "kind": "mesh",
+      "ref": "Cabin__door-trim__leftDoorTrim__interior_092__01__part_009",
+      "assemblyId": "body",
+      "skus": [
+        "981-98155553300"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__door-trim__leftDoorTrim__interior_054__01",
+      "kind": "mesh",
+      "ref": "Cabin__door-trim__leftDoorTrim__interior_054__01",
+      "assemblyId": "body",
+      "skus": [
+        "981-98155590300"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__door-trim__leftDoorTrim__interior_064__corrected__part_002",
+      "kind": "mesh",
+      "ref": "Cabin__door-trim__leftDoorTrim__interior_064__corrected__part_002",
+      "assemblyId": "body",
+      "skus": [
+        "981-98155590300"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__door-trim__leftDoorTrim__hq_body_116_T__from_part_004__mirrored",
+      "kind": "mesh",
+      "ref": "Cabin__door-trim__leftDoorTrim__hq_body_116_T__from_part_004__mirrored",
+      "assemblyId": "body",
+      "skus": [
+        "981-98155590300"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__door-trim__leftDoorTrim__interior_043__01",
+      "kind": "mesh",
+      "ref": "Cabin__door-trim__leftDoorTrim__interior_043__01",
+      "assemblyId": "body",
+      "skus": [
+        "981-98155590300"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__door-trim__leftDoorTrim__interior_009__01__part_004",
+      "kind": "mesh",
+      "ref": "Cabin__door-trim__leftDoorTrim__interior_009__01__part_004",
+      "assemblyId": "body",
+      "skus": [
+        "981-99155572100"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__door-trim__rightDoorTrim__interior_065__01",
+      "kind": "mesh",
+      "ref": "Cabin__door-trim__rightDoorTrim__interior_065__01",
+      "assemblyId": "body",
+      "skus": [
+        "981-98155590400"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__door-trim__rightDoorTrim__interior_054__01",
+      "kind": "mesh",
+      "ref": "Cabin__door-trim__rightDoorTrim__interior_054__01",
+      "assemblyId": "body",
+      "skus": [
+        "981-98155590400"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__door-trim__rightDoorTrim__interior_064__corrected__part_002",
+      "kind": "mesh",
+      "ref": "Cabin__door-trim__rightDoorTrim__interior_064__corrected__part_002",
+      "assemblyId": "body",
+      "skus": [
+        "981-98155590400"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__door-trim__rightDoorTrim__interior_064__corrected__part_006",
+      "kind": "mesh",
+      "ref": "Cabin__door-trim__rightDoorTrim__interior_064__corrected__part_006",
+      "assemblyId": "body",
+      "skus": [
+        "981-98155590400"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__door-trim__rightDoorTrim__interior_043__01",
+      "kind": "mesh",
+      "ref": "Cabin__door-trim__rightDoorTrim__interior_043__01",
+      "assemblyId": "body",
+      "skus": [
+        "981-98155590400"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__Source__hq_body_116_T__part_004",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__Source__hq_body_116_T__part_004",
+      "assemblyId": "body",
+      "skus": [
+        "981-98155590400"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__door-trim__rightDoorTrim__interior_092__01",
+      "kind": "mesh",
+      "ref": "Cabin__door-trim__rightDoorTrim__interior_092__01",
+      "assemblyId": "body",
+      "skus": [
+        "981-98155553403"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__Source__hq_body_116_T__part_025",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__Source__hq_body_116_T__part_025",
+      "assemblyId": "body",
+      "skus": [
+        "981-99155572200"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__seats__718__GEO_INT_LEATHER_SUB1_Part_007",
+      "kind": "mesh",
+      "ref": "Cabin__seats__718__GEO_INT_LEATHER_SUB1_Part_007",
+      "assemblyId": "body",
+      "skus": [
+        "981-982857551T"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__seats__718__GEO_INT_LEATHER_SUB1_Part_006",
+      "kind": "mesh",
+      "ref": "Cabin__seats__718__GEO_INT_LEATHER_SUB1_Part_006",
+      "assemblyId": "body",
+      "skus": [
+        "981-982857552AB"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__seats__718__GEO_INT_LEATHER_SUB1_Part_018",
+      "kind": "mesh",
+      "ref": "Cabin__seats__718__GEO_INT_LEATHER_SUB1_Part_018",
+      "assemblyId": "body",
+      "skus": [
+        "981-982857552AB"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__seats__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_112",
+      "kind": "mesh",
+      "ref": "Cabin__seats__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_112",
+      "assemblyId": "body",
+      "skus": [
+        "981-982857552AB"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__seats__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_028",
+      "kind": "mesh",
+      "ref": "Cabin__seats__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_028",
+      "assemblyId": "body",
+      "skus": [
+        "981-982857552AB"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__seats__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_110",
+      "kind": "mesh",
+      "ref": "Cabin__seats__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_110",
+      "assemblyId": "body",
+      "skus": [
+        "981-982857552AB"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__seats__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_114",
+      "kind": "mesh",
+      "ref": "Cabin__seats__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_114",
+      "assemblyId": "body",
+      "skus": [
+        "981-982857551T"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__seats__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_029",
+      "kind": "mesh",
+      "ref": "Cabin__seats__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_029",
+      "assemblyId": "body",
+      "skus": [
+        "981-982857551T"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__seats__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_111",
+      "kind": "mesh",
+      "ref": "Cabin__seats__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_111",
+      "assemblyId": "body",
+      "skus": [
+        "981-982857551T"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__seats__718__GEO_INT_LEATHER_SUB1_Part_019",
+      "kind": "mesh",
+      "ref": "Cabin__seats__718__GEO_INT_LEATHER_SUB1_Part_019",
+      "assemblyId": "body",
+      "skus": [
+        "981-982857551T"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__liner__718__GEO_INT_LEATHER_SUB1_Part_002",
+      "kind": "mesh",
+      "ref": "Cabin__liner__718__GEO_INT_LEATHER_SUB1_Part_002",
+      "assemblyId": "body",
+      "skus": [
+        "981-98155531102"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__seats__rightSeat__assembly",
+      "kind": "mesh",
+      "ref": "Cabin__seats__rightSeat__assembly",
+      "assemblyId": "body",
+      "skus": [
+        "981-99152114112"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__seats__leftSeat__assembly",
+      "kind": "mesh",
+      "ref": "Cabin__seats__leftSeat__assembly",
+      "assemblyId": "body",
+      "skus": [
+        "981-99152114112"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__seats__rightSeat__base__assembly",
+      "kind": "mesh",
+      "ref": "Cabin__seats__rightSeat__base__assembly",
+      "assemblyId": "body",
+      "skus": [
+        "981-99152115100"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__seats__leftSeat__base__assembly",
+      "kind": "mesh",
+      "ref": "Cabin__seats__leftSeat__base__assembly",
+      "assemblyId": "body",
+      "skus": [
+        "981-99152115100"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__dashboard__interior__assembly",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__dashboard__interior__assembly",
+      "assemblyId": "body",
+      "skus": [
+        "981-98155210120"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__airVent__left__combined__assembly",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__airVent__left__combined__assembly",
+      "assemblyId": "body",
+      "skus": [
+        "981-98155213100"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__airVent__centerLeft__combined__assembly",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__airVent__centerLeft__combined__assembly",
+      "assemblyId": "body",
+      "skus": [
+        "981-98155213100"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__airVent__centerRight__combined__assembly",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__airVent__centerRight__combined__assembly",
+      "assemblyId": "body",
+      "skus": [
+        "981-98155213100"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__airVent__right__combined__assembly",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__airVent__right__combined__assembly",
+      "assemblyId": "body",
+      "skus": [
+        "981-98155213100"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__Source__hq_body_116_T__part_010",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__Source__hq_body_116_T__part_010",
+      "assemblyId": "body",
+      "skus": [
+        "981-98155239700"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__console__centerConsole__interior_006__01",
+      "kind": "mesh",
+      "ref": "Cabin__console__centerConsole__interior_006__01",
+      "assemblyId": "body",
+      "skus": [
+        "981-99165320108"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__console__centerConsole__interior_009__01__part_220",
+      "kind": "mesh",
+      "ref": "Cabin__console__centerConsole__interior_009__01__part_220",
+      "assemblyId": "body",
+      "skus": [
+        "981-99161396107"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__console__centerConsole__hazardLockButtons__assembly",
+      "kind": "mesh",
+      "ref": "Cabin__console__centerConsole__hazardLockButtons__assembly",
+      "assemblyId": "body",
+      "skus": [
+        "981-99161333001"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__steeringWheel__005_070__assembly",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__steeringWheel__005_070__assembly",
+      "assemblyId": "body",
+      "skus": [
+        "982-9P1419091ECA34"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__steeringWheel__interior_063__01",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__steeringWheel__interior_063__01",
+      "assemblyId": "body",
+      "skus": [
+        "981-99155247300"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__Source__hq_body_116_T__part_009",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__Source__hq_body_116_T__part_009",
+      "assemblyId": "body",
+      "skus": [
+        "981-99155247500"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__steeringWheel__interior_071",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__steeringWheel__interior_071",
+      "assemblyId": "body",
+      "skus": [
+        "982-9P1419091ECA34"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__dashboard__interior_064__corrected__part_003",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__dashboard__interior_064__corrected__part_003",
+      "assemblyId": "body",
+      "skus": [
+        "981-98155202100"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__dashboard__hq_body_116_T_033__interior_046__assembly",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__dashboard__hq_body_116_T_033__interior_046__assembly",
+      "assemblyId": "body",
+      "skus": [
+        "981-98155234500"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__cabinFloor__interior_055__01",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__cabinFloor__interior_055__01",
+      "assemblyId": "body",
+      "skus": [
+        "981-98155101104"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__dashboard__interior_064__corrected__part_008",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__dashboard__interior_064__corrected__part_008",
+      "assemblyId": "body",
+      "skus": [
+        "981-99155542102"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__dashboard__interior_064__corrected__part_009",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__dashboard__interior_064__corrected__part_009",
+      "assemblyId": "body",
+      "skus": [
+        "981-99155542102"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__Source__hq_body_116_T__part_029",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__Source__hq_body_116_T__part_029",
+      "assemblyId": "body",
+      "skus": [
+        "981-9P1864714"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__console__centerConsole__interior_009__01__part_003",
+      "kind": "mesh",
+      "ref": "Cabin__console__centerConsole__interior_009__01__part_003",
+      "assemblyId": "body",
+      "skus": [
+        "981-99155313101"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__console__centerConsole__interior_009__01__part_436",
+      "kind": "mesh",
+      "ref": "Cabin__console__centerConsole__interior_009__01__part_436",
+      "assemblyId": "body",
+      "skus": [
+        "981-99155313201"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__console__centerConsole__interior_079__01",
+      "kind": "mesh",
+      "ref": "Cabin__console__centerConsole__interior_079__01",
+      "assemblyId": "body",
+      "skus": [
+        "981-98155323102"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__dashboard__interior_011__01",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__dashboard__interior_011__01",
+      "assemblyId": "body",
+      "skus": [
+        "981-99155315102"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__console__centerConsole__interior_009__01__part_430",
+      "kind": "mesh",
+      "ref": "Cabin__console__centerConsole__interior_009__01__part_430",
+      "assemblyId": "body",
+      "skus": [
+        "981-99155311101"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__console__centerConsole__interior_009__01__part_007",
+      "kind": "mesh",
+      "ref": "Cabin__console__centerConsole__interior_009__01__part_007",
+      "assemblyId": "body",
+      "skus": [
+        "981-99155311101"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__console__centerConsole__interior_046__01",
+      "kind": "mesh",
+      "ref": "Cabin__console__centerConsole__interior_046__01",
+      "assemblyId": "body",
+      "skus": [
+        "981-99155311101"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__console__centerConsole__hq_body_116_T__rearSwitchBox",
+      "kind": "mesh",
+      "ref": "Cabin__console__centerConsole__hq_body_116_T__rearSwitchBox",
+      "assemblyId": "body",
+      "skus": [
+        "981-99155314300"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__seats__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_086",
+      "kind": "mesh",
+      "ref": "Cabin__seats__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_086",
+      "assemblyId": "body",
+      "skus": [
+        "981-982857551T"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__seats__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_118",
+      "kind": "mesh",
+      "ref": "Cabin__seats__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_118",
+      "assemblyId": "body",
+      "skus": [
+        "981-982857551T"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__seats__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_056",
+      "kind": "mesh",
+      "ref": "Cabin__seats__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_056",
+      "assemblyId": "body",
+      "skus": [
+        "981-982857551T"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__seats__718__GEO_INT_LEATHER_SUB1_Part_009",
+      "kind": "mesh",
+      "ref": "Cabin__seats__718__GEO_INT_LEATHER_SUB1_Part_009",
+      "assemblyId": "body",
+      "skus": [
+        "981-982857551T"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__seats__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_055",
+      "kind": "mesh",
+      "ref": "Cabin__seats__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_055",
+      "assemblyId": "body",
+      "skus": [
+        "981-982857552AB"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__seats__718__GEO_INT_LEATHER_SUB1_Part_008",
+      "kind": "mesh",
+      "ref": "Cabin__seats__718__GEO_INT_LEATHER_SUB1_Part_008",
+      "assemblyId": "body",
+      "skus": [
+        "981-982857552AB"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__seats__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_116",
+      "kind": "mesh",
+      "ref": "Cabin__seats__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_116",
+      "assemblyId": "body",
+      "skus": [
+        "981-982857552AB"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__dashboard__interior_041__01__分块03_04_05",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__dashboard__interior_041__01__分块03_04_05",
+      "assemblyId": "body",
+      "skus": [
+        "981-99155219401"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__dashboard__interior_041__01__分块06",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__dashboard__interior_041__01__分块06",
+      "assemblyId": "body",
+      "skus": [
+        "981-99155238700"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__dashboard__interior_041__01__分块02",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__dashboard__interior_041__01__分块02",
+      "assemblyId": "body",
+      "skus": [
+        "981-99155238301"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__dashboard__interior_041__01__分块01",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__dashboard__interior_041__01__分块01",
+      "assemblyId": "body",
+      "skus": [
+        "981-99155238102"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__dashboard__interior_042__hq_body_116_T_011__assembly",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__dashboard__interior_042__hq_body_116_T_011__assembly",
+      "assemblyId": "body",
+      "skus": [
+        "981-98155215101"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__instrumentCluster__hq_body_116_T__002_023_043_044__assembly",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__instrumentCluster__hq_body_116_T__002_023_043_044__assembly",
+      "assemblyId": "body",
+      "skus": [
+        "981-98155252500"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__console__manualShifter__interior_067__01",
+      "kind": "mesh",
+      "ref": "Cabin__console__manualShifter__interior_067__01",
+      "assemblyId": "body",
+      "skus": [
+        "982-982711141AJ8YR"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__console__manualShifter__interior_069__01",
+      "kind": "mesh",
+      "ref": "Cabin__console__manualShifter__interior_069__01",
+      "assemblyId": "body",
+      "skus": [
+        "982-982711141AJ8YR"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__console__manualShifter__interior_066__01",
+      "kind": "mesh",
+      "ref": "Cabin__console__manualShifter__interior_066__01",
+      "assemblyId": "body",
+      "skus": [
+        "982-982711141AJ8YR"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__liner__718__GEO_EXT_GRID_COCKPIT_Part_002",
+      "kind": "mesh",
+      "ref": "Cabin__liner__718__GEO_EXT_GRID_COCKPIT_Part_002",
+      "assemblyId": "body",
+      "skus": [
+        "981-98156158302"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__liner__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_071",
+      "kind": "mesh",
+      "ref": "Cabin__liner__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_071",
+      "assemblyId": "body",
+      "skus": [
+        "981-98156165003"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__liner__718__GEO_EXT_GRID_COCKPIT_Part_005",
+      "kind": "mesh",
+      "ref": "Cabin__liner__718__GEO_EXT_GRID_COCKPIT_Part_005",
+      "assemblyId": "body",
+      "skus": [
+        "981-98156158302"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__liner__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_052",
+      "kind": "mesh",
+      "ref": "Cabin__liner__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_052",
+      "assemblyId": "body",
+      "skus": [
+        "981-98156158302"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__liner__718__GEO_EXT_GRID_COCKPIT_Part_004",
+      "kind": "mesh",
+      "ref": "Cabin__liner__718__GEO_EXT_GRID_COCKPIT_Part_004",
+      "assemblyId": "body",
+      "skus": [
+        "981-98156158402"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__liner__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_051",
+      "kind": "mesh",
+      "ref": "Cabin__liner__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_051",
+      "assemblyId": "body",
+      "skus": [
+        "981-98156158402"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__door-trim__718__GEO_INT_LEATHER_SUB1_Part_012",
+      "kind": "mesh",
+      "ref": "Cabin__door-trim__718__GEO_INT_LEATHER_SUB1_Part_012",
+      "assemblyId": "body",
+      "skus": [
+        "981-98155521602"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__door-trim__718__GEO_INT_LEATHER_SUB1_Part_011",
+      "kind": "mesh",
+      "ref": "Cabin__door-trim__718__GEO_INT_LEATHER_SUB1_Part_011",
+      "assemblyId": "body",
+      "skus": [
+        "981-98155545204"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__door-trim__leftDoorTrim__mainPanel__assembly",
+      "kind": "mesh",
+      "ref": "Cabin__door-trim__leftDoorTrim__mainPanel__assembly",
+      "assemblyId": "body",
+      "skus": [
+        "981-99161315500"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__dashboard__interior_006__01",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__dashboard__interior_006__01",
+      "assemblyId": "body",
+      "skus": [
+        "981-99161325100"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__dashboard__interior_055__01",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__dashboard__interior_055__01",
+      "assemblyId": "body",
+      "skus": [
+        "981-99155510101"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__cabinFloor__interior_050__01",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__cabinFloor__interior_050__01",
+      "assemblyId": "body",
+      "skus": [
+        "981-98155154700"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__Source__hq_body_116_T__part_024",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__Source__hq_body_116_T__part_024",
+      "assemblyId": "body",
+      "skus": [
+        "981-98155154700"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__dashboard__interior_079__part_01",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__dashboard__interior_079__part_01",
+      "assemblyId": "body",
+      "skus": [
+        "981-99155220105"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__dashboard__interior_079__part_06",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__dashboard__interior_079__part_06",
+      "assemblyId": "body",
+      "skus": [
+        "981-99155240500"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__dashboard__interior_016__01",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__dashboard__interior_016__01",
+      "assemblyId": "body",
+      "skus": [
+        "981-98155210120"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__door-trim__rightDoorTrim__interior_079__01",
+      "kind": "mesh",
+      "ref": "Cabin__door-trim__rightDoorTrim__interior_079__01",
+      "assemblyId": "body",
+      "skus": [
+        "981-99155240500"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__door-trim__leftDoorTrim__interior_041__01",
+      "kind": "mesh",
+      "ref": "Cabin__door-trim__leftDoorTrim__interior_041__01",
+      "assemblyId": "body",
+      "skus": [
+        "981-99155591308"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__door-trim__rightDoorTrim__interior_041__01",
+      "kind": "mesh",
+      "ref": "Cabin__door-trim__rightDoorTrim__interior_041__01",
+      "assemblyId": "body",
+      "skus": [
+        "981-99155591408"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__seats__leftSeat__interior_080__01",
+      "kind": "mesh",
+      "ref": "Cabin__seats__leftSeat__interior_080__01",
+      "assemblyId": "body",
+      "skus": [
+        "981-99152162300"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__seats__rightSeat__interior_080__01",
+      "kind": "mesh",
+      "ref": "Cabin__seats__rightSeat__interior_080__01",
+      "assemblyId": "body",
+      "skus": [
+        "981-99152162300"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__door-trim__rightDoorTrim__interior_049__01",
+      "kind": "mesh",
+      "ref": "Cabin__door-trim__rightDoorTrim__interior_049__01",
+      "assemblyId": "body",
+      "skus": [
+        "981-99155552206"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__door-trim__leftDoorTrim__interior_049__01",
+      "kind": "mesh",
+      "ref": "Cabin__door-trim__leftDoorTrim__interior_049__01",
+      "assemblyId": "body",
+      "skus": [
+        "981-99155552106"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__Source__hq_body_116_T__part_053",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__Source__hq_body_116_T__part_053",
+      "assemblyId": "body",
+      "skus": [
+        "981-99155559000"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__door-trim__leftDoorTrim__interior_009__01__part_006",
+      "kind": "mesh",
+      "ref": "Cabin__door-trim__leftDoorTrim__interior_009__01__part_006",
+      "assemblyId": "body",
+      "skus": [
+        "981-99155558900"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__Source__hq_body_116_T__part_096",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__Source__hq_body_116_T__part_096",
+      "assemblyId": "body",
+      "skus": [
+        "981-99155552206"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__door-trim__leftDoorTrim__interior_009__01__part_013",
+      "kind": "mesh",
+      "ref": "Cabin__door-trim__leftDoorTrim__interior_009__01__part_013",
+      "assemblyId": "body",
+      "skus": [
+        "981-99155552106"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__door-trim__leftDoorTrim__interior_009__01__part_003",
+      "kind": "mesh",
+      "ref": "Cabin__door-trim__leftDoorTrim__interior_009__01__part_003",
+      "assemblyId": "body",
+      "skus": [
+        "981-99155552106"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__door-trim__leftDoorTrim__interior_009__01__part_012",
+      "kind": "mesh",
+      "ref": "Cabin__door-trim__leftDoorTrim__interior_009__01__part_012",
+      "assemblyId": "body",
+      "skus": [
+        "981-99155557900"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__Source__hq_body_116_T__part_021",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__Source__hq_body_116_T__part_021",
+      "assemblyId": "body",
+      "skus": [
+        "981-99155552206"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__Source__hq_body_116_T__part_089",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__Source__hq_body_116_T__part_089",
+      "assemblyId": "body",
+      "skus": [
+        "981-99155557900"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__dashboard__interior_064__corrected__part_014",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__dashboard__interior_064__corrected__part_014",
+      "assemblyId": "body",
+      "skus": [
+        "981-99155247300"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__rear-bumper__SM_RearKit_0000003_MAT_718_Car_Paint_Base_00076_0__part_008__Car_Paint",
+      "kind": "mesh",
+      "ref": "Exterior__rear-bumper__SM_RearKit_0000003_MAT_718_Car_Paint_Base_00076_0__part_008__Car_Paint",
+      "assemblyId": "body",
+      "skus": [
+        "981-98150100100"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__other__718__GEO_Chassis_SUB8",
+      "kind": "mesh",
+      "ref": "Exterior__other__718__GEO_Chassis_SUB8",
+      "assemblyId": "body",
+      "skus": [
+        "981-98111196101"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__other__尾排",
+      "kind": "mesh",
+      "ref": "Exterior__other__尾排",
+      "assemblyId": "body",
+      "skus": [
+        "981-98111122201"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__other__SM_Disk_L_0000_Morph001_BD_HR_R003_MAT_Disk_0",
+      "kind": "mesh",
+      "ref": "Exterior__other__SM_Disk_L_0000_Morph001_BD_HR_R003_MAT_Disk_0",
+      "assemblyId": "body",
+      "skus": [
+        "981-98135140101"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__other__SM_Disk_R_0000_Morph001_BD_HR_R003_MAT_Disk_0",
+      "kind": "mesh",
+      "ref": "Exterior__other__SM_Disk_R_0000_Morph001_BD_HR_R003_MAT_Disk_0",
+      "assemblyId": "body",
+      "skus": [
+        "981-98135140101"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__other__SM_Brake_FL_0000_Morph001_BD_HR_R003_MAT_Tire_Brake132_0",
+      "kind": "mesh",
+      "ref": "Exterior__other__SM_Brake_FL_0000_Morph001_BD_HR_R003_MAT_Tire_Brake132_0",
+      "assemblyId": "body",
+      "skus": [
+        "981-98135142101"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__other__SM_Brake_FR_0000_Morph001_BD_HR_R003_MAT_Tire_Brake132_0",
+      "kind": "mesh",
+      "ref": "Exterior__other__SM_Brake_FR_0000_Morph001_BD_HR_R003_MAT_Tire_Brake132_0",
+      "assemblyId": "body",
+      "skus": [
+        "981-98135142201"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__other__SM_Disk_L_0000_Morph002_BD_W_F003_MAT_Disk_0",
+      "kind": "mesh",
+      "ref": "Exterior__other__SM_Disk_L_0000_Morph002_BD_W_F003_MAT_Disk_0",
+      "assemblyId": "body",
+      "skus": [
+        "981-98135203100"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__other__SM_Disk_R_0000_Morph002_BD_W_F003_MAT_Disk_0",
+      "kind": "mesh",
+      "ref": "Exterior__other__SM_Disk_R_0000_Morph002_BD_W_F003_MAT_Disk_0",
+      "assemblyId": "body",
+      "skus": [
+        "981-98135203200"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__other__SM_Brake_RR_0000_Morph002_BD_W_F002_MAT_Tire_Brake132_0",
+      "kind": "mesh",
+      "ref": "Exterior__other__SM_Brake_RR_0000_Morph002_BD_W_F002_MAT_Tire_Brake132_0",
+      "assemblyId": "body",
+      "skus": [
+        "981-98635242402"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__other__SM_Brake_RL_0000_Morph002_BD_W_F003_MAT_Tire_Brake132_0",
+      "kind": "mesh",
+      "ref": "Exterior__other__SM_Brake_RL_0000_Morph002_BD_W_F003_MAT_Tire_Brake132_0",
+      "assemblyId": "body",
+      "skus": [
+        "981-98635242302"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__rear-bumper__SM_RearKit_0000003_MAT_Light030_0__rear_center_light",
+      "kind": "mesh",
+      "ref": "Exterior__rear-bumper__SM_RearKit_0000003_MAT_Light030_0__rear_center_light",
+      "assemblyId": "body",
+      "skus": [
+        "981-98163146502"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__rear-bumper__SM_RearKit_0000003_MAT_Glass067_0__part_002",
+      "kind": "mesh",
+      "ref": "Exterior__rear-bumper__SM_RearKit_0000003_MAT_Glass067_0__part_002",
+      "assemblyId": "body",
+      "skus": [
+        "981-98163198302"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__rear-bumper__SM_RearKit_0000003_MAT_Glass067_0__part_001",
+      "kind": "mesh",
+      "ref": "Exterior__rear-bumper__SM_RearKit_0000003_MAT_Glass067_0__part_001",
+      "assemblyId": "body",
+      "skus": [
+        "981-98163198402"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__other__718__EXT_GLASS_REAR",
+      "kind": "mesh",
+      "ref": "Exterior__other__718__EXT_GLASS_REAR",
+      "assemblyId": "body",
+      "skus": [
+        "981-98151271500"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__other__718__GEO_Chassis_SUB0_Part_010__Car_Paint",
+      "kind": "mesh",
+      "ref": "Exterior__other__718__GEO_Chassis_SUB0_Part_010__Car_Paint",
+      "assemblyId": "body",
+      "skus": [
+        "981-98151271500"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__other__718__GEO_Chassis_SUB1_Part_002_010_012",
+      "kind": "mesh",
+      "ref": "Exterior__other__718__GEO_Chassis_SUB1_Part_002_010_012",
+      "assemblyId": "body",
+      "skus": [
+        "981-98150456202"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__soft-top__SM_SoftTop_0000001_MAT_Glass067_0",
+      "kind": "mesh",
+      "ref": "Exterior__soft-top__SM_SoftTop_0000001_MAT_Glass067_0",
+      "assemblyId": "body",
+      "skus": [
+        "981-98156101500"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__liner__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_005",
+      "kind": "mesh",
+      "ref": "Cabin__liner__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_005",
+      "assemblyId": "body",
+      "skus": [
+        "981-98156173003"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__liner__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_433",
+      "kind": "mesh",
+      "ref": "Cabin__liner__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_433",
+      "assemblyId": "body",
+      "skus": [
+        "981-98156165003"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__liner__718__CINTURE_OFF_SUB0",
+      "kind": "mesh",
+      "ref": "Cabin__liner__718__CINTURE_OFF_SUB0",
+      "assemblyId": "body",
+      "skus": [
+        "981-98180303300"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__liner__718__CINTURE_OFF_SUB1",
+      "kind": "mesh",
+      "ref": "Cabin__liner__718__CINTURE_OFF_SUB1",
+      "assemblyId": "body",
+      "skus": [
+        "981-98180303300"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__liner__718__CINTURE_OFF_SUB2",
+      "kind": "mesh",
+      "ref": "Cabin__liner__718__CINTURE_OFF_SUB2",
+      "assemblyId": "body",
+      "skus": [
+        "981-98180303300"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__liner__718__CINTURE_Passanger",
+      "kind": "mesh",
+      "ref": "Cabin__liner__718__CINTURE_Passanger",
+      "assemblyId": "body",
+      "skus": [
+        "981-98180303300"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__console__centerConsole__interior_009__01__part_437",
+      "kind": "mesh",
+      "ref": "Cabin__console__centerConsole__interior_009__01__part_437",
+      "assemblyId": "body",
+      "skus": [
+        "981-99180318305"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__console__centerConsole__interior_009__01__part_438",
+      "kind": "mesh",
+      "ref": "Cabin__console__centerConsole__interior_009__01__part_438",
+      "assemblyId": "body",
+      "skus": [
+        "981-99180318305"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__seats__rightSeat__interior_082__01",
+      "kind": "mesh",
+      "ref": "Cabin__seats__rightSeat__interior_082__01",
+      "assemblyId": "body",
+      "skus": [
+        "981-99180318305"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__seats__leftSeat__interior_009__01",
+      "kind": "mesh",
+      "ref": "Cabin__seats__leftSeat__interior_009__01",
+      "assemblyId": "body",
+      "skus": [
+        "981-99180318300"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__seats__leftSeat__interior_082__01",
+      "kind": "mesh",
+      "ref": "Cabin__seats__leftSeat__interior_082__01",
+      "assemblyId": "body",
+      "skus": [
+        "981-99180318300"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__seats__rightSeat__interior_009__01",
+      "kind": "mesh",
+      "ref": "Cabin__seats__rightSeat__interior_009__01",
+      "assemblyId": "body",
+      "skus": [
+        "981-99180318406"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__liner__981__doorHinge_upper__R",
+      "kind": "mesh",
+      "ref": "Cabin__liner__981__doorHinge_upper__R",
+      "assemblyId": "body",
+      "skus": [
+        "981-99153132000"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__liner__981__doorHinge_upper__L",
+      "kind": "mesh",
+      "ref": "Cabin__liner__981__doorHinge_upper__L",
+      "assemblyId": "body",
+      "skus": [
+        "981-99153131900"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__liner__981__doorHinge_lower__L",
+      "kind": "mesh",
+      "ref": "Cabin__liner__981__doorHinge_lower__L",
+      "assemblyId": "body",
+      "skus": [
+        "981-99153715100"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__liner__981__doorHinge_lower__R",
+      "kind": "mesh",
+      "ref": "Cabin__liner__981__doorHinge_lower__R",
+      "assemblyId": "body",
+      "skus": [
+        "981-99153715100"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__Source__hq_body_116_T__part_027",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__Source__hq_body_116_T__part_027",
+      "assemblyId": "body",
+      "skus": [
+        "981-98155237600"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__Source__hq_body_116_T__part_028",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__Source__hq_body_116_T__part_028",
+      "assemblyId": "body",
+      "skus": [
+        "981-98155237500"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__rear-bumper__SM_RearKit_0000003_MAT_Details_MAT130_0__rear_badge_trim",
+      "kind": "mesh",
+      "ref": "Exterior__rear-bumper__SM_RearKit_0000003_MAT_Details_MAT130_0__rear_badge_trim",
+      "assemblyId": "body",
+      "skus": [
+        "981-98155923300"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__liner__981__doorSill__R",
+      "kind": "mesh",
+      "ref": "Cabin__liner__981__doorSill__R",
+      "assemblyId": "body",
+      "skus": [
+        "981-98150498200"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__liner__981__doorSill__L",
+      "kind": "mesh",
+      "ref": "Cabin__liner__981__doorSill__L",
+      "assemblyId": "body",
+      "skus": [
+        "981-98150498100"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__Source__hq_body_116_T__part_064",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__Source__hq_body_116_T__part_064",
+      "assemblyId": "body",
+      "skus": [
+        "981-99173151100"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__Source__hq_body_284",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__Source__hq_body_284",
+      "assemblyId": "body",
+      "skus": [
+        "981-99173151100"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__Source__hq_body_116_T__part_052",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__Source__hq_body_116_T__part_052",
+      "assemblyId": "body",
+      "skus": [
+        "981-99173181101"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__Source__hq_body_116_T__part_022",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__Source__hq_body_116_T__part_022",
+      "assemblyId": "body",
+      "skus": [
+        "981-99173181201"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__dashboard__Source__hq_body_116_T__part_016",
+      "kind": "mesh",
+      "ref": "Cabin__dashboard__Source__hq_body_116_T__part_016",
+      "assemblyId": "body",
+      "skus": [
+        "981-99173151100"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__other__718__GEO_Chassis_SUB1_Part_003_011_013",
+      "kind": "mesh",
+      "ref": "Exterior__other__718__GEO_Chassis_SUB1_Part_003_011_013",
+      "assemblyId": "body",
+      "skus": [
+        "981-98150456102"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__other__SM_Hub_L_0000_Morph003_W_R004_MAT_Hub_0",
+      "kind": "mesh",
+      "ref": "Exterior__other__SM_Hub_L_0000_Morph003_W_R004_MAT_Hub_0",
+      "assemblyId": "body",
+      "skus": [
+        "981-98104460223"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__other__SM_Hub_L_0000_Morph002_HR_R004_MAT_Hub_0",
+      "kind": "mesh",
+      "ref": "Exterior__other__SM_Hub_L_0000_Morph002_HR_R004_MAT_Hub_0",
+      "assemblyId": "body",
+      "skus": [
+        "981-98104460223"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__other__SM_Hub_L_0000_Morph003_W_R003_MAT_Hub_0",
+      "kind": "mesh",
+      "ref": "Exterior__other__SM_Hub_L_0000_Morph003_W_R003_MAT_Hub_0",
+      "assemblyId": "body",
+      "skus": [
+        "981-98104460223"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__other__SM_Hub_L_0000_Morph002_HR_R003_MAT_Hub_0",
+      "kind": "mesh",
+      "ref": "Exterior__other__SM_Hub_L_0000_Morph002_HR_R003_MAT_Hub_0",
+      "assemblyId": "body",
+      "skus": [
+        "981-98104460223"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__liner__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_075",
+      "kind": "mesh",
+      "ref": "Cabin__liner__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_075",
+      "assemblyId": "body",
+      "skus": [
+        "981-98156117503"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__liner__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_074",
+      "kind": "mesh",
+      "ref": "Cabin__liner__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_074",
+      "assemblyId": "body",
+      "skus": [
+        "981-98156117603"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__liner__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_061",
+      "kind": "mesh",
+      "ref": "Cabin__liner__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_061",
+      "assemblyId": "body",
+      "skus": [
+        "981-98156165003"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__liner__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_072",
+      "kind": "mesh",
+      "ref": "Cabin__liner__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_072",
+      "assemblyId": "body",
+      "skus": [
+        "981-98156165003"
+      ],
+      "note": null
+    },
+    {
+      "id": "mesh:body:Cabin__liner__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_448",
+      "kind": "mesh",
+      "ref": "Cabin__liner__718__GEO_INT_PLASTIC_BLACK_SUB0_Part_448",
+      "assemblyId": "body",
+      "skus": [
+        "981-98156165003"
       ],
       "note": null
     }

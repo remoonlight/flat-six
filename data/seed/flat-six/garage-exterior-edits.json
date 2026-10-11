@@ -1,0 +1,129 @@
+{
+  "version": 1,
+  "scope": "Explicit saved desktop exterior deletion/join topology. Original geometry, material and transforms retained.",
+  "sourceFile": "车库外观.blend",
+  "sourceHash": "2d41a8c9ec97581384b6168afc1abf7057ae20fb659eaefa86614a2f254c8a59",
+  "removed": [
+    "Exterior__front-trunk__718__GEO_Hood_SUB2",
+    "Exterior__front-bumper__SM_FrontKit_0000.003_MAT_718_Car_Paint_Base_00.076_0__part_014__Car_Paint",
+    "Exterior__front-bumper__SM_FrontKit_0000.003_MAT_718_Car_Paint_Base_00.076_0__part_012__Car_Paint"
+  ],
+  "merged": [
+    {
+      "name": "Exterior__other__718__GEO_Chassis_SUB0_Part_014__Car_Paint",
+      "nodes": [
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_014__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_015__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_016__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_017__Car_Paint"
+      ],
+      "anchor": "Exterior__other__718__GEO_Chassis_SUB0_Part_014__Car_Paint"
+    },
+    {
+      "name": "Exterior__other__718__GEO_Chassis_SUB0_Part_018__Car_Paint",
+      "nodes": [
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_013__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_018__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_019__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_020__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_021__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_022__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_023__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_024__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_025__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_026__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_027__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_028__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_029__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_030__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_031__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_032__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_033__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_034__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_035__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_036__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_037__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_038__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_039__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_040__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_041__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_042__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_043__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_044__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_045__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_046__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_047__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_048__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_049__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_050__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_051__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_052__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_053__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_054__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_055__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_056__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_057__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_058__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_059__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_060__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_061__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_062__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_063__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_064__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_065__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_066__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_067__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_068__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_069__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_070__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_071__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_072__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_073__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_074__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_075__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_076__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_077__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_078__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_079__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_080__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_081__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_082__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_083__Car_Paint",
+        "Exterior__other__718__GEO_Chassis_SUB0_Part_084__Car_Paint"
+      ],
+      "anchor": "Exterior__other__718__GEO_Chassis_SUB0_Part_018__Car_Paint"
+    },
+    {
+      "name": "Exterior__other__W2__1529b39_dds_0",
+      "nodes": [
+        "Exterior__other__W3__c5ebe6d_dds_0",
+        "Exterior__other__W2__1529b39_dds_0"
+      ],
+      "anchor": "Exterior__other__W2__1529b39_dds_0"
+    },
+    {
+      "name": "Exterior__other__W2__1529b39_dds_0001",
+      "nodes": [
+        "Exterior__other__W3__c5ebe6d_dds_0.001",
+        "Exterior__other__W2__1529b39_dds_0.001"
+      ],
+      "anchor": "Exterior__other__W2__1529b39_dds_0.001"
+    },
+    {
+      "name": "Exterior__other__WTopLevelGroupObject_128__1529b39_dds_0",
+      "nodes": [
+        "Exterior__other__W:TopLevelGroupObject_182__c5ebe6d_dds_0",
+        "Exterior__other__W:TopLevelGroupObject_128__1529b39_dds_0"
+      ],
+      "anchor": "Exterior__other__W:TopLevelGroupObject_128__1529b39_dds_0"
+    },
+    {
+      "name": "Exterior__other__TopLevelGroupObject_182__c5ebe6d_dds_0",
+      "nodes": [
+        "Exterior__other__TopLevelGroupObject_182__c5ebe6d_dds_0",
+        "Exterior__other__TopLevelGroupObject_128__1529b39_dds_0"
+      ],
+      "anchor": "Exterior__other__TopLevelGroupObject_182__c5ebe6d_dds_0"
+    }
+  ]
+}

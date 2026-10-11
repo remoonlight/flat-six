@@ -9,6 +9,7 @@ import {
   api,
   type CmsAsset,
   type CmsMeshMap,
+  type ModelOemLink,
   type Vehicle,
   type XrayMeshState,
   type XrayScene,
@@ -55,6 +56,17 @@ export function LocatorPage({
     Record<string, XrayTransform>
   >({});
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
+  const [modelLinks, setModelLinks] = useState<ModelOemLink[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    const reload = () => {
+      void Promise.all([api().getVehicle(), api().modelOemLinksGet!()]).then(([v, links]) => {
+        if (!cancelled) { setVehicle(v); setModelLinks(links.links); }
+      }).catch(() => {});
+    };
+    reload(); window.addEventListener("focus", reload);
+    return () => { cancelled = true; window.removeEventListener("focus", reload); };
+  }, []);
 
   useEffect(() => {
     if (!xrayScene) return;
@@ -101,14 +113,12 @@ export function LocatorPage({
       api().cmsGetMeshMap().catch(() => null),
       api().xrayLayers().catch(() => null),
       api().xrayGetMeshState().catch(() => null),
-      api().getVehicle().catch(() => null),
     ])
-      .then(([m, cmsAssets, mm, xray, ms, v]) => {
+      .then(([m, cmsAssets, mm, xray, ms]) => {
         setAssets(cmsAssets);
         if (mm) setMeshMap(mm);
         if (xray) setXrayScene(xray);
         if (ms) setMeshState(ms);
-        if (v) setVehicle(v);
 
         const focusZone =
           (initialZoneId && m?.zones.find((z) => z.id === initialZoneId)) ||
@@ -284,6 +294,8 @@ export function LocatorPage({
               bodyPaintPbr={bodyPaintPbr}
               softTopHex={softTopHex}
               interiorHex={interiorHex}
+              interiorSpec={vehicle?.interior}
+              interiorModelLinks={modelLinks}
               readGlb={readGlb}
               selectedMeshName={pickedMesh}
               linkedMeshNames={linkedMeshNames}
@@ -299,7 +311,12 @@ export function LocatorPage({
             <LocatorGlbViewer
               glbRel={glbRel}
               singleAssetId={assetId}
+              bodyPaintHex={bodyPaintHex}
+              bodyPaintPbr={bodyPaintPbr}
+              softTopHex={softTopHex}
               interiorHex={interiorHex}
+              interiorSpec={vehicle?.interior}
+              interiorModelLinks={modelLinks}
               readGlb={readGlb}
               selectedMeshName={pickedMesh}
               linkedMeshNames={linkedMeshNames}

@@ -1,6 +1,6 @@
 {
   "version": 5,
-  "note": "981 brochure paint + PET interior trim codes. Sync with packages/domain/src/vehicle-paint.ts.",
+  "note": "981 brochure paint + PET interior trim codes. Hex colours and rendered fabric/paint finishes are visual approximations, not measured factory colour or BRDF data. Sync with packages/domain/src/vehicle-paint.ts.",
   "paints": {
     "Black": { "hex": "#1A1A1C", "code": "041", "oem_code": "L041", "zh": "黑色", "group": "solid" },
     "White": { "hex": "#F5F5F2", "code": "C9A", "zh": "白色", "group": "solid" },

@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { reviewedInteriorZone } from "../components/reviewed-interior-materials";
 import {
   buildGarageConsumablesList,
   collectSkusForModelSelection,
@@ -143,12 +144,13 @@ function modelItemsForView(input: {
   meshesByAsm: Record<string, string[]>;
   layers: readonly XrayAssembly[];
   flows: readonly GarageFlowSystem[];
+  modelLinks: readonly ModelOemLink[];
 }): ModelListItemBase[] {
   const { mode, meshesByAsm, layers, flows, interiorZone } = input;
   const body = meshesByAsm.body ?? [];
 
   if (mode === "exterior") {
-    // 外观 = 车壳全部子 mesh，仅排除 SM_Interior 座舱块（平铺）
+    // 外观排除主模型 Cabin 与旧模型 SM_Interior 座舱块。
     return filterNames(body, null)
       .filter((n) => !isBodyInteriorMeshName(n))
       .map((n) => ({
@@ -177,11 +179,13 @@ function modelItemsForView(input: {
         assemblyId: l.id,
       }));
     const bodyMatch =
-      zone.id === "all" ? /SM_Interior/i : zone.match;
+      zone.id === "all" ? /SM_Interior|^Cabin__/i : zone.match;
     const bodyItems =
       bodyMatch == null
         ? []
-        : filterNames(body, bodyMatch)
+        : body.filter(n => zone.id === "all" || (reviewedInteriorZone(n, input.modelLinks)
+            ? reviewedInteriorZone(n, input.modelLinks) === zone.id : bodyMatch.test(n)))
+            .filter((n) => isBodyInteriorMeshName(n))
             .filter((n) => !isBodyPaintMeshName(n))
             .map((n) => ({
               key: `mesh:${n}`,
@@ -273,6 +277,8 @@ export function PartsBrowserPage() {
   );
   /** 子模型/叶子：展开看价；关联按钮再开 OEM 弹窗 */
   const [expandedChildKey, setExpandedChildKey] = useState<string | null>(null);
+  const modelListRef = useRef<HTMLUListElement>(null);
+  const [viewerPick, setViewerPick] = useState<{ key: string } | null>(null);
   const [oemDialog, setOemDialog] = useState<ModelListItem | null>(null);
   /** 消耗品：改零件库 oem_number（按 sku） */
   const [partOemEdit, setPartOemEdit] = useState<{
@@ -322,10 +328,10 @@ export function PartsBrowserPage() {
 
   useEffect(() => {
     function reloadLinks() {
-      void api()
-        .modelOemLinksGet?.()
-        .then((links) => {
+      void Promise.all([api().modelOemLinksGet?.(), api().getVehicle()])
+        .then(([links, v]) => {
           if (links?.links) setModelLinks(links.links);
+          setVehicle(v);
         })
         .catch(() => {});
     }
@@ -354,6 +360,7 @@ export function PartsBrowserPage() {
       meshesByAsm,
       layers: garageLayers,
       flows: garageFlows,
+      modelLinks,
     });
     return base.map((item): ModelListItem => {
       const linkedSkus = collectSkusForModelSelection(modelLinks, {
@@ -416,6 +423,19 @@ export function PartsBrowserPage() {
         };
       });
   }, [expandedAssemblyId, meshesByAsm, modelLinks, parts]);
+
+  useEffect(() => {
+    if (!viewerPick || rightTab !== "model") return;
+    const list = modelListRef.current;
+    const row = list && Array.from(
+      list.querySelectorAll<HTMLButtonElement>("[data-model-key]"),
+    ).find((item) => item.dataset.modelKey === viewerPick.key);
+    if (!list || !row) return;
+    // Scroll only the parts list so the clicked model stays in place.
+    list.scrollTop += row.getBoundingClientRect().top -
+      list.getBoundingClientRect().top - list.clientTop - 8;
+    setViewerPick(null);
+  }, [viewerPick, rightTab, modelItems, expandedChildren, expandedChildKey]);
 
   const consumableRows = useMemo(
     () => buildGarageConsumablesList(parts, { carGeneration: "981" }),
@@ -743,15 +763,30 @@ export function PartsBrowserPage() {
     clearOemSelection();
 
     if (asm !== "body") {
-      if (mode !== "interior" || !isInteriorZoneAssembly(garageLayers, asm)) {
+      const cabinZone = INTERIOR_ZONES.find((zone) => zone.id ===
+        garageLayers.find((layer) => layer.id === asm)?.interiorZone)?.id;
+      if (cabinZone) {
+        setMode("interior");
+        if (mode !== "interior" || interiorZone !== "all") {
+          setInteriorZone(cabinZone);
+        }
+      } else {
         setMode("xray");
         setXrayStructure(
           xrayStructureForAssemblyPick(garageLayers, asm, xrayStructure),
         );
       }
       setExpandedAssemblyId(asm);
-    } else if (mode === "xray") {
+    } else {
       setExpandedAssemblyId(null);
+      if (isBodyInteriorMeshName(meshName) && !isBodyPaintMeshName(meshName)) {
+        setMode("interior");
+        if (mode !== "interior" || !modelItems.some((item) => item.meshName === meshName)) {
+          setInteriorZone("all");
+        }
+      } else {
+        setMode("exterior");
+      }
     }
 
     const linkedSkus = resolveModelOemSkus(modelLinks, {
@@ -760,8 +795,10 @@ export function PartsBrowserPage() {
       assemblyId: asm,
     });
     const cap = formatModelChildCaption(meshName, linkedSkus, parts);
+    const key = asm === "body" ? `mesh:${meshName}` : `mesh:${asm}:${meshName}`;
+    setViewerPick({ key });
     selectChildPart({
-      key: `mesh:${asm}:${meshName}`,
+      key,
       label: cap.title,
       kind: "mesh",
       ref: meshName,
@@ -931,6 +968,8 @@ export function PartsBrowserPage() {
               bodyPaintPbr={bodyPaintPbr}
               softTopHex={softTopHex}
               interiorHex={interiorHex}
+              interiorSpec={vehicle?.interior}
+              interiorModelLinks={modelLinks}
               hideSoftTop={cabinView}
               interiorFillLight={cabinView}
               onMeshesReady={setMeshesByAsm}
@@ -982,7 +1021,7 @@ export function PartsBrowserPage() {
 
           {rightTab === "model" ? (
             <>
-              <ul className="parts-browser-list plain-list">
+              <ul className="parts-browser-list plain-list" ref={modelListRef}>
                 {modelItems.map((item) => {
                   const expandedAsm =
                     item.kind === "assembly" &&
@@ -998,6 +1037,7 @@ export function PartsBrowserPage() {
                     <li key={item.key}>
                       <button
                         type="button"
+                        data-model-key={item.key}
                         className={
                           active
                             ? "parts-browser-item active"
@@ -1039,6 +1079,7 @@ export function PartsBrowserPage() {
                               <li key={child.key}>
                                 <button
                                   type="button"
+                                  data-model-key={child.key}
                                   className={
                                     child.meshName === selectedMeshName
                                       ? "parts-browser-item active"

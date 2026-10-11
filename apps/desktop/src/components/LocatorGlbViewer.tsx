@@ -3,13 +3,26 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { TransformControls } from "three/addons/controls/TransformControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import {
+  applyVehicleSurfaceMaterial,
+  disposeVehicleSurfaceMaps,
+  SOFT_TOP_PBR,
+} from "./vehicle-surface-materials";
+import { applyReviewedInteriorMaterials, restoreReviewedInteriorMesh, disposeReviewedInteriorMaps, reviewedInteriorZone } from "./reviewed-interior-materials";
+import { applyReviewedXrayMaterials, restoreReviewedXrayMesh, disposeReviewedXrayMaps } from "./reviewed-xray-materials";
 import type {
+  ModelOemLink,
   GarageFlowSystem,
   XrayAssembly,
   XrayBodyShell,
   XrayMeshState,
   XrayTransform,
 } from "../api";
+
+const EMPTY_INTERIOR_LINKS: readonly ModelOemLink[] = [];
+type ReviewedInterior = { interior: string | null | undefined; links: readonly ModelOemLink[];
+  paint?: { hex: string; pbr: { metalness: number; roughness: number } } };
 
 export type GarageViewMode = "exterior" | "interior" | "xray";
 export type GarageStructureId =
@@ -75,15 +88,15 @@ export const EXTERIOR_ZONES: readonly ExteriorZoneDef[] = [
     id: "front-bumper",
     labelZh: "前保险杠",
     labelEn: "FRONT BUMPER",
-    match: /SM_FrontKit/i,
+    match: /SM_FrontKit|Exterior__front-bumper__/i,
   },
   {
     id: "front-trunk",
     labelZh: "前舱",
     labelEn: "FRONT TRUNK",
-    match: /SM_Hood|SM_FrontKit/i,
+    match: /SM_Hood|SM_FrontKit|Exterior__front-trunk__/i,
     lid: {
-      match: /SM_Hood/i,
+      match: /SM_Hood|GEO_Hood_SUB0/i,
       hinge: "rear",
       angleDeg: CMS_DOOR_ANGLE_DEG,
     },
@@ -92,7 +105,7 @@ export const EXTERIOR_ZONES: readonly ExteriorZoneDef[] = [
     id: "soft-top",
     labelZh: "顶蓬机构",
     labelEn: "SOFT TOP",
-    match: /SM_SoftTop/i,
+    match: /SM_SoftTop|Exterior__soft-top__/i,
   },
   {
     id: "rear-trunk",
@@ -100,7 +113,7 @@ export const EXTERIOR_ZONES: readonly ExteriorZoneDef[] = [
     labelEn: "REAR DECK",
     // ponytail: flat-six boxster-real 无独立后盖 mesh（CMS 有 trunk/engine_cover）；
     // 后舱仅聚焦后部套件；有 SM_Hood 以外的 deck/trunk 名时再开盖。
-    match: /SM_RearKit|SM_Base/i,
+    match: /SM_RearKit|SM_Base|Exterior__rear-trunk__/i,
     lid: {
       match: /SM_(Trunk|Engine_?Cover|Deck|RearHood)/i,
       hinge: "front",
@@ -111,13 +124,12 @@ export const EXTERIOR_ZONES: readonly ExteriorZoneDef[] = [
     id: "rear-bumper",
     labelZh: "后保险杠",
     labelEn: "REAR BUMPER",
-    match: /SM_RearKit/i,
+    match: /SM_RearKit|Exterior__rear-bumper__/i,
   },
 ];
 
 /**
- * 内饰分栏。flat-six boxster-real 无独立车门/座椅/中控 mesh，
- * 仅材质子块（Details_INT / Details_MAT / Light）+ 镜头预设区分。
+ * 内饰分栏支持主模型的 Cabin__区域__ 名称，兼容旧模型材质子块。
  */
 export type InteriorZoneId =
   | "all"
@@ -141,42 +153,42 @@ export const INTERIOR_ZONES: readonly InteriorZoneDef[] = [
     id: "all",
     labelZh: "全部",
     labelEn: "ALL",
-    match: /SM_Interior/i,
+    match: /SM_Interior|^Cabin__/i,
     look: { target: [0, 0.4, 0.1], eye: [0.15, 0.55, -1.35] },
   },
   {
     id: "door-trim",
     labelZh: "车门饰板",
     labelEn: "DOOR TRIM",
-    match: /Details_INT/i,
+    match: /Details_INT|^Cabin__door-trim__/i,
     look: { target: [0.55, 0.4, 0.05], eye: [0.05, 0.5, -0.55] },
   },
   {
     id: "dashboard",
     labelZh: "仪表板",
     labelEn: "DASHBOARD",
-    match: /Details_MAT/i,
+    match: /Details_MAT|^Cabin__dashboard__/i,
     look: { target: [0, 0.55, 0.55], eye: [0, 0.5, -0.35] },
   },
   {
     id: "console",
     labelZh: "中控台",
     labelEn: "CONSOLE",
-    match: /Details_MAT/i,
+    match: /Details_MAT|^Cabin__console__/i,
     look: { target: [0, 0.28, 0.2], eye: [0, 0.75, -0.55] },
   },
   {
     id: "seats",
     labelZh: "座椅",
     labelEn: "SEATS",
-    match: /Details_MAT/i,
+    match: /Details_MAT|^Cabin__seats__/i,
     look: { target: [0.25, 0.35, -0.05], eye: [0.9, 0.55, -0.7] },
   },
   {
     id: "liner",
     labelZh: "内衬",
     labelEn: "TRIM LINER",
-    match: /(?!)/,
+    match: /^Cabin__liner__/i,
     look: { target: [0, 0.35, 0], eye: [0, 0.55, -1.1] },
   },
 ];
@@ -219,10 +231,13 @@ export type LocatorGlbViewerProps = {
   bodyPaintHex?: string | null;
   /** Brochure finish → metalness/roughness on Car_Paint* (with bodyPaintHex). */
   bodyPaintPbr?: { metalness: number; roughness: number } | null;
-  /** Vehicle settings → ghost soft-top tint (X-ray only). */
+  /** Vehicle settings → soft-top colour, including the named cabin liner. */
   softTopHex?: string | null;
   /** Vehicle settings → cabin leather tint (interior zone + matching body meshes). */
   interiorHex?: string | null;
+  /** Full vehicle upholstery/two-tone setting and explicit cabin OEM associations. */
+  interiorSpec?: string | null;
+  interiorModelLinks?: readonly ModelOemLink[];
   /** Hide soft-top / convertible roof meshes (interior view). */
   hideSoftTop?: boolean;
   /** Extra cabin fill light (interior view). */
@@ -264,8 +279,20 @@ function meshPath(obj: THREE.Object3D): string {
   return parts.join("/") || obj.uuid;
 }
 
+function namedPartRoot(obj: THREE.Object3D): THREE.Object3D | null {
+  // A joined GLB with several materials loads as several primitive meshes.
+  // Keep them selectable and listed as the one explicitly named part.
+  for (let node: THREE.Object3D | null = obj; node; node = node.parent) {
+    if (typeof node.userData.garagePartName === "string" && node.userData.garagePartName) {
+      return node;
+    }
+  }
+  return null;
+}
+
 function meshLabel(obj: THREE.Object3D): string {
-  return obj.name || `unnamed:${obj.type}:${obj.uuid.slice(0, 8)}`;
+  return namedPartRoot(obj)?.userData.garagePartName ||
+    obj.name || `unnamed:${obj.type}:${obj.uuid.slice(0, 8)}`;
 }
 
 function parseHotspot(s: string): THREE.Vector3 {
@@ -324,6 +351,7 @@ function applySoftTopVisibility(
 
 /**
  * Cabin colour targets (flat-six boxster-real):
+ * - Primary Cabin__ meshes use their named seat/leather/upholstery pieces.
  * - SM_Interior_*_Details_MAT ≈ bulk cabin (seats/dash/trim) — ~21k verts
  * - SM_Interior_*_Details_INT ≈ small cabin sub-block — ~1.4k verts
  * Never tint Car_Paint / Light / SoftTop / exterior Details_MAT (FrontKit/RearKit).
@@ -335,7 +363,7 @@ function isInteriorLeatherMeshName(name: string): boolean {
   }
   if (/light|lamp/i.test(n)) return false;
   // Must be under SM_Interior so exterior Details_MAT panels stay untouched.
-  if (!/sm_interior/i.test(n) && !/seat|leather|upholstery|kanapa|siedzenie/i.test(n)) {
+  if (!/sm_interior|^cabin__/i.test(n) && !/seat|leather|upholstery|kanapa|siedzenie/i.test(n)) {
     return false;
   }
   return /details_mat|details_int|seat|leather|upholstery|kanapa|siedzenie|dash[_-]?leather/i.test(
@@ -350,7 +378,7 @@ export function isBodyPaintMeshName(name: string): boolean {
 
 /** 座舱 bulk mesh（内饰分栏）；外观模型列表应排除。 */
 export function isBodyInteriorMeshName(name: string): boolean {
-  return /SM_Interior/i.test(name);
+  return /SM_Interior|^Cabin__/i.test(name);
 }
 
 /** Wheels / tires / brakes must never take body paint. */
@@ -431,16 +459,24 @@ function applyGhostVehiclePaint(
     if (!mesh.isMesh) return;
     if (ghostOnly && !mesh.userData?.ghost) return;
     const name = meshLabel(mesh);
+    // Colour targets are separate from cabin classification and roof visibility.
+    const softTopColour = isSoftTopMeshName(name) ||
+      name === "Cabin__liner__718__GEO_Chassis_SUB5";
+    const bodyPaintColour = isBodyPaintMeshName(name) ||
+      name === "Cabin__liner__718__GEO_EXT_ROLLCAGE";
+    if ((mesh.userData.preserveGarageMaterial || mesh.parent?.userData.preserveGarageMaterial) &&
+        !softTopColour && !bodyPaintColour) return;
     if (isGlassMeshName(name) || isGlassMeshName(mesh.name)) return;
     if (isRollingStockMeshName(name) || isRollingStockMeshName(mesh.name)) {
       return;
     }
-    if (softTopHex && isSoftTopMeshName(name)) {
-      tintGhostMesh(mesh, softTopHex, bases, true);
+    if (softTopHex && softTopColour) {
+      applyVehicleSurfaceMaterial(mesh, "fabric", bases);
+      tintGhostMesh(mesh, softTopHex, bases, true, false, SOFT_TOP_PBR);
       return;
     }
-    // Body colour only on Car_Paint* — never Disk/Hub/Brake/tire/details.
-    if (bodyPaintHex && isBodyPaintMeshName(name)) {
+    if (bodyPaintHex && bodyPaintColour) {
+      applyVehicleSurfaceMaterial(mesh, "paint", bases, bodyPaintPbr ?? { metalness: 0, roughness: 0.3 });
       tintGhostMesh(mesh, bodyPaintHex, bases, true, false, bodyPaintPbr);
     }
   });
@@ -453,10 +489,11 @@ function isGlassMeshName(name: string): boolean {
 }
 
 /** Clear, near-neutral glass (no blue cast). */
-function applyGlassMaterials(root: THREE.Object3D): void {
+function applyGlassMaterials(root: THREE.Object3D, bases: Map<string, ShadeBase>): void {
   root.traverse((o) => {
     const mesh = o as THREE.Mesh;
     if (!mesh.isMesh) return;
+    if (mesh.userData.preserveGarageMaterial || mesh.parent?.userData.preserveGarageMaterial) return;
     const name = meshLabel(mesh);
     if (!isGlassMeshName(name) && !isGlassMeshName(mesh.name)) return;
     const old = mesh.material;
@@ -479,6 +516,10 @@ function applyGlassMaterials(root: THREE.Object3D): void {
       depthWrite: false,
       envMapIntensity: 0.25,
     });
+    bases.set(mesh.uuid, {
+      color: new THREE.Color(0xf4f6f7), metalness: 0, roughness: 0.02,
+      vertexColors: false, preserve: true, opacity: 0.22, transparent: true,
+    });
   });
 }
 
@@ -486,11 +527,17 @@ function applyInteriorLeatherTint(
   root: THREE.Object3D,
   interiorHex: string | null | undefined,
   bases: Map<string, ShadeBase>,
+  reviewed?: ReviewedInterior,
 ) {
+  if (reviewed) {
+    applyReviewedInteriorMaterials(root, reviewed.interior, reviewed.links, bases, reviewed.paint);
+    applyReviewedXrayMaterials(root, reviewed.links, bases);
+  }
   if (!interiorHex) return;
   root.traverse((o) => {
     const mesh = o as THREE.Mesh;
     if (!mesh.isMesh) return;
+    if (mesh.userData.preserveGarageMaterial || mesh.parent?.userData.preserveGarageMaterial) return;
     const name = meshLabel(mesh);
     if (!isInteriorLeatherMeshName(name) && !isInteriorLeatherMeshName(mesh.name)) {
       return;
@@ -504,6 +551,8 @@ function disposeObject(root: THREE.Object3D) {
   root.traverse((o) => {
     const mesh = o as THREE.Mesh;
     if (mesh.isMesh) {
+      restoreReviewedInteriorMesh(mesh);
+      restoreReviewedXrayMesh(mesh);
       mesh.geometry?.dispose();
       const mats = Array.isArray(mesh.material)
         ? mesh.material
@@ -551,6 +600,7 @@ function materialHasTexture(mat: THREE.Material): boolean {
 }
 
 function shadeLoadedModel(root: THREE.Object3D, bases: Map<string, ShadeBase>) {
+  const replaced = new Set<THREE.Material>();
   root.traverse((o) => {
     const mesh = o as THREE.Mesh;
     if (!mesh.isMesh || !mesh.geometry) return;
@@ -562,8 +612,13 @@ function shadeLoadedModel(root: THREE.Object3D, bases: Map<string, ShadeBase>) {
 
     const existing = mesh.material;
     const existingOne = Array.isArray(existing) ? existing[0] : existing;
-    if (existingOne && materialHasTexture(existingOne as THREE.Material)) {
-      const mats = Array.isArray(existing) ? existing : [existing];
+    if (existingOne && (materialHasTexture(existingOne as THREE.Material) ||
+        mesh.userData.preserveGarageMaterial || mesh.parent?.userData.preserveGarageMaterial)) {
+      // glTF shares materials between parts. Focus and selection must stay per mesh.
+      const originals = Array.isArray(existing) ? existing : [existing];
+      const mats = originals.map((m) => m.clone());
+      originals.forEach((m) => replaced.add(m));
+      mesh.material = Array.isArray(existing) ? mats : mats[0]!;
       for (const raw of mats) {
         const m = raw as THREE.MeshStandardMaterial;
         if ("emissive" in m) {
@@ -614,6 +669,7 @@ function shadeLoadedModel(root: THREE.Object3D, bases: Map<string, ShadeBase>) {
       transparent: false,
     });
   });
+  replaced.forEach((m) => m.dispose());
 }
 
 function applyGhostOpacity(root: THREE.Object3D, opacity: number) {
@@ -662,7 +718,7 @@ function setShellOpacity(
       } else {
         mat.transparent = Boolean(base?.transparent);
         mat.opacity = base?.opacity ?? 1;
-        mat.depthWrite = true;
+        mat.depthWrite = !(mat as THREE.MeshPhysicalMaterial).transmission;
       }
       mat.needsUpdate = true;
     }
@@ -844,16 +900,16 @@ function applyExteriorZoneFocus(
   return focusRoots;
 }
 
-/** 内饰分栏：整车保留，车身为透明结构；焦点舱内子 mesh 更实。 */
+/** 内饰分栏：车身为透明结构；焦点内饰恢复源材质透明度。 */
 function applyInteriorZoneFocus(
   bodyRoot: THREE.Object3D,
   zone: InteriorZoneDef,
-  _bases: Map<string, ShadeBase>,
+  bases: Map<string, ShadeBase>,
+  links: readonly ModelOemLink[],
 ) {
-  const match = zone.match ?? /SM_Interior/i;
+  const match = zone.match ?? /SM_Interior|^Cabin__/i;
   const focusRoots: THREE.Object3D[] = [];
   const shellOpacity = 0.14;
-  const focusOpacity = 0.92;
 
   bodyRoot.traverse((o) => {
     const mesh = o as THREE.Mesh;
@@ -871,12 +927,14 @@ function applyInteriorZoneFocus(
       isBodyPaintMeshName(meshLabel(mesh)) || isBodyPaintMeshName(mesh.name);
     // 座舱文件里的 Car_Paint 归外观，不当内饰焦点
     const underInterior =
-      !paint && objectMatches(mesh, /SM_Interior/i);
+      !paint && objectMatches(mesh, /SM_Interior|^Cabin__/i);
     // 顶篷永不进内饰点选（含「全部」）
-    const hit = underInterior && objectMatches(mesh, match);
+    const reviewedZone = reviewedInteriorZone(meshLabel(mesh), links);
+    const hit = underInterior && (zone.id === "all" || (reviewedZone ? reviewedZone === zone.id : objectMatches(mesh, match)));
     if (hit) focusRoots.push(mesh);
     // 含「全部」：外板等非舱内一律点穿；仅 SM_Interior（及分栏 match）可点
     markZonePick(mesh, hit);
+    const base = bases.get(mesh.uuid);
     const mats = Array.isArray(mesh.material)
       ? mesh.material
       : mesh.material
@@ -885,9 +943,9 @@ function applyInteriorZoneFocus(
     for (const raw of mats) {
       const mat = raw as THREE.MeshStandardMaterial;
       if (!mat) continue;
-      mat.transparent = true;
-      mat.opacity = hit ? focusOpacity : shellOpacity;
-      mat.depthWrite = hit;
+      mat.transparent = hit ? Boolean(base?.transparent) : true;
+      mat.opacity = hit ? (base?.opacity ?? 1) : shellOpacity;
+      mat.depthWrite = hit && !(mat as THREE.MeshPhysicalMaterial).transmission;
       mat.needsUpdate = true;
     }
   });
@@ -1039,11 +1097,12 @@ function readManualTransform(obj: THREE.Object3D): XrayTransform {
 function findMeshByName(
   root: THREE.Object3D,
   name: string,
-): THREE.Mesh | null {
-  let hit: THREE.Mesh | null = null;
+): THREE.Object3D | null {
+  let hit: THREE.Object3D | null = null;
   root.traverse((o) => {
     if (hit) return;
     const mesh = o as THREE.Mesh;
+    if (mesh.userData.garagePartName === name) { hit = mesh; return; }
     if (!mesh.isMesh) return;
     if (meshLabel(mesh) === name || mesh.name === name) hit = mesh;
   });
@@ -1131,7 +1190,7 @@ async function loadGlbScene(
 function storeMeshBaseLocal(root: THREE.Object3D) {
   root.traverse((o) => {
     const mesh = o as THREE.Mesh;
-    if (!mesh.isMesh || mesh.userData.baseLocal) return;
+    if ((!mesh.isMesh && !mesh.userData.garagePartName) || mesh.userData.baseLocal) return;
     mesh.userData.baseLocal = {
       position: mesh.position.clone(),
       rotation: mesh.rotation.clone(),
@@ -1163,7 +1222,9 @@ function applyMeshStateToWrap(
   const hideSet = new Set(hideInUnified || []);
   wrap.traverse((o) => {
     const mesh = o as THREE.Mesh;
-    if (!mesh.isMesh) return;
+    if (!mesh.isMesh && !mesh.userData.garagePartName) return;
+    const part = namedPartRoot(mesh);
+    if (part && part !== mesh) return;
     if (!mesh.userData.baseLocal) {
       mesh.userData.baseLocal = {
         position: mesh.position.clone(),
@@ -1256,6 +1317,8 @@ export function LocatorGlbViewer({
   bodyPaintPbr = null,
   softTopHex = null,
   interiorHex = null,
+  interiorSpec = null,
+  interiorModelLinks = EMPTY_INTERIOR_LINKS,
   hideSoftTop = false,
   interiorFillLight = false,
   onMeshesReady,
@@ -1305,6 +1368,9 @@ export function LocatorGlbViewer({
   softTopRef.current = softTopHex;
   const interiorRef = useRef(interiorHex);
   interiorRef.current = interiorHex;
+  const reviewedInteriorRef = useRef<ReviewedInterior>({ interior: interiorSpec, links: interiorModelLinks });
+  reviewedInteriorRef.current = { interior: interiorSpec, links: interiorModelLinks,
+    paint: bodyPaintHex ? { hex: bodyPaintHex, pbr: bodyPaintPbr ?? { metalness: 0, roughness: 0.3 } } : undefined };
   const hideSoftTopRef = useRef(hideSoftTop);
   hideSoftTopRef.current = hideSoftTop;
   const fillLightRef = useRef(interiorFillLight);
@@ -1370,6 +1436,12 @@ export function LocatorGlbViewer({
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.15;
+    const room = new RoomEnvironment();
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    const environment = pmrem.fromScene(room);
+    scene.environment = environment.texture;
+    room.dispose();
+    pmrem.dispose();
     host.appendChild(renderer.domElement);
 
     const controls = new OrbitControls(camera, renderer.domElement);
@@ -1639,7 +1711,7 @@ export function LocatorGlbViewer({
           if (mode === "exterior" && extZone && extZone.id !== "all") {
             applyExteriorZoneFocus(bodyWrap, extZone, bases);
           } else if (mode === "interior") {
-            applyInteriorZoneFocus(bodyWrap, intZone, bases);
+            applyInteriorZoneFocus(bodyWrap, intZone, bases, reviewedInteriorRef.current.links);
           }
         } else {
           // 透视：车身半透幽灵，射线点穿（不可点）
@@ -1707,7 +1779,7 @@ export function LocatorGlbViewer({
       }
       if (objectUrl) objectUrls.push(objectUrl);
       shadeLoadedModel(glbScene, bases);
-      applyGlassMaterials(glbScene);
+      applyGlassMaterials(glbScene, bases);
       glbScene.traverse((o) => {
         o.userData.assemblyId = layer.id;
       });
@@ -1756,8 +1828,9 @@ export function LocatorGlbViewer({
         layer.id,
       );
       if (layer.id === "interior") {
-        applyInteriorLeatherTint(parent, interiorRef.current, bases);
+        applyInteriorLeatherTint(parent, interiorRef.current, bases, reviewedInteriorRef.current);
       }
+      applyReviewedXrayMaterials(parent, reviewedInteriorRef.current?.links ?? [], bases);
       layerEntries.set(layer.id, {
         wrap: parent,
         assembly: layer,
@@ -1997,16 +2070,18 @@ export function LocatorGlbViewer({
 
     /** X-ray: frame camera to whole world without moving models. */
     function frameWorld(root: THREE.Object3D) {
-      const box = new THREE.Box3().setFromObject(root);
+      // Garage starts framed on the car; hidden reference/mechanical layers must not shrink it.
+      const box = new THREE.Box3().setFromObject(garageUnified && bodyWrap ? bodyWrap : root);
       if (box.isEmpty()) return;
       const size = box.getSize(new THREE.Vector3());
       const center = box.getCenter(new THREE.Vector3());
       const maxDim = Math.max(size.x, size.y, size.z, 0.001);
+      const framing = garageUnified ? 0.7 : 1;
       controls.target.copy(center);
       camera.position.set(
-        center.x + maxDim * 1.1,
-        center.y + maxDim * 0.7,
-        center.z + maxDim * 1.3,
+        center.x + maxDim * 1.1 * framing,
+        center.y + maxDim * 0.7 * framing,
+        center.z + maxDim * 1.3 * framing,
       );
       camera.near = maxDim / 200;
       camera.far = maxDim * 50;
@@ -2127,19 +2202,20 @@ export function LocatorGlbViewer({
             wrap.userData.ghost = true;
             wrap.userData.assemblyId = "body";
             shadeLoadedModel(bodyScene, bases);
-            applyGlassMaterials(bodyScene);
+            applyGlassMaterials(bodyScene, bases);
             applyGhostVehiclePaint(
               bodyScene,
               bodyPaintRef.current,
               softTopRef.current,
               bases,
-              true,
+              false,
               bodyPaintPbrRef.current,
             );
             applyInteriorLeatherTint(
               bodyScene,
               interiorRef.current,
               bases,
+              reviewedInteriorRef.current,
             );
             // 车库：初始按模式；透视=半透幽灵车身（不可点）
             if (garageUnified) {
@@ -2201,7 +2277,7 @@ export function LocatorGlbViewer({
             );
         }
 
-        if (loadMechLayers || loadBodyShell || loadFlows) {
+        if (loadMechLayers || loadBodyShell || loadFlows || (xrayMode && deferManyMech)) {
           const byAsm: Record<string, string[]> = {};
           for (const [id, entry] of layerEntries) {
             const names: string[] = [];
@@ -2292,7 +2368,7 @@ export function LocatorGlbViewer({
           }
           if (objectUrl) objectUrls.push(objectUrl);
           shadeLoadedModel(glbScene, bases);
-          applyGlassMaterials(glbScene);
+          applyGlassMaterials(glbScene, bases);
           applyGhostVehiclePaint(
             glbScene,
             bodyPaintRef.current,
@@ -2301,7 +2377,7 @@ export function LocatorGlbViewer({
             false,
             bodyPaintPbrRef.current,
           );
-          applyInteriorLeatherTint(glbScene, interiorRef.current, bases);
+          applyInteriorLeatherTint(glbScene, interiorRef.current, bases, reviewedInteriorRef.current);
           applySoftTopVisibility(glbScene, hideSoftTopRef.current);
 
           // Center mesh in local space, then TRS on wrapper (hand-tune / persist).
@@ -2331,6 +2407,7 @@ export function LocatorGlbViewer({
             wrap.traverse((o) => {
               o.userData.assemblyId = sid;
             });
+            applyReviewedXrayMaterials(wrap, reviewedInteriorRef.current?.links ?? [], bases);
             storeMeshBaseLocal(wrap);
             applyMeshStateToWrap(wrap, sid, meshStateRef.current, []);
             const names: string[] = [];
@@ -2370,7 +2447,11 @@ export function LocatorGlbViewer({
       controls.dispose();
       transformControls.dispose();
       disposeObject(worldRoot);
+      disposeVehicleSurfaceMaps(bases);
+      disposeReviewedInteriorMaps(bases);
+      disposeReviewedXrayMaps(bases);
       scene.remove(worldRoot);
+      environment.dispose();
       renderer.dispose();
       if (renderer.domElement.parentNode === host) {
         host.removeChild(renderer.domElement);
@@ -2405,7 +2486,7 @@ export function LocatorGlbViewer({
       exteriorZone,
       interiorZone,
     );
-  }, [garageViewMode, garageStructure, exteriorZone, interiorZone, layersKey]);
+  }, [garageViewMode, garageStructure, exteriorZone, interiorZone, layersKey, interiorModelLinks]);
 
   useEffect(() => {
     const rt = runtimeRef.current;
@@ -2481,7 +2562,7 @@ export function LocatorGlbViewer({
         true,
         bodyPaintPbr,
       );
-      applyInteriorLeatherTint(rt.bodyWrap, interiorHex, rt.bases);
+      applyInteriorLeatherTint(rt.bodyWrap, interiorHex, rt.bases, reviewedInteriorRef.current);
     }
     // Exterior / interior single-GLB mode: tint whole pick root (not ghost-only).
     if (!rt.layerEntries.size) {
@@ -2493,10 +2574,10 @@ export function LocatorGlbViewer({
         false,
         bodyPaintPbr,
       );
-      applyInteriorLeatherTint(rt.pickRoot, interiorHex, rt.bases);
+      applyInteriorLeatherTint(rt.pickRoot, interiorHex, rt.bases, reviewedInteriorRef.current);
     }
     rt.applyHighlights();
-  }, [bodyPaintHex, bodyPaintPbr, softTopHex, interiorHex]);
+  }, [bodyPaintHex, bodyPaintPbr, softTopHex, interiorHex, interiorSpec, interiorModelLinks]);
 
   useEffect(() => {
     const rt = runtimeRef.current;
@@ -2508,15 +2589,16 @@ export function LocatorGlbViewer({
     const rt = runtimeRef.current;
     if (!rt) return;
     for (const [id, entry] of rt.layerEntries) {
+      applyReviewedXrayMaterials(entry.wrap, reviewedInteriorRef.current?.links ?? [], rt.bases);
       if (id === "interior") {
-        applyInteriorLeatherTint(entry.wrap, interiorHex, rt.bases);
+        applyInteriorLeatherTint(entry.wrap, interiorHex, rt.bases, reviewedInteriorRef.current);
       }
     }
     if (!rt.layerEntries.size && !rt.bodyWrap) {
-      applyInteriorLeatherTint(rt.pickRoot, interiorHex, rt.bases);
+      applyInteriorLeatherTint(rt.pickRoot, interiorHex, rt.bases, reviewedInteriorRef.current);
     }
     rt.applyHighlights();
-  }, [interiorHex]);
+  }, [interiorHex, interiorSpec, interiorModelLinks]);
 
   if (!hasContent) {
     return (

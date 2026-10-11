@@ -1,0 +1,685 @@
+{
+  "version": 1,
+  "reviewedAt": "2026-10-11",
+  "scope": "Current garage-primary cabin meshes with matching explicit OEM links, plus explicitly named user material overrides. Vehicle interior settings choose upholstery and two-tone layout; fixed polymer, carpet, foam, controls and existing roof/paint targets remain distinct. Rendering parameters are visual approximations, not factory measurements or VIN fitment verification. Explicit exterior OEM rules cover primed air inlet trim and the linked gloss-black wheel set; other exterior source materials are retained.",
+  "sources": {
+    "catalogue": "Local explicit PETKA plaintext parts descriptions and PR labels; no binary EPC parsing.",
+    "brochure": "https://www.centuryu.com/uploads/1/4/4/6/144698822/2014_boxster.pdf",
+    "porscheInterior": "https://files.porsche.com/filestore/download/pap/none/philippines-offlinenewsletter-2012-1/default/3e6eae4e-25c6-4edf-8608-913fdf6014e6/Porsche-News-01-2012.pdf",
+    "porscheLeather": "https://newsroom.porsche.com/en/company/saddlery-10781.html",
+    "leatherPanels": "https://www.lllparts.co.uk/product/981553982016j0",
+    "carbonWheel": "https://teile.com/en/porsche-parts-shop/model-Boxster-982-718/36/Front-axle-steering-wheel-and-airbag/403B-Steering-wheel-steering-column/22/Multifunction-steering-wheel-Leather-Carbon-Black/71044",
+    "shiftKnob": "https://www.porschepartsdepot.com/oem-parts/porsche-shift-knob-982711141aj8yr",
+    "tequipment718": "https://files.porsche.com/filestore/download/usa/none/718-tequipmentcatalogue/default/198ac8e2-72d5-11e7-99c7-0019999cd470/Tequipment-718.pdf",
+    "windbreakInsert": "https://www.boutiqueporschepoitiers.fr/produit/98156173003-insert-porsche/",
+    "airInletTrim": "https://www.design911.co.uk/parts/98150456102/",
+    "blackWheelSet": "https://teile.com/pdf/teilecom_en_20-inch-Carrera-S-III-summer-wheel-set-8J-x-20-ET57-95J-x-20-ET45-Pirelli-tyres-235-35-ZR20-265-35-ZR20-rims-star-in-bla_98104460223.pdf"
+  },
+  "layoutNotes": [
+    "Leather package two-tone colours contrast the instrument cowl, seat centres, door grips/armrests and storage lid. Full two-tone leather also separates dark upper surfaces from the lighter lower interior.",
+    "GTS Alcantara areas stay black. Red/silver contrasts are stitching and logos, not a blanket red/silver surface. Existing unlinked stitching and logo geometry is retained.",
+    "Bare OEM numbers often omit colour and option suffixes. Existing OEM links are retained; current vehicle settings control the displayed upholstery variant.",
+    "The linked 9P1419091ECA34 steering wheel is described as leather/carbon and belongs to 982/991.2 catalogues. This visual review does not establish 981 fitment.",
+    "2026-10-11 additions: Galvano Silver strips stay silver; shift boot/grip follow vehicle upholstery independently of the silver insert. Windbreak/net source textures and cutouts are retained. Functional grouping follows explicit OEM descriptions without changing model identifiers or stored associations. Restored large visor bodies 006/007 belong to liner.",
+    "Dashboard upper OEM 98155210120: all disconnected surfaces of dashboard__interior__assembly and dashboard__interior_016__01 follow upper colour/upholstery. Passenger airbag-cover layers are not a contrasting instrument cowl; explicit cowl OEM rules remain separate.",
+    "Door 054 keeps the upper shell in the primary colour. Its disconnected pull/armrest uses the second colour in leather packages and full two-tone interiors; the small lower insert contrasts in full two-tone only. Named left/right 092 pieces remain brushed silver. Safety-belt webbing, metal tongue, plastic fittings and release-button source graphics stay separate."
+  ],
+  "parts": {
+    "98156101500": {
+      "kind": "soft-top",
+      "evidence": [
+        "catalogue",
+        "brochure"
+      ]
+    },
+    "98155545104": {
+      "kind": "polymer",
+      "region": "lower",
+      "evidence": [
+        "catalogue",
+        "brochure"
+      ],
+      "zone": "liner"
+    },
+    "98155521502": {
+      "kind": "polymer",
+      "region": "lower",
+      "evidence": [
+        "catalogue",
+        "brochure"
+      ],
+      "zone": "liner"
+    },
+    "98155103521": {
+      "kind": "carpet",
+      "evidence": [
+        "catalogue",
+        "brochure"
+      ]
+    },
+    "98155103904": {
+      "kind": "carpet",
+      "fixedBlack": true,
+      "evidence": [
+        "catalogue"
+      ]
+    },
+    "98155533105": {
+      "kind": "body-paint",
+      "evidence": [
+        "catalogue",
+        "brochure"
+      ]
+    },
+    "98155531102": {
+      "kind": "polymer",
+      "region": "lower",
+      "evidence": [
+        "catalogue",
+        "brochure"
+      ]
+    },
+    "98155590300": {
+      "kind": "door-panel",
+      "evidence": [
+        "catalogue",
+        "brochure"
+      ],
+      "zone": "door-trim"
+    },
+    "98155590400": {
+      "kind": "door-panel",
+      "evidence": [
+        "catalogue",
+        "brochure"
+      ],
+      "zone": "door-trim"
+    },
+    "98155553300": {
+      "kind": "upholstery",
+      "region": "grip",
+      "evidence": [
+        "catalogue",
+        "porscheInterior",
+        "brochure"
+      ]
+    },
+    "98155553403": {
+      "kind": "upholstery",
+      "region": "grip",
+      "evidence": [
+        "catalogue",
+        "porscheInterior",
+        "brochure"
+      ]
+    },
+    "99155572100": {
+      "kind": "polymer",
+      "region": "lower",
+      "evidence": [
+        "catalogue"
+      ],
+      "zone": "door-trim"
+    },
+    "99155572200": {
+      "kind": "polymer",
+      "region": "lower",
+      "evidence": [
+        "catalogue"
+      ],
+      "zone": "door-trim"
+    },
+    "982857551T": {
+      "kind": "visor",
+      "evidence": [
+        "catalogue",
+        "brochure"
+      ],
+      "zone": "liner"
+    },
+    "982857552AB": {
+      "kind": "visor",
+      "evidence": [
+        "catalogue",
+        "brochure"
+      ],
+      "zone": "liner"
+    },
+    "99152114112": {
+      "kind": "seat",
+      "evidence": [
+        "catalogue",
+        "brochure"
+      ]
+    },
+    "99152115100": {
+      "kind": "seat-centre",
+      "evidence": [
+        "catalogue",
+        "brochure"
+      ]
+    },
+    "98155210120": {
+      "kind": "dashboard",
+      "evidence": [
+        "catalogue",
+        "porscheLeather",
+        "brochure"
+      ]
+    },
+    "98155213100": {
+      "kind": "vent",
+      "evidence": [
+        "catalogue",
+        "porscheInterior"
+      ]
+    },
+    "98155239700": {
+      "kind": "polymer",
+      "fixedBlack": true,
+      "evidence": [
+        "catalogue"
+      ]
+    },
+    "99165320108": {
+      "kind": "control",
+      "evidence": [
+        "catalogue"
+      ]
+    },
+    "99161396107": {
+      "kind": "control",
+      "evidence": [
+        "catalogue"
+      ]
+    },
+    "99161333001": {
+      "kind": "control",
+      "evidence": [
+        "catalogue"
+      ]
+    },
+    "9P1419091ECA34": {
+      "kind": "steering-wheel",
+      "evidence": [
+        "catalogue",
+        "carbonWheel"
+      ]
+    },
+    "99155247300": {
+      "kind": "polymer",
+      "fixedBlack": true,
+      "evidence": [
+        "catalogue"
+      ]
+    },
+    "99155247500": {
+      "kind": "polymer",
+      "fixedBlack": true,
+      "evidence": [
+        "catalogue"
+      ]
+    },
+    "98155202100": {
+      "kind": "upholstery",
+      "region": "cowl",
+      "evidence": [
+        "catalogue",
+        "brochure"
+      ]
+    },
+    "98155234500": {
+      "kind": "polymer",
+      "region": "upper",
+      "evidence": [
+        "catalogue"
+      ]
+    },
+    "98155101104": {
+      "kind": "carpet",
+      "evidence": [
+        "catalogue",
+        "brochure"
+      ]
+    },
+    "99155542102": {
+      "kind": "polymer",
+      "region": "lower",
+      "evidence": [
+        "catalogue"
+      ]
+    },
+    "9P1864714": {
+      "kind": "foam",
+      "evidence": [
+        "catalogue"
+      ]
+    },
+    "99155313101": {
+      "kind": "upholstery",
+      "region": "console",
+      "evidence": [
+        "catalogue",
+        "leatherPanels",
+        "brochure"
+      ]
+    },
+    "99155313201": {
+      "kind": "upholstery",
+      "region": "console",
+      "evidence": [
+        "catalogue",
+        "leatherPanels",
+        "brochure"
+      ]
+    },
+    "98155323102": {
+      "kind": "upholstery",
+      "region": "lid",
+      "evidence": [
+        "catalogue",
+        "brochure"
+      ]
+    },
+    "99155315102": {
+      "kind": "polymer",
+      "region": "lower",
+      "evidence": [
+        "catalogue"
+      ]
+    },
+    "99155311101": {
+      "kind": "polymer",
+      "fixedBlack": true,
+      "evidence": [
+        "catalogue"
+      ]
+    },
+    "99155314300": {
+      "kind": "polymer",
+      "fixedBlack": true,
+      "evidence": [
+        "catalogue"
+      ]
+    },
+    "99155219401": {
+      "evidence": [
+        "catalogue",
+        "brochure"
+      ],
+      "kind": "silver",
+      "zone": "dashboard"
+    },
+    "99155238700": {
+      "evidence": [
+        "catalogue",
+        "brochure"
+      ],
+      "kind": "silver",
+      "zone": "dashboard"
+    },
+    "99155238301": {
+      "evidence": [
+        "catalogue",
+        "brochure"
+      ],
+      "kind": "silver",
+      "zone": "dashboard"
+    },
+    "99155238102": {
+      "evidence": [
+        "catalogue",
+        "brochure"
+      ],
+      "kind": "silver",
+      "zone": "dashboard"
+    },
+    "98155215101": {
+      "evidence": [
+        "catalogue",
+        "brochure"
+      ],
+      "kind": "upholstery",
+      "region": "lower",
+      "zone": "dashboard"
+    },
+    "98155252500": {
+      "evidence": [
+        "catalogue",
+        "brochure"
+      ],
+      "kind": "polymer",
+      "region": "upper",
+      "zone": "dashboard"
+    },
+    "982711141AJ8YR": {
+      "evidence": [
+        "shiftKnob",
+        "tequipment718"
+      ],
+      "kind": "shifter",
+      "zone": "console",
+      "note": "Exact linked SKU is a black leather 982 manual shift knob; mixed visual model does not establish 981 PDK fitment. Boot/grip follow vehicle upholstery; separate cap/stem retains silver finish."
+    },
+    "98156158302": {
+      "evidence": [
+        "catalogue",
+        "brochure"
+      ],
+      "kind": "windbreak",
+      "zone": "liner"
+    },
+    "98156158402": {
+      "evidence": [
+        "catalogue",
+        "brochure"
+      ],
+      "kind": "windbreak",
+      "zone": "liner"
+    },
+    "98156165003": {
+      "kind": "polymer",
+      "fixedBlack": true,
+      "zone": "liner",
+      "evidence": [
+        "catalogue",
+        "Black 1E0 guide/flap; source plastic geometry. Fixed black, independent of upholstery."
+      ]
+    },
+    "98155521602": {
+      "evidence": [
+        "catalogue",
+        "brochure"
+      ],
+      "kind": "polymer",
+      "region": "lower",
+      "zone": "liner"
+    },
+    "98155545204": {
+      "evidence": [
+        "catalogue",
+        "brochure"
+      ],
+      "kind": "polymer",
+      "region": "lower",
+      "zone": "liner"
+    },
+    "99161315500": {
+      "evidence": [
+        "catalogue",
+        "brochure"
+      ],
+      "kind": "control",
+      "zone": "door-trim"
+    },
+    "99161325100": {
+      "evidence": [
+        "catalogue",
+        "brochure"
+      ],
+      "kind": "control",
+      "zone": "dashboard"
+    },
+    "99155510101": {
+      "evidence": [
+        "catalogue",
+        "brochure"
+      ],
+      "kind": "polymer",
+      "fixedBlack": true,
+      "zone": "dashboard"
+    },
+    "98155154700": {
+      "evidence": [
+        "catalogue",
+        "brochure"
+      ],
+      "kind": "mesh",
+      "zone": "console"
+    },
+    "99155220105": {
+      "evidence": [
+        "catalogue",
+        "brochure"
+      ],
+      "kind": "upholstery",
+      "region": "lower",
+      "zone": "dashboard"
+    },
+    "99155240500": {
+      "evidence": [
+        "catalogue",
+        "brochure"
+      ],
+      "kind": "polymer",
+      "region": "lower",
+      "zone": "dashboard"
+    },
+    "99152162300": {
+      "kind": "silver",
+      "zone": "seats",
+      "evidence": [
+        "catalogue"
+      ]
+    },
+    "99155552106": {
+      "kind": "polymer",
+      "zone": "door-trim",
+      "evidence": [
+        "catalogue"
+      ],
+      "fixedBlack": true
+    },
+    "99155552206": {
+      "kind": "polymer",
+      "zone": "door-trim",
+      "evidence": [
+        "catalogue"
+      ],
+      "fixedBlack": true
+    },
+    "99155558900": {
+      "kind": "polymer",
+      "zone": "door-trim",
+      "evidence": [
+        "catalogue"
+      ],
+      "fixedBlack": true
+    },
+    "99155559000": {
+      "kind": "polymer",
+      "zone": "door-trim",
+      "evidence": [
+        "catalogue"
+      ],
+      "fixedBlack": true
+    },
+    "99155557900": {
+      "kind": "polymer",
+      "zone": "door-trim",
+      "evidence": [
+        "catalogue"
+      ],
+      "fixedBlack": true
+    },
+    "98156173003": {
+      "kind": "polymer",
+      "zone": "liner",
+      "evidence": [
+        "catalogue"
+      ],
+      "fixedBlack": true,
+      "note": "Wind-deflector insert; black polymer based on source surface and functional assembly, not a measured factory material specification."
+    },
+    "98180303300": {
+      "kind": "seat-belt",
+      "zone": "seats",
+      "evidence": [
+        "catalogue"
+      ]
+    },
+    "99180318300": {
+      "kind": "belt-latch",
+      "zone": "seats",
+      "evidence": [
+        "catalogue"
+      ]
+    },
+    "99180318305": {
+      "kind": "belt-latch",
+      "zone": "seats",
+      "evidence": [
+        "catalogue"
+      ]
+    },
+    "99180318406": {
+      "kind": "belt-latch",
+      "zone": "seats",
+      "evidence": [
+        "catalogue"
+      ]
+    },
+    "99153131900": {
+      "kind": "metal",
+      "zone": "liner",
+      "evidence": [
+        "catalogue"
+      ]
+    },
+    "99153132000": {
+      "kind": "metal",
+      "zone": "liner",
+      "evidence": [
+        "catalogue"
+      ]
+    },
+    "99153715100": {
+      "kind": "metal",
+      "zone": "liner",
+      "evidence": [
+        "catalogue"
+      ]
+    },
+    "98155237500": {
+      "kind": "upholstery",
+      "zone": "dashboard",
+      "evidence": [
+        "catalogue"
+      ],
+      "region": "upper"
+    },
+    "98155237600": {
+      "kind": "upholstery",
+      "zone": "dashboard",
+      "evidence": [
+        "catalogue"
+      ],
+      "region": "upper"
+    },
+    "98150498100": {
+      "kind": "brushed-silver",
+      "zone": "liner",
+      "evidence": [
+        "catalogue"
+      ]
+    },
+    "98150498200": {
+      "kind": "brushed-silver",
+      "zone": "liner",
+      "evidence": [
+        "catalogue"
+      ]
+    },
+    "99173103504": {
+      "kind": "mirror",
+      "zone": "dashboard",
+      "evidence": [
+        "catalogue"
+      ]
+    },
+    "99173151100": {
+      "kind": "interior-mirror",
+      "fixedBlack": true,
+      "zone": "dashboard",
+      "evidence": [
+        "catalogue"
+      ]
+    },
+    "99173181101": {
+      "kind": "polymer",
+      "fixedBlack": true,
+      "zone": "dashboard",
+      "evidence": [
+        "catalogue"
+      ]
+    },
+    "99173181201": {
+      "kind": "polymer",
+      "fixedBlack": true,
+      "zone": "dashboard",
+      "evidence": [
+        "catalogue"
+      ]
+    },
+    "98156117503": {
+      "kind": "polymer",
+      "fixedBlack": true,
+      "zone": "liner",
+      "evidence": [
+        "catalogue",
+        "Black 1E0 guide/flap; source plastic geometry. Fixed black, independent of upholstery."
+      ]
+    },
+    "98156117603": {
+      "kind": "polymer",
+      "fixedBlack": true,
+      "zone": "liner",
+      "evidence": [
+        "catalogue",
+        "Black 1E0 guide/flap; source plastic geometry. Fixed black, independent of upholstery."
+      ]
+    },
+    "98150456102": {
+      "kind": "body-paint",
+      "evidence": [
+        "catalogue",
+        "airInletTrim",
+        "Primed exterior trim uses current vehicle paint; all three children of the explicitly linked assembly."
+      ]
+    },
+    "98104460223": {
+      "kind": "wheel-black",
+      "evidence": [
+        "blackWheelSet",
+        "Explicit set variant has a glossy black rim star; coated surface uses dielectric black paint and clearcoat, not bare silver metal. Source geometry unchanged."
+      ]
+    }
+  },
+  "modelZones": {
+    "Cabin__seats__718__GEO_INT_LEATHER_SUB1_Part_006": "liner",
+    "Cabin__seats__718__GEO_INT_LEATHER_SUB1_Part_007": "liner",
+    "Cabin__dashboard__Source__hq_body_116_T__part_025": "door-trim"
+  },
+  "modelMaterials": {
+    "Cabin__door-trim__leftDoorTrim__interior_041__01": {
+      "kind": "silver",
+      "zone": "door-trim",
+      "note": "Explicit user material choice: match dashboard split group 03/04/05. Linked OEM describes a complete leather door panel, so this silver override applies only to this named visual piece."
+    },
+    "Cabin__door-trim__rightDoorTrim__interior_041__01": {
+      "kind": "silver",
+      "zone": "door-trim",
+      "note": "Explicit user material choice: match dashboard split group 03/04/05. Linked OEM describes a complete leather door panel, so this silver override applies only to this named visual piece."
+    },
+    "Cabin__door-trim__leftDoorTrim__interior_092__01__part_009": {
+      "kind": "brushed-silver",
+      "zone": "door-trim",
+      "note": "Explicit user choice: this visible piece is always brushed silver, independent of the pull-handle OEM upholstery rule."
+    },
+    "Cabin__door-trim__rightDoorTrim__interior_092__01": {
+      "kind": "brushed-silver",
+      "zone": "door-trim",
+      "note": "Explicit user choice: this visible piece is always brushed silver, independent of the pull-handle OEM upholstery rule."
+    }
+  }
+}

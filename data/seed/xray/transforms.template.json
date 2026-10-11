@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "note": "hand overrides; do not commit",
+  "note": "Bundled garage placement/visibility snapshot; copied only when the local state is missing.",
   "layers": {
     "engine": {
       "position": [
