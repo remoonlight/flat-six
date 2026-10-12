@@ -23,6 +23,7 @@ function emptyFile() {
     version: 1,
     note: "garage model block → part sku(s); 装配优先，mesh 可补",
     updated_at: null,
+    removedLinkIds: [],
     links: [],
   };
 }
@@ -59,16 +60,33 @@ function migrateMeshIds(file) {
 function readLinksFile() {
   ensureLocalFromSeed(LINKS_PATH, LINKS_SEED);
   if (!fs.existsSync(LINKS_PATH)) return emptyFile();
+  let raw;
   try {
-    const raw = JSON.parse(fs.readFileSync(LINKS_PATH, "utf8"));
-    return {
-      ...emptyFile(),
-      ...raw,
-      links: Array.isArray(raw.links) ? raw.links : [],
-    };
+    raw = JSON.parse(fs.readFileSync(LINKS_PATH, "utf8"));
   } catch {
-    return emptyFile();
+    // Do not replace unreadable local choices with the bundled defaults.
+    throw new Error("model_oem_links_invalid");
   }
+  const file = {
+    ...emptyFile(),
+    ...raw,
+    removedLinkIds: Array.isArray(raw.removedLinkIds) ? raw.removedLinkIds : [],
+    links: Array.isArray(raw.links) ? raw.links : [],
+  };
+  // Git updates must also reach installations that already have a local file.
+  // Local choices win; explicit unlinks are tombstoned so they stay removed.
+  const seed = JSON.parse(fs.readFileSync(LINKS_SEED, "utf8"));
+  const removed = new Set(file.removedLinkIds);
+  const occupied = new Set(file.links.map((l) => linkId(l.kind, l.ref, l.assemblyId)));
+  let changed = false;
+  for (const link of seed.links || []) {
+    const id = linkId(link.kind, link.ref, link.assemblyId);
+    if (occupied.has(id) || removed.has(id)) continue;
+    file.links.push({ ...link, id });
+    occupied.add(id);
+    changed = true;
+  }
+  return changed ? saveModelOemLinks(file) : file;
 }
 
 export function loadModelOemLinks() {
@@ -82,6 +100,7 @@ export function saveModelOemLinks(file) {
     version: 1,
     note: file?.note || emptyFile().note,
     updated_at: new Date().toISOString(),
+    removedLinkIds: [...new Set(file?.removedLinkIds || [])],
     links: Array.isArray(file?.links) ? file.links : [],
   };
   fs.mkdirSync(path.dirname(LINKS_PATH), { recursive: true });
@@ -123,6 +142,9 @@ export function upsertModelOemLink(link) {
   else file.links.push(row);
   if (skus.length === 0) {
     file.links = file.links.filter((l) => l.id !== id);
+    file.removedLinkIds = [...new Set([...file.removedLinkIds, id])];
+  } else {
+    file.removedLinkIds = file.removedLinkIds.filter((removed) => removed !== id);
   }
   return saveModelOemLinks(file);
 }
@@ -144,6 +166,7 @@ export function removeModelOemLink(kind, ref, sku, assemblyId) {
         : l.kind === kind && l.ref === ref;
   if (!sku) {
     file.links = file.links.filter((l) => !match(l));
+    file.removedLinkIds = [...new Set([...file.removedLinkIds, id])];
     return saveModelOemLinks(file);
   }
   const row = file.links.find(match);
@@ -151,6 +174,7 @@ export function removeModelOemLink(kind, ref, sku, assemblyId) {
   row.skus = (row.skus || []).filter((s) => s !== sku);
   if (row.skus.length === 0) {
     file.links = file.links.filter((l) => l.id !== row.id);
+    file.removedLinkIds = [...new Set([...file.removedLinkIds, id])];
   }
   return saveModelOemLinks(file);
 }

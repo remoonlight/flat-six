@@ -9,6 +9,11 @@ const local=path.join(output,'assets');
 const seed=JSON.parse(fs.readFileSync(path.join(root,'data/seed/xray/garage-assemblies.json')));
 const expectedLinks=JSON.parse(fs.readFileSync(path.join(root,'data/seed/xray/model-oem-links.seed.json')));
 const expectedState=JSON.parse(fs.readFileSync(path.join(root,'data/seed/xray/mesh-state.template.json')));
+const existingOem=process.argv.includes('--existing-oem');
+if(existingOem){
+  fs.mkdirSync(local,{recursive:true});
+  fs.writeFileSync(path.join(local,'model-oem-links.json'),JSON.stringify({version:1,links:[]}));
+}
 for(const rel of [seed.bodyShell.rel,seed.bodyShell.fallbackRel,...seed.assemblies.map(a=>a.glbRel)]){
   const source=path.join(root,'.local',rel);if(!fs.existsSync(source))continue;
   fs.mkdirSync(path.dirname(path.join(local,rel)),{recursive:true});fs.copyFileSync(source,path.join(local,rel));
@@ -35,8 +40,25 @@ try{
   const fresh=await page.evaluate(async()=>({links:await window.porsche981.modelOemLinksGet(),state:await window.porsche981.xrayGetMeshState(),
     prices:(await window.porsche981.listParts()).map(p=>({sku:p.sku,oem_price:p.oem_price,aftermarket_price:p.aftermarket_price,aftermarket_quotes:p.aftermarket_quotes,price_note:p.price_note,price_as_of:p.price_as_of}))}));
   assert.deepEqual(fresh.links.links,expectedLinks.links);assert.deepEqual(fresh.state.layers,expectedState.layers);
+  const partSkus=new Set(fresh.prices.map(p=>p.sku));
+  for(const link of fresh.links.links)for(const sku of link.skus)assert(partSkus.has(sku),`linked SKU missing from bundled catalog: ${sku}`);
   assert(fresh.prices.length>8000);fs.writeFileSync(path.join(output,'fresh-prices.json'),JSON.stringify(fresh.prices));
   assert.equal(await page.locator('[data-model-key]').count(),expectedExterior);const exterior=await state(page);
+  // Check actual rendered labels, not just the number of rows in the seed.
+  // GLTFLoader removes punctuation from single-primitive object names.
+  const oemChecks=[
+    ['Exterior__soft-top__SM_SoftTop_0000001_MAT_SoftTop_0','981.561.015.00'],
+    ['Exterior__soft-top__SM_SoftTop_0000001_MAT_Glass067_0','981.561.015.00'],
+    ['Exterior__windows__718__GEO_INNER_DOOR_GLASS_L','981.542.511.00'],
+    ['Exterior__windows__718__GEO_INNER_DOOR_GLASS_R','981.542.512.00'],
+  ];
+  for(const [ref,oem] of oemChecks){
+    const row=page.locator(`[data-model-key="mesh:${ref}"]`);
+    assert((await row.innerText()).includes(oem),`${ref} must display ${oem}`);
+    await row.click();assert(!(await row.locator('..').innerText()).includes('未关联'));
+  }
+  const exteriorLinked=await page.locator('[data-model-key]').evaluateAll(es=>es.filter(e=>!e.textContent.includes('未关联')).length);
+  checks.push('soft top and left/right window OEM labels',existingOem?'existing local OEM upgrade':'fresh OEM seed');
   assert(exterior.some(m=>m.mats.some(x=>x.reviewed?.finish==='wheel-black')));
   await page.screenshot({path:path.join(output,'exterior.png')});
   await page.getByRole('button',{name:'内饰',exact:true}).click();await page.waitForTimeout(250);
@@ -57,6 +79,6 @@ try{
   await page.getByRole('button',{name:edited.merged[0].name,exact:true}).waitFor({timeout:45000});
   for(const part of edited.merged)assert.equal(await page.getByRole('button',{name:part.name,exact:true}).count(),1);
   await state(page);await page.screenshot({path:path.join(output,'tune.png')});
-  assert.deepEqual(errors,[]);fs.writeFileSync(path.join(output,'report.json'),JSON.stringify({ok:true,exterior:expectedExterior,interior:expectedInterior,links:fresh.links.links.length,prices:fresh.prices.length,checks,errors},null,2));
-  console.log(JSON.stringify({ok:true,output,exterior:expectedExterior,interior:expectedInterior,links:fresh.links.links.length,prices:fresh.prices.length}));
+  assert.deepEqual(errors,[]);fs.writeFileSync(path.join(output,'report.json'),JSON.stringify({ok:true,exterior:expectedExterior,exteriorLinked,interior:expectedInterior,links:fresh.links.links.length,prices:fresh.prices.length,checks,errors},null,2));
+  console.log(JSON.stringify({ok:true,output,exterior:expectedExterior,exteriorLinked,interior:expectedInterior,links:fresh.links.links.length,prices:fresh.prices.length}));
 }finally{clearTimeout(timer);if(app)await app.close();}

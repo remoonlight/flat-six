@@ -7,14 +7,16 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import os from "node:os";
 import { ensureLocalFromSeed } from "./ensure-local-snapshot.mjs";
-import {
+const isolatedRoot = fs.mkdtempSync(path.join(os.tmpdir(), "p981-oem-check-"));
+process.env.PORSCHE981_LOCAL_ROOT = isolatedRoot;
+const {
   listGarageModelCatalog,
   listGlbNodeNames,
   loadModelOemLinks,
   removeModelOemLink,
   upsertModelOemLink,
   MODEL_OEM_LINKS_PATH,
-} from "./model-oem-links.mjs";
+} = await import("./model-oem-links.mjs");
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "../../..");
@@ -63,6 +65,37 @@ assert(
   before.links.length > 0,
   "local oem links after load (missing .local is seeded from git snapshot)",
 );
+assert(JSON.stringify(before.links) === JSON.stringify(seedLinks.links), "fresh install gets every bundled link");
+
+// Reproduce a pre-existing installation: the old first-run copy skipped this file.
+const custom = { ...seedLinks.links[0], skus: ["spark-plugs"] };
+const extra = { id: "mesh:body:custom", kind: "mesh", ref: "custom", assemblyId: "body", skus: ["oil-filter"] };
+fs.writeFileSync(MODEL_OEM_LINKS_PATH, JSON.stringify({ version: 1, links: [custom, extra] }));
+const upgraded = loadModelOemLinks();
+assert(upgraded.links.length === seedLinks.links.length + 1, "existing installation gains missing bundled links");
+assert(upgraded.links.find(l => l.id === custom.id).skus[0] === "spark-plugs", "local override wins");
+assert(upgraded.links.some(l => l.id === extra.id), "custom link survives update");
+const once = fs.readFileSync(MODEL_OEM_LINKS_PATH, "utf8");
+loadModelOemLinks();
+assert(fs.readFileSync(MODEL_OEM_LINKS_PATH, "utf8") === once, "unchanged load does not rewrite state");
+
+for (const remove of ["whole", "sku", "empty-upsert"]) {
+  const target = seedLinks.links.find(l => l.kind === "mesh");
+  if (remove === "whole") removeModelOemLink(target.kind, target.ref, undefined, target.assemblyId);
+  if (remove === "sku") removeModelOemLink(target.kind, target.ref, target.skus[0], target.assemblyId);
+  if (remove === "empty-upsert") upsertModelOemLink({ ...target, skus: [] });
+  assert(!loadModelOemLinks().links.some(l => l.id === target.id), `${remove}: explicit unlink stays removed after reload`);
+  upsertModelOemLink(target);
+  assert(loadModelOemLinks().links.some(l => l.id === target.id), `${remove}: explicit relink works`);
+}
+
+fs.writeFileSync(MODEL_OEM_LINKS_PATH, JSON.stringify({ version: 1, links: [] }));
+assert(loadModelOemLinks().links.length === seedLinks.links.length, "old empty local file receives seed");
+fs.writeFileSync(MODEL_OEM_LINKS_PATH, "broken-json");
+let invalid = false;
+try { loadModelOemLinks(); } catch { invalid = true; }
+assert(invalid && fs.readFileSync(MODEL_OEM_LINKS_PATH, "utf8") === "broken-json", "invalid local file is preserved and reported");
+fs.writeFileSync(MODEL_OEM_LINKS_PATH, JSON.stringify(seedLinks));
 
 const after = upsertModelOemLink({
   kind: "assembly",
@@ -120,7 +153,7 @@ if (fs.existsSync(bodyGlb)) {
   assert(names.length > 0, "glb node names");
   console.log("glb nodes sample:", names.slice(0, 5).join(", "));
   const cat = listGarageModelCatalog({
-    bodyRel: "flat-six/boxster-real.glb",
+    bodyRel: bodyGlb,
     layers: [],
     flows: [{ id: "flow-selfcheck", label: "selfcheck flow" }],
   });
@@ -135,3 +168,5 @@ if (fs.existsSync(bodyGlb)) {
 }
 
 console.log("ok model-oem-links →", MODEL_OEM_LINKS_PATH);
+assert(path.dirname(isolatedRoot) === path.resolve(os.tmpdir()) && path.basename(isolatedRoot).startsWith("p981-oem-check-"), "cleanup stays in own temporary directory");
+fs.rmSync(isolatedRoot, { recursive: true, force: true });

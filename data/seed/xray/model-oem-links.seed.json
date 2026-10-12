@@ -1,7 +1,7 @@
 {
   "version": 1,
   "note": "garage model block → part sku(s); 装配优先，mesh 可补",
-  "updated_at": "2026-10-11T14:21:45.935Z",
+  "updated_at": "2026-10-12T08:07:43.906Z",
   "links": [
     {
       "id": "assembly:engine",
@@ -4352,6 +4352,26 @@
         "981-98156165003"
       ],
       "note": null
+    },
+    {
+      "id": "mesh:body:Exterior__windows__718__GEO_INNER_DOOR_GLASS_L",
+      "kind": "mesh",
+      "ref": "Exterior__windows__718__GEO_INNER_DOOR_GLASS_L",
+      "assemblyId": "body",
+      "skus": [
+        "981-98154251100"
+      ],
+      "note": "PETKA 明文 EPC 805-000 / 3：车门窗玻璃，左侧，D >> - MJ 2014；718 视觉补件对应 981 目录参考，不证明 VIN 适配。来源 data/seed/petka/plaintext-archive/PETKA_Porsche_981_EPC.csv。"
+    },
+    {
+      "id": "mesh:body:Exterior__windows__718__GEO_INNER_DOOR_GLASS_R",
+      "kind": "mesh",
+      "ref": "Exterior__windows__718__GEO_INNER_DOOR_GLASS_R",
+      "assemblyId": "body",
+      "skus": [
+        "981-98154251200"
+      ],
+      "note": "PETKA 明文 EPC 805-000 / 3：车门窗玻璃，右侧，D >> - MJ 2014；718 视觉补件对应 981 目录参考，不证明 VIN 适配。来源 data/seed/petka/plaintext-archive/PETKA_Porsche_981_EPC.csv。"
     }
   ]
 }
