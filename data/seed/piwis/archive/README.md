@@ -4,17 +4,17 @@
 
 原件位置：`.local/piwis-archive/981-982/2026-10-01/files/`。原始固件容器保持完整，共享规则原件可能包含其他车型分支；其他车型专属容器未复制。本轮扫描范围为共享 9x1 平台的 flash-data 与配套维护配置，不代表所有外部更新介质。
 
-2026-10-11 迁移后定位：上述为归档时路径；当前原件实际保留在 `archives/migration-20261008/flat-six/.local/piwis-archive/981-982/2026-10-01/`。299 原件已重新通过只读完整核验，未复制或修改原件。下列本地数据链接指向当前迁移位置；历史版本和适用性说明保持。
+2026-10-21 整合后定位：当前原件及索引保留在 `.local/piwis-archive/981-982/2026-10-01/`，已从旧迁入目录搬迁并逐项核对 SHA-256，原件内容未修改。下列本地数据链接指向当前目录；历史版本和适用性说明保持。299 份原件已通过下方只读完整核验（含 293 条规则、来源指纹、PDX CRC／目录、元数据与链接）。
 
 本次保存 299 个原件，其中 269 个 PDX/ODX 容器，436.81 MiB。
 包含 293 条 981/982 展示记录；共享规则可能在两个车系下各显示一次，不等于固件数量。所有原件与主机 SHA-256 相符，PDX 内部 CRC 已检查。
 
 - [981/982 文件与版本 Markdown 索引](981-982-files.md)
 - [规则修订时间线 Markdown](981-982-timeline.md)
-- [文件、系统、车型、版本及时间 CSV](../../../../archives/migration-20261008/flat-six/.local/piwis-archive/981-982/2026-10-01/files.csv)
-- [规则、车型配置与文件对应表](../../../../archives/migration-20261008/flat-six/.local/piwis-archive/981-982/2026-10-01/rules.csv)
-- [规则版本时间线 CSV](../../../../archives/migration-20261008/flat-six/.local/piwis-archive/981-982/2026-10-01/timeline.csv)
-- [完整归档清单与容器元数据](../../../../archives/migration-20261008/flat-six/.local/piwis-archive/981-982/2026-10-01/manifest.json)
+- [文件、系统、车型、版本及时间 CSV](../../../../.local/piwis-archive/981-982/2026-10-01/files.csv)
+- [规则、车型配置与文件对应表](../../../../.local/piwis-archive/981-982/2026-10-01/rules.csv)
+- [规则版本时间线 CSV](../../../../.local/piwis-archive/981-982/2026-10-01/timeline.csv)
+- [完整归档清单与容器元数据](../../../../.local/piwis-archive/981-982/2026-10-01/manifest.json)
 
 ## 版本与时间的含义
 
@@ -70,7 +70,7 @@ PIWIS 应用版本 `24.0.3_E4`；共享脚本版本 `9x1-42.80.00-P, Build_01`�
 ## 复核
 
 ```powershell
-python scripts/archive_piwis_workshop.py --archive archives/migration-20261008/flat-six/.local/piwis-archive/981-982/2026-10-01 --verify
+python scripts/archive_piwis_workshop.py --archive .local/piwis-archive/981-982/2026-10-01 --verify
 ```
 
 本目录 Markdown 为项目索引；`.local/piwis-archive/` 内原件、清单与 CSV 仅保存在当前项目电脑，不随 Git 或安装包发布。归档不授予刷写资格。

@@ -110,6 +110,8 @@ npm run accept:catalog
 npm run accept:all
 ```
 
+PIWIS 离线解析工具位于 `scripts/diagnostics/piwis_*.py`，使用项目 Python 环境运行 `npm run check:piwis-research` 检查。工具只解析本地资料，原件位于 `.local/piwis-archive/` 等本机目录；旧诊断定义保存在研究目录，不自动安装到当前资料库。
+
 ## 简要结构
 
 ```text

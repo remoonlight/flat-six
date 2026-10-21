@@ -44,7 +44,7 @@ class FakeMemory:
 
 class Pt3gTransportSourceTests(unittest.TestCase):
     def test_full_pinned_source_matches_three_CAN_routes_and_24_exports(self):
-        default=Path(transport.__file__).resolve().parents[2]/'archives/migration-20261008/flat-six/.local/pt3g-support/vendor/PORSCHE-VCI/X64'
+        default=Path(transport.__file__).resolve().parents[2]/'.local/pt3g-support/vendor/PORSCHE-VCI/X64'
         root=Path(os.environ.get('PORSCHE981_PT3G_TEST_SOURCE') or default)
         source=transport.audit_transport_source(root)
         self.assertEqual(len(source['bindings']),24);self.assertEqual(len(source['regions']),20)

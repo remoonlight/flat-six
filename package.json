@@ -142,7 +142,8 @@
     "accept:obd-measurement-capture-ui": "npm run build -w @porsche981/desktop && node scripts/obd-measurement-capture-ui-accept.mjs",
     "analyze:obd-identity-application": "python -X utf8 -m scripts.diagnostics.identity_application_capture",
     "accept:obd-identity-capture-ui": "npm run build -w @porsche981/desktop && node scripts/obd-identity-capture-ui-accept.mjs",
-    "audit:obd-source-fields": "python -X utf8 -m scripts.diagnostics.definition_decoder_audit"
+    "audit:obd-source-fields": "python -X utf8 -m scripts.diagnostics.definition_decoder_audit",
+    "check:piwis-research": "python -X utf8 -B -m unittest discover -s scripts/diagnostics/tests -t . -p \"test_piwis_*.py\""
   },
   "engines": {
     "node": ">=22"
