@@ -41,6 +41,30 @@ def families(rule, description, legacy):
     return [], "product-key"
 
 
+def validate_rule_tree(rule):
+    """Reject unsupported semantics before classifying a rule's target family."""
+    children = {
+        'FLASHREGEL': {'BESCHREIBUNG', 'ISTSTAND', 'SOLLSTAND'},
+        'ISTSTAND': {'PRODUKTSCHLUESSEL', 'AUSSTATTUNG', 'MODELLJAHR', 'STEUERGERAETE'},
+        'SOLLSTAND': {'STEUERGERAETE'}, 'STEUERGERAETE': {'STEUERGERAET'},
+        'STEUERGERAET': {'LOGICALLINK', 'BESCHREIBUNG', 'PTNR', 'HWTNR', 'SWVERSION', 'SESSIONNAME'},
+    }
+    leaves = {'BESCHREIBUNG', 'PRODUKTSCHLUESSEL', 'AUSSTATTUNG', 'MODELLJAHR',
+              'LOGICALLINK', 'PTNR', 'HWTNR', 'SWVERSION', 'SESSIONNAME'}
+    for node in rule.iter():
+        if node.attrib:
+            raise ValueError('Unsupported rule attributes: ' + node.tag)
+        tags = [child.tag for child in node]
+        if node.tag not in children and node.tag not in leaves:
+            raise ValueError('Unsupported rule condition: ' + node.tag)
+        if any(tag not in children.get(node.tag, set()) for tag in tags):
+            raise ValueError('Unsupported rule condition: ' + node.tag)
+        if node.tag != 'STEUERGERAETE' and len(tags) != len(set(tags)):
+            raise ValueError('Duplicate rule field: ' + node.tag)
+    if rule.find('ISTSTAND') is None or rule.find('SOLLSTAND') is None:
+        raise ValueError('Required rule section missing')
+
+
 def current_conditions(node):
     result = []
     for ecu in node:
@@ -71,6 +95,7 @@ def build_index(source: Path) -> dict:
         raw = (source / filename).read_bytes()
         sources.append({"file": filename, "sha256": hashlib.sha256(raw).hexdigest()})
         for ordinal, rule in enumerate(ET.fromstring(raw).findall(".//FLASHREGEL")):
+            validate_rule_tree(rule)
             description = (rule.findtext("BESCHREIBUNG") or "").strip()
             generations, family_evidence = families(rule, description, not filename.startswith("flash-rules/"))
             if not generations:

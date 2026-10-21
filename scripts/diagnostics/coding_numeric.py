@@ -16,7 +16,6 @@ from pathlib import Path
 import re
 import zipfile
 
-from .decoder_reference import reference_patch, reference_value, compare_reference
 from .offline_match import ANCHORS, FLAGS
 from .response_values import data_span, request_from_record
 from .x431_formula import formula_from_record
@@ -50,8 +49,16 @@ def _constraints(record):
     if not request.get('ok') or request['sid'] not in (0x21, 0x22):
         raise ValueError('numeric-read-request-unresolved')
     _, parsed = formula_from_record(record)
-    if not parsed.get('ok') or parsed.get('kind') != 'LINEAR':
+    if not parsed.get('ok') or parsed.get('kind') not in ('LINEAR', 'SCALE-LINEAR'):
         raise ValueError('numeric-linear-definition-required')
+    if parsed['kind'] == 'SCALE-LINEAR':
+        segments = parsed.get('segments')
+        # The retained PCM fields each declare one bounded affine segment.
+        # Multiple segments may be discontinuous or have ambiguous inverses;
+        # they are not reduced to one envelope or inferred from storage width.
+        if not isinstance(segments, list) or len(segments) != 1:
+            raise ValueError('numeric-single-source-segment-required')
+        parsed = {**parsed, **{k: segments[0].get(k) for k in ('lower', 'upper', 'xa', 'xb', 'xc')}}
     if parsed.get('baseDataType') not in INTEGER_TYPES or (parsed.get('encoding') or '').upper() not in ('UNDEFINED', '2C'):
         raise ValueError('numeric-integer-encoding-unqualified')
     try:
@@ -76,6 +83,14 @@ def _constraints(record):
     if type(mask) is not int or not 0 <= mask < 1 << width:
         raise ValueError('numeric-mask-unrepresentable')
     return request, parsed, lo, hi, xa, xb, xc
+
+
+def numeric_physical_value(record, coded):
+    """Exact source conversion shared by a draft and its current-value display."""
+    if type(coded) is not int:
+        raise ValueError('numeric-coded-value-invalid')
+    _, _, _, _, xa, xb, xc = _constraints(record)
+    return (Fraction(coded) * xc - xa) / xb
 
 
 def numeric_domain(record):
@@ -140,6 +155,7 @@ def preview_numeric_candidate(record, original, target):
 
 
 def audit_variants(stream, output):
+    from .decoder_reference import reference_patch, reference_value, compare_reference
     output = Path(output)
     if output.exists():
         raise ValueError('numeric-audit-fresh-output-required')
@@ -153,7 +169,7 @@ def audit_variants(stream, output):
             tally = Counter()
             for record in variant.get('pool_records', {}).get('coding', {}).get('records', []):
                 _, parsed = formula_from_record(record)
-                if parsed.get('kind') != 'LINEAR':
+                if parsed.get('kind') not in ('LINEAR', 'SCALE-LINEAR'):
                     continue
                 domain = numeric_domain(record); tally['linearFields'] += 1
                 key = json.dumps({k: record.get(k) for k in ('formula', 'byteOffset', 'bitOffset', 'unit', 'enumText')}, sort_keys=True)
@@ -162,7 +178,7 @@ def audit_variants(stream, output):
                     if key not in cache:
                         lo, hi = domain['codedLower'], domain['codedUpper']
                         for coded in sorted({lo, hi, (lo + hi) // 2, lo - 1, hi + 1}):
-                            physical = (Fraction(coded) * Fraction(parsed['xc']) - Fraction(parsed['xa'])) / Fraction(parsed['xb'])
+                            physical = numeric_physical_value(record, coded)
                             for pattern in (0, 0xA5, 0xFF):
                                 before = bytes([pattern]) * (data_span(record)['dataMin'] + 3)
                                 candidate = preview_numeric_candidate(record, before, rational(physical))

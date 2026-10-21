@@ -1,4 +1,15 @@
 #:schema https://developers.openai.com/codex/config-schema.json
-# Project-only overrides. Do not declare MCP servers here unless they
-# belong to this repo and include a valid transport (command or url).
-# mysql-mcp / ida / ldj-debug / ssh-mcp are not used in flat-six.
+# Project-only overrides. Global launchers, credentials, plugins, and model stay in ~/.codex/config.toml.
+#
+# Do not add [mcp_servers.<id>] with only `enabled = false`. Codex treats that as a new
+# server and rejects it (`invalid transport` / "failed to load workspace requirements")
+# unless the same id already has a command or url in the merged config.
+# mysql-mcp, ida-pro-mcp, ldj-debug, hcrdi-aichat, and ssh-mcp are not in the global
+# Codex config, so they are already absent here. Re-add a table only together with a
+# real transport, and only for a task that needs that server.
+
+[mcp_servers.rea]
+command = "/bin/bash"
+args = ["/Users/diwen/code/flat-six/scripts/rea.sh", "mcp"]
+cwd = "/Users/diwen/code/flat-six"
+startup_timeout_sec = 30

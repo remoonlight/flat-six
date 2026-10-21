@@ -1,0 +1,2430 @@
+{
+  "schemaVersion": 1,
+  "kind": "reviewed-dme-coding-read-scopes",
+  "profiles": [
+    {
+      "profileId": "9x1:DME_BDE_Continental:SDI9_1_981_3_8L_E4E",
+      "generations": [
+        "981"
+      ],
+      "ecuId": 1,
+      "definitionSha256": "93e3daa213b5a5d5debb62e13035bbd488a291e5a457b97fcabb593b80d30081",
+      "definitionFieldCount": 39,
+      "completeScopeSource": {
+        "kind": "piwis-readable-configuration-record-set",
+        "project": "9x1",
+        "version": "2830.1.0",
+        "sourceFile": "0.0.0@EcuConfig_DME_BDE_Continental.ec.db",
+        "sourceSha256": "e712641493bf8bfa1abf2eb590fd225b1292733bdb5bf211b6a329239d265549",
+        "indexSha256": "32f22614194f50be8dec8c805d326d33629a38af191b05dd7d99f5d7d0dc2e32",
+        "datasetId": "#RtGen_CD_EcuConfig_DME_BDE_Continental_ConfigData_DME_BDE_Continental",
+        "datasetSha256": "65d14b3c4054a89ee2510485a49d5762923f6187b172852df7eceda8e7a46d41",
+        "requestLengths": [
+          {
+            "requestHex": "2101",
+            "bytes": 2
+          },
+          {
+            "requestHex": "21A1",
+            "bytes": 1
+          },
+          {
+            "requestHex": "21A2",
+            "bytes": 12
+          },
+          {
+            "requestHex": "21A3",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21A4",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21A5",
+            "bytes": 11
+          },
+          {
+            "requestHex": "21A6",
+            "bytes": 5
+          },
+          {
+            "requestHex": "21A7",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21A8",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21A9",
+            "bytes": 8
+          },
+          {
+            "requestHex": "21AA",
+            "bytes": 5
+          },
+          {
+            "requestHex": "21AB",
+            "bytes": 4
+          },
+          {
+            "requestHex": "21AC",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21AD",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21AE",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21AF",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21B0",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B1",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B2",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B3",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B4",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B5",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21B6",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21B7",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21B8",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21B9",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21BA",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21BB",
+            "bytes": 50
+          }
+        ],
+        "sha256": "dce91134749d0c19613ff23c5eeb7067ca5e11bc5681fb16182e1b1378ebc610"
+      },
+      "sourceQualification": "kwp-source-version-and-identity",
+      "applicationProtocol": "kwp",
+      "txId": 2016,
+      "rxId": 2024,
+      "sourceCommands": [
+        "1089",
+        "1A9F",
+        "1089"
+      ],
+      "session": {
+        "requestHex": "1089",
+        "positivePrefixHex": "5089"
+      },
+      "identityConstraints": {
+        "versionRules": [
+          "W300"
+        ]
+      },
+      "identityFields": [
+        {
+          "requestHex": "1A9F",
+          "sourceOffset": 4096458,
+          "byteOffset": 0,
+          "dataMin": 4
+        },
+        {
+          "requestHex": "1A95",
+          "sourceOffset": 4096496,
+          "byteOffset": 0,
+          "dataMin": 15
+        },
+        {
+          "requestHex": "1A9A",
+          "sourceOffset": 4096523,
+          "byteOffset": 6,
+          "dataMin": 10
+        },
+        {
+          "requestHex": "1A87",
+          "sourceOffset": 4096691,
+          "byteOffset": 0,
+          "dataMin": 11
+        },
+        {
+          "requestHex": "1A91",
+          "sourceOffset": 4096772,
+          "byteOffset": 0,
+          "dataMin": 11
+        },
+        {
+          "requestHex": "1A90",
+          "sourceOffset": 4097071,
+          "byteOffset": 0,
+          "dataMin": 17
+        },
+        {
+          "requestHex": "1A9E",
+          "sourceOffset": 4096718,
+          "byteOffset": 0,
+          "dataMin": 4
+        },
+        {
+          "requestHex": "1A92",
+          "sourceOffset": 4096745,
+          "byteOffset": 0,
+          "dataMin": 12
+        }
+      ]
+    },
+    {
+      "profileId": "9x1:DME_BDE_Continental:SDI9_1_981_3_8L_EU4",
+      "generations": [
+        "981"
+      ],
+      "ecuId": 1,
+      "definitionSha256": "8be7cbdde7222b6042f08db50a20e4324b2333789b58a49c09a9fe5fde9db230",
+      "definitionFieldCount": 39,
+      "completeScopeSource": {
+        "kind": "piwis-readable-configuration-record-set",
+        "project": "9x1",
+        "version": "2830.1.0",
+        "sourceFile": "0.0.0@EcuConfig_DME_BDE_Continental.ec.db",
+        "sourceSha256": "e712641493bf8bfa1abf2eb590fd225b1292733bdb5bf211b6a329239d265549",
+        "indexSha256": "32f22614194f50be8dec8c805d326d33629a38af191b05dd7d99f5d7d0dc2e32",
+        "datasetId": "#RtGen_CD_EcuConfig_DME_BDE_Continental_ConfigData_DME_BDE_Continental",
+        "datasetSha256": "65d14b3c4054a89ee2510485a49d5762923f6187b172852df7eceda8e7a46d41",
+        "requestLengths": [
+          {
+            "requestHex": "2101",
+            "bytes": 2
+          },
+          {
+            "requestHex": "21A1",
+            "bytes": 1
+          },
+          {
+            "requestHex": "21A2",
+            "bytes": 12
+          },
+          {
+            "requestHex": "21A3",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21A4",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21A5",
+            "bytes": 11
+          },
+          {
+            "requestHex": "21A6",
+            "bytes": 5
+          },
+          {
+            "requestHex": "21A7",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21A8",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21A9",
+            "bytes": 8
+          },
+          {
+            "requestHex": "21AA",
+            "bytes": 5
+          },
+          {
+            "requestHex": "21AB",
+            "bytes": 4
+          },
+          {
+            "requestHex": "21AC",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21AD",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21AE",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21AF",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21B0",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B1",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B2",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B3",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B4",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B5",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21B6",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21B7",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21B8",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21B9",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21BA",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21BB",
+            "bytes": 50
+          }
+        ],
+        "sha256": "dce91134749d0c19613ff23c5eeb7067ca5e11bc5681fb16182e1b1378ebc610"
+      },
+      "sourceQualification": "kwp-source-version-and-identity",
+      "applicationProtocol": "kwp",
+      "txId": 2016,
+      "rxId": 2024,
+      "sourceCommands": [
+        "1089",
+        "1A9F",
+        "1089"
+      ],
+      "session": {
+        "requestHex": "1089",
+        "positivePrefixHex": "5089"
+      },
+      "identityConstraints": {
+        "versionRules": [
+          "W400"
+        ]
+      },
+      "identityFields": [
+        {
+          "requestHex": "1A9F",
+          "sourceOffset": 4124475,
+          "byteOffset": 0,
+          "dataMin": 4
+        },
+        {
+          "requestHex": "1A95",
+          "sourceOffset": 4124513,
+          "byteOffset": 0,
+          "dataMin": 15
+        },
+        {
+          "requestHex": "1A9A",
+          "sourceOffset": 4124540,
+          "byteOffset": 6,
+          "dataMin": 10
+        },
+        {
+          "requestHex": "1A87",
+          "sourceOffset": 4124708,
+          "byteOffset": 0,
+          "dataMin": 11
+        },
+        {
+          "requestHex": "1A91",
+          "sourceOffset": 4124789,
+          "byteOffset": 0,
+          "dataMin": 11
+        },
+        {
+          "requestHex": "1A90",
+          "sourceOffset": 4125088,
+          "byteOffset": 0,
+          "dataMin": 17
+        },
+        {
+          "requestHex": "1A9E",
+          "sourceOffset": 4124735,
+          "byteOffset": 0,
+          "dataMin": 4
+        },
+        {
+          "requestHex": "1A92",
+          "sourceOffset": 4124762,
+          "byteOffset": 0,
+          "dataMin": 12
+        }
+      ]
+    },
+    {
+      "profileId": "9x1:DME_BDE_Continental:SDI9_1_981_3_8L_EU6",
+      "generations": [
+        "981"
+      ],
+      "ecuId": 1,
+      "definitionSha256": "437b4b8de567d84731f9011c9db1d3fadb70e62aea630441d9a6f8ae61a57a86",
+      "definitionFieldCount": 39,
+      "completeScopeSource": {
+        "kind": "piwis-readable-configuration-record-set",
+        "project": "9x1",
+        "version": "2830.1.0",
+        "sourceFile": "0.0.0@EcuConfig_DME_BDE_Continental.ec.db",
+        "sourceSha256": "e712641493bf8bfa1abf2eb590fd225b1292733bdb5bf211b6a329239d265549",
+        "indexSha256": "32f22614194f50be8dec8c805d326d33629a38af191b05dd7d99f5d7d0dc2e32",
+        "datasetId": "#RtGen_CD_EcuConfig_DME_BDE_Continental_ConfigData_DME_BDE_Continental",
+        "datasetSha256": "65d14b3c4054a89ee2510485a49d5762923f6187b172852df7eceda8e7a46d41",
+        "requestLengths": [
+          {
+            "requestHex": "2101",
+            "bytes": 2
+          },
+          {
+            "requestHex": "21A1",
+            "bytes": 1
+          },
+          {
+            "requestHex": "21A2",
+            "bytes": 12
+          },
+          {
+            "requestHex": "21A3",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21A4",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21A5",
+            "bytes": 11
+          },
+          {
+            "requestHex": "21A6",
+            "bytes": 5
+          },
+          {
+            "requestHex": "21A7",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21A8",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21A9",
+            "bytes": 8
+          },
+          {
+            "requestHex": "21AA",
+            "bytes": 5
+          },
+          {
+            "requestHex": "21AB",
+            "bytes": 4
+          },
+          {
+            "requestHex": "21AC",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21AD",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21AE",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21AF",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21B0",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B1",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B2",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B3",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B4",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B5",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21B6",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21B7",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21B8",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21B9",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21BA",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21BB",
+            "bytes": 50
+          }
+        ],
+        "sha256": "dce91134749d0c19613ff23c5eeb7067ca5e11bc5681fb16182e1b1378ebc610"
+      },
+      "sourceQualification": "kwp-source-version-and-identity",
+      "applicationProtocol": "kwp",
+      "txId": 2016,
+      "rxId": 2024,
+      "sourceCommands": [
+        "1089",
+        "1A9F",
+        "1089"
+      ],
+      "session": {
+        "requestHex": "1089",
+        "positivePrefixHex": "5089"
+      },
+      "identityConstraints": {
+        "versionRules": [
+          "W200"
+        ]
+      },
+      "identityFields": [
+        {
+          "requestHex": "1A9F",
+          "sourceOffset": 4152492,
+          "byteOffset": 0,
+          "dataMin": 4
+        },
+        {
+          "requestHex": "1A95",
+          "sourceOffset": 4152530,
+          "byteOffset": 0,
+          "dataMin": 15
+        },
+        {
+          "requestHex": "1A9A",
+          "sourceOffset": 4152557,
+          "byteOffset": 6,
+          "dataMin": 10
+        },
+        {
+          "requestHex": "1A87",
+          "sourceOffset": 4152725,
+          "byteOffset": 0,
+          "dataMin": 11
+        },
+        {
+          "requestHex": "1A91",
+          "sourceOffset": 4152806,
+          "byteOffset": 0,
+          "dataMin": 11
+        },
+        {
+          "requestHex": "1A90",
+          "sourceOffset": 4153105,
+          "byteOffset": 0,
+          "dataMin": 17
+        },
+        {
+          "requestHex": "1A9E",
+          "sourceOffset": 4152752,
+          "byteOffset": 0,
+          "dataMin": 4
+        },
+        {
+          "requestHex": "1A92",
+          "sourceOffset": 4152779,
+          "byteOffset": 0,
+          "dataMin": 12
+        }
+      ]
+    },
+    {
+      "profileId": "9x1:DME_BDE_Continental:SDI9_1_981_3_8L_ULEV",
+      "generations": [
+        "981"
+      ],
+      "ecuId": 1,
+      "definitionSha256": "bec45b789356992c4059388556681c5e1cc217a91f6609e5237fd5e00c867cd3",
+      "definitionFieldCount": 39,
+      "completeScopeSource": {
+        "kind": "piwis-readable-configuration-record-set",
+        "project": "9x1",
+        "version": "2830.1.0",
+        "sourceFile": "0.0.0@EcuConfig_DME_BDE_Continental.ec.db",
+        "sourceSha256": "e712641493bf8bfa1abf2eb590fd225b1292733bdb5bf211b6a329239d265549",
+        "indexSha256": "32f22614194f50be8dec8c805d326d33629a38af191b05dd7d99f5d7d0dc2e32",
+        "datasetId": "#RtGen_CD_EcuConfig_DME_BDE_Continental_ConfigData_DME_BDE_Continental",
+        "datasetSha256": "65d14b3c4054a89ee2510485a49d5762923f6187b172852df7eceda8e7a46d41",
+        "requestLengths": [
+          {
+            "requestHex": "2101",
+            "bytes": 2
+          },
+          {
+            "requestHex": "21A1",
+            "bytes": 1
+          },
+          {
+            "requestHex": "21A2",
+            "bytes": 12
+          },
+          {
+            "requestHex": "21A3",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21A4",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21A5",
+            "bytes": 11
+          },
+          {
+            "requestHex": "21A6",
+            "bytes": 5
+          },
+          {
+            "requestHex": "21A7",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21A8",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21A9",
+            "bytes": 8
+          },
+          {
+            "requestHex": "21AA",
+            "bytes": 5
+          },
+          {
+            "requestHex": "21AB",
+            "bytes": 4
+          },
+          {
+            "requestHex": "21AC",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21AD",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21AE",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21AF",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21B0",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B1",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B2",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B3",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B4",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B5",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21B6",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21B7",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21B8",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21B9",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21BA",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21BB",
+            "bytes": 50
+          }
+        ],
+        "sha256": "dce91134749d0c19613ff23c5eeb7067ca5e11bc5681fb16182e1b1378ebc610"
+      },
+      "sourceQualification": "kwp-source-version-and-identity",
+      "applicationProtocol": "kwp",
+      "txId": 2016,
+      "rxId": 2024,
+      "sourceCommands": [
+        "1089",
+        "1A9F",
+        "1089"
+      ],
+      "session": {
+        "requestHex": "1089",
+        "positivePrefixHex": "5089"
+      },
+      "identityConstraints": {
+        "versionRules": [
+          "W100"
+        ]
+      },
+      "identityFields": [
+        {
+          "requestHex": "1A9F",
+          "sourceOffset": 4180509,
+          "byteOffset": 0,
+          "dataMin": 4
+        },
+        {
+          "requestHex": "1A95",
+          "sourceOffset": 4180547,
+          "byteOffset": 0,
+          "dataMin": 15
+        },
+        {
+          "requestHex": "1A9A",
+          "sourceOffset": 4180574,
+          "byteOffset": 6,
+          "dataMin": 10
+        },
+        {
+          "requestHex": "1A87",
+          "sourceOffset": 4180742,
+          "byteOffset": 0,
+          "dataMin": 11
+        },
+        {
+          "requestHex": "1A91",
+          "sourceOffset": 4180823,
+          "byteOffset": 0,
+          "dataMin": 11
+        },
+        {
+          "requestHex": "1A90",
+          "sourceOffset": 4181122,
+          "byteOffset": 0,
+          "dataMin": 17
+        },
+        {
+          "requestHex": "1A9E",
+          "sourceOffset": 4180769,
+          "byteOffset": 0,
+          "dataMin": 4
+        },
+        {
+          "requestHex": "1A92",
+          "sourceOffset": 4180796,
+          "byteOffset": 0,
+          "dataMin": 12
+        }
+      ]
+    },
+    {
+      "profileId": "9x1:DME_BDE_Continental:SDI9_1_981_2_7L_E4E",
+      "generations": [
+        "981"
+      ],
+      "ecuId": 1,
+      "definitionSha256": "fce1e1cd661abf6ee8c8dcc8a2b31bccf294e887706c4b7b38579d86f940c6fe",
+      "definitionFieldCount": 39,
+      "completeScopeSource": {
+        "kind": "piwis-readable-configuration-record-set",
+        "project": "9x1",
+        "version": "2830.1.0",
+        "sourceFile": "0.0.0@EcuConfig_DME_BDE_Continental.ec.db",
+        "sourceSha256": "e712641493bf8bfa1abf2eb590fd225b1292733bdb5bf211b6a329239d265549",
+        "indexSha256": "32f22614194f50be8dec8c805d326d33629a38af191b05dd7d99f5d7d0dc2e32",
+        "datasetId": "#RtGen_CD_EcuConfig_DME_BDE_Continental_ConfigData_DME_BDE_Continental",
+        "datasetSha256": "65d14b3c4054a89ee2510485a49d5762923f6187b172852df7eceda8e7a46d41",
+        "requestLengths": [
+          {
+            "requestHex": "2101",
+            "bytes": 2
+          },
+          {
+            "requestHex": "21A1",
+            "bytes": 1
+          },
+          {
+            "requestHex": "21A2",
+            "bytes": 12
+          },
+          {
+            "requestHex": "21A3",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21A4",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21A5",
+            "bytes": 11
+          },
+          {
+            "requestHex": "21A6",
+            "bytes": 5
+          },
+          {
+            "requestHex": "21A7",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21A8",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21A9",
+            "bytes": 8
+          },
+          {
+            "requestHex": "21AA",
+            "bytes": 5
+          },
+          {
+            "requestHex": "21AB",
+            "bytes": 4
+          },
+          {
+            "requestHex": "21AC",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21AD",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21AE",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21AF",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21B0",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B1",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B2",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B3",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B4",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B5",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21B6",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21B7",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21B8",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21B9",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21BA",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21BB",
+            "bytes": 50
+          }
+        ],
+        "sha256": "dce91134749d0c19613ff23c5eeb7067ca5e11bc5681fb16182e1b1378ebc610"
+      },
+      "sourceQualification": "kwp-source-version-and-identity",
+      "applicationProtocol": "kwp",
+      "txId": 2016,
+      "rxId": 2024,
+      "sourceCommands": [
+        "1089",
+        "1A9F",
+        "1089"
+      ],
+      "session": {
+        "requestHex": "1089",
+        "positivePrefixHex": "5089"
+      },
+      "identityConstraints": {
+        "versionRules": [
+          "O300"
+        ]
+      },
+      "identityFields": [
+        {
+          "requestHex": "1A9F",
+          "sourceOffset": 3853234,
+          "byteOffset": 0,
+          "dataMin": 4
+        },
+        {
+          "requestHex": "1A95",
+          "sourceOffset": 3853272,
+          "byteOffset": 0,
+          "dataMin": 15
+        },
+        {
+          "requestHex": "1A9A",
+          "sourceOffset": 3853299,
+          "byteOffset": 6,
+          "dataMin": 10
+        },
+        {
+          "requestHex": "1A87",
+          "sourceOffset": 3853467,
+          "byteOffset": 0,
+          "dataMin": 11
+        },
+        {
+          "requestHex": "1A91",
+          "sourceOffset": 3853548,
+          "byteOffset": 0,
+          "dataMin": 11
+        },
+        {
+          "requestHex": "1A90",
+          "sourceOffset": 3853847,
+          "byteOffset": 0,
+          "dataMin": 17
+        },
+        {
+          "requestHex": "1A9E",
+          "sourceOffset": 3853494,
+          "byteOffset": 0,
+          "dataMin": 4
+        },
+        {
+          "requestHex": "1A92",
+          "sourceOffset": 3853521,
+          "byteOffset": 0,
+          "dataMin": 12
+        }
+      ]
+    },
+    {
+      "profileId": "9x1:DME_BDE_Continental:SDI9_1_981_2_7L_EU4",
+      "generations": [
+        "981"
+      ],
+      "ecuId": 1,
+      "definitionSha256": "2232745669080974061f0dccd5163cdf1283deb30c14903df9c044de86470a96",
+      "definitionFieldCount": 39,
+      "completeScopeSource": {
+        "kind": "piwis-readable-configuration-record-set",
+        "project": "9x1",
+        "version": "2830.1.0",
+        "sourceFile": "0.0.0@EcuConfig_DME_BDE_Continental.ec.db",
+        "sourceSha256": "e712641493bf8bfa1abf2eb590fd225b1292733bdb5bf211b6a329239d265549",
+        "indexSha256": "32f22614194f50be8dec8c805d326d33629a38af191b05dd7d99f5d7d0dc2e32",
+        "datasetId": "#RtGen_CD_EcuConfig_DME_BDE_Continental_ConfigData_DME_BDE_Continental",
+        "datasetSha256": "65d14b3c4054a89ee2510485a49d5762923f6187b172852df7eceda8e7a46d41",
+        "requestLengths": [
+          {
+            "requestHex": "2101",
+            "bytes": 2
+          },
+          {
+            "requestHex": "21A1",
+            "bytes": 1
+          },
+          {
+            "requestHex": "21A2",
+            "bytes": 12
+          },
+          {
+            "requestHex": "21A3",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21A4",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21A5",
+            "bytes": 11
+          },
+          {
+            "requestHex": "21A6",
+            "bytes": 5
+          },
+          {
+            "requestHex": "21A7",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21A8",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21A9",
+            "bytes": 8
+          },
+          {
+            "requestHex": "21AA",
+            "bytes": 5
+          },
+          {
+            "requestHex": "21AB",
+            "bytes": 4
+          },
+          {
+            "requestHex": "21AC",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21AD",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21AE",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21AF",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21B0",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B1",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B2",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B3",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B4",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B5",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21B6",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21B7",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21B8",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21B9",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21BA",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21BB",
+            "bytes": 50
+          }
+        ],
+        "sha256": "dce91134749d0c19613ff23c5eeb7067ca5e11bc5681fb16182e1b1378ebc610"
+      },
+      "sourceQualification": "kwp-source-version-and-identity",
+      "applicationProtocol": "kwp",
+      "txId": 2016,
+      "rxId": 2024,
+      "sourceCommands": [
+        "1089",
+        "1A9F",
+        "1089"
+      ],
+      "session": {
+        "requestHex": "1089",
+        "positivePrefixHex": "5089"
+      },
+      "identityConstraints": {
+        "versionRules": [
+          "O400"
+        ]
+      },
+      "identityFields": [
+        {
+          "requestHex": "1A9F",
+          "sourceOffset": 3883504,
+          "byteOffset": 0,
+          "dataMin": 4
+        },
+        {
+          "requestHex": "1A95",
+          "sourceOffset": 3883542,
+          "byteOffset": 0,
+          "dataMin": 15
+        },
+        {
+          "requestHex": "1A9A",
+          "sourceOffset": 3883569,
+          "byteOffset": 6,
+          "dataMin": 10
+        },
+        {
+          "requestHex": "1A87",
+          "sourceOffset": 3883737,
+          "byteOffset": 0,
+          "dataMin": 11
+        },
+        {
+          "requestHex": "1A91",
+          "sourceOffset": 3883818,
+          "byteOffset": 0,
+          "dataMin": 11
+        },
+        {
+          "requestHex": "1A90",
+          "sourceOffset": 3884117,
+          "byteOffset": 0,
+          "dataMin": 17
+        },
+        {
+          "requestHex": "1A9E",
+          "sourceOffset": 3883764,
+          "byteOffset": 0,
+          "dataMin": 4
+        },
+        {
+          "requestHex": "1A92",
+          "sourceOffset": 3883791,
+          "byteOffset": 0,
+          "dataMin": 12
+        }
+      ]
+    },
+    {
+      "profileId": "9x1:DME_BDE_Continental:SDI9_1_981_2_7L_EU5",
+      "generations": [
+        "981"
+      ],
+      "ecuId": 1,
+      "definitionSha256": "a62b942abc873b82ed0b5ebd61330790a683e40c502fc36376c2510f2c85cbe7",
+      "definitionFieldCount": 39,
+      "completeScopeSource": {
+        "kind": "piwis-readable-configuration-record-set",
+        "project": "9x1",
+        "version": "2830.1.0",
+        "sourceFile": "0.0.0@EcuConfig_DME_BDE_Continental.ec.db",
+        "sourceSha256": "e712641493bf8bfa1abf2eb590fd225b1292733bdb5bf211b6a329239d265549",
+        "indexSha256": "32f22614194f50be8dec8c805d326d33629a38af191b05dd7d99f5d7d0dc2e32",
+        "datasetId": "#RtGen_CD_EcuConfig_DME_BDE_Continental_ConfigData_DME_BDE_Continental",
+        "datasetSha256": "65d14b3c4054a89ee2510485a49d5762923f6187b172852df7eceda8e7a46d41",
+        "requestLengths": [
+          {
+            "requestHex": "2101",
+            "bytes": 2
+          },
+          {
+            "requestHex": "21A1",
+            "bytes": 1
+          },
+          {
+            "requestHex": "21A2",
+            "bytes": 12
+          },
+          {
+            "requestHex": "21A3",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21A4",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21A5",
+            "bytes": 11
+          },
+          {
+            "requestHex": "21A6",
+            "bytes": 5
+          },
+          {
+            "requestHex": "21A7",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21A8",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21A9",
+            "bytes": 8
+          },
+          {
+            "requestHex": "21AA",
+            "bytes": 5
+          },
+          {
+            "requestHex": "21AB",
+            "bytes": 4
+          },
+          {
+            "requestHex": "21AC",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21AD",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21AE",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21AF",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21B0",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B1",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B2",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B3",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B4",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B5",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21B6",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21B7",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21B8",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21B9",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21BA",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21BB",
+            "bytes": 50
+          }
+        ],
+        "sha256": "dce91134749d0c19613ff23c5eeb7067ca5e11bc5681fb16182e1b1378ebc610"
+      },
+      "sourceQualification": "kwp-source-version-and-identity",
+      "applicationProtocol": "kwp",
+      "txId": 2016,
+      "rxId": 2024,
+      "sourceCommands": [
+        "1089",
+        "1A9F",
+        "1089"
+      ],
+      "session": {
+        "requestHex": "1089",
+        "positivePrefixHex": "5089"
+      },
+      "identityConstraints": {
+        "versionRules": [
+          "O200"
+        ]
+      },
+      "identityFields": [
+        {
+          "requestHex": "1A9F",
+          "sourceOffset": 3913774,
+          "byteOffset": 0,
+          "dataMin": 4
+        },
+        {
+          "requestHex": "1A95",
+          "sourceOffset": 3913812,
+          "byteOffset": 0,
+          "dataMin": 15
+        },
+        {
+          "requestHex": "1A9A",
+          "sourceOffset": 3913839,
+          "byteOffset": 6,
+          "dataMin": 10
+        },
+        {
+          "requestHex": "1A87",
+          "sourceOffset": 3914007,
+          "byteOffset": 0,
+          "dataMin": 11
+        },
+        {
+          "requestHex": "1A91",
+          "sourceOffset": 3914088,
+          "byteOffset": 0,
+          "dataMin": 11
+        },
+        {
+          "requestHex": "1A90",
+          "sourceOffset": 3914387,
+          "byteOffset": 0,
+          "dataMin": 17
+        },
+        {
+          "requestHex": "1A9E",
+          "sourceOffset": 3914034,
+          "byteOffset": 0,
+          "dataMin": 4
+        },
+        {
+          "requestHex": "1A92",
+          "sourceOffset": 3914061,
+          "byteOffset": 0,
+          "dataMin": 12
+        }
+      ]
+    },
+    {
+      "profileId": "9x1:DME_BDE_Continental:SDI9_1_981_2_7L_ULEV",
+      "generations": [
+        "981"
+      ],
+      "ecuId": 1,
+      "definitionSha256": "91df823a3860fa7f9772e329518b6742af5d7ebdd463e7bea16beaf3f2bd50e1",
+      "definitionFieldCount": 39,
+      "completeScopeSource": {
+        "kind": "piwis-readable-configuration-record-set",
+        "project": "9x1",
+        "version": "2830.1.0",
+        "sourceFile": "0.0.0@EcuConfig_DME_BDE_Continental.ec.db",
+        "sourceSha256": "e712641493bf8bfa1abf2eb590fd225b1292733bdb5bf211b6a329239d265549",
+        "indexSha256": "32f22614194f50be8dec8c805d326d33629a38af191b05dd7d99f5d7d0dc2e32",
+        "datasetId": "#RtGen_CD_EcuConfig_DME_BDE_Continental_ConfigData_DME_BDE_Continental",
+        "datasetSha256": "65d14b3c4054a89ee2510485a49d5762923f6187b172852df7eceda8e7a46d41",
+        "requestLengths": [
+          {
+            "requestHex": "2101",
+            "bytes": 2
+          },
+          {
+            "requestHex": "21A1",
+            "bytes": 1
+          },
+          {
+            "requestHex": "21A2",
+            "bytes": 12
+          },
+          {
+            "requestHex": "21A3",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21A4",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21A5",
+            "bytes": 11
+          },
+          {
+            "requestHex": "21A6",
+            "bytes": 5
+          },
+          {
+            "requestHex": "21A7",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21A8",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21A9",
+            "bytes": 8
+          },
+          {
+            "requestHex": "21AA",
+            "bytes": 5
+          },
+          {
+            "requestHex": "21AB",
+            "bytes": 4
+          },
+          {
+            "requestHex": "21AC",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21AD",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21AE",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21AF",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21B0",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B1",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B2",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B3",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B4",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B5",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21B6",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21B7",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21B8",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21B9",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21BA",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21BB",
+            "bytes": 50
+          }
+        ],
+        "sha256": "dce91134749d0c19613ff23c5eeb7067ca5e11bc5681fb16182e1b1378ebc610"
+      },
+      "sourceQualification": "kwp-source-version-and-identity",
+      "applicationProtocol": "kwp",
+      "txId": 2016,
+      "rxId": 2024,
+      "sourceCommands": [
+        "1089",
+        "1A9F",
+        "1089"
+      ],
+      "session": {
+        "requestHex": "1089",
+        "positivePrefixHex": "5089"
+      },
+      "identityConstraints": {
+        "versionRules": [
+          "O100"
+        ]
+      },
+      "identityFields": [
+        {
+          "requestHex": "1A9F",
+          "sourceOffset": 3944044,
+          "byteOffset": 0,
+          "dataMin": 4
+        },
+        {
+          "requestHex": "1A95",
+          "sourceOffset": 3944082,
+          "byteOffset": 0,
+          "dataMin": 15
+        },
+        {
+          "requestHex": "1A9A",
+          "sourceOffset": 3944109,
+          "byteOffset": 6,
+          "dataMin": 10
+        },
+        {
+          "requestHex": "1A87",
+          "sourceOffset": 3944277,
+          "byteOffset": 0,
+          "dataMin": 11
+        },
+        {
+          "requestHex": "1A91",
+          "sourceOffset": 3944358,
+          "byteOffset": 0,
+          "dataMin": 11
+        },
+        {
+          "requestHex": "1A90",
+          "sourceOffset": 3944657,
+          "byteOffset": 0,
+          "dataMin": 17
+        },
+        {
+          "requestHex": "1A9E",
+          "sourceOffset": 3944304,
+          "byteOffset": 0,
+          "dataMin": 4
+        },
+        {
+          "requestHex": "1A92",
+          "sourceOffset": 3944331,
+          "byteOffset": 0,
+          "dataMin": 12
+        }
+      ]
+    },
+    {
+      "profileId": "9x1:DME_BDE_Continental:SDI9_1_981_3_4L_ULEV",
+      "generations": [
+        "981"
+      ],
+      "ecuId": 1,
+      "definitionSha256": "95e3804719d1039b5551135e79657a8c37c5269e6aa41050df290d8a6db73910",
+      "definitionFieldCount": 39,
+      "completeScopeSource": {
+        "kind": "piwis-readable-configuration-record-set",
+        "project": "9x1",
+        "version": "2830.1.0",
+        "sourceFile": "0.0.0@EcuConfig_DME_BDE_Continental.ec.db",
+        "sourceSha256": "e712641493bf8bfa1abf2eb590fd225b1292733bdb5bf211b6a329239d265549",
+        "indexSha256": "32f22614194f50be8dec8c805d326d33629a38af191b05dd7d99f5d7d0dc2e32",
+        "datasetId": "#RtGen_CD_EcuConfig_DME_BDE_Continental_ConfigData_DME_BDE_Continental",
+        "datasetSha256": "65d14b3c4054a89ee2510485a49d5762923f6187b172852df7eceda8e7a46d41",
+        "requestLengths": [
+          {
+            "requestHex": "2101",
+            "bytes": 2
+          },
+          {
+            "requestHex": "21A1",
+            "bytes": 1
+          },
+          {
+            "requestHex": "21A2",
+            "bytes": 12
+          },
+          {
+            "requestHex": "21A3",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21A4",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21A5",
+            "bytes": 11
+          },
+          {
+            "requestHex": "21A6",
+            "bytes": 5
+          },
+          {
+            "requestHex": "21A7",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21A8",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21A9",
+            "bytes": 8
+          },
+          {
+            "requestHex": "21AA",
+            "bytes": 5
+          },
+          {
+            "requestHex": "21AB",
+            "bytes": 4
+          },
+          {
+            "requestHex": "21AC",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21AD",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21AE",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21AF",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21B0",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B1",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B2",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B3",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B4",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B5",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21B6",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21B7",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21B8",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21B9",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21BA",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21BB",
+            "bytes": 50
+          }
+        ],
+        "sha256": "dce91134749d0c19613ff23c5eeb7067ca5e11bc5681fb16182e1b1378ebc610"
+      },
+      "sourceQualification": "kwp-source-version-and-identity",
+      "applicationProtocol": "kwp",
+      "txId": 2016,
+      "rxId": 2024,
+      "sourceCommands": [
+        "1089",
+        "1A9F",
+        "1089"
+      ],
+      "session": {
+        "requestHex": "1089",
+        "positivePrefixHex": "5089"
+      },
+      "identityConstraints": {
+        "versionRules": [
+          "P100"
+        ]
+      },
+      "identityFields": [
+        {
+          "requestHex": "1A9F",
+          "sourceOffset": 4065906,
+          "byteOffset": 0,
+          "dataMin": 4
+        },
+        {
+          "requestHex": "1A95",
+          "sourceOffset": 4065944,
+          "byteOffset": 0,
+          "dataMin": 15
+        },
+        {
+          "requestHex": "1A9A",
+          "sourceOffset": 4065971,
+          "byteOffset": 6,
+          "dataMin": 10
+        },
+        {
+          "requestHex": "1A87",
+          "sourceOffset": 4066139,
+          "byteOffset": 0,
+          "dataMin": 11
+        },
+        {
+          "requestHex": "1A91",
+          "sourceOffset": 4066220,
+          "byteOffset": 0,
+          "dataMin": 11
+        },
+        {
+          "requestHex": "1A90",
+          "sourceOffset": 4066519,
+          "byteOffset": 0,
+          "dataMin": 17
+        },
+        {
+          "requestHex": "1A9E",
+          "sourceOffset": 4066166,
+          "byteOffset": 0,
+          "dataMin": 4
+        },
+        {
+          "requestHex": "1A92",
+          "sourceOffset": 4066193,
+          "byteOffset": 0,
+          "dataMin": 12
+        }
+      ]
+    },
+    {
+      "profileId": "9x1:DME_BDE_Continental:SDI9_1_981_3_4L_E4E",
+      "generations": [
+        "981"
+      ],
+      "ecuId": 1,
+      "definitionSha256": "ca71a6fdd3ccc299439ef4feb56bd28d2e4dba896bced8a9e1de484f15862430",
+      "definitionFieldCount": 39,
+      "completeScopeSource": {
+        "kind": "piwis-readable-configuration-record-set",
+        "project": "9x1",
+        "version": "2830.1.0",
+        "sourceFile": "0.0.0@EcuConfig_DME_BDE_Continental.ec.db",
+        "sourceSha256": "e712641493bf8bfa1abf2eb590fd225b1292733bdb5bf211b6a329239d265549",
+        "indexSha256": "32f22614194f50be8dec8c805d326d33629a38af191b05dd7d99f5d7d0dc2e32",
+        "datasetId": "#RtGen_CD_EcuConfig_DME_BDE_Continental_ConfigData_DME_BDE_Continental",
+        "datasetSha256": "65d14b3c4054a89ee2510485a49d5762923f6187b172852df7eceda8e7a46d41",
+        "requestLengths": [
+          {
+            "requestHex": "2101",
+            "bytes": 2
+          },
+          {
+            "requestHex": "21A1",
+            "bytes": 1
+          },
+          {
+            "requestHex": "21A2",
+            "bytes": 12
+          },
+          {
+            "requestHex": "21A3",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21A4",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21A5",
+            "bytes": 11
+          },
+          {
+            "requestHex": "21A6",
+            "bytes": 5
+          },
+          {
+            "requestHex": "21A7",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21A8",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21A9",
+            "bytes": 8
+          },
+          {
+            "requestHex": "21AA",
+            "bytes": 5
+          },
+          {
+            "requestHex": "21AB",
+            "bytes": 4
+          },
+          {
+            "requestHex": "21AC",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21AD",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21AE",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21AF",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21B0",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B1",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B2",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B3",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B4",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B5",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21B6",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21B7",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21B8",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21B9",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21BA",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21BB",
+            "bytes": 50
+          }
+        ],
+        "sha256": "dce91134749d0c19613ff23c5eeb7067ca5e11bc5681fb16182e1b1378ebc610"
+      },
+      "sourceQualification": "kwp-source-version-and-identity",
+      "applicationProtocol": "kwp",
+      "txId": 2016,
+      "rxId": 2024,
+      "sourceCommands": [
+        "1089",
+        "1A9F",
+        "1089"
+      ],
+      "session": {
+        "requestHex": "1089",
+        "positivePrefixHex": "5089"
+      },
+      "identityConstraints": {
+        "versionRules": [
+          "P300"
+        ]
+      },
+      "identityFields": [
+        {
+          "requestHex": "1A9F",
+          "sourceOffset": 3974346,
+          "byteOffset": 0,
+          "dataMin": 4
+        },
+        {
+          "requestHex": "1A95",
+          "sourceOffset": 3974384,
+          "byteOffset": 0,
+          "dataMin": 15
+        },
+        {
+          "requestHex": "1A9A",
+          "sourceOffset": 3974411,
+          "byteOffset": 6,
+          "dataMin": 10
+        },
+        {
+          "requestHex": "1A87",
+          "sourceOffset": 3974579,
+          "byteOffset": 0,
+          "dataMin": 11
+        },
+        {
+          "requestHex": "1A91",
+          "sourceOffset": 3974660,
+          "byteOffset": 0,
+          "dataMin": 11
+        },
+        {
+          "requestHex": "1A90",
+          "sourceOffset": 3974959,
+          "byteOffset": 0,
+          "dataMin": 17
+        },
+        {
+          "requestHex": "1A9E",
+          "sourceOffset": 3974606,
+          "byteOffset": 0,
+          "dataMin": 4
+        },
+        {
+          "requestHex": "1A92",
+          "sourceOffset": 3974633,
+          "byteOffset": 0,
+          "dataMin": 12
+        }
+      ]
+    },
+    {
+      "profileId": "9x1:DME_BDE_Continental:SDI9_1_981_3_4L_EU4",
+      "generations": [
+        "981"
+      ],
+      "ecuId": 1,
+      "definitionSha256": "c9ebda34367633189bf11fdb16c1776792d872a8ff1850f3fdee5e7aa20aee1f",
+      "definitionFieldCount": 39,
+      "completeScopeSource": {
+        "kind": "piwis-readable-configuration-record-set",
+        "project": "9x1",
+        "version": "2830.1.0",
+        "sourceFile": "0.0.0@EcuConfig_DME_BDE_Continental.ec.db",
+        "sourceSha256": "e712641493bf8bfa1abf2eb590fd225b1292733bdb5bf211b6a329239d265549",
+        "indexSha256": "32f22614194f50be8dec8c805d326d33629a38af191b05dd7d99f5d7d0dc2e32",
+        "datasetId": "#RtGen_CD_EcuConfig_DME_BDE_Continental_ConfigData_DME_BDE_Continental",
+        "datasetSha256": "65d14b3c4054a89ee2510485a49d5762923f6187b172852df7eceda8e7a46d41",
+        "requestLengths": [
+          {
+            "requestHex": "2101",
+            "bytes": 2
+          },
+          {
+            "requestHex": "21A1",
+            "bytes": 1
+          },
+          {
+            "requestHex": "21A2",
+            "bytes": 12
+          },
+          {
+            "requestHex": "21A3",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21A4",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21A5",
+            "bytes": 11
+          },
+          {
+            "requestHex": "21A6",
+            "bytes": 5
+          },
+          {
+            "requestHex": "21A7",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21A8",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21A9",
+            "bytes": 8
+          },
+          {
+            "requestHex": "21AA",
+            "bytes": 5
+          },
+          {
+            "requestHex": "21AB",
+            "bytes": 4
+          },
+          {
+            "requestHex": "21AC",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21AD",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21AE",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21AF",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21B0",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B1",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B2",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B3",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B4",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B5",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21B6",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21B7",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21B8",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21B9",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21BA",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21BB",
+            "bytes": 50
+          }
+        ],
+        "sha256": "dce91134749d0c19613ff23c5eeb7067ca5e11bc5681fb16182e1b1378ebc610"
+      },
+      "sourceQualification": "kwp-source-version-and-identity",
+      "applicationProtocol": "kwp",
+      "txId": 2016,
+      "rxId": 2024,
+      "sourceCommands": [
+        "1089",
+        "1A9F",
+        "1089"
+      ],
+      "session": {
+        "requestHex": "1089",
+        "positivePrefixHex": "5089"
+      },
+      "identityConstraints": {
+        "versionRules": [
+          "P400"
+        ]
+      },
+      "identityFields": [
+        {
+          "requestHex": "1A9F",
+          "sourceOffset": 4004866,
+          "byteOffset": 0,
+          "dataMin": 4
+        },
+        {
+          "requestHex": "1A95",
+          "sourceOffset": 4004904,
+          "byteOffset": 0,
+          "dataMin": 15
+        },
+        {
+          "requestHex": "1A9A",
+          "sourceOffset": 4004931,
+          "byteOffset": 6,
+          "dataMin": 10
+        },
+        {
+          "requestHex": "1A87",
+          "sourceOffset": 4005099,
+          "byteOffset": 0,
+          "dataMin": 11
+        },
+        {
+          "requestHex": "1A91",
+          "sourceOffset": 4005180,
+          "byteOffset": 0,
+          "dataMin": 11
+        },
+        {
+          "requestHex": "1A90",
+          "sourceOffset": 4005479,
+          "byteOffset": 0,
+          "dataMin": 17
+        },
+        {
+          "requestHex": "1A9E",
+          "sourceOffset": 4005126,
+          "byteOffset": 0,
+          "dataMin": 4
+        },
+        {
+          "requestHex": "1A92",
+          "sourceOffset": 4005153,
+          "byteOffset": 0,
+          "dataMin": 12
+        }
+      ]
+    },
+    {
+      "profileId": "9x1:DME_BDE_Continental:SDI9_1_981_3_4L_EU5",
+      "generations": [
+        "981"
+      ],
+      "ecuId": 1,
+      "definitionSha256": "12ad6535f4a344ea66962ee1cda79e17bc6150f7e0f951b3562783f42e0418d7",
+      "definitionFieldCount": 39,
+      "completeScopeSource": {
+        "kind": "piwis-readable-configuration-record-set",
+        "project": "9x1",
+        "version": "2830.1.0",
+        "sourceFile": "0.0.0@EcuConfig_DME_BDE_Continental.ec.db",
+        "sourceSha256": "e712641493bf8bfa1abf2eb590fd225b1292733bdb5bf211b6a329239d265549",
+        "indexSha256": "32f22614194f50be8dec8c805d326d33629a38af191b05dd7d99f5d7d0dc2e32",
+        "datasetId": "#RtGen_CD_EcuConfig_DME_BDE_Continental_ConfigData_DME_BDE_Continental",
+        "datasetSha256": "65d14b3c4054a89ee2510485a49d5762923f6187b172852df7eceda8e7a46d41",
+        "requestLengths": [
+          {
+            "requestHex": "2101",
+            "bytes": 2
+          },
+          {
+            "requestHex": "21A1",
+            "bytes": 1
+          },
+          {
+            "requestHex": "21A2",
+            "bytes": 12
+          },
+          {
+            "requestHex": "21A3",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21A4",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21A5",
+            "bytes": 11
+          },
+          {
+            "requestHex": "21A6",
+            "bytes": 5
+          },
+          {
+            "requestHex": "21A7",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21A8",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21A9",
+            "bytes": 8
+          },
+          {
+            "requestHex": "21AA",
+            "bytes": 5
+          },
+          {
+            "requestHex": "21AB",
+            "bytes": 4
+          },
+          {
+            "requestHex": "21AC",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21AD",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21AE",
+            "bytes": 6
+          },
+          {
+            "requestHex": "21AF",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21B0",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B1",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B2",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B3",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B4",
+            "bytes": 20
+          },
+          {
+            "requestHex": "21B5",
+            "bytes": 3
+          },
+          {
+            "requestHex": "21B6",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21B7",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21B8",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21B9",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21BA",
+            "bytes": 50
+          },
+          {
+            "requestHex": "21BB",
+            "bytes": 50
+          }
+        ],
+        "sha256": "dce91134749d0c19613ff23c5eeb7067ca5e11bc5681fb16182e1b1378ebc610"
+      },
+      "sourceQualification": "kwp-source-version-and-identity",
+      "applicationProtocol": "kwp",
+      "txId": 2016,
+      "rxId": 2024,
+      "sourceCommands": [
+        "1089",
+        "1A9F",
+        "1089"
+      ],
+      "session": {
+        "requestHex": "1089",
+        "positivePrefixHex": "5089"
+      },
+      "identityConstraints": {
+        "versionRules": [
+          "P200"
+        ]
+      },
+      "identityFields": [
+        {
+          "requestHex": "1A9F",
+          "sourceOffset": 4035386,
+          "byteOffset": 0,
+          "dataMin": 4
+        },
+        {
+          "requestHex": "1A95",
+          "sourceOffset": 4035424,
+          "byteOffset": 0,
+          "dataMin": 15
+        },
+        {
+          "requestHex": "1A9A",
+          "sourceOffset": 4035451,
+          "byteOffset": 6,
+          "dataMin": 10
+        },
+        {
+          "requestHex": "1A87",
+          "sourceOffset": 4035619,
+          "byteOffset": 0,
+          "dataMin": 11
+        },
+        {
+          "requestHex": "1A91",
+          "sourceOffset": 4035700,
+          "byteOffset": 0,
+          "dataMin": 11
+        },
+        {
+          "requestHex": "1A90",
+          "sourceOffset": 4035999,
+          "byteOffset": 0,
+          "dataMin": 17
+        },
+        {
+          "requestHex": "1A9E",
+          "sourceOffset": 4035646,
+          "byteOffset": 0,
+          "dataMin": 4
+        },
+        {
+          "requestHex": "1A92",
+          "sourceOffset": 4035673,
+          "byteOffset": 0,
+          "dataMin": 12
+        }
+      ]
+    }
+  ]
+}

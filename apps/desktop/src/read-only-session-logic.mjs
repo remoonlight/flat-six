@@ -168,9 +168,9 @@ export function enginePlanView(plan) {
 }
 
 export function pickEngineView(status) {
-  const final = status?.final;
+  const final = status?.final?.engine ? status.final : status?.retainedEngine;
   if (final && typeof final === "object" && final.engine && typeof final.engine === "object") {
-    return { engine: final.engine, source: "final", simulated: final.mode !== "live" };
+    return { engine: final.engine, source: status.final?.engine ? "final" : "retained", simulated: final.mode !== "live" };
   }
   const latest = status?.latest;
   if (latest && latest.type === "progress" && latest.engine && typeof latest.engine === "object") {
@@ -222,10 +222,17 @@ export async function afterStatusIpcFailure(token, invoke) {
 }
 
 export async function interpretStatusDoc(doc, token, invoke) {
-  if (!doc || doc.ok === false) {
+  const owned = doc?.jobId === token && ["running", "cancelling", "completed", "cancelled", "failed"].includes(doc.state);
+  if (!owned || doc.ok === false && ["running", "cancelling"].includes(doc.state)) {
     await afterStatusIpcFailure(token, invoke);
-    return { stop: true, error: (doc && doc.error) || "status_failed", doc };
+    // A failed status request does not prove the worker or adapter has closed.
+    return { stop: false, cleanupPending: true, error: doc?.error || "status_failed", doc: null };
   }
-  const terminal = Boolean(doc.state && doc.state !== "running" && doc.state !== "cancelling");
-  return { stop: terminal, terminal, doc };
+  const terminal = doc.state !== "running" && doc.state !== "cancelling";
+  const released = doc.released === true;
+  const normalStop = doc.state === "cancelled" && doc.error === "cancelled";
+  const error = terminal && released && doc.releaseVerified !== true ? "adapter_release_not_verified"
+    : normalStop ? null : doc.error || null;
+  return { stop: terminal && released, terminal, cleanupPending: doc.state === "cancelling" || terminal && !released,
+    error, doc };
 }

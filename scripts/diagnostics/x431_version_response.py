@@ -679,35 +679,58 @@ def audit_subtype4_request_packing(request_bytes: int, reread_request_bytes: int
 
 
 def audit_mode30_filter_context(observation: dict) -> dict:
-    """Trace a complete explicit source record through the common filter setter.
+    """Trace the dedicated mode30 setter and its first-response dependency.
 
-    PorscheEnterSys calls the setter after a nonnegative initializer return for
-    modes other than 0x60. This is source order, never a runtime observation.
-    Stored source words are not hardware CAN identifiers.
+    The first filter precedes initialization. At pair 1, the original rewrites
+    slots 1 and 2 from bytes +0x1967/+0x1968 of the first pair's response area.
+    Explicit bytes establish only an offline candidate, never freshness or CAN
+    addresses. Do not substitute the untouched directory words for those slots.
     """
-    if not isinstance(observation,dict) or set(observation)!={'communicationRecordHex','pairIndex'}:
+    fields={'communicationRecordHex','pairIndex'}
+    response_field='firstPairResponseFilterBytesHex'
+    if not isinstance(observation,dict) or set(observation) not in (fields,fields|{response_field}):
         raise ValueError('mode30-filter-context-fields-invalid')
     context=audit_communication_pair_context(observation['communicationRecordHex'],observation['pairIndex'])
     if context['modeByte']!=0x30:
         raise ValueError('mode30-filter-record-mode-mismatch')
     from scripts.x431_re.sysdata import parse_comm
     blob=bytes.fromhex(observation['communicationRecordHex'])
-    pair=parse_comm(blob,0,len(blob))['pairs'][observation['pairIndex']]
-    word=((pair['storedTx']<<16)|(pair['storedRx']&65535))&0xffffffff
+    pairs=parse_comm(blob,0,len(blob))['pairs'];index=observation['pairIndex'];pair=pairs[index]
+    directory_word=((pair['storedTx']<<16)|(pair['storedRx']&65535))&0xffffffff
+    dependent=index in (1,2)
+    supplied=response_field in observation
+    if supplied and not dependent:
+        raise ValueError('mode30-first-pair-response-filter-bytes-unused')
+    response_bytes=_hex(observation[response_field],2,2) if supplied else None
+    word=None if dependent else directory_word
+    if response_bytes is not None:
+        word=((pairs[1]['storedRx']&65535)|(int.from_bytes(response_bytes,'little')<<21))&0xffffffff
     return dict(kind='x431-offline-mode30-filter-context-audit',
         commSourceSha256=PORSCHE_COMM_SHA256,fileSourceSha256=FILE_SHA256,syspSourceSha256=SYSP_SHA256,
-        communicationPairSourceAudit=context,sourceFilterWordCandidate=word,
-        sourceRequestFilterPrefixHexCandidate=bytes((word>>24,(word>>16)&255)).hex().upper(),
-        sourceTokenFilterOffset=0x65c+4*observation['pairIndex'],
-        sourceFilterSetterEntry=0x12238,sourceFilterSetterCallSite=0x19eec,
+        communicationPairSourceAudit=context,sourceDirectoryFilterWord=directory_word,sourceFilterWordCandidate=word,
+        sourceRequestFilterPrefixHexCandidate=(bytes((word>>24,(word>>16)&255)).hex().upper() if word is not None else None),
+        sourceFilterCandidateComplete=word is not None,
+        sourceFilterDependsOnFirstPairResponse=dependent,
+        firstPairResponseFilterBytesHex=response_bytes.hex().upper() if response_bytes is not None else None,
+        sourceResponseFilterByteOffsets=[0x1967,0x1968] if dependent else [],
+        sourceResponseFilterReadAtPairIndex=1 if dependent else None,
+        sourceFilterLowHalfwordPairIndex=1 if dependent else index,
+        sourceResponseFilterBytesFreshnessQualified=False,
+        sourceTokenFilterOffset=0x65c+4*index,
+        sourceFilterSetterEntry=0x12238,sourceFilterSetterCallSite=0x19ce8,
         sourceFilterSetterExport='UpdateCanFilterId',sourceFilterObjectSymbol='iFilterId',
-        sourceInitializerCallSite=0x19ec0,sourceCallerInitializerReturnGate='signed-32-bits-nonnegative',
-        sourceSetterSkippedMode=0x60,sourceInitializerMode30BranchWritesFilter=False,
+        sourceInitializerCallSite=0x19d08,sourceSelectedPairInvokesInitializer=index==0,
+        sourceFilterPrecedesFirstInitializer=index==0,
+        sourceCallerInitializerReturnGate='signed-32-bits-nonnegative-after-first-filter',
+        sourceInitializerMode30BranchWritesFilter=False,
         staticFilterSetterAssignmentVerified=True,actualFilterSetterCallProven=False,
         filterAssignmentBeforeSelectedRequestSourceVerified=True,
         actualInitializationReturnQualified=False,actualTokenPointersAliasProven=False,
         runtimeFilterStableAcrossCallbacksProven=False,hardwareAddressConversionQualified=False,
-        actualInitializationConfigurationOriginProven=False,**VERSION_GUARDS)
+        actualInitializationConfigurationOriginProven=False,
+        status=('first-pair-response-filter-bytes-required' if word is None else
+                'source-response-dependent-filter-candidate' if dependent else 'source-directory-filter-candidate'),
+        **VERSION_GUARDS)
 
 
 def audit_mode30_non4_request_packet(observation: dict) -> dict:
@@ -718,9 +741,10 @@ def audit_mode30_non4_request_packet(observation: dict) -> dict:
     candidate still has no runtime, native memory or hardware qualification.
     """
     fields={'communicationRecordHex','pairIndex','requestAreaHex'}
-    if not isinstance(observation,dict) or set(observation)!=fields:
+    response_field='firstPairResponseFilterBytesHex'
+    if not isinstance(observation,dict) or set(observation) not in (fields,fields|{response_field}):
         raise ValueError('mode30-request-packet-fields-invalid')
-    context=audit_mode30_filter_context({key:observation[key] for key in fields if key!='requestAreaHex'})
+    context=audit_mode30_filter_context({key:value for key,value in observation.items() if key!='requestAreaHex'})
     if context['communicationPairSourceAudit']['subtypeByte']==4:
         raise ValueError('mode30-non4-request-subtype-mismatch')
     area=_hex(observation['requestAreaHex'],1,256)
@@ -736,7 +760,7 @@ def audit_mode30_non4_request_packet(observation: dict) -> dict:
     wrapped=length+6>255 or length+5>255
     complete=not overlap and not wrapped
     frame=None
-    if complete:
+    if complete and context['sourceFilterCandidateComplete']:
         frame=bytearray(bytes((0x55,0xaa,length_byte,0x61,1,length)))
         frame.extend(bytes.fromhex(context['sourceRequestFilterPrefixHexCandidate']))
         frame.extend(area[1:length+1])
@@ -756,7 +780,8 @@ def audit_mode30_non4_request_packet(observation: dict) -> dict:
         providerCommandHexCandidate=frame.hex().upper() if frame is not None else None,
         providerObjectSymbol='CommSubFunc_00000002',providerCallSite=0x112bc,providerCapacity=1024,
         status=('source-length-arithmetic-wraps' if wrapped else 'source-command-overlaps-receive-scratch'
-                if overlap else 'source-internal-provider-packet-candidate'),
+                if overlap else 'first-pair-response-filter-bytes-required' if not context['sourceFilterCandidateComplete']
+                else 'source-internal-provider-packet-candidate'),
         requestPacketBytesConstructed=frame is not None,canFrameLayoutQualified=False,
         providerRuntimeBindingQualified=False,nativeRequestScratchBoundsQualified=False,
         nativeOriginalInstructionsExecuted=False,**VERSION_GUARDS)

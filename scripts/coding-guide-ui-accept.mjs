@@ -55,7 +55,8 @@ try {
   await page.locator('[data-coding-category="coding"]').click();
   await page.locator('[data-coding-function="guide-2"]').click();
   assert.equal(await page.locator(".coding-steps li").count(), 8);
-  assert.deepEqual((await page.locator('[aria-label="系统功能类别"] button').allTextContents()).map((x) => x.split("（")[0]), ["维护", "设码", "特殊功能", "编程"]);
+  assert.deepEqual((await page.locator('[data-coding-category]').allTextContents()).map((x) => x.split("（")[0]), ["维护", "设码", "特殊功能", "编程"]);
+  for (const id of ["coding-backup-original", "coding-read-original"]) assert.equal(await page.getByTestId(id).count(), 1);
   await page.screenshot({ path: path.join(output, "catalog.png") });
   assert.equal(await page.locator('[data-coding-view]').count(), 0);
   assert.equal(await page.getByLabel("搜索功能").count(), 0);

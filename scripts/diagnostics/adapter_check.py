@@ -1,4 +1,4 @@
-"""Powered-adapter-only AT preflight. No ECU bytes. Coordinator owns real hardware."""
+"""Powered-adapter-only AT/STI preflight. No ECU bytes. Coordinator owns real hardware."""
 from __future__ import annotations
 
 import argparse
@@ -9,19 +9,18 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-from . import BAUD
-from .elm import SETTING_CMDS_BEFORE_IDS, ElmClient, ElmError, _setting_ok
+from .connection import ELM_MODELS, ELM_SERIAL_BAUDS, open_selected_port, valid_device_id, validate_serial_baud
+from .elm import SETTING_CMDS_BEFORE_IDS, ElmClient, ElmError, _setting_ok, adapter_identity_ok, stn_firmware_identity_ok
 from .hashutil import sha256_file
 from .sessions import DEFAULT_ARTIFACT_ROOT, SessionError, _FileLock
 
 PAIR_IDS = (("7E0", "7E8"), ("710", "77A"))
-QUERIES = ("ATI", "ATDPN", "ATRV")
+QUERIES = ("ATI", "STI", "ATDPN", "ATRV")
 CLEANUP = ("ATCSM1", "ATCFC0", "ATPC", "ATWS", "ATDPN")
 CLEANUP_REQUIRE_OK = frozenset({"ATCSM1", "ATCFC0", "ATPC"})
 CMD_TIMEOUT_S = 4.0
 TOTAL_BUDGET_S = 90.0
 REOPEN_COUNT = 2
-SERIAL_WRITE_TIMEOUT_S = 3
 _VOLT = re.compile(r"\d+(?:\.\d+)?\s*V", re.I)
 RESTORATION_NOTE = (
     "ATWS resets volatile defaults; original adapter state is not fully knowable or restorable"
@@ -77,14 +76,16 @@ def command_accepted(cmd: str, text: str) -> bool:
         return False
     key = cmd.strip().upper()
     if key == "ATI":
-        return "ELM327" in text.upper()
+        return adapter_identity_ok(text)
+    if key == "STI":
+        return stn_firmware_identity_ok(text)
     if key == "ATDPN":
         tok = parse_protocol_string(text)
         return bool(tok and re.fullmatch(r"A?[0-9A-C]", tok.upper()))
     if key == "ATRV":
         return parse_voltage_string(text) is not None
     if key == "ATWS":
-        return "ELM327" in text.upper()
+        return adapter_identity_ok(text)
     return _setting_ok(text)
 
 
@@ -105,6 +106,8 @@ class AtOnlyGuard:
         self._inner = inner
         self.traffic = traffic
         self.denied = None
+        self._close_attempted = False
+        self._close_error = None
 
     def write(self, data: bytes) -> int:
         if data not in ALLOWED_AT:
@@ -119,15 +122,30 @@ class AtOnlyGuard:
             self.traffic.append({"utc": _utc(), "dir": "rx", "hex": chunk.hex().upper()})
         return chunk
 
+    @property
+    def write_timeout(self):
+        return self._inner.write_timeout
+
+    @write_timeout.setter
+    def write_timeout(self, value):
+        self._inner.write_timeout = value
+
     def close(self) -> None:
-        self._inner.close()
+        if not self._close_attempted:
+            self._close_attempted = True
+            try:
+                self._inner.close()
+            except Exception as error:
+                self._close_error = error
+        if self._close_error is not None:
+            raise self._close_error
 
 
 class BoundedElm(ElmClient):
     """Clamp every AT command to min(global end, now+4s). Record completion, not TX alone."""
 
-    def __init__(self, port, *, global_end: float, records: list, timeout_s: float = CMD_TIMEOUT_S):
-        super().__init__(port, timeout_s=timeout_s)
+    def __init__(self, port, *, global_end: float, records: list, timeout_s: float = CMD_TIMEOUT_S, expected_model=None):
+        super().__init__(port, timeout_s=timeout_s, expected_model=expected_model)
         self._global_end = global_end
         self.cmd_records = records
 
@@ -169,22 +187,15 @@ def _nonempty_artifacts(out_dir: Path) -> bool:
     return False
 
 
-def _open_port(port_factory, serial_module, list_ports):
+def _open_port(port_factory, serial_module, list_ports, *, device_id, adapter_model, serial_baud, snapshot):
     if port_factory is not None:
         return port_factory(), None
-    from .live import find_vlinker_port
-
-    if serial_module is None:
-        import serial as serial_module
-    if list_ports is None:
-        import serial.tools.list_ports as list_ports
-    com = find_vlinker_port(list_ports)
-    return (
-        serial_module.Serial(
-            com, BAUD, timeout=0.05, write_timeout=SERIAL_WRITE_TIMEOUT_S, exclusive=True
-        ),
-        com,
-    )
+    if snapshot is None and list_ports is not None:
+        from .connection import pyserial_rows
+        rows, errors = pyserial_rows(list_ports)
+        snapshot = {'platform': 'win32', 'serial': [], 'bluetooth': [], 'pyserial': rows, 'errors': [errors] if errors else []}
+    return open_selected_port(device_id, serial_module=serial_module, snapshot=snapshot,
+        adapter_model=adapter_model, serial_baud=serial_baud)
 
 
 def _close_quiet(port) -> list[str]:
@@ -245,6 +256,10 @@ def run_adapter_check(
     port_factory=None,
     serial_module=None,
     list_ports=None,
+    device_id=None,
+    adapter_model=None,
+    serial_baud=None,
+    snapshot=None,
 ) -> dict:
     started = datetime.now(timezone.utc)
     out_dir = Path(out_dir)
@@ -255,6 +270,12 @@ def run_adapter_check(
     result = {
         "ok": False,
         "kind": "powered-adapter-only",
+        "simulation": port_factory is not None,
+        "deviceId": device_id,
+        "adapterModel": adapter_model,
+        "serialBaud": serial_baud,
+        "hardwareQualified": False,
+        "poweredBenchConfirmed": confirmed_powered_bench is True,
         "ecuRequestsSent": 0,
         "canWiresConnected": False,
         "canCommunicationVerified": False,
@@ -290,6 +311,7 @@ def run_adapter_check(
             for e in traffic
             if e.get("dir") == "tx"
             and not bytes.fromhex(e.get("hex") or "00").upper().startswith(b"AT")
+            and bytes.fromhex(e.get("hex") or "00").upper() != b"STI\r"
         )
         _apply_records(verified, records)
         result["adapterCommandsVerified"] = dict(verified)
@@ -309,6 +331,19 @@ def run_adapter_check(
 
     if confirmed_powered_bench is not True:
         result["error"] = "powered-bench-confirmation-required"
+        persist()
+        return result
+
+    try:
+        if device_id is not None and (not valid_device_id(device_id) or device_id.startswith(('vnci:', 'pt3g:'))):
+            raise ElmError('device-id-invalid-for-ELM-bench')
+        if adapter_model is not None and (not isinstance(adapter_model, str) or adapter_model not in ELM_MODELS):
+            raise ElmError('adapter-model-invalid')
+        if port_factory is None and (device_id is None or adapter_model is None):
+            raise ElmError('explicit-device-and-model-required')
+        validate_serial_baud(device_id, serial_baud)
+    except (ElmError, TypeError) as error:
+        result['error'] = str(error)
         persist()
         return result
 
@@ -335,21 +370,23 @@ def run_adapter_check(
             guard = None
             client = None
             try:
-                port, com = _open_port(port_factory, serial_module, list_ports)
+                port, com = _open_port(port_factory, serial_module, list_ports, device_id=device_id,
+                    adapter_model=adapter_model, serial_baud=serial_baud, snapshot=snapshot)
             except Exception as e:  # noqa: BLE001
                 rec["error"] = f"open:{e}"
                 result["error"] = rec["error"]
-                continue
+                break
             finally:
                 end += time.monotonic() - t_open
             if com:
                 result["port"] = com
             try:
                 guard = AtOnlyGuard(port, traffic)
-                client = BoundedElm(guard, global_end=end, records=records, timeout_s=CMD_TIMEOUT_S)
+                client = BoundedElm(guard, global_end=end, records=records, timeout_s=CMD_TIMEOUT_S, expected_model=adapter_model)
                 ident = client.validate_adapter(min(CMD_TIMEOUT_S * 3, max(0.1, end - time.monotonic())))
                 rec["adapter"] = {
                     "ati": ident.get("ati"),
+                    "sti": ident.get("sti"),
                     "atdpn": ident.get("atdpn"),
                     "atrv": ident.get("atrv"),
                     "voltageString": parse_voltage_string(ident.get("atrv")),
@@ -362,6 +399,9 @@ def run_adapter_check(
                     for tx, rx in PAIR_IDS:
                         client.configure_pair(tx, rx, min(end, time.monotonic() + CMD_TIMEOUT_S * 14))
                 else:
+                    if (ident.get('ati') != result['atiText']
+                            or ident.get('sti') != connections[0]['adapter'].get('sti')):
+                        raise ElmError('adapter-identity-changed')
                     q = _reopen_close_cmd(client, end)
                     if q["errors"]:
                         rec["error"] = ";".join(q["errors"])
@@ -399,6 +439,8 @@ def run_adapter_check(
                             rec["ok"] = False
                             rec["error"] = rec["error"] or ";".join(close_errors)
                             result["error"] = result["error"] or rec["error"]
+            if result["error"] is not None:
+                break
         if result["error"] is None and (
             result["reopenCount"] != REOPEN_COUNT or not connections or not connections[0].get("ok")
         ):
@@ -414,11 +456,18 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m scripts.diagnostics.adapter_check")
     parser.add_argument("--yes-powered-bench", action="store_true", help="Confirm power-only bench: CAN wires disconnected and no vehicle attached")
     parser.add_argument("--out", required=True, help="Fresh output directory; existing evidence is never overwritten")
+    parser.add_argument('--device-id', help='Explicit stable bt:/usb: identity or configured tcp: literal endpoint')
+    parser.add_argument('--adapter-model', choices=sorted(ELM_MODELS), help='Actual ELM family; required for physical checks')
+    parser.add_argument('--serial-baud', type=int, choices=ELM_SERIAL_BAUDS, help='Match existing UART settings; omit for model default')
     args = parser.parse_args(argv)
     if not args.yes_powered_bench:
         print("refusing: pass --yes-powered-bench; will not enumerate or open serial", file=sys.stderr)
         return 2
-    out = run_adapter_check(confirmed_powered_bench=True, out_dir=Path(args.out))
+    if not args.device_id or not args.adapter_model:
+        print('refusing: supply explicit --device-id and --adapter-model; will not enumerate or open', file=sys.stderr)
+        return 2
+    out = run_adapter_check(confirmed_powered_bench=True, out_dir=Path(args.out),
+        device_id=args.device_id, adapter_model=args.adapter_model, serial_baud=args.serial_baud)
     printable = {k: v for k, v in out.items() if k != "connections"}
     print(json.dumps(printable, ensure_ascii=False, indent=2))
     return 0 if out.get("ok") else 1

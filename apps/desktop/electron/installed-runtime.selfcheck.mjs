@@ -12,7 +12,17 @@ assert.equal(definitionLibraryRoot("C:\\Users\\a\\AppData\\Roaming\\flat-six", "
 assert.equal(definitionLibraryRoot("\\\\server\\share\\flat-six", "win32"),
   "\\\\?\\UNC\\server\\share\\flat-six\\diagnostic-library");
 assert.equal(definitionLibraryRoot("/tmp/flat-six", "darwin"), "/tmp/flat-six/diagnostic-library");
-assert.equal(installedRuntime({ packaged: false, repoRoot, userData, env: devEnv }).env, devEnv);
+const development = installedRuntime({ packaged: false, repoRoot, userData, env: devEnv });
+assert.equal(development.definitionsRoot, definitionLibraryRoot(userData));
+assert.equal(development.env.CUSTOM, "unchanged");
+assert.ok(development.env.PORSCHE981_REALTIME_PREPARATION.startsWith(development.definitionsRoot + path.sep));
+assert.equal(fs.existsSync(development.definitionsRoot), false, "startup does not invent or unpack private definitions");
+const explicit = installedRuntime({ packaged: false, repoRoot, userData, env: { PORSCHE981_DEFINITION_ROOT: "/explicit", PORSCHE981_VARIANTS: "/custom-variants" } });
+assert.equal(explicit.definitionsRoot, "/explicit");
+assert.equal(explicit.env.PORSCHE981_VARIANTS, "/custom-variants");
+fs.mkdirSync(path.join(repoRoot, ".local/diagnostics/realtime-preparation"), { recursive: true });
+fs.writeFileSync(path.join(repoRoot, ".local/diagnostics/realtime-preparation/index.json"), "{}");
+assert.equal(installedRuntime({ packaged: false, repoRoot, userData, env: devEnv }).env, devEnv, "existing checkout library remains supported");
 assert.throws(() => installedRuntime({ packaged: true, repoRoot, userData, env: {} }), /runtime-missing/);
 fs.mkdirSync(path.join(repoRoot, "runtime/python"), { recursive: true });
 fs.writeFileSync(path.join(repoRoot, "runtime/node.exe"), "fixture");

@@ -190,7 +190,8 @@ def review(capture, bindings, sources, generation, ecu_id, target, run_id, outpu
         'availableSessions': [dict(targetProfileId=p, runId=r, packets=n) for (p, r), n in sessions.items()],
         'capture': scanned, 'selectedVehicleVariant': None,
         'versionRuleComparison': version_rules.finish(language_path,
-            capture_complete=scanned['prefixComplete'] and not scanned['packetErrors']),
+            capture_complete=scanned['prefixComplete'] and not scanned['packetErrors']
+                and scanned['endStatisticsPresent']),
         'qualificationGaps': ['actual-responder-identity', 'fresh-complete-identity', 'full-response-length-contract',
             'native-version-selection-and-session', 'independent-adapter-response'], **GUARDS}
     report['artifacts'] = {n: digest(output / n) for n in ('responses.jsonl', 'identity-values.jsonl', 'identity-profiles.json')}

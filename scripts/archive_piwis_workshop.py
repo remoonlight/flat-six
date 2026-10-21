@@ -241,7 +241,7 @@ def file_system_hint(name):
     return "共享配套文件/系统见原件"
 
 
-def finalize(archive, inventory, selected, index, research, docs):
+def finalize(archive, inventory, selected, index, docs):
     expected = {h["sourcePath"]: h for h in json.loads((archive / "source-hashes.json").read_text(encoding="utf-8"))}
     for f in selected:
         local = archive / "files" / safe_relative(f["relativePath"])
@@ -356,7 +356,7 @@ def finalize(archive, inventory, selected, index, research, docs):
         latest = valid[-1] if valid else {}
         span = valid[0]["date"] + " ～ " + valid[-1]["date"] if valid else "未记录"
         lines.append("| " + " | ".join(cell(v) for v in [name, span, latest.get("version"), latest.get("description")]) + " |")
-    lines += ["", "## 其他车型", "", "[其他车型 Markdown 索引](other-models.md) 仅保存文件名、系统线索、源时间和原始规则描述，不保存其专属 PDX/ODX。共享容器若被 981/982 规则引用，或属于本轮明确列出的共享系统候选，保留共同原件并标明待核实依据，不据此宣称车型适用。", "",
+    lines += ["", "共享容器保留共同原件并标明待核实依据，不据此宣称车型适用；不生成其他车型专属文档。", "",
               "## 复核", "", "```powershell", "python scripts/archive_piwis_workshop.py --verify", "```", "",
               "本目录 Markdown 为项目索引；`.local/piwis-archive/` 内原件、清单与 CSV 仅保存在当前项目电脑，不随 Git 或安装包发布。归档不授予刷写资格。"]
     (docs / "README.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -384,50 +384,7 @@ def finalize(archive, inventory, selected, index, research, docs):
     for r in sorted(timeline_rows, key=lambda r: (r["date"] or "", r["source"], r["version"])):
         timeline_lines.append("| " + " | ".join(cell(r[k]) for k in ["source", "dateRaw", "date", "version", "description"]) + " |")
     (docs / "981-982-timeline.md").write_text("\n".join(timeline_lines) + "\n", encoding="utf-8")
-    write_other_models(docs, inventory, selected, research)
     print(f"Verified archive: {len(selected)} originals; {len(firmware)} PDX/ODX; {len(rules)} rules", flush=True)
-
-
-def write_other_models(docs, inventory, selected, research):
-    paths = {f["relativePath"] for f in selected}
-    other_files = [f for f in inventory["files"] if f["relativePath"] not in paths and PurePosixPath(f["relativePath"]).suffix.lower() in {".pdx", ".odx"}]
-    lines = ["# 其他车型：仅 Markdown 索引", "", "观察时间：" + inventory["observedAtUtc"], "",
-             "以下为共享 9x1 安装目录中未纳入 981/982 归档的容器。文件名的 991、991II、970 等仅为分类线索；不凭软件号前缀推定适用车型。具体 VIN、代际、年款、硬件和版本仍需匹配原始规则。",
-             "991.1 / 991.2 接口契约另见项目 `docs/piwis-991-interface.md`；本次未创建其他车型执行入口。", "",
-             "## 其他车型/未确定车型文件线索", "", "版本末尾标识直接取文件名，未解释其软件/数据集含义；不替代实际 ECU 软件版本。", "",
-             "| 文件名 | 车型/系统线索（仅文件名） | 末尾版本标识（文件名原文） | 源修改时间 UTC | 大小 |", "|---|---|---|---|---|"]
-    for f in other_files:
-        name = PurePosixPath(f["relativePath"]).name
-        hints = " / ".join(p for p in name.removesuffix("_container.pdx").split("_")[:3] if p not in {"FL", "DB"})
-        tail = "_".join(PurePosixPath(name).stem.removesuffix("_container").split("_")[-2:])
-        lines.append("| " + " | ".join(cell(v) for v in [name, hints, tail, f["lastWriteTimeUtc"], f["bytes"]]) + " |")
-    lines += ["", "## 原规则中的其他车型分支", "", "产品键明确指向其他车型的行仅记于本 Markdown。9x1 通用规则不自动归为 991.1 或 991.2。", "",
-              "| 规则源 / 系统 | 原始车型描述 | 产品键 | 年款原文 | 目标软件 / session |", "|---|---|---|---|---|"]
-    extra_sources = [("SWA3 Master", "flash-rules/SWA3_Master.xml"), ("SWA3 Slave", "flash-rules/SWA3_Slave.xml")]
-    for ecu, filename in [*SOURCES, *extra_sources]:
-        path = research / filename
-        if not path.exists():
-            continue
-        for r in ET.fromstring(path.read_bytes()).findall(".//FLASHREGEL"):
-            desc = (r.findtext("BESCHREIBUNG") or "").strip()
-            gens, _ = families(r, desc, not filename.startswith("flash-rules/"))
-            if gens:
-                continue
-            targets = [" / ".join(filter(None, [t.findtext("PTNR"), t.findtext("SESSIONNAME")])) for t in r.findall("SOLLSTAND/STEUERGERAETE/STEUERGERAET")]
-            lines.append("| " + " | ".join(cell(v) for v in [filename + " / " + ecu, desc, r.findtext("ISTSTAND/PRODUKTSCHLUESSEL"), r.findtext("ISTSTAND/MODELLJAHR"), " ; ".join(targets)]) + " |")
-    lines += ["", "## 相关规则表的版本节点（共享整表）", "",
-              "这些是规则表修订节点，不是上述容器的固件发布日期。", "",
-              "| 规则来源 | 日期原文 | 表版本 | 说明原文 |", "|---|---|---|---|"]
-    for _, filename in [*SOURCES, *extra_sources]:
-        path = research / filename
-        if path.exists():
-            revisions = history(path)
-            if revisions:
-                # Shared table history is retained in full in 981/982 timeline; other-model MD keeps the current head.
-                h = revisions[0]
-                lines.append("| " + " | ".join(cell(v) for v in [filename, h["dateRaw"], h["version"], h["description"]]) + " |")
-    lines += ["", f"本索引记录 {len(other_files)} 个未归档容器；时间是主机文件修改时间，固件发布日期未核实。文件名中的版本标识保留原文。其他车型专属文件均未复制。"]
-    (docs / "other-models.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def verify_archive(archive):
@@ -522,7 +479,7 @@ def main():
             p.error("--fetch requires --host and --known-hosts")
         fetch_files(selected, inventory, args.archive, args.host, args.known_hosts)
     if args.catalog or args.fetch:
-        finalize(args.archive, inventory, selected, index, args.research, args.docs)
+        finalize(args.archive, inventory, selected, index, args.docs)
         verify_archive(args.archive)
 
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   hasDesktopApi,
   topologyFixtureEnabled,
@@ -15,7 +15,6 @@ import { TopologyPage } from "./TopologyPage";
 import { EngineDataPage } from "./EngineDataPage";
 import { ObdDeviceRegistry } from "../obd/ObdDeviceRegistry";
 import { InternalCanPanel } from "../obd/InternalCanPanel";
-import { DtcCapturePanel } from "../obd/DtcCapturePanel";
 
 type ObdTab =
   | "topology"
@@ -40,7 +39,8 @@ const CONNECTION_PURPOSES = [
 
 function vnciConnectionMessage(error: unknown): string | null {
   const messages: Record<string, string> = {
-    device_port_unavailable: "上次选择的诊断头本次不可用。请接入该设备后刷新，或手动选择其他设备。",
+    device_not_selected: "请先选择本次使用的诊断头，再点击连接。",
+    device_port_unavailable: "所选诊断头当前不可用。请接入该设备后刷新，或重新选择设备。",
     can_network_required: "请按实际接线选择内网用途。",
     internal_receive_not_integrated: "内网持续接收尚未接入桌面，本次不会打开诊断链路。已保存所选 CAN。",
     internal_profile_not_qualified: "此诊断头与 CAN 尚无已核实的原始监听配置，连接已停止；不会发送诊断请求。",
@@ -69,8 +69,23 @@ function vnciConnectionMessage(error: unknown): string | null {
   return null;
 }
 
-export function ObdPage() {
-  const [tab, setTab] = useState<ObdTab>("topology");
+export function ObdPage({ active = true, onCodingDraftChange, codingDiscardVersion = 0 }: { active?: boolean; onCodingDraftChange?: (dirty: boolean) => void; codingDiscardVersion?: number }) {
+  const [tab, setTab] = useState<ObdTab>("connection");
+  const [codingDirty, setCodingDirty] = useState(false);
+  const [localCodingDiscard, setLocalCodingDiscard] = useState(0);
+  const [pendingTab, setPendingTab] = useState<ObdTab | null>(null);
+  const reportCodingDraft = useCallback((dirty: boolean) => { setCodingDirty(dirty); onCodingDraftChange?.(dirty); }, [onCodingDraftChange]);
+  useEffect(() => { reportCodingDraft(false); setPendingTab(null); }, [codingDiscardVersion, reportCodingDraft]);
+  function selectTab(next: ObdTab) {
+    if (next === tab) return;
+    if (tab === "coding" && codingDirty) { setPendingTab(next); return; }
+    setCodingTargetSystem("");
+    setLiveTargetSystem(""); setTab(next);
+  }
+  const [liveVisited, setLiveVisited] = useState(false);
+  useEffect(() => { if (tab === "live") setLiveVisited(true); }, [tab]);
+  const [codingVisited, setCodingVisited] = useState(false);
+  useEffect(() => { if (tab === "coding") setCodingVisited(true); }, [tab]);
   const [topoBusy, setTopoBusy] = useState(false);
   const [engineBusy, setEngineBusy] = useState(false);
   const [overview, setOverview] = useState<{
@@ -86,22 +101,46 @@ export function ObdPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [connBusy, setConnBusy] = useState(false);
   const [connNote, setConnNote] = useState<string | null>(null);
+  const [connectionFailed, setConnectionFailed] = useState(false);
   const [connected, setConnected] = useState(false);
   const [linkState, setLinkState] = useState("idle");
   const [purpose, setPurpose] = useState<"diagnostic" | "internal">("diagnostic");
   const [canNetwork, setCanNetwork] = useState<ObdCanNetwork | "">("");
   const [connectionStatus, setConnectionStatus] = useState<ObdConnectionResult | null>(null);
-  const [modelPick, setModelPick] = useState<"vLinker" | "OBDLink MX+" | "ELM327" | "OBDKey" | "OBDLink" | "VNCI" | "PT3G" | "">("");
+  const [modelPick, setModelPick] = useState<"vLinker" | "OBDLink MX+" | "ELM327" | "OBDKey" | "OBDLink" | "CANtieCAR" | "VNCI" | "PT3G" | "">("");
   const [topologyAdapterModel, setTopologyAdapterModel] = useState<string | null>(null);
   const [codingTargetSystem, setCodingTargetSystem] = useState("");
   const [liveTargetSystem, setLiveTargetSystem] = useState("");
 
+  useEffect(() => {
+    if (!active) return;
+    let cancelled = false;
+    const status = window.porsche981?.obdConnection || window.__FAKE_CONNECTION__;
+    if (!status) { setTab("connection"); return; }
+    const overview = window.porsche981?.readOnlySession;
+    void Promise.allSettled([
+      Promise.resolve().then(() => status({ action: "status" })),
+      Promise.resolve().then(() => overview?.({ action: "overview" } as never)),
+    ]).then(([link, task]) => {
+      if (cancelled || link.status !== "fulfilled") return;
+      const result = link.value as ObdConnectionResult;
+      const running = topoBusy || engineBusy
+        || ["starting", "receiving", "stopping"].includes(result.internal?.receiveState || "")
+        || task.status === "fulfilled" && task.value?.ok === true && task.value?.taskState === "running";
+      // A vehicle task can own the head while the idle voltage monitor is
+      // suspended. That handoff must not move the user away from the task.
+      if (result.ok && result.connected === false && !running) setTab("connection");
+    });
+    return () => { cancelled = true; };
+  }, [active]);
+
   const apiAvailable = hasDesktopApi() || topologyFixtureEnabled();
+  const internalRunning = ["starting", "receiving", "stopping"].includes(connectionStatus?.internal?.receiveState || "");
   const taskState = headerTaskState({
     apiAvailable,
     overviewOk: overview?.ok === true,
     overviewState: overview?.taskState,
-    localRunning: topoBusy || engineBusy,
+    localRunning: topoBusy || engineBusy || internalRunning,
     commLost,
   });
 
@@ -125,11 +164,9 @@ export function ObdPage() {
         if (connFn) {
           const st = await connFn({ action: "status" });
           if (stop || seq !== latest) return;
-          applyConn(st);
+          applyConn({ ...st, error: st.error || st.connectionError }, false);
           setConnected(!!st.connected);
           setTopologyAdapterModel(typeof st.model === "string" ? st.model : null);
-          const vnciNote = vnciConnectionMessage(st.error || st.connectionError);
-          if (vnciNote) setConnNote(vnciNote);
           if (typeof st.linkState === "string") setLinkState(st.linkState);
           if (typeof st.voltageVolts === "number") {
             setOverview((o) => ({ ...(o || {}), ok: o?.ok, taskState: o?.taskState, voltageVolts: st.voltageVolts }));
@@ -157,11 +194,12 @@ export function ObdPage() {
   }, []);
 
   const tabsLocked = topoBusy || engineBusy;
-  const sessionLocked = tabsLocked || overview?.taskState === "running";
+  const sessionLocked = tabsLocked || overview?.taskState === "running" || internalRunning;
+  const retryChoice = !sessionLocked && (connectionFailed || linkState === "retry-required");
   const selectedDev = devices.find((d) => d.id === selectedId);
   const needsModel = selectedDev?.brand === "unresolved" && !modelPick;
   const canConnect = Boolean(
-    selectedId && selectedDev?.available && !needsModel && !connBusy && !sessionLocked && linkState === "idle" && !connected && (purpose !== "internal" || !!canNetwork),
+    selectedId && selectedDev?.available && !needsModel && !connBusy && !sessionLocked && ["idle", "retry-required"].includes(linkState) && !connected && (purpose !== "internal" || !!canNetwork),
   );
 
   function applyConn(doc: {
@@ -173,12 +211,14 @@ export function ObdPage() {
     deviceRegistry?: ObdRegisteredDevice[];
     listErrors?: string[];
     selectedDeviceId?: string | null;
+    networkEndpoint?: { host: string; port: number } | null;
+    serialBaud?: number | null;
     model?: string | null;
     connected?: boolean;
     linkState?: string;
     voltageVolts?: number | null;
     guidance?: string;
-  }) {
+  }, clearNotice = true) {
     setConnectionStatus(doc as ObdConnectionResult);
     if (doc.purpose) setPurpose(doc.purpose);
     if ("canNetwork" in doc) setCanNetwork(doc.canNetwork || "");
@@ -186,7 +226,7 @@ export function ObdPage() {
     if (doc.deviceRegistry) setDeviceRegistry(doc.deviceRegistry);
     if (doc.listErrors) setListErrors(doc.listErrors);
     if ("selectedDeviceId" in doc) setSelectedId(doc.selectedDeviceId ?? null);
-    if ("model" in doc) setModelPick(doc.model === "vLinker" || doc.model === "OBDLink MX+" || doc.model === "ELM327" || doc.model === "OBDKey" || doc.model === "OBDLink" || doc.model === "VNCI" || doc.model === "PT3G" ? doc.model : "");
+    if ("model" in doc) setModelPick(doc.model === "vLinker" || doc.model === "OBDLink MX+" || doc.model === "ELM327" || doc.model === "OBDKey" || doc.model === "OBDLink" || doc.model === "CANtieCAR" || doc.model === "VNCI" || doc.model === "PT3G" ? doc.model : "");
     if ("model" in doc) setTopologyAdapterModel(doc.model || null);
     if (typeof doc.voltageVolts === "number") {
       setOverview((o) => ({ ...(o || {}), voltageVolts: doc.voltageVolts }));
@@ -195,37 +235,79 @@ export function ObdPage() {
     }
     if ("connected" in doc) setConnected(!!doc.connected);
     if (typeof doc.linkState === "string") setLinkState(doc.linkState);
-    const hit = (doc.devices || devices).find((d) => d.id === (doc.selectedDeviceId ?? selectedId));
     const err = doc.error;
-    const note =
-      vnciConnectionMessage(err) || (err === "device_port_unavailable" || err === "busy"
-        ? hit?.guidance || (err === "busy" ? "诊断任务占用链路" : "已配对但没有可用串口")
-        : err || null);
-    setConnNote(note);
+    if (err || clearNotice) {
+      const note = err === "adapter-mode-not-qualified"
+        ? "CANtieCAR 工作模式尚未完成核实，当前无法连接。请使用已支持的诊断头。"
+        : err === "busy" ? "当前任务正在使用连接。请等待任务结束后重试。"
+        : vnciConnectionMessage(err) || (err ? "本次连接操作未能完成，原因尚未确认。请检查设备连接与驱动后重试。" : null);
+      setConnNote(note);
+    }
   }
 
-  async function connectionCall(req: Parameters<NonNullable<PorscheApi["obdConnection"]>>[0]) {
+  async function connectionCall(req: Parameters<NonNullable<PorscheApi["obdConnection"]>>[0], manageBusy = true) {
     const fn = window.porsche981?.obdConnection || window.__FAKE_CONNECTION__;
     if (!fn) {
       applyConn({ ok: false, error: "desktop_required", devices: [], voltageVolts: null, connected: false });
       return;
     }
-    setConnBusy(true);
+    if (manageBusy) setConnBusy(true);
     try {
       const result = await fn(req);
       applyConn(result);
+      if (req.action === "connect") setConnectionFailed(result.ok !== true);
+      if (req.action === "disconnect" && result.ok === true) setConnectionFailed(false);
       return result;
     } catch (e) {
-      applyConn({ ok: false, error: String(e), connected: false, voltageVolts: null });
+      // An IPC failure does not prove the head disconnected or receiving stopped.
+      // Keep the last observed state until the next authoritative status poll.
+      applyConn({ ...connectionStatus, ok: false, error: String(e) });
+      if (req.action === "connect") setConnectionFailed(true);
     } finally {
-      setConnBusy(false);
+      if (manageBusy) setConnBusy(false);
     }
   }
 
+  async function changePurpose(value: "diagnostic" | ObdCanNetwork) {
+    if (connBusy || sessionLocked || retryChoice) return;
+    const reconnect = connected;
+    const deviceId = selectedId;
+    const model = selectedDev?.brand === "unresolved" && modelPick ? modelPick : undefined;
+    setConnBusy(true);
+    try {
+      if (reconnect) {
+        const stopped = await connectionCall({ action: "disconnect" }, false);
+        if (!stopped?.ok || stopped.connected || stopped.linkState !== "idle") return;
+      }
+      const configured = await connectionCall(value === "diagnostic"
+        ? { action: "configure", purpose: "diagnostic" }
+        : { action: "configure", purpose: "internal", canNetwork: value }, false);
+      if (!configured?.ok || !reconnect) return;
+      if (!deviceId || configured.selectedDeviceId !== deviceId) {
+        applyConn({ ...configured, ok: false, error: "device_mismatch" });
+        return;
+      }
+      await connectionCall({ action: "connect", deviceId, model }, false);
+    } finally { setConnBusy(false); }
+  }
+
+  async function refreshDevices() {
+    if (connBusy || sessionLocked || retryChoice) return;
+    setConnBusy(true);
+    try {
+      if (connected || linkState !== "idle") {
+        const stopped = await connectionCall({ action: "disconnect" }, false);
+        if (!stopped?.ok || stopped.connected || stopped.linkState !== "idle") return;
+      }
+      await connectionCall({ action: "list" }, false);
+    } finally { setConnBusy(false); }
+  }
+
   useEffect(() => {
-    if (tab !== "connection") return;
+    // Load the initial inventory once. Later navigation only observes status;
+    // explicit Refresh owns any subsequent enumeration and release sequence.
     void connectionCall({ action: "list" });
-  }, [tab]);
+  }, []);
 
   return (
     <div className="obd-page" data-page="obd">
@@ -238,7 +320,7 @@ export function ObdPage() {
         </div>
         <div className="obd-head-meta">
           <p className="obd-header-device" data-testid="obd-header-device">
-            已连接设备：{connected ? topologyAdapterModel || "型号未知" : "无"}
+            已连接设备：{connected ? topologyAdapterModel || "型号未知" : linkState === "diagnostic" ? `${topologyAdapterModel || "型号未知"}（任务占用）` : "无"}
           </p>
           <p className="obd-header-voltage" data-testid="obd-header-voltage">
             {formatHeaderVoltage(overview?.voltageVolts ?? null)}
@@ -257,44 +339,42 @@ export function ObdPage() {
             type="button"
             data-obd-tab={t.id}
             className={`chip${tab === t.id ? " active" : ""}`}
-            disabled={tabsLocked && tab !== t.id && t.id !== "connection"}
-            onClick={() => {
-              if (t.id === "coding") setCodingTargetSystem("");
-              if (t.id === "live") setLiveTargetSystem("");
-              setTab(t.id);
-            }}
+            disabled={tabsLocked && tab !== t.id && t.id === "coding"}
+            onClick={() => selectTab(t.id)}
           >
             {t.label}
           </button>
         ))}
       </nav>
+      {pendingTab && <section className="panel" role="alert" data-testid="coding-leave-review"><p>尚有未写入的调整，离开设码页会丢弃这些调整。</p>
+        <button type="button" onClick={() => setPendingTab(null)}>继续修改</button>
+        <button type="button" onClick={() => { setLocalCodingDiscard(value => value + 1); reportCodingDraft(false); setLiveTargetSystem(""); setTab(pendingTab); setPendingTab(null); }}>丢弃后离开</button>
+      </section>}
 
       {tab === "connection" && (
         <section className="panel" data-testid="obd-connection">
-          <fieldset className="obd-purpose-options" data-testid="obd-purpose" disabled={connBusy || sessionLocked || linkState !== "idle"}>
+          <fieldset className="obd-purpose-options" data-testid="obd-purpose" disabled={connBusy || sessionLocked || retryChoice || !["idle", "connected"].includes(linkState)}>
             <legend>连接用途</legend>
             {CONNECTION_PURPOSES.map((option) => <label key={option.value}>
               <input type="radio" name="obd-purpose" data-testid={`obd-purpose-${option.value}`} value={option.value}
                 checked={(purpose === "diagnostic" ? "diagnostic" : canNetwork) === option.value}
-                onChange={() => void connectionCall(option.value === "diagnostic" ? { action: "configure", purpose: "diagnostic" } :
-                  { action: "configure", purpose: "internal", canNetwork: option.value })} />
+                onChange={() => void changePurpose(option.value)} />
               <span>{option.label}</span>
             </label>)}
           </fieldset>
           {purpose === "internal" ? <p className="muted">请手动接到所选 CAN。项目不自动识别网络或切换接线；当前仅 MX+ 驱动 CAN 有已核实的监听配置。</p> : null}
           {purpose === "internal" && canNetwork === "adas" ? <p className="muted">上次保存的接线为 ADAS CAN，请按实际接线重新选择连接用途。</p> : null}
-          <p className="muted">可接入 vLinker、OBDLink MX+、ELM327、OBDKey、其他 OBDLink、VNCI 与 PT3G。通用 USB 串口须选择实际诊断头型号；ELM327 默认 38400、OBDKey 9600、OBDLink 115200，不自动修改设备速率。新增头的实物与车辆读取待验收；PT3G 当前仅支持诊断头连接与供电监测。</p>
-          <ObdDeviceRegistry devices={deviceRegistry} detectedDevices={devices} busy={connBusy || sessionLocked} selectedId={selectedId}
-            connectionState={linkState === "disconnecting" ? "正在断开" : linkState === "close_failed" ? "关闭失败 · 等待释放" : sessionLocked || linkState === "diagnostic" ? "诊断占用" : linkState === "connecting" ? "连接中" : linkState === "reconnecting" ? "等待重连" : connected ? "已连接" : "已选择"}
+          <p className="muted">请选择本次使用的诊断头，再点击连接。未发现设备时，接入设备后刷新。</p>
+          {purpose === "diagnostic" && <p className="muted" data-testid="obd-ignition-guidance">诊断前请打开点火电源，让仪表点亮。未打开时仅能识别网关；已打开时，未识别的单元也可能未安装。控制单元未识别不等于诊断头断开。</p>}
+          <ObdDeviceRegistry devices={deviceRegistry} detectedDevices={devices} busy={connBusy || sessionLocked || retryChoice} selectedId={selectedId}
+            connectionState={linkState === "disconnecting" ? "正在断开" : linkState === "close_failed" ? "关闭失败 · 等待释放" : retryChoice ? "连接中断 · 等待选择" : sessionLocked || linkState === "diagnostic" ? "任务占用" : linkState === "connecting" ? "连接中" : linkState === "reconnecting" ? "等待重连" : connected ? "已连接" : "已选择"}
             onSelect={(deviceId) => {
-              setSelectedId(deviceId);
-              setModelPick("");
               void connectionCall({ action: "select", deviceId });
             }} />
           {devices.some((d) => d.id === selectedId && d.brand === "unresolved") ? (
             <label className="field">
               设备型号
-              <select data-testid="obd-model-pick" value={modelPick} disabled={connBusy || sessionLocked}
+              <select data-testid="obd-model-pick" value={modelPick} disabled={connBusy || sessionLocked || retryChoice}
                 onChange={(e) => {
                   const model = e.target.value as typeof modelPick;
                   setModelPick(model);
@@ -306,38 +386,58 @@ export function ObdPage() {
                 <option value="ELM327">ELM327</option>
                 <option value="OBDKey">OBDKey</option>
                 <option value="OBDLink">OBDLink / STN</option>
+                <option value="CANtieCAR">CANtieCAR · 工作模式待核实</option>
               </select>
             </label>
           ) : null}
           <div className="row">
-            <button type="button" data-testid="obd-conn-refresh" className="btn" disabled={connBusy}
-              onClick={() => void connectionCall({ action: "list" })}>刷新</button>
-            <button type="button" data-testid="obd-conn-connect" className="btn" disabled={!canConnect}
+            <button type="button" data-testid="obd-conn-refresh" className="btn" disabled={connBusy || sessionLocked || retryChoice || linkState === "disconnecting"}
+              onClick={() => void refreshDevices()}>刷新</button>
+            <button type="button" data-testid="obd-conn-connect" className="btn" disabled={!canConnect || retryChoice}
               onClick={() => void connectionCall({ action: "connect", deviceId: selectedId || undefined,
                 model: selectedDev?.brand === "unresolved" && modelPick ? modelPick : undefined })}>连接设备</button>
-            <button type="button" data-testid="obd-conn-disconnect" className="ghost" disabled={connBusy || linkState === "disconnecting"}
-              onClick={() => void connectionCall({ action: "disconnect" })}>断开设备</button>
+            <button type="button" data-testid="obd-conn-disconnect" className="ghost" disabled={connBusy || sessionLocked || retryChoice || linkState === "disconnecting"}
+              onClick={() => void connectionCall({ action: "disconnect" })}>{linkState === "connecting" || linkState === "reconnecting" ? "终止连接" : linkState === "disconnecting" ? "等待释放" : "断开设备"}</button>
           </div>
-          {listErrors.length > 0 ? <p className="error" data-testid="obd-conn-errors">{listErrors.join("；")}</p> : null}
-          {connNote ? <p className="error" data-testid="obd-conn-note">{connNote}</p> : null}
+          {retryChoice ? <div role="alertdialog" aria-labelledby="obd-retry-title" data-testid="obd-conn-retry-choice">
+            <h3 id="obd-retry-title">诊断头连接未成功或已中断</h3>
+            <p>重试将连接同一诊断头；终止将停止连接尝试，并留在连接设置页。</p>
+            <button type="button" className="btn" data-testid="obd-conn-retry" disabled={!canConnect}
+              onClick={() => void connectionCall({ action: "connect", deviceId: selectedId || undefined,
+                model: selectedDev?.brand === "unresolved" && modelPick ? modelPick : undefined })}>重试</button>
+            <button type="button" className="ghost" data-testid="obd-conn-terminate" disabled={connBusy || linkState === "disconnecting"}
+              onClick={() => void connectionCall({ action: "disconnect" })}>终止</button>
+          </div> : null}
+          {listErrors.length > 0 ? <div role="alert" className="error" data-testid="obd-conn-errors">
+            <p>部分诊断头未能完成检测。请检查设备连接与驱动后刷新。</p>
+          </div> : null}
+          {connNote ? <div role="alert" className="error" data-testid="obd-conn-note">
+            <p>{connNote}</p>
+          </div> : null}
         </section>
       )}
 
-      {tab === "live" ? (
+      <div hidden={tab !== "live"}>
+      {liveVisited ? (
         purpose === "internal" ? <InternalCanPanel status={connectionStatus} busy={connBusy} invoke={connectionCall} /> : <EngineDataPage
           adapterModel={topologyAdapterModel}
+          diagnosticConnectionKey={purpose === "diagnostic" && (connected || ["diagnostic", "connecting", "reconnecting"].includes(linkState)) ? `${selectedId}|${topologyAdapterModel}` : ""}
+          diagnosticReady={purpose === "diagnostic" && (connected || linkState === "diagnostic")}
+          active={tab === "live"}
           initialSystemId={liveTargetSystem}
           onBusyChange={setEngineBusy}
           peerBusy={topoBusy || (overview?.taskState === "running" && !engineBusy)}
         />
       ) : null}
+      </div>
 
       <div hidden={tab !== "topology"}>
         <TopologyPage
           onBusyChange={setTopoBusy}
           peerBusy={engineBusy || (overview?.taskState === "running" && !topoBusy)}
           adapterModel={topologyAdapterModel}
-          active={tab === "topology"}
+          active={active && tab === "topology"}
+          adapterDeviceId={selectedId}
           diagnosticReady={purpose === "diagnostic" && connected}
           onNavigate={(target, systemId) => {
             if (target === "coding") setCodingTargetSystem(systemId || "");
@@ -346,8 +446,9 @@ export function ObdPage() {
           }}
         />
       </div>
-      {tab === "topology" && <><DtcCapturePanel kind="identity" /><DtcCapturePanel /></>}
-      {tab === "coding" ? <CodingPage initialSystemId={codingTargetSystem} /> : null}
+      <div hidden={tab !== "coding"}>
+        {codingVisited ? <CodingPage initialSystemId={codingTargetSystem} onDraftChange={reportCodingDraft} discardVersion={codingDiscardVersion + localCodingDiscard} /> : null}
+      </div>
     </div>
   );
 }

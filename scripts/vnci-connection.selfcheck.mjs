@@ -83,12 +83,12 @@ try {
 } finally { await manager.shutdown(); }
 const restored = createObdConnectionManager(options);
 try {
-  assert.equal(restored.selectedId(), id);
-  assert.equal(restored.snapshot().model, "VNCI");
+  assert.equal(restored.selectedId(), null);
+  assert.equal(restored.snapshot().model, null);
   assert.equal(restored.snapshot().connected, false);
   assert.equal(restored.snapshot().adapterInfo, null, "saved device selection does not restore old firmware qualification");
 } finally { await restored.shutdown(); }
-console.log("VNCI connection selfcheck passed: USB identity, voltage provenance, persistence and exclusive session handoff (synthetic)");
+console.log("VNCI connection selfcheck passed: USB identity, voltage provenance, fresh startup selection and exclusive session handoff (synthetic)");
 
 for (const [index, invalid] of [
   { ...adapterInfo, serial: "99999" }, { ...adapterInfo, managementSerialMatched: false },
@@ -171,7 +171,8 @@ for (const brand of ["VNCI", "PT3G"]) {
         emit({ type: "stopped", restoration: { errors: [] } });
         worker.exitCode = 1; worker.emit("close", 1);
         assert.equal(conn.gate.owner(), null);
-        assert.equal(conn.snapshot().linkState, "idle");
+        assert.equal(conn.snapshot().linkState, "retry-required");
+        assert.equal(conn._state().wantConnected, false, "identity failure never reconnects automatically");
         assert.equal(conn.snapshot().connectionError, "adapter-identity-mismatch", "keep the failure visible after clean release");
       } else {
         deadline.cleared = true; deadline.callback();

@@ -66,6 +66,43 @@ const hs = (volts = 12.6, at = 1000) =>
     at,
   }) + "\n";
 
+// Terminating a handshake uses the existing disconnect route, including native
+// heads. Late output cannot revive the connection while cleanup is pending.
+for (const waitingDevice of [device,
+  { id: "vnci:10001", brand: "VNCI", available: true },
+  { id: "pt3g:10001", brand: "PT3G", available: true }]) {
+  let child, stopCount = 0;
+  const m = manager({ gracefulMs: 1000, listFn: async () => ({ devices: [waitingDevice] }), monitorSpawnFn: () => {
+    child = fakeChild(false);
+    child.stdin.on("data", bytes => { if (JSON.parse(String(bytes)).action === "stop") stopCount++; });
+    return child;
+  } });
+  try {
+    await m.handle({ action: "list" });
+    assert.equal((await m.handle({ action: "select", deviceId: waitingDevice.id })).ok, true);
+    assert.equal((await m.handle({ action: "connect" })).linkState, "connecting");
+    const terminating = m.handle({ action: "disconnect" });
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(stopCount, 1);
+    assert.equal(m.snapshot().linkState, "disconnecting");
+    assert.equal(m.reserveDispatch(), false, "release must finish before vehicle dispatch");
+    child.stdout.write(JSON.stringify({ ok: true, type: "handshake", simulation: false,
+      deviceId: waitingDevice.id, volts: 12.6, voltageSource: waitingDevice.id.startsWith("bt:") ? "atrv" : "d-pdu-vbatt", at: Date.now() }) + "\n");
+    assert.equal(m.snapshot().connected, false);
+    assert.equal(m.snapshot().linkState, "disconnecting");
+    cleanStopped(child); child.exitCode = 0; child.emit("close", 0);
+    const ended = await terminating;
+    assert.equal(ended.ok, true); assert.equal(ended.linkState, "idle");
+    assert.equal(ended.selectedDeviceId, waitingDevice.id);
+    assert.equal(ended.purpose, "diagnostic"); assert.equal(m.gate.owner(), null);
+    assert.equal(ended.monitorDiagnostics.starts, 1, "termination never starts a replacement monitor");
+    assert.equal((await m.handle({ action: "connect" })).linkState, "connecting");
+    const last = m.handle({ action: "disconnect" });
+    await new Promise(resolve => setImmediate(resolve));
+    cleanStopped(child); child.exitCode = 0; child.emit("close", 0); await last;
+  } finally { await m.shutdown(); }
+}
+
 // Exercise the real selection/monitor/handoff route using an OS USB instance ID.
 // No serial or native API is opened by this injected worker.
 {
@@ -212,58 +249,45 @@ await fresh.handle({ action: "disconnect" });
 assert.equal(fresh.snapshot().voltageVolts, null);
 await fresh.shutdown();
 
+// Diagnostic connection loss waits for a choice, after verified release.
 const delays = [];
 const timers = [];
-let child2;
+let child2, retryOpens = 0;
 const retryGate = createTransportGate();
 const retryer = manager({
   gate: retryGate,
   handshakeMs: 120000,
   livenessMs: 120000,
-  monitorSpawnFn: () => {
-    child2 = fakeChild();
-    return child2;
-  },
-  setTimeoutFn: (fn, ms) => {
-    delays.push(ms);
-    const id = timers.length;
-    timers.push({ fn, ms });
-    return id;
-  },
+  monitorSpawnFn: () => { retryOpens++; child2 = fakeChild(); return child2; },
+  setTimeoutFn: (fn, ms) => { delays.push(ms); const id = timers.length; timers.push({ fn, ms }); return id; },
   clearTimeoutFn: () => {},
 });
 await select(retryer);
 await retryer.handle({ action: "connect" });
-child2.stdout.write(JSON.stringify({ type: "error", ok: false, error: "port-io" }) + "\n");
-cleanStopped(child2);
-child2.exitCode = 1;
-child2.emit("close", 1);
-assert.equal(retryer.snapshot().linkState, "reconnecting");
-assert.ok(delays.includes(5000));
-const retryFns = timers.filter((t) => t.ms === 5000 || t.ms === 10000 || t.ms === 20000 || t.ms === 30000);
-retryFns[0].fn();
-child2.stdout.write(JSON.stringify({ type: "error", ok: false, error: "port-io" }) + "\n");
-cleanStopped(child2);
-child2.exitCode = 1;
-child2.emit("close", 1);
-retryFns[1]?.fn?.();
-child2.stdout.write(JSON.stringify({ type: "error", ok: false, error: "port-io" }) + "\n");
-cleanStopped(child2);
-child2.exitCode = 1;
-child2.emit("close", 1);
-retryFns[2]?.fn?.();
-child2.stdout.write(JSON.stringify({ type: "error", ok: false, error: "port-io" }) + "\n");
-cleanStopped(child2);
-child2.exitCode = 1;
-child2.emit("close", 1);
-const retryDelays = delays.filter((d) => d === 5000 || d === 10000 || d === 20000 || d === 30000);
-assert.deepEqual(retryDelays.slice(0, 4), [5000, 10000, 20000, 30000]);
-await retryer.handle({ action: "disconnect" });
+for (let attempt = 0; attempt < 2; attempt++) {
+  child2.stdout.write(hs(12.6, Date.now()));
+  assert.equal(retryer.snapshot().connected, true);
+  child2.stdout.write(JSON.stringify({ type: "error", ok: false, error: "port-io" }) + "\n");
+  assert.equal((await retryer.handle({ action: "connect" })).error, "port_release_pending");
+  assert.equal(retryOpens, attempt + 1, "retry cannot open before old worker releases");
+  cleanStopped(child2); child2.exitCode = 1; child2.emit("close", 1);
+  assert.equal(retryer.snapshot().linkState, "retry-required");
+  assert.equal(retryer.snapshot().selectedDeviceId, device.id);
+  assert.equal(retryer.snapshot().voltageVolts, null);
+  assert.equal(retryer._state().wantConnected, false);
+  assert.equal(retryGate.owner(), null);
+  assert.deepEqual(delays.filter(d => [5000, 10000, 20000, 30000].includes(d)), [], "no automatic diagnostic retry timer");
+  await retryer.handle({ action: "status" });
+  assert.equal(retryOpens, attempt + 1, "status cannot retry on behalf of user");
+  if (attempt === 0) {
+    assert.equal((await retryer.handle({ action: "connect", deviceId: device.id })).ok, true);
+    assert.equal(retryOpens, 2, "one explicit retry opens exactly one new worker");
+  }
+}
+assert.equal((await retryer.handle({ action: "disconnect" })).ok, true);
 assert.equal(retryer.snapshot().linkState, "idle");
-const before = delays.length;
-timers.filter((t) => t.ms === 30000).at(-1)?.fn?.();
-assert.equal(delays.filter((d) => d === 5000).length, delays.filter((d) => d === 5000).length);
-void before;
+assert.equal(retryer.snapshot().selectedDeviceId, device.id, "terminate leaves the selected head available");
+assert.equal(retryOpens, 2);
 await retryer.shutdown();
 
 const syn = manager({ now: () => 1000, monitorSpawnFn: () => { child = fakeChild(); return child; } });
@@ -460,8 +484,8 @@ await syn.shutdown();
   await conn.shutdown();
 
   const restored = manager(options);
-  assert.equal(restored.selectedId(), mx.id);
-  assert.equal(restored.snapshot().model, "OBDLink MX+");
+  assert.equal(restored.selectedId(), null);
+  assert.equal(restored.snapshot().model, null);
   assert.equal(restored.snapshot().connected, false, "restart must not open a device automatically");
   await restored.handle({ action: "list" });
   const unknown = await restored.handle({ action: "select", deviceId: unresolved.id });
@@ -474,7 +498,7 @@ await syn.shutdown();
   await restored.shutdown();
 }
 
-// Explicit networks persist; unqualified MX+ networks never reuse drive CAN.
+// Startup resets the purpose/network; explicit unqualified networks remain blocked.
 {
   let opens = 0;
   const stateFile = path.join(scratch, `networks-${Date.now()}.json`);
@@ -488,20 +512,24 @@ await syn.shutdown();
     assert.equal((await settings.handle({ action: "configure", purpose: "internal", canNetwork })).ok, true);
     await settings.shutdown();
     settings = manager(options);
-    assert.equal(settings.snapshot().canNetwork, canNetwork);
-    assert.equal(settings.snapshot().purpose, "internal");
+    assert.equal(settings.snapshot().canNetwork, null);
+    assert.equal(settings.snapshot().purpose, "diagnostic");
+    assert.equal(settings.snapshot().selectedDeviceId, null);
     assert.equal(settings.snapshot().connected, false);
+    await settings.handle({ action: "list" });
+    assert.equal((await settings.handle({ action: "connect" })).error, "device_not_selected");
+    await settings.handle({ action: "select", deviceId: mx.id });
+    await settings.handle({ action: "configure", purpose: "internal", canNetwork });
     if (canNetwork !== "drive") {
-      await settings.handle({ action: "list" });
       assert.equal((await settings.handle({ action: "connect" })).error, "internal_profile_not_qualified");
     }
   }
   assert.equal(opens, 0);
   await settings.shutdown();
 }
-console.log("obd-connection selfcheck PASS: close-timeout quarantine, cadence, backoff, ingest, silent child, queued device identity, MX+ persistence and explicit model");
+console.log("obd-connection selfcheck PASS: close-timeout quarantine, cadence, explicit diagnostic retry, ingest, silent child, queued device identity, startup defaults and explicit model");
 
-// Current list, persistent purpose/CAN, unavailable remembered head, and no startup open.
+// Current list, ignored historical purpose/head, and no startup/list/configure open.
 {
   let opens = 0;
   const stateFile = path.join(scratch, `settings-${Date.now()}.json`);
@@ -517,12 +545,15 @@ console.log("obd-connection selfcheck PASS: close-timeout quarantine, cadence, b
   assert.equal(opens, 0, "internal selection must never fall back to diagnostic commands");
   await settings.shutdown();
   const restored = manager({ env: { PORSCHE981_CONNECTION_STATE: stateFile }, listFn: async () => ({ devices: [] }), monitorSpawnFn: () => { opens++; return fakeChild(); } });
-  assert.equal(restored.snapshot().purpose, "internal");
-  assert.equal(restored.snapshot().canNetwork, "adas");
-  assert.equal(restored.snapshot().selectedDeviceId, device.id);
+  assert.equal(restored.snapshot().purpose, "diagnostic");
+  assert.equal(restored.snapshot().canNetwork, null);
+  assert.equal(restored.snapshot().selectedDeviceId, null);
   await restored.handle({ action: "list" });
   await restored.handle({ action: "configure", purpose: "diagnostic" });
-  assert.equal((await restored.handle({ action: "connect" })).error, "device_port_unavailable");
+  assert.equal((await restored.handle({ action: "connect" })).error, "device_not_selected");
+  assert.equal((await restored.handle({ action: "select", deviceId: device.id })).error, "unknown_device");
+  assert.equal(restored.snapshot().selectedDeviceId, null, "a missing historical head cannot be selected");
+  assert.equal((await restored.handle({ action: "connect" })).error, "device_not_selected");
   assert.equal(opens, 0);
   await restored.shutdown();
 }
@@ -557,12 +588,17 @@ console.log("obd-connection selfcheck PASS: close-timeout quarantine, cadence, b
   } };
   attachSessionHandoff(conn, session);
   g.tryAcquire("session");
+  assert.equal((await conn.handle({ action: "disconnect" })).error, "busy");
+  assert.equal(cancelled, false, "connection settings must not cancel the active vehicle task");
+  assert.equal(g.owner(), "session", "busy disconnect keeps transport ownership unchanged");
+  g.release("session");
+  conn.releaseDispatch();
   assert.equal((await conn.handle({ action: "disconnect" })).ok, true);
-  assert.equal(cancelled, true);
+  assert.equal(cancelled, false);
   assert.equal(conn.snapshot().linkState, "idle");
   await conn.shutdown();
 }
-console.log("obd-connection convergence checks PASS: settings, current devices, unknown voltage, truthful close, session disconnect");
+console.log("obd-connection convergence checks PASS: settings, current devices, unknown voltage, truthful close, busy disconnect rejected");
 
 // Pipe reads can coalesce many valid JSON lines beyond the per-line bound.
 // Do not turn healthy buffered output into a timeout/reconnect.
@@ -620,4 +656,78 @@ console.log("obd-connection convergence checks PASS: settings, current devices, 
   child.exitCode = 0; child.emit("close", 0);
   await conn.shutdown();
 }
-console.log("obd-connection stream checks PASS: coalesced lines, UTF-8 byte cap, stderr drain, bounded lifecycle evidence");
+// A head change owns the entire stop/select transition. It never opens the new
+// head until a later explicit connect and never publishes a selection on failure.
+for (const closes of [true, false]) {
+  const next = { ...device, id: "bt:001122334455", brand: "OBDLink MX+" };
+  let oldWorker, opens = 0;
+  const conn = manager({ now: () => 1000, listFn: async () => ({ devices: [device, next] }),
+    monitorSpawnFn: () => {
+      opens++; oldWorker = fakeChild(closes);
+      if (!closes) oldWorker.kill = () => false;
+      queueMicrotask(() => oldWorker.stdout.write(hs()));
+      return oldWorker;
+    } });
+  await conn.handle({ action: "list" });
+  await conn.handle({ action: "configure", purpose: "internal", canNetwork: "drive" });
+  assert.equal((await conn.handle({ action: "select", deviceId: device.id })).purpose, "internal", "choosing the first head preserves an explicitly chosen purpose");
+  await conn.handle({ action: "configure", purpose: "diagnostic" });
+  await conn.handle({ action: "connect" });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(conn.snapshot().connected, true);
+  assert.equal((await conn.handle({ action: "select", deviceId: "bt:999999999999" })).error, "unknown_device");
+  assert.equal(conn.snapshot().connected, true, "invalid selection does not disconnect the old head");
+  const changed = await conn.handle({ action: "select", deviceId: next.id });
+  assert.equal(opens, 1, "selecting another head does not connect it automatically");
+  if (closes) {
+    assert.equal(changed.ok, true); assert.equal(changed.selectedDeviceId, next.id);
+    assert.equal(changed.model, next.brand); assert.equal(changed.connected, false);
+    assert.equal(changed.linkState, "idle"); assert.equal(oldWorker.exitCode, 0);
+    assert.equal(changed.purpose, "diagnostic"); assert.equal(changed.canNetwork, null);
+    assert.equal(conn.gate.owner(), null);
+  } else {
+    assert.equal(changed.ok, false); assert.equal(changed.error, "monitor_close_timeout");
+    assert.equal(changed.selectedDeviceId, device.id); assert.equal(changed.model, device.brand);
+    assert.equal(changed.linkState, "close_failed"); assert.ok(conn.gate.owner());
+    oldWorker.exitCode = 0; cleanStopped(oldWorker); oldWorker.emit("close", 0);
+  }
+  await conn.shutdown();
+}
+{
+  const next = { ...device, id: "bt:001122334455", brand: "OBDLink MX+" };
+  const conn = manager({ listFn: async () => ({ devices: [device, next] }) });
+  await select(conn);
+  await conn.handle({ action: "configure", purpose: "internal", canNetwork: "comfort" });
+  assert.equal((await conn.handle({ action: "select", deviceId: device.id })).purpose, "internal", "reselecting the same head does not reset purpose");
+  const changed = await conn.handle({ action: "select", deviceId: next.id });
+  assert.equal(changed.purpose, "diagnostic"); assert.equal(changed.canNetwork, null);
+  assert.equal(changed.connected, false);
+  assert.equal((await conn.handle({ action: "configure", purpose: "internal", canNetwork: "chassis" })).purpose, "internal", "the user can choose a different purpose for the new head before connecting");
+  await conn.shutdown();
+}
+{
+  const next = { ...device, id: "bt:001122334455", brand: "OBDLink MX+" };
+  let listed = [device, next], failed = false, opens = 0;
+  const conn = manager({ listFn: async () => {
+    if (failed) throw new Error("inventory unavailable");
+    return { devices: listed };
+  }, monitorSpawnFn: () => { opens++; throw new Error("refresh must not open a head"); } });
+  await select(conn);
+  await conn.handle({ action: "configure", purpose: "internal", canNetwork: "comfort" });
+  const retained = await conn.handle({ action: "list" });
+  assert.equal(retained.selectedDeviceId, device.id); assert.equal(retained.purpose, "internal");
+  assert.equal(retained.canNetwork, "comfort"); assert.equal(retained.connected, false);
+  listed = [next];
+  const removed = await conn.handle({ action: "list" });
+  assert.equal(removed.ok, true); assert.equal(removed.selectedDeviceId, null);
+  assert.equal(removed.model, null); assert.equal(removed.serialBaud, null);
+  assert.equal(removed.purpose, "diagnostic"); assert.equal(removed.canNetwork, null);
+  assert.equal((await conn.handle({ action: "list" })).selectedDeviceId, null, "refresh never selects the remaining head");
+  await conn.handle({ action: "select", deviceId: next.id });
+  failed = true;
+  const unavailable = await conn.handle({ action: "list" });
+  assert.equal(unavailable.ok, false); assert.equal(unavailable.selectedDeviceId, next.id, "a failed inventory is not evidence that the head disappeared");
+  assert.equal(opens, 0);
+  await conn.shutdown();
+}
+console.log("obd-connection stream checks PASS: bounded lifecycle, serial head switch, failed-release retention and manual refresh selection");

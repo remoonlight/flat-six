@@ -2,7 +2,10 @@ const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("porsche981", {
   diagnosticPreparation: (request) => ipcRenderer.invoke("diagnostics:preparation", request),
+  firmwareVersions: (request) => ipcRenderer.invoke("diagnostics:firmwareVersions", request),
+  firmwareExecution: (request) => ipcRenderer.invoke("diagnostics:firmwareExecution", request),
   codingCapture: (request) => ipcRenderer.invoke("diagnostics:codingCapture", request),
+  codingWorkspace: (request) => ipcRenderer.invoke("diagnostics:codingWorkspace", request),
   measurementCapture: (request) => ipcRenderer.invoke("diagnostics:measurementCapture", request),
   dtcCapture: (request) => ipcRenderer.invoke("diagnostics:dtcCapture", request),
   identityCapture: (request) => ipcRenderer.invoke("diagnostics:identityCapture", request),
@@ -10,6 +13,7 @@ contextBridge.exposeInMainWorld("porsche981", {
   // Main validates the selected CAN/application capture layer; no renderer bytes.
   diagnosticCanRecording: (request) => ipcRenderer.invoke("diagnostics:canRecording", request),
   workshopFlashIndex: () => ipcRenderer.invoke("workshop:flashIndex"),
+  workshopExecution: (request) => ipcRenderer.invoke("workshop:execution", request),
   workshopExportPreview: (input) => ipcRenderer.invoke("workshop:exportPreview", input),
   obdGetState: () => ipcRenderer.invoke("obd:getState"),
   obdStartSimulation: (input) => ipcRenderer.invoke("obd:startSimulation", input),
@@ -99,6 +103,7 @@ contextBridge.exposeInMainWorld("porsche981", {
     ipcRenderer.invoke("xray:setLayerVisible", { assemblyId, visible }),
   xrayBridge: (assemblyId) => ipcRenderer.invoke("xray:bridge", assemblyId),
   openXrayTuneWindow: (arg) => ipcRenderer.invoke("window:openXrayTune", arg),
+  setCodingDraftDirty: (dirty) => ipcRenderer.invoke("window:codingDraftDirty", dirty),
   modelOemLinksGet: () => ipcRenderer.invoke("modelOem:get"),
   modelOemLinksUpsert: (link) => ipcRenderer.invoke("modelOem:upsert", link),
   modelOemLinksRemove: (kind, ref, sku, assemblyId) =>
@@ -110,6 +115,7 @@ contextBridge.exposeInMainWorld("porsche981", {
     ipcRenderer.invoke("diagnostics:offline", request, operationId),
   cancelOfflineDiagnostics: (operationId) => ipcRenderer.invoke("diagnostics:offlineCancel", operationId),
   saveDiagnosticRecording: (input) => ipcRenderer.invoke("diagnostics:saveRecording", input),
+  revealParameterRecording: (request) => ipcRenderer.invoke("diagnostics:revealParameterRecording", request),
   acquisitionReplay: (request) => ipcRenderer.invoke("diagnostics:acquisitionReplay", request),
   // Main owns standard-data batches; saveEngine/discardEngine pass only a batch ID.
   readOnlySession: (request) =>

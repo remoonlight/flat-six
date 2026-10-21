@@ -69,6 +69,25 @@ describe("guide checklist", () => {
 });
 
 describe("snapshot identity and compare", () => {
+  it("rejects conflicting VINs within a result and across all topology modules", () => {
+    const vinA = "WP0ZZZ98ZES000001", vinB = "WP0ZZZ98ZES000002";
+    expect(() => identityFromCapture({ vin: vinA, vehicleKey: vinB })).toThrow("diag_vehicle_identity_conflict");
+    const capture = (vins: Array<string | undefined>) => normalizeTopologyCapture({
+      source: "simulation", captureEventId: "synthetic-vin-scope",
+      nodes: vins.map((_, i) => ({ id: `ecu-${i}`, profileId: `ecu-${i}` })),
+      results: vins.map((vin, i) => ({ nodeId: `ecu-${i}`, classified: { kind: "no-dtc", records: [] },
+        doc: { final: vin ? { vin } : {} } })),
+    });
+    for (const vins of [[vinA, vinB], [vinB, vinA], [undefined, vinA, vinB]]) {
+      expect(() => capture(vins)).toThrow("diag_vehicle_identity_conflict");
+    }
+    for (const vins of [[vinA, vinA], [undefined, vinA], [vinA, undefined]]) {
+      expect(capture(vins)).toMatchObject({ identityKind: "vin", vehicleKey: vinA });
+    }
+    expect(capture([undefined, undefined])).toMatchObject({ identityKind: "unbound", vehicleKey: null });
+    expect(identityFromCapture({ vin: vinA, vehicleKey: vinA }).vehicleKey).toBe(vinA);
+  });
+
   it("does not infer VIN and rejects unbound pairs until user-declared binding", () => {
     expect(identityFromCapture({ vehicleKey: "unknown:abc" }).identityKind).toBe("unbound");
     expect(identityFromCapture(null).identityKind).toBe("unknown");

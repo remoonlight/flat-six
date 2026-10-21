@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import ctypes as c
 from copy import deepcopy
+from functools import wraps
 import hashlib
 import json
 import ipaddress
@@ -55,6 +56,9 @@ UINT_PARAMETER_CLASSES = {
     'CP_RepeatReqCountTrans': 4, 'CP_CanFuncReqId': 3, 'CP_CanFuncReqFormat': 3,
     'CP_CanPhysReqId': 6, 'CP_CanPhysReqFormat': 6, 'CP_CanRespUSDTId': 6,
     'CP_CanRespUSDTFormat': 6, 'CP_CanRespUUDTId': 6,
+    'CP_CanPhysReqExtAddr': 6, 'CP_CanRespUUDTExtAddr': 6,
+    'CP_CanRespUUDTFormat': 6, 'CP_P2Max': 4, 'CP_CyclicRespTimeout': 4,
+    'CP_Loopback': 3, 'CP_TransmitIndEnable': 3, 'CP_RawCanSequenceHandling': 3,
 }
 
 
@@ -128,6 +132,12 @@ class UniqueTable(c.Structure):
 class Control(c.Structure):
     _fields_ = [("time", U32), ("send_cycles", c.c_int32), ("receive_cycles", c.c_int32),
                 ("temporary", U32), ("flags", Flag), ("expected_count", U32), ("expected", PTR)]
+
+
+class ExpectedResponse(c.Structure):
+    # ISO22900.II PDU_EXP_RESP_DATA; byte pointers remain owned until start returns.
+    _fields_ = [('response_type', U32), ('acceptance', U32), ('mask_size', U32),
+                ('mask', PTR), ('pattern', PTR), ('unique_count', U32), ('unique_ids', PTR)]
 
 
 class Event(c.Structure):
@@ -254,6 +264,19 @@ def require_matching_firmware(address, *, fetch=None, expected_serial=None):
         raise ElmError("vnci-firmware-check-failed") from e
 
 
+def _serialized_native(method):
+    """Keep DLL calls and borrowed-item reads ahead of adapter destruction."""
+    @wraps(method)
+    def serialized(self, *args, **kwargs):
+        lock = getattr(self, '_native_lock', None)
+        if lock is None:
+            # Constructor-bypassing test fixtures share the same instance lock.
+            lock = self.__dict__.setdefault('_native_lock', threading.RLock())
+        with lock:
+            return method(self, *args, **kwargs)
+    return serialized
+
+
 class NativeDpu:
     """Small stdcall binding. Calls run in the existing bounded Python worker."""
     def __init__(self, root=None):
@@ -267,6 +290,7 @@ class NativeDpu:
         self.online = False
         self.constructed = False
         self._close_report = None
+        self._native_lock = threading.RLock()
         try:
             self.dll = c.WinDLL(str(root / "PDUAPI_VW.dll"))
             for name, args in self.export_signatures().items():
@@ -302,11 +326,16 @@ class NativeDpu:
             "PDUGetEventItem": [U32, U32, c.POINTER(c.POINTER(Event))],
         }
 
-    def call(self, name, *args):
+    def _require_open(self):
         if getattr(self, "_close_report", None) is not None:
             raise ElmError("d-pdu:adapter-closed")
+
+    @_serialized_native
+    def call(self, name, *args):
+        NativeDpu._require_open(self)
         _check(getattr(self.dll, name)(*args), name)
 
+    @_serialized_native
     def object_id(self, kind, name):
         value = U32(ID_UNDEF)
         self.call("PDUGetObjectId", kind, name.encode("ascii"), c.byref(value))
@@ -314,6 +343,7 @@ class NativeDpu:
             raise ElmError("d-pdu:unsupported-object:" + name)
         return value.value
 
+    @_serialized_native
     def modules(self):
         ptr = c.POINTER(ModuleItem)()
         self.call("PDUGetModuleIds", c.byref(ptr))
@@ -329,13 +359,16 @@ class NativeDpu:
         finally:
             self.call("PDUDestroyItem", ptr)
 
+    @_serialized_native
     def connect_module(self, handle):
         self.call("PDUModuleConnect", handle)
         self.module = handle
 
+    @_serialized_native
     def check_firmware(self, device):
         return require_matching_firmware(device.get("address"), expected_serial=device["serial"])
 
+    @_serialized_native
     def voltage(self):
         ptr = c.POINTER(DataItem)()
         oid = self.object_id(0x8023, "PDU_IOCTL_READ_VBATT")
@@ -356,6 +389,7 @@ class NativeDpu:
             raise ElmError("d-pdu:invalid-uint-param")
         return c.cast(item.data, c.POINTER(U32))
 
+    @_serialized_native
     def set_param(self, name, value):
         category = UINT_PARAMETER_CLASSES.get(name)
         if category is None or category == 6 or type(value) is not int or not 0 <= value <= UNDEF:
@@ -397,7 +431,11 @@ class NativeDpu:
             raise ElmError("d-pdu:ambiguous-response-params")
         return entry
 
+    @_serialized_native
     def create_link(self, protocol, tx, rx, *, connect=True):
+        self._mode50_configured = False
+        self._mode30_configured = False
+        self._raw_owner = None
         if getattr(self, "_link_transition_errors", None):
             raise ElmError("d-pdu:link-transition-failed")
         if self.link is not None:
@@ -413,6 +451,7 @@ class NativeDpu:
         if link.value in (UNDEF, ID_UNDEF):
             raise ElmError("d-pdu:logical-link-handle-missing")
         self.link = link.value
+        self._link_protocol = protocol
         # Prevent spontaneous tester-present and automatic resend on NRC21/23.
         settings = {"CP_Baudrate": 500000, "CP_RequestAddrMode": 2 if tx == 0x7DF else 1,
                             "CP_TesterPresentHandling": 0, "CP_RC21Handling": 0,
@@ -422,6 +461,18 @@ class NativeDpu:
                             "CP_CanFuncReqId": 0x7DF, "CP_CanFuncReqFormat": 5}
         for name, value in settings.items():
             self.set_param(name, value)
+        values = {"CP_CanPhysReqId": 0x7E0 if tx == 0x7DF else tx,
+                  "CP_CanPhysReqFormat": 5, "CP_CanRespUSDTId": rx, "CP_CanRespUSDTFormat": 5,
+                  "CP_CanRespUUDTId": UNDEF}
+        self._set_response_values(values)
+        # Later setters must not invalidate an earlier successful readback.
+        for name, value in settings.items():
+            self._verify_param_value(name, self.object_id(0x8024, name), UINT_PARAMETER_CLASSES[name], value)
+        if connect:
+            self.call("PDUConnect", self.module, self.link)
+            self.online = True
+
+    def _set_response_values(self, values):
         table = c.POINTER(UniqueTable)()
         self.call("PDUGetUniqueRespIdTable", self.module, self.link, c.byref(table))
         if not table:
@@ -431,9 +482,6 @@ class NativeDpu:
             original_ids = {param.id for param in entry.params[:entry.count]}
             expected_values = {param.id: self._uint(param, expected_class=6).contents.value
                                for param in entry.params[:entry.count]}
-            values = {"CP_CanPhysReqId": 0x7E0 if tx == 0x7DF else tx,
-                      "CP_CanPhysReqFormat": 5, "CP_CanRespUSDTId": rx, "CP_CanRespUSDTFormat": 5,
-                      "CP_CanRespUUDTId": UNDEF}
             ids = {self.object_id(0x8024, name): value for name, value in values.items()}
             if len(ids) != len(values):
                 raise ElmError("d-pdu:ambiguous-response-address-ids")
@@ -463,14 +511,147 @@ class NativeDpu:
                 raise ElmError("d-pdu:response-readback-mismatch")
         finally:
             self.call("PDUDestroyItem", actual)
-        # Later setters must not invalidate an earlier successful readback.
+
+    @_serialized_native
+    def create_mode50_link(self, *, connect=True):
+        """Pinned central-light RAW route; address/PCI/FC stay in its client."""
+        self._mode50_configured = self._mode30_configured = False
+        self._raw_owner = None
+        self._create_raw_can_link(0x754, 0x7BE, connect=connect)
+        self._raw_owner = 'mode50'
+        self._mode50_configured = True
+
+    @_serialized_native
+    def create_mode30_link(self, tx, rx, *, offer, setup, connect=True):
+        """Source seat/door offer or its freshly negotiated standard CAN pair.
+
+        The protocol client owns the source offer and live D0 response. This
+        native method cannot discover a route, send setup or issue ECU writes.
+        """
+        from .mode30_transport import ChannelOffer, SOURCE_CHANNEL_OFFERS
+        self._mode50_configured = self._mode30_configured = False
+        self._raw_owner = None
+        if (not isinstance(offer, ChannelOffer) or offer not in SOURCE_CHANNEL_OFFERS
+                or type(setup) is not bool or type(tx) is not int or type(rx) is not int
+                or not 0 < tx <= 0x7FF or not 0 < rx <= 0x7FF or tx == rx
+                or setup and (tx, rx) != (offer.tx_id, offer.rx_id)):
+            raise ElmError('d-pdu:mode30-address-unqualified')
+        self._create_raw_can_link(tx, rx, connect=connect)
+        self._mode30_offer, self._mode30_setup = offer, setup
+        self._raw_owner = 'mode30'
+        self._mode30_configured = True
+
+    def _create_raw_can_link(self, tx, rx, *, connect):
+        """Shared pinned RAW ABI, settings and independent driver readback."""
+        if getattr(self, '_link_transition_errors', None):
+            raise ElmError('d-pdu:link-transition-failed')
+        if self.link is not None:
+            raise ElmError('d-pdu:link-already-created')
+        pins = (Pin * 2)(Pin(6, self.object_id(0x8025, 'HI')), Pin(14, self.object_id(0x8025, 'LOW')))
+        resource = Resource(self.object_id(0x8022, 'ISO_11898_2_DWCAN'),
+                            self.object_id(0x8021, 'ISO_11898_RAW'), 2, pins)
+        raw_flags = (c.c_uint8 * 4)(0x80, 0, 0, 0)
+        link = U32(UNDEF)
+        self.call('PDUCreateComLogicalLink', self.module, c.byref(resource), ID_UNDEF,
+                  None, c.byref(link), c.byref(Flag(4, raw_flags)))
+        if link.value in (UNDEF, ID_UNDEF):
+            raise ElmError('d-pdu:logical-link-handle-missing')
+        self.link = link.value
+        self._link_protocol = 'ISO_11898_RAW'
+        settings = {'CP_Baudrate': 500000, 'CP_RepeatReqCountApp': 0, 'CP_P2Max': 8000000,
+                    'CP_CyclicRespTimeout': 0, 'CP_Loopback': 0, 'CP_TransmitIndEnable': 0,
+                    'CP_RawCanSequenceHandling': 0}
+        for name, value in settings.items():
+            self.set_param(name, value)
+        self._set_response_values({'CP_CanPhysReqId': tx, 'CP_CanPhysReqFormat': 0,
+            'CP_CanPhysReqExtAddr': 0, 'CP_CanRespUUDTId': rx,
+            'CP_CanRespUUDTFormat': 0, 'CP_CanRespUUDTExtAddr': 0})
         for name, value in settings.items():
             self._verify_param_value(name, self.object_id(0x8024, name), UINT_PARAMETER_CLASSES[name], value)
         if connect:
-            self.call("PDUConnect", self.module, self.link)
+            self.call('PDUConnect', self.module, self.link)
             self.online = True
+        self._raw_tx_id, self._raw_rx_id = tx, rx
 
+    @_serialized_native
+    def start_mode50_primitive(self, frame=None):
+        """An owned receive-only COP or a single transmit-only source frame.
+
+        RAW mode includes the big-endian CAN ID. Expected-response masking and
+        the response-table ID both restrict receiving to the source CAN pair.
+        """
+        if (not getattr(self, '_mode50_configured', False) or not self.online
+                or self.link in (None, UNDEF, ID_UNDEF) or getattr(self, '_link_transition_errors', None)):
+            raise ElmError('d-pdu:mode50-link-not-configured')
+        if frame is not None and (type(frame) is not bytes or len(frame) != 8
+                or frame[0] != 0x55 or frame[1] >> 4 not in (0, 3)
+                or frame[1] >> 4 == 0 and not 1 <= frame[1] <= 6
+                or frame[1] >> 4 == 3 and frame != bytes.fromhex('55301005AAAAAAAA')):
+            raise ElmError('d-pdu:mode50-frame-unqualified')
+        if frame is not None and frame[1] >> 4 == 0:
+            payload = frame[2:2+frame[1]]
+            if (not (payload in (b'\x10\x03', b'\x3E\x00')
+                    or payload in (b'\x19\x02\x08',b'\x19\x02\x0c',b'\x19\x02\x2c')
+                    or len(payload) == 2 and payload[0] in (0x1A, 0x21)
+                    or len(payload) == 3 and payload[0] == 0x22)
+                    or frame[2+frame[1]:] != b'\xAA' * (6-frame[1])):
+                raise ElmError('d-pdu:mode50-frame-unqualified')
+        return self._start_raw_can_primitive(frame, 0x754, 0x7BE)
+
+    @_serialized_native
+    def start_mode30_primitive(self, frame=None):
+        """Receive only, transport control, or one whitelisted read TP frame."""
+        from .mode30_transport import HOST_PARAMETERS, _read_allowlist
+        if (not getattr(self, '_mode30_configured', False) or not self.online
+                or getattr(self, '_raw_owner', None) != 'mode30'
+                or self.link in (None, UNDEF, ID_UNDEF) or getattr(self, '_link_transition_errors', None)):
+            raise ElmError('d-pdu:mode30-link-not-configured')
+        if frame is not None:
+            valid = type(frame) is bytes and 1 <= len(frame) <= 8
+            if valid and self._mode30_setup:
+                valid = frame == self._mode30_offer.payload
+            elif valid:
+                valid = (frame in (HOST_PARAMETERS, b'\xA1'+HOST_PARAMETERS[1:], b'\xA8')
+                    or len(frame) == 1 and frame[0] >> 4 == 0xB)
+                if not valid and len(frame) >= 5 and frame[0] >> 4 == 1 and frame[1] == 0 and frame[2] == len(frame)-3:
+                    try:
+                        _read_allowlist({frame[3:].hex().upper()})
+                        valid = True
+                    except ElmError:
+                        pass
+            if not valid:
+                raise ElmError('d-pdu:mode30-frame-unqualified')
+        return self._start_raw_can_primitive(frame, self._raw_tx_id, self._raw_rx_id)
+
+    def _start_raw_can_primitive(self, frame, tx, rx):
+        """Callers validate protocol ownership before the shared one-shot ABI."""
+        flags_data = (c.c_uint8 * 4)(0, 0, 0, 0)
+        if frame is None:
+            mask = (c.c_uint8 * 4)(255, 255, 255, 255)
+            pattern = (c.c_uint8 * 4).from_buffer_copy(rx.to_bytes(4, 'big'))
+            ids = (U32 * 1)(1)
+            expected = ExpectedResponse(0, 1, 4, c.cast(mask, PTR), c.cast(pattern, PTR), 1, c.cast(ids, PTR))
+            control = Control(0, 0, -1, 0, Flag(4, flags_data), 1, c.cast(c.pointer(expected), PTR))
+            payload = b''
+        else:
+            control = Control(0, 1, 0, 0, Flag(4, flags_data), 0, None)
+            payload = tx.to_bytes(4, 'big') + frame
+        data = (c.c_uint8 * len(payload)).from_buffer_copy(payload) if payload else None
+        tag = getattr(self, '_raw_tag_counter', 0) + 1
+        if tag > 0xFFFFFFFF:
+            raise ElmError('d-pdu:raw-tag-exhausted')
+        self._raw_tag_counter = tag
+        cop = U32(UNDEF)
+        self.call('PDUStartComPrimitive', self.module, self.link, 0x8004, len(payload),
+                  data, c.byref(control), c.c_void_p(tag), c.byref(cop))
+        if cop.value in (UNDEF, ID_UNDEF):
+            raise ElmError('d-pdu:primitive-handle-missing')
+        return cop.value, tag
+
+    @_serialized_native
     def start(self, payload):
+        if getattr(self, '_link_protocol', None) == 'ISO_11898_RAW':
+            raise ElmError('d-pdu:raw-link-requires-'+('mode30' if getattr(self, '_raw_owner', None)=='mode30' else 'mode50')+'-primitive')
         if getattr(self, "_link_transition_errors", None):
             raise ElmError("d-pdu:link-transition-failed")
         if not self.online or self.link in (None, UNDEF, ID_UNDEF):
@@ -486,7 +667,11 @@ class NativeDpu:
             raise ElmError("d-pdu:primitive-handle-missing")
         return cop.value
 
+    @_serialized_native
     def event(self):
+        # This API handles the empty-queue status directly, bypassing call().
+        # It still must not enter a driver whose close already completed.
+        NativeDpu._require_open(self)
         ptr = c.POINTER(Event)()
         code = self.dll.PDUGetEventItem(self.module, self.link, c.byref(ptr))
         if code == 0x71:
@@ -497,6 +682,8 @@ class NativeDpu:
         try:
             ev = ptr.contents
             out = {"type": ev.type, "cop": ev.cop, "timestamp": ev.timestamp}
+            if getattr(self, '_link_protocol', None) == 'ISO_11898_RAW':
+                out['tag'] = ev.tag or 0
             if not ev.data:
                 raise ElmError("d-pdu:event-data-missing")
             if ev.type == 0x1300:
@@ -528,9 +715,11 @@ class NativeDpu:
         finally:
             self.call("PDUDestroyItem", ptr)
 
+    @_serialized_native
     def cancel(self, cop):
         self.call("PDUCancelComPrimitive", self.module, self.link, cop)
 
+    @_serialized_native
     def release_link(self):
         """Release one logical route without disconnecting the matched module.
 
@@ -559,6 +748,7 @@ class NativeDpu:
         return {"errors": errors, "moduleRetained": self.module is not None and self.constructed,
                 "ecuRestorationProven": False}
 
+    @_serialized_native
     def close(self):
         if getattr(self, "_close_report", None) is not None:
             return deepcopy(self._close_report)
@@ -635,6 +825,7 @@ class DpuClient:
         self._cleanup_errors = []
         self._close_report = None
         self.allowed = set()
+        self._manufacturer_contract = None
         self.identity = None
 
     def _guard(self, deadline):
@@ -673,6 +864,7 @@ class DpuClient:
         self._guard(deadline)
         self._configured = False
         self.allowed = set()
+        self._manufacturer_contract = None
         pairs = [p for p in load_catalog()["profiles"]
                  if p["id"] in ("porsche-981-2014-dme", "porsche-981-2014-gateway")
                  and p["txId"] == tx_hex and p["rxId"] == rx_hex]
@@ -701,6 +893,7 @@ class DpuClient:
             replacing = self._configured
             self._configured = False
             self.allowed = set()
+            self._manufacturer_contract = None
             if replacing:
                 report = self.native.release_link()
                 if (not isinstance(report, dict) or not isinstance(report.get("errors"), list)
@@ -722,8 +915,8 @@ class DpuClient:
         finally:
             self._lock.release()
 
-    def configure_manufacturer(self, profile, selected, deadline):
-        """Bind typed, verified DME/Gateway definitions to this VNCI link only.
+    def configure_manufacturer(self, profile, selected, deadline, *, identity_only=False):
+        """Bind typed, verified manufacturer definitions to this VNCI link only.
 
         Production passes a hash-verified profile from manufacturer_read. The
         shared session engine must finish fresh complete identity qualification
@@ -735,13 +928,57 @@ class DpuClient:
         self._guard(deadline)
         self._configured = False
         self.allowed = set()
-        contract = prepared_read_contract(profile, selected, transport_kind='d-pdu-iso-tp')
+        self._manufacturer_contract = None
+        contract = prepared_read_contract(profile, selected, transport_kind='d-pdu-iso-tp', identity_only=identity_only)
+        if contract.get('transportAddressing', {}).get('kind') in ('porsche-mode50','porsche-tp20'):
+            raise ElmError('manufacturer-transport-unqualified')
         allowed = {group['requestHex'] for group in contract['groups']}
         allowed.update(row['requestHex'] for row in contract['identityRequests'])
         allowed.add(contract['session']['requestHex'])
-        self.configure_pair(f"{contract['txId']:X}", f"{contract['rxId']:X}", deadline)
+        allowed.update(contract.get('sourceCommands',[]))
+        if contract.get('sourceQualification'):
+            try:
+                protocol='ISO_15765_3_on_ISO_15765_2' if contract.get('applicationProtocol')=='uds' else 'ISO_14230_3_on_ISO_15765_2'
+                self.native.create_link(protocol, contract['txId'], contract['rxId'])
+            except Exception:
+                self._poisoned = True
+                raise
+            self._configured = True
+        else:
+            self.configure_pair(f"{contract['txId']:X}", f"{contract['rxId']:X}", deadline)
         # Do not retain the broader named-catalog/standard-engine allowlist.
         self.allowed = allowed
+        self._manufacturer_contract = deepcopy(contract) if identity_only else None
+
+    def bind_manufacturer_identity(self, profile, deadline):
+        """Finish a source-version discovery on the existing read-only link.
+
+        The engine calls this after a unique selector match. Rebuild the actual
+        source contract here; never accept a raw request list or a new address.
+        This grants only identity reads, without bus IO or measurement access.
+        """
+        from .manufacturer_transport import prepared_read_contract
+        if not self._lock.acquire(blocking=False):
+            raise ElmError('request-in-flight')
+        try:
+            self._guard(deadline)
+            base = self._manufacturer_contract
+            if not self._configured or not base or not base.get('sourceQualification') or base['groups']:
+                raise ElmError('manufacturer-identity-bind-unqualified')
+            actual = prepared_read_contract(profile, [], transport_kind='d-pdu-iso-tp', identity_only=True)
+            same = ('ecuId','generation','catalogProfileId','txId','rxId','session',
+                    'applicationProtocol','sourceCommands','sourceCatalogId','sourceQualification')
+            if (any(actual.get(k) != base.get(k) for k in same)
+                    or bool(actual.get('versionSelectors')) != bool(base.get('versionSelectors'))):
+                raise ElmError('manufacturer-identity-bind-route-conflict')
+            reads = {r['requestHex'] for r in actual['identityRequests']}
+            if any(not re.fullmatch(r'(?:1A[0-9A-F]{2}|22[0-9A-F]{4})', hx) for hx in reads):
+                raise ElmError('manufacturer-identity-bind-request-invalid')
+            self._guard(deadline)
+            self.allowed = self.allowed | reads
+            self._manufacturer_contract = deepcopy(actual)
+        finally:
+            self._lock.release()
 
     def request(self, req_hex, deadline):
         self._guard(deadline)
@@ -754,6 +991,62 @@ class DpuClient:
         reason = blocked_reason(payload, self.allowed)
         if reason:
             raise ElmError(reason)
+        return self._request_payload(payload, deadline)
+
+    def _check_coding_access_link(self, contract):
+        base = self._manufacturer_contract
+        fields = ('profileId', 'sourceCatalogId', 'sourceQualification', 'ecuId',
+                  'generation', 'txId', 'rxId', 'applicationProtocol')
+        if (self._device_brand != 'vnci' or not self._configured or not isinstance(base, dict)
+                or not base.get('sourceQualification') or base.get('groups')
+                or contract.get('transportAddressing', {}).get('kind') in ('porsche-tp20', 'porsche-mode50')
+                or any(base.get(key) != contract.get(key) for key in fields)):
+            raise ElmError('coding-access-native-link-unqualified')
+
+    def run_coding_access(self, source, profile, contract, qualification, deadline, guard):
+        """Run only the qualified source access flow on this identified link.
+
+        The nested transport accepts no external raw request. Public request()
+        retains its blocked-SID policy. Coding-record writes are not granted.
+        """
+        from .manufacturer_coding_access import run_coding_access as exchange_access, _operations
+        profile = deepcopy(profile)
+        bound = deepcopy(contract)
+        self._guard(deadline)
+        self._check_coding_access_link(bound)
+        # Source/identity/complete-scope qualification is performed by the
+        # exchange before it invokes the local transport or native start().
+        owner = self
+
+        class AccessTransport:
+            allowed = set()
+
+            def request(self, hx, until):
+                definition = source.resolve(profile['profileId'])['match']
+                if definition is None:
+                    raise ElmError('coding-access-definition-missing')
+                operations = _operations(definition['modeWord'])
+                data = bytes.fromhex(hx)
+                session = hx in {op[0] for op in operations}
+                seed = any(data == bytes((0x27, op[1])) for op in operations)
+                key = any(data[:2] == bytes((0x27, op[2]))
+                    and len(data) == 2 + definition['flagByte'] for op in operations)
+                if hx not in self.allowed or not (session or seed or key):
+                    raise ElmError('coding-access-native-request-unqualified')
+                return owner._request_payload(data, until, coding_contract=bound)
+
+        result = exchange_access(AccessTransport(), source, deepcopy(profile), bound,
+            deepcopy(qualification), deadline, guard, clock=self._clock, sleeper=self._sleep)
+        if not result['ok']:
+            # A changed session or unknown access result must be re-identified,
+            # even when the last native primitive itself finished normally.
+            self._poisoned = True
+        return result
+
+    def _request_payload(self, payload, deadline, *, coding_contract=None):
+        self._guard(deadline)
+        if not self._configured:
+            raise ElmError('not-configured')
         if not self._lock.acquire(blocking=False):
             raise ElmError("request-in-flight")
         cop = None
@@ -763,6 +1056,8 @@ class DpuClient:
             # Close/cancellation may have happened between the first guard and
             # acquiring the request lock. Never enter native code in that case.
             self._guard(deadline)
+            if coding_contract is not None:
+                self._check_coding_access_link(coding_contract)
             # A leftover event cannot be reused as the new request's response.
             for _ in range(32):
                 prior = self.native.event()
@@ -917,6 +1212,7 @@ class DpuClient:
             self._closed = True
             self._configured = False
             self.allowed = set()
+            self._manufacturer_contract = None
             try:
                 report = self.native.close()
                 if (not isinstance(report, dict) or not isinstance(report.get("errors"), list)

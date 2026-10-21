@@ -38,8 +38,35 @@ class ImportTests(unittest.TestCase):
     def test_unknown_conditions_are_not_silently_dropped(self):
         with self.assertRaisesRegex(ValueError, "Unsupported rule condition"):
             self.run_import(rule("982 TEST", extra="<UNKNOWN>TEST</UNKNOWN>"))
-        with self.assertRaisesRegex(ValueError, "Unsupported target condition"):
+        with self.assertRaisesRegex(ValueError, "Unsupported rule condition"):
             self.run_import(rule("982 TEST", target_extra="<UNKNOWN>TEST</UNKNOWN>"))
+
+    def test_unknown_attributes_cannot_change_rule_or_family_semantics(self):
+        original = rule("981 TEST", product="F82CA")
+        for tag in ["FLASHREGEL", "ISTSTAND", "PRODUKTSCHLUESSEL", "AUSSTATTUNG",
+                    "STEUERGERAETE", "SOLLSTAND", "STEUERGERAET", "LOGICALLINK", "PTNR"]:
+            with self.subTest(tag=tag), self.assertRaisesRegex(ValueError, "Unsupported rule attributes"):
+                self.run_import(original.replace('<'+tag+'>', '<'+tag+' operator="NOT">', 1))
+        # Even a nominal non-target family cannot hide a negated family test.
+        with self.assertRaisesRegex(ValueError, "Unsupported rule attributes"):
+            self.run_import(rule("991 TEST", product="F91CA").replace('<PRODUKTSCHLUESSEL>', '<PRODUKTSCHLUESSEL negate="true">'))
+
+    def test_duplicate_single_fields_cannot_silently_choose_the_first_value(self):
+        for body in [
+            rule("981 TEST", product="F82CA").replace('</PRODUKTSCHLUESSEL>', '</PRODUKTSCHLUESSEL><PRODUKTSCHLUESSEL>F91CA</PRODUKTSCHLUESSEL>'),
+            rule("981 TEST", target_extra='<PTNR>OTHER-SW</PTNR>'),
+            rule("981 TEST", target_extra='<LOGICALLINK>OTHER-ECU</LOGICALLINK>'),
+            rule("981 TEST", extra='<AUSSTATTUNG>OTHER</AUSSTATTUNG>'),
+        ]:
+            with self.subTest(body=body), self.assertRaisesRegex(ValueError, "Duplicate rule field"):
+                self.run_import(body)
+
+    def test_multiple_target_units_keep_source_order(self):
+        original = rule("981 TEST", product="F82CA")
+        second = '<STEUERGERAET><LOGICALLINK>SECOND</LOGICALLINK><PTNR>SECOND-SW</PTNR></STEUERGERAET>'
+        original = original.replace('</STEUERGERAETE></SOLLSTAND>', second+'</STEUERGERAETE></SOLLSTAND>')
+        doc = self.run_import(original)
+        self.assertEqual([t['logicalLink'] for t in doc['rules'][0]['targets']], ['TEST-ECU', 'SECOND'])
 
     def test_hardware_software_conditions_and_product_family_are_preserved(self):
         current = "<STEUERGERAET><LOGICALLINK>AIRBAG</LOGICALLINK><HWTNR>HW1/HW2</HWTNR><PTNR>SW1/SW2</PTNR><SWVERSION>2040</SWVERSION></STEUERGERAET>"

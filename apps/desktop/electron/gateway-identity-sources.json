@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "kind": "reviewed-gateway-identity-contracts",
+  "sourceCatalogId": "31bf93245fffc375b757fc19ba03491e101ccabc838c9ee742d70a88cb7805ba",
+  "contractFields": [
+    "sourceQualification",
+    "applicationProtocol",
+    "txId",
+    "rxId",
+    "identityConstraints",
+    "sourceCommands",
+    "session",
+    "versionSelectors",
+    "identityRequests"
+  ],
+  "profiles": [
+    {
+      "profileId": "9x1:CAN_CAN_Gateway:CAN_CAN_Gateway_A3",
+      "identityContractSha256": "180b602acbdd41365c74c6fbba1576ddc92c2f988c5a29e38f73bcfc86721256"
+    },
+    {
+      "profileId": "9x1:CAN_CAN_Gateway:CAN_CAN_Gateway_A4",
+      "identityContractSha256": "d071bca02c95be00dae4e21fe8e1d8913ad3be1b6a786c9a172cf54932d7d24c"
+    },
+    {
+      "profileId": "9x1:CAN_CAN_Gateway:CAN_CAN_Gateway_A4_1",
+      "identityContractSha256": "9f1b6917d09599f62c2eff4db9cc29fce98303e7dcb3c78411ed6766300e06c0"
+    },
+    {
+      "profileId": "9x1:CAN_CAN_Gateway:CAN_CAN_Gateway_A4_2",
+      "identityContractSha256": "e8c156eef22fb42a01ecf9b270044acdc927650636b2e22edf3238756b6c7ce4"
+    },
+    {
+      "profileId": "9x1:CAN_CAN_Gateway:CAN_CAN_Gateway_A5",
+      "identityContractSha256": "c6516c11da41384c3f5191cc3f7685effe10d5eda3659e4ae986dd2ccbe7880e"
+    },
+    {
+      "profileId": "9x1:CAN_CAN_Gateway:CAN_CAN_Gateway_A5_1",
+      "identityContractSha256": "2335eae00ca91c9f3e049b606eec6ec59f7c9d95779dc05413c81efaabb5462a"
+    },
+    {
+      "profileId": "9x1:CAN_CAN_Gateway:CAN_CAN_Gateway_A5_2",
+      "identityContractSha256": "3123342ff8050df31b32ce909a314b69ec94b4b5c4f32149555f5bffc631a132"
+    },
+    {
+      "profileId": "9x1:CAN_CAN_Gateway:CAN_CAN_Gateway_A5_3",
+      "identityContractSha256": "206ef306bac1770bfceb0d9b0c731a9214b6d369fef3d959c55407a33447dda1"
+    },
+    {
+      "profileId": "9x1:CAN_CAN_Gateway:CAN_CAN_Gateway_A6",
+      "identityContractSha256": "1c23d064e349696e9e00a556d5a3a67a63f1083c53113ab8b9399eed0a094058"
+    },
+    {
+      "profileId": "9x1:CAN_CAN_Gateway:CAN_CAN_Gateway_A6_1",
+      "identityContractSha256": "b7ddeda5a5bd9479226fabbf0a14fc628a8ad0b8e6a3d8a7ebd89d3ee18e554f"
+    },
+    {
+      "profileId": "9x1:CAN_CAN_Gateway:CAN_CAN_Gateway_A6_2",
+      "identityContractSha256": "9e7b6d37d741755f97ecd34256a66ab8dff7b8fa8d355ff32db5beeaf85d5384"
+    },
+    {
+      "profileId": "9x1:CAN_CAN_Gateway:CAN_CAN_Gateway_A6_3",
+      "identityContractSha256": "3726a6ee408f895a03d8afc5fbab08f226eb250dc33cc4a7a0e3bc3843868f58"
+    },
+    {
+      "profileId": "9x1:CAN_CAN_Gateway:CAN_CAN_Gateway_A6_4",
+      "identityContractSha256": "96ef1f15eeaff0522860baebb10a741be67df9f3ff9ffc205075f5ded3e366ae"
+    },
+    {
+      "profileId": "9x1:CAN_CAN_Gateway:CAN_CAN_Gateway_A7_0",
+      "identityContractSha256": "6af2d7892a0c4e974292b011cbea6d661b9ca29684ceb997b184d46e34b66028"
+    },
+    {
+      "profileId": "9x1:CAN_CAN_Gateway:CAN_CAN_Gateway_A7_1",
+      "identityContractSha256": "367bad2c04768617404d88f3f4dc87dc3a71cef9f1b0168dde26aaed1c1e6a66"
+    },
+    {
+      "profileId": "9x1:CAN_CAN_Gateway:CAN_CAN_Gateway_A7_2_China",
+      "identityContractSha256": "4d2552582a4592fa8aa5e25b9d2cd1c468a9550502df8c9d7325375fa9a6b2ef"
+    }
+  ]
+}

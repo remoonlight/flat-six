@@ -14,7 +14,7 @@ import xml.etree.ElementTree as ET
 
 from .elm import ElmError
 from .pt3g import NativeAdapter, SUPPORT_SHA256, vendor_root
-from .vnci import U32, UNDEF, ID_UNDEF, _check
+from .vnci import U32, UNDEF, ID_UNDEF, _check, _serialized_native
 
 GUARDS = dict(moduleConnected=False, logicalLinkCreated=False, parametersApplied=False,
               ecuRequestsSent=0, firmwareQualified=False, vehicleTransportQualified=False,
@@ -153,7 +153,9 @@ class _ReadObjectProbe(NativeAdapter):
         self._read_objects = {(r['objectType'],r['name'].encode('ascii')) for r in self.contract['objectQueries']}
         super().__init__(root)
 
+    @_serialized_native
     def call(self, name, *args):
+        self._require_open()
         if name=='PDUGetObjectId':
             if len(args)!=3 or type(args[0]) is not int or type(args[1]) is not bytes or (args[0],args[1]) not in self._read_objects:
                 raise ElmError('pt3g-read-object-not-in-source-contract')

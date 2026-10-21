@@ -17,6 +17,49 @@ def profile():
 
 
 class AcquisitionTests(unittest.TestCase):
+    def test_decoded_identifier_without_display_preserves_the_complete_value(self):
+        for value in ('0000000000000000', ''):
+            with self.subTest(value=value), patch(
+                'scripts.diagnostics.manufacturer_acquisition.decode_application_response',
+                return_value={'ok': True, 'value': value, 'display': None, 'numeric': False}):
+                out = acquire_cycle(profile(), ['a'*64], lambda _: bytes.fromhex('62F10000'))
+                self.assertTrue(out['ok'], out)
+                self.assertEqual(out['samples'][0]['value'], value)
+                self.assertEqual(out['samples'][0]['display'], value)
+
+    def test_invalid_value_does_not_discard_healthy_fields_or_other_requests(self):
+        p = profile(); p['parameters'].append(field('c', '22F101'))
+        p['parameters'][0]['formula']['text'] += 'Ic:[0xFF]->0xF0005B27'
+        out = acquire_cycle(p, ['a'*64, 'b'*64, 'c'*64],
+            lambda hx: bytes.fromhex('62F100FF07' if hx == '22F100' else '62F1012A'))
+        self.assertTrue(out['ok'], out)
+        self.assertEqual([s['value'] for s in out['samples']], [7, 42])
+        self.assertEqual(out['unavailableParameters'], [])
+        self.assertEqual(len(out['invalidParameters']), 1)
+        entry = out['invalidParameters'][0]
+        self.assertEqual((entry['parameterId'], entry['reason']), ('a'*64, 'invalid_reserved'))
+        self.assertEqual(entry['pduSha256'], out['transactions'][0]['pduSha256'])
+        self.assertEqual(entry['processedUtc'], out['transactions'][0]['processedUtc'])
+        self.assertTrue(all(t['ok'] for t in out['transactions']))
+
+    def test_invalid_value_then_truncated_field_keeps_group_atomic(self):
+        p = profile(); p['parameters'][0]['formula']['text'] += 'Ic:[0xFF]->0xF0005B27'
+        out = acquire_cycle(p, ['a'*64, 'b'*64], lambda _: bytes.fromhex('62F100FF'))
+        self.assertFalse(out['ok'], out)
+        self.assertEqual(out['invalidParameters'], [])
+        self.assertEqual(out['samples'], [])
+
+    def test_only_known_value_errors_are_isolated(self):
+        from scripts.diagnostics.manufacturer_acquisition import INVALID_VALUE_REASONS
+        for reason in [*INVALID_VALUE_REASONS, 'unexpected-decoder-error']:
+            with self.subTest(reason=reason), patch(
+                'scripts.diagnostics.manufacturer_acquisition.decode_application_response',
+                return_value={'ok': False, 'reason': reason}):
+                out = acquire_cycle(profile(), ['a'*64], lambda _: bytes.fromhex('62F100FF'))
+                self.assertEqual(out['ok'], reason in INVALID_VALUE_REASONS)
+                self.assertEqual(len(out['invalidParameters']), int(reason in INVALID_VALUE_REASONS))
+                self.assertEqual(out['samples'], [])
+
     def test_conflicting_request_metadata_is_rejected_before_provider(self):
         def forbidden(_):raise AssertionError('provider called')
         for change in ({'pid':0xF101},{'wireSID':0x21},{'rawSID':0x2E},{'read_request_candidate_hex':'22F101'}):
@@ -84,7 +127,7 @@ class AcquisitionTests(unittest.TestCase):
             self.assertEqual(acquire_cycle(p, ['a' * 64], forbidden)['error'], 'manufacturer-profile-unqualified')
 
     def test_group_atomic_negative_short_timeout_and_missing(self):
-        for value in (b'', None, bytes.fromhex('7F2278'), bytes.fromhex('7F2231'),
+        for value in (b'', None, bytes.fromhex('7F2278'), bytes.fromhex('7F2233'),
                       bytes.fromhex('62F1002A'), bytes.fromhex('62F1012A07')):
             out = acquire_cycle(profile(), ['a' * 64, 'b' * 64], lambda _: value)
             self.assertFalse(out['ok']); self.assertEqual(out['samples'], [])
@@ -105,6 +148,32 @@ class AcquisitionTests(unittest.TestCase):
                             lambda hx: bytes.fromhex('62F1002A') if hx == '22F100' else b'')
         self.assertFalse(out['ok']); self.assertEqual(len(out['samples']), 1)
         self.assertEqual(out['samples'][0]['value'], 42)
+
+    def test_explicit_unsupported_group_disables_only_its_fields_and_keeps_other_group(self):
+        p = profile(); p['parameters'].append(field('c', '22F101'))
+        for nrc in (0x11, 0x31):
+            seen = []
+            def receive(hx):
+                seen.append(hx)
+                return bytes((0x7F, 0x22, nrc)) if hx == '22F100' else bytes.fromhex('62F10107')
+            out = acquire_cycle(p, ['a'*64, 'b'*64, 'c'*64], receive)
+            self.assertTrue(out['ok'], out)
+            self.assertEqual(seen, ['22F100', '22F101'])
+            self.assertEqual([s['parameterId'] for s in out['samples']], ['c'*64])
+            self.assertEqual([s['parameterId'] for s in out['unavailableParameters']], ['a'*64, 'b'*64])
+            self.assertEqual(out['unavailableParameters'][0]['pduSha256'], out['transactions'][0]['pduSha256'])
+            self.assertEqual(out['unavailableParameters'][0]['processedUtc'], out['transactions'][0]['processedUtc'])
+
+    def test_other_negatives_never_become_unavailable_and_do_not_continue(self):
+        p = profile(); p['parameters'][1] = field('b', '22F101')
+        for pdu in ('7F2221', '7F2222', '7F2233', '7F2278', '7F2131', '7F223100', '7F22'):
+            seen = []
+            def receive(hx):
+                seen.append(hx); return bytes.fromhex(pdu)
+            out = acquire_cycle(p, ['a'*64, 'b'*64], receive)
+            self.assertFalse(out['ok'], pdu)
+            self.assertEqual(out['unavailableParameters'], [])
+            self.assertEqual(seen, ['22F100'])
 
     def test_exact_historical_source_hash_address_phase(self):
         p = profile(); raw = bytes.fromhex('62F1002A07')

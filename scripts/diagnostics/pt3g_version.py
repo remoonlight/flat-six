@@ -14,7 +14,7 @@ import struct
 
 from .elm import ElmError
 from .pt3g import NativeAdapter, SUPPORT_SHA256, vendor_root
-from .vnci import U32, UNDEF, _check
+from .vnci import U32, UNDEF, _check, _serialized_native
 
 GUARDS=dict(moduleConnected=False,logicalLinkCreated=False,ecuRequestsSent=0,
             hardwareIdentityQualified=False,firmwareQualified=False,
@@ -120,7 +120,9 @@ class _MetadataProbe(NativeAdapter):
                 raise ElmError('pt3g-api-version-probe-init-cleanup-failed') from None
             raise
 
+    @_serialized_native
     def call(self,name,*args):
+        self._require_open()
         if name=='PDUGetVersion':
             if len(args)!=2 or type(args[0]) is not int or args[0]!=UNDEF:
                 raise ElmError('pt3g-api-version-only-undefined-module')

@@ -21,7 +21,7 @@ try {
   put(delivery, "delivery-manifest.json", JSON.stringify(manifest));
   const first = verifyLaptopAcceptanceInputs(delivery, bundle); assert.equal(first.staticOnly, true); assert.equal(first.windowsExecutionVerified, false); checks++;
   for (const name of ["accept-laptop.cmd", "README.md", "scripts/windows-runtime-accept.mjs", "scripts/windows-runtime-source.mjs",
-    "scripts/laptop-accept-inputs.mjs", "apps/desktop/electron/offline-diagnostics.mjs", "apps/desktop/electron/installed-entry.mjs",
+    "scripts/laptop-accept-inputs.mjs", "scripts/obd-unidentified-ui-check.mjs", "apps/desktop/electron/offline-diagnostics.mjs", "apps/desktop/electron/installed-entry.mjs",
     "node_modules/playwright/index.mjs", "node_modules/playwright-core/index.mjs"]) put(kit, name, "SYNTHETIC fixture only");
   put(kit, "package.json", JSON.stringify({ name: "flat-six-laptop-acceptance", type: "module" }));
   for (const name of ["playwright", "playwright-core"]) put(kit, `node_modules/${name}/package.json`, JSON.stringify({ name, version: "1.62.1" }));

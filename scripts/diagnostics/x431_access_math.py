@@ -31,6 +31,16 @@ NAMED_FUNCTIONS = (
      0x23ae4, 140, '3d5d8aed961da0522c778390fdcd51496cc05e6d6e1bdabefe2cfed3d5d1336e', 4, 40, 'ASAM_seedkey_Gateway'),
     ('psm', '_Z62ASAP1A_CCP_ComputeKeyFromSeed_E70BF466EE7EC94D7CA91F163898FEE5PhtS_tPt',
      0x230ec, 208, 'c69ccb2c6d4b43c404417e650a0d41d8b44ba166f63a1c65be004ca2ed947ab1', 2, 22, 'ASAM_seedkey_PSM'),
+    ('pdk', '_Z62ASAP1A_CCP_ComputeKeyFromSeed_2BF9206CB1FA70E8D1C9333C6F06F725PhtS_tPt',
+     0x235c8, 224, 'ae428dec1770377524f0075e6d87b8b7a45719329fe1afef7ab92e64da410448', 2, 30, 'ASAM_seedkey_PDK'),
+    ('kombi-9x1', '_Z62ASAP1A_CCP_ComputeKeyFromSeed_CF204DC3E999C2DA3C824397DE7EDE89PhtS_tPt',
+     0x23de8, 154, '81315487da91ab6ec704aa595ff9e729ec9f71c1a10c9424a45c9f5d705f71f4', 4, 45, 'kombi_9x1_codierung'),
+    ('bcm-v-h', '_Z62ASAP1A_CCP_ComputeKeyFromSeed_0C06174BD705DAE0356040C2503F59B2PhtS_tPt',
+     0x22aa8, 140, '49e9292f48d578e7855d397c7a358c81c99c672b7a649e65456f8c16cda5aefc', 4, 10, 'ASAM_seedkey_BCM_V'),
+    ('swsg', '_Z62ASAP1A_CCP_ComputeKeyFromSeed_2400B02A51433AC88778712B4E59EAAEPhtS_tPt',
+     0x22b34, 140, '6b2d706c9e09e9226ae26d1d024bc4096f27225d6265df9cd3b6c27962e064b0', 4, 11, 'SWSG_seedkey'),
+    ('rdk', '_Z62ASAP1A_CCP_ComputeKeyFromSeed_D61F9674EC5E918218101C97593C55E0PhtS_tPt',
+     0x22da4, 140, '2c59a87dc5a4194340a5ddfa49e870df94de03597acd7540bbd65a98b0879e17', 4, 15, 'ASAM_seedkey_RDK'),
 )
 GUARDS = dict(integerModelOnly=True, nativeOriginalInstructionsExecuted=False,
     actualProcessBindingQualified=False, vehicleResponseMappingQualified=False,
@@ -163,6 +173,62 @@ def transform_psm(word: int) -> int:
     return shifted & 0xffff
 
 
+def transform_pdk(word: int) -> int:
+    """Fixed two-byte source algorithm; explicit word, no vehicle/session selection."""
+    word = _unsigned_word(word,16)
+    count = ((word >> 6) & 1) | ((word >> 9) & 2) | (word & 4) | ((word >> 10) & 8)
+    if word & 0x10:
+        rotated = (word << count) | (word >> (16-count))
+    else:
+        rotated = (word >> count) | (word << (16-count))
+    operation = ((word >> 9) & 1) | ((word >> 13) & 2)
+    if operation == 0:
+        result = word & rotated
+    elif operation == 1:
+        result = word | rotated
+    elif operation == 2:
+        result = word ^ rotated
+    else:
+        result = ~word
+    return result & 0xffff
+
+
+def transform_kombi_9x1(word: int) -> int:
+    """Four explicit bytes with separate output; no ECU/version or access selection.
+
+    The original native body ignores declared lengths and differs for overlapping
+    buffers. An unsigned word guarantees four input bytes and no mutable alias.
+    """
+    word = _unsigned_word(word, 32)
+    seed = word.to_bytes(4, 'big')
+    key = bytearray(((seed[2] + 1) & 255, (seed[0] + 2) & 255,
+                     (seed[3] + 3) & 255, (seed[1] + 4) & 255))
+    for step in range(31):
+        index = step % 4
+        key[index] = ((key[index] + seed[(step + 1) % 4]) ^ seed[(step + 2) % 4]) & 255
+        other = (step + 3) % 4
+        key[other] ^= seed[index]
+    return int.from_bytes(key, 'big')
+
+
+def transform_bcm_v_h(word: int) -> int:
+    """Shared source body for front/rear aliases; no actual ECU selection."""
+    word = _unsigned_word(word, 32)
+    return ((word ^ 0x03f4c55d) * 0xa953fd4e + 0x6ed9eba1) & 0xffffffff
+
+
+def transform_swsg(word: int) -> int:
+    """Fixed soft-top source body; no version, response or access mapping."""
+    word = _unsigned_word(word, 32)
+    return ((word ^ 0xf4932bd6) * 0xa953fd4e + 0x6ed9eba1) & 0xffffffff
+
+
+def transform_rdk(word: int) -> int:
+    """Fixed RDK source arithmetic; no ECU, input-response or access mapping."""
+    word = _unsigned_word(word, 32)
+    return ((word ^ 0x30154c8b) * 0xa953fd4e + 0x6ed9eba1) & 0xffffffff
+
+
 def audit_source(blob: bytes):
     """Verify the exact retained ELF before attaching source provenance to CLI output."""
     if type(blob) is not bytes or len(blob) != SOURCE_BYTES or hashlib.sha256(blob).hexdigest() != SOURCE_SHA256:
@@ -193,15 +259,15 @@ def audit_source(blob: bytes):
 def main(argv=None):
     parser = argparse.ArgumentParser(description='Pinned X431 offline integer math; no vehicle/session operations')
     parser.add_argument('--source', required=True, type=Path)
-    parser.add_argument('--entry', required=True, choices=('1c940', '1cd20', 'mode2', 'mode6', 'bde-cod-w06', 'gateway', 'psm'))
+    parser.add_argument('--entry', required=True, choices=('1c940', '1cd20', 'mode2', 'mode6', 'bde-cod-w06', 'gateway', 'psm', 'pdk', 'kombi-9x1', 'bcm-v-h', 'swsg', 'rdk'))
     parser.add_argument('--window-hex', required=True)
     parser.add_argument('--second', type=int)
     parser.add_argument('--minute', type=int)
     parser.add_argument('--hour', type=int)
     args = parser.parse_args(argv)
     scalar = args.entry in ('mode2', 'mode6')
-    named = args.entry in ('bde-cod-w06','gateway','psm')
-    size = (2 if args.entry == 'psm' else 4) if named else 4 if scalar else 8 if args.entry == '1c940' else 2
+    named = args.entry in ('bde-cod-w06','gateway','psm','pdk','kombi-9x1','bcm-v-h','swsg','rdk')
+    size = (2 if args.entry in ('psm','pdk') else 4) if named else 4 if scalar else 8 if args.entry == '1c940' else 2
     if not re.fullmatch('[0-9a-fA-F]{' + str(size * 2) + '}', args.window_hex):
         parser.error('window must contain exactly the required hexadecimal bytes')
     window = bytes.fromhex(args.window_hex)
@@ -211,7 +277,7 @@ def main(argv=None):
             if any(v is not None for v in (args.second, args.minute, args.hour)):
                 raise ValueError('access-math-clock-not-used-by-selected-entry')
             if named:
-                fn = {'bde-cod-w06':transform_bde_cod_w06,'gateway':transform_gateway,'psm':transform_psm}[args.entry]
+                fn = {'bde-cod-w06':transform_bde_cod_w06,'gateway':transform_gateway,'psm':transform_psm,'pdk':transform_pdk,'kombi-9x1':transform_kombi_9x1,'bcm-v-h':transform_bcm_v_h,'swsg':transform_swsg,'rdk':transform_rdk}[args.entry]
                 result = fn(int.from_bytes(window,'big')).to_bytes(size,'big')
             elif scalar:
                 fn = transform_mode2 if args.entry == 'mode2' else transform_mode6

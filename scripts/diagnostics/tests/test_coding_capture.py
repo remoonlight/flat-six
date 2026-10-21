@@ -96,6 +96,35 @@ clocked.finish('software-clock-rollback');'''
             self.assertFalse(report['prefixComplete']);self.assertEqual(len(rows),count)
             self.assertIn('truncated',report['error']);self.assertFalse(report['endStatisticsPresent'])
 
+    def test_end_statistics_require_final_position_interface_and_exact_packet_count(self):
+        data=(self.root/'normal.pcapng').read_bytes();pos=0;blocks=[]
+        while pos<len(data):
+            kind,length=struct.unpack_from('<II',data,pos);blocks.append((kind,data[pos:pos+length]));pos+=length
+        ending=blocks[-1][1];self.assertEqual(blocks[-1][0],5)
+        prefix=b''.join(raw for _,raw in blocks[:-1])
+        packet=next(raw for kind,raw in blocks if kind==6)
+        wrong_interface=bytearray(ending);struct.pack_into('<I',wrong_interface,8,1)
+        wrong_count=bytearray(ending);struct.pack_into('<Q',wrong_count,24,11)
+        # Production ISB has option 4 (uint64 received packets) first.
+        self.assertEqual(struct.unpack_from('<HH',ending,20),(4,8))
+        duplicated=ending[:-8]+ending[20:32]+ending[-8:]
+        duplicated=bytearray(duplicated);struct.pack_into('<I',duplicated,4,len(duplicated));struct.pack_into('<I',duplicated,len(duplicated)-4,len(duplicated))
+        cases=[('interface',prefix+wrong_interface,'capture-statistics-interface-invalid'),
+            ('count',prefix+wrong_count,'capture-statistics-count-mismatch'),
+            ('duplicate-option',prefix+duplicated,'capture-statistics-count-invalid'),
+            ('after-statistics',data+packet,'capture-statistics-not-final'),
+            ('duplicate-statistics',data+ending,'capture-statistics-not-final')]
+        for name,raw,reason in cases:
+            with self.subTest(name=name):
+                file=self.root/('statistics-'+name+'.pcapng');file.write_bytes(raw);rows=[]
+                report=scan_capture(file,rows.append)
+                self.assertFalse(report['prefixComplete']);self.assertFalse(report['endStatisticsPresent'])
+                self.assertEqual(report['error'],reason);self.assertEqual(len(rows),10)
+        file=self.root/'no-statistics.pcapng';file.write_bytes(prefix);rows=[]
+        report=scan_capture(file,rows.append)
+        self.assertTrue(report['prefixComplete']);self.assertFalse(report['endStatisticsPresent'])
+        self.assertEqual(len(rows),10)
+
     def test_wrong_layer_bad_tlv_or_bad_context_does_not_become_coding_data(self):
         data=(self.root/'normal.pcapng').read_bytes()
         for old,new,packets,errors in ((b'\xfc\x00\x00\x00\x00\x20\x00\x00',b'\xe3\x00\x00\x00\x00\x20\x00\x00',0,0),

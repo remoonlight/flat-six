@@ -3,8 +3,8 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { readWorkshopFlashIndex, prepareWorkshopExport } from "../apps/desktop/electron/piwis-workshop.mjs";
 
-const root = path.resolve(import.meta.dirname, "..");
-const scratch = path.join(root, ".local", "piwis-workshop-accept");
+const root = process.env.FLATSIX_INSTALLED_APP || path.resolve(import.meta.dirname, "..");
+const scratch = process.env.PORSCHE981_SELFCHECK_OUTPUT || path.join(root, ".local", "piwis-workshop-accept");
 await fs.mkdir(scratch, { recursive: true });
 const file = path.join(scratch, "fixture-index.json");
 const fixture = { schemaVersion: 1, sources: [{ file: "fixture.xml", sha256: "a".repeat(64) }], rules: [{
@@ -21,6 +21,15 @@ for (const mutate of [
   (f) => { f.rules.push(structuredClone(f.rules[0])); },
   (f) => { f.sources[0].sha256 = "bad"; },
   (f) => { f.rules[0].conditions = []; },
+  (f) => { f.conditions = [{ field: "MODELLJAHR", values: ["TEST"] }]; },
+  (f) => { f.sources[0].scope = "other-generation"; },
+  (f) => { f.sources.push(structuredClone(f.sources[0])); },
+  (f) => { f.sources.push({ ...f.sources[0], sha256: "b".repeat(64) }); },
+  (f) => { f.rules[0].operator = "NOT"; },
+  (f) => { f.rules[0].conditions[0].operator = "NOT"; },
+  (f) => { f.rules[0].targets[0].excludeHardware = "TEST-HW"; },
+  (f) => { f.rules[0].currentEcus = [{ logicalLink: "DME", conditions: [], operator: "NOT" }]; },
+  (f) => { f.rules[0].currentEcus = [{ logicalLink: "DME", conditions: [{ field: "HWTNR", values: ["TEST-HW"], negate: true }] }]; },
 ]) {
   const bad = structuredClone(fixture); mutate(bad);
   await fs.writeFile(file, JSON.stringify(bad));
@@ -30,9 +39,8 @@ const decorated = structuredClone(fixture);
 decorated.execute = true; decorated.rules[0].writePayload = "UNKNOWN";
 await fs.writeFile(file, JSON.stringify(decorated));
 const loaded = await readWorkshopFlashIndex(file);
-assert.equal(loaded.status, "loaded");
-assert.equal("execute" in loaded.index, false);
-assert.equal("writePayload" in loaded.index.rules[0], false);
+assert.equal(loaded.status, "invalid", "unknown imported fields must not be projected away");
+await fs.writeFile(file, JSON.stringify(fixture));
 const draft = await prepareWorkshopExport({ generation: "982", functionId: "program-dme", flashRuleId: "rule", writePayload: "UNKNOWN" }, file);
 assert.equal(draft.flashRule.targets[0].softwarePartNumber, "TEST-SW");
 assert.equal(draft.executionEnabled, false);
@@ -59,4 +67,14 @@ const local = await readWorkshopFlashIndex(path.join(root, ".local/diagnostics/p
 if (local.status === "loaded") {
   console.log(`Local research index validated: ${local.index.rules.length} rows; no vehicle applicability inferred.`);
 }
-console.log("PASS PIWIS IPC helpers: missing/invalid inputs, rule identity, known-field projection and offline export.");
+if (process.env.PORSCHE981_PIWIS_REFERENCE_INDEX) {
+  const reference = await readWorkshopFlashIndex(process.env.PORSCHE981_PIWIS_REFERENCE_INDEX);
+  assert.equal(reference.status, "loaded");
+  assert.equal(reference.index.rules.length, 293);
+  const original = JSON.parse(await fs.readFile(process.env.PORSCHE981_PIWIS_REFERENCE_INDEX, "utf8"));
+  assert.deepEqual(reference.index.rules.map(r => r.conditions), original.rules.map(r => r.conditions));
+  assert.deepEqual(reference.index.rules.map(r => r.currentEcus), original.rules.map(r => r.currentEcus));
+  assert.deepEqual(reference.index.rules.map(r => r.targets), original.rules.map(r => r.targets));
+  console.log("PASS original PIWIS index: 293 rules retain exact conditions, current ECU constraints and target order.");
+}
+console.log("PASS PIWIS IPC helpers: closed schema, source uniqueness, rule identity and offline export; no vehicle qualification.");

@@ -13,9 +13,10 @@ import os
 from pathlib import Path
 import re
 import sys
+import threading
 
 from .elm import ElmError
-from .vnci import DataItem, ModuleItem, U32, PTR, UNDEF, ID_UNDEF, _check, _display_voltage
+from .vnci import DataItem, ModuleItem, U32, PTR, UNDEF, ID_UNDEF, _check, _display_voltage, _serialized_native
 
 DEVICE_RE = re.compile(r'^pt3g:([0-9]{1,16})$')
 # Pinned PDU_VCI.dll's config builder (RVA 0x17f30) appends this name
@@ -121,6 +122,7 @@ class NativeAdapter:
         self.configuration = verify_windows_config(root)
         self.module, self.constructed = None, False
         self._close_report = None
+        self._native_lock = threading.RLock()
         self._voltage_oid = None
         self._directory = os.add_dll_directory(str(root))
         try:
@@ -146,9 +148,13 @@ class NativeAdapter:
                                + ';dll-directory-close:' + str(cleanup)) from error
             raise
 
-    def call(self, name, *args):
+    def _require_open(self):
         if getattr(self, '_close_report', None) is not None:
             raise ElmError('pt3g-adapter-closed')
+
+    @_serialized_native
+    def call(self, name, *args):
+        NativeAdapter._require_open(self)
         if name not in self._allowed:
             raise ElmError('pt3g-adapter-only-api')
         if name == 'PDUGetObjectId' and (args[0] != 0x8023 or args[1] != b'PDU_IOCTL_READ_VBATT'):
@@ -157,6 +163,7 @@ class NativeAdapter:
             raise ElmError('pt3g-adapter-only-ioctl')
         _check(getattr(self.dll, name)(*args), name)
 
+    @_serialized_native
     def modules(self):
         ptr = c.POINTER(ModuleItem)()
         self.call('PDUGetModuleIds', c.byref(ptr))
@@ -172,10 +179,12 @@ class NativeAdapter:
         finally:
             self.call('PDUDestroyItem', ptr)
 
+    @_serialized_native
     def connect_module(self, handle):
         self.call('PDUModuleConnect', handle)
         self.module = handle
 
+    @_serialized_native
     def voltage(self):
         oid = U32(ID_UNDEF)
         self.call('PDUGetObjectId', 0x8023, b'PDU_IOCTL_READ_VBATT', c.byref(oid))
@@ -193,6 +202,7 @@ class NativeAdapter:
         finally:
             self.call('PDUDestroyItem', ptr)
 
+    @_serialized_native
     def close(self):
         if getattr(self, '_close_report', None) is not None:
             return deepcopy(self._close_report)

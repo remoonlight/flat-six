@@ -15,10 +15,10 @@ export function ObdDeviceRegistry({ devices, detectedDevices, busy, selectedId, 
   for (const d of detectedDevices) {
     if (!d.available) continue;
     const family = d.brand || devices.find((known) => known.id === d.id)?.family || "未识别型号";
-    if (!["vLinker", "OBDLink MX+", "ELM327", "OBDKey", "OBDLink", "VNCI", "PT3G", "unresolved"].includes(family)) continue;
+    if (!["vLinker", "OBDLink MX+", "ELM327", "OBDKey", "OBDLink", "CANtieCAR", "VNCI", "PT3G", "unresolved"].includes(family)) continue;
     if (HIDDEN_FAMILIES.has(family)) continue;
     rows.set(d.id, { id: d.id, family, name: d.name, serial: d.serial, comPort: d.comPort,
-      state: d.available ? d.transport === "d-pdu-usb" ? "USB 已接入" : d.paired ? "已配对" : "可连接" : d.paired ? "已配对 · 无可用串口" : "本次未发现",
+      state: d.brand === "CANtieCAR" ? "工作模式(未完成) · 当前不打开通道" : d.available ? d.transport === "tcp" ? "地址已配置 · 未核实连接" : d.transport === "d-pdu-usb" ? "USB 已接入" : d.paired ? "已配对" : "可连接" : d.paired ? "已配对 · 无可用串口" : "本次未发现",
       selectable: !!d.available });
   }
   if (!rows.size) return <p className="muted" data-testid="obd-conn-empty">本次没有发现可用诊断头，请接入设备后刷新。</p>;
@@ -33,7 +33,7 @@ export function ObdDeviceRegistry({ devices, detectedDevices, busy, selectedId, 
             {d.name && d.name !== d.family ? ` · ${d.name}` : ""}
             {d.serial ? ` · 序列号 ${d.serial}` : d.comPort ? ` · ${d.comPort}` : ""}
             <span className="muted obd-device-state" data-testid={selectedId === d.id ? "obd-conn-state" : undefined}>
-              {selectedId === d.id ? connectionState : d.state}
+              {d.family === "CANtieCAR" ? d.state : selectedId === d.id ? connectionState : d.state}
             </span>
           </span>
         </label>

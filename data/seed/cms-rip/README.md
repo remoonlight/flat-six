@@ -11,9 +11,9 @@
 
 - `manifest.json` — 目标车/引擎 ID、过滤关键字、本机路径约定（`bodyForApp: false`）
 - `mesh-map.template.json` — mesh↔热点可恢复快照
-- 导出物：`.local/cms-rip/`（见 `docs/cms-991-engine-rip.md`、ADR 004）
+- 导出物：`.local/cms-rip/`（见 [ADR 004](../../../docs/adr/004-cms-rip-local-only.md)）
 
-App：**仅**挂载引擎 + 底盘；**不用** CMS 991 车身（车身/内饰见 `../flat-six/`）。Locator：X-ray/单模型 + 2D 手点配对。
+CMS 既有参考入口只允许引擎与底盘，不使用 CMS 991 车身。当前车库透视机械层使用 [PETKA 图号分件](../petka-models/README.md)，车身／内饰见 [主模型说明](../flat-six/README.md)。Locator 保留既有单模型与 2D 对应能力；清单不代表缺失资产已补齐。
 
 ## 从 seed 恢复（PowerShell）
 

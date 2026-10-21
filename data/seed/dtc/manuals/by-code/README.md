@@ -1,13 +1,12 @@
 # 手册故障码 · 按 code 汇总
 
-并行分车型抽取后合并。**不**写入 ootstrap.json / dtc_kb。
+分车型抽取后合并。**不**写入 `bootstrap.json` / `dtc_kb`。
 
 ## 产物
 
 | 文件 | 说明 |
 |------|------|
 | [codes.json](./codes.json) | 去重后的码表（同 code 合并 models/pages） |
-| [index.md](./index.md) | 按 code 排序的可读索引 |
 
 ## 统计
 
@@ -19,4 +18,4 @@
 ## 边界
 
 - 只读对照手册；产品查码仍走 bootstrap。
-- 不写 ECU（ADR 001）。
+- 来源数据不授予车辆执行资格，当前边界见 [ADR 001](../../../../../docs/adr/001-no-ecu-write.md)。

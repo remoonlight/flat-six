@@ -565,14 +565,14 @@ class TestVoltageMonitor(unittest.TestCase):
         serial.Serial.return_value = port
         snap = _snap(serial=[HOST_SERIAL, MX_SERIAL], bluetooth=[HOST_BT, MX_BT])
         self.assertIs(_open_live_port(serial_module=serial, device_id=MX, discovery=snap), port)
-        serial.Serial.assert_called_once_with("COM12", 115200, timeout=0.05, exclusive=True)
+        serial.Serial.assert_called_once_with("COM12", 115200, timeout=0.05, write_timeout=1.0, exclusive=True)
         serial.reset_mock()
         stdout = io.StringIO()
         clock = FakeClock()
         rc = run_voltage_monitor(MX, serial_module=serial, snapshot=snap, stdout=stdout,
                                  clock=clock.now, sleep_fn=clock.sleep, max_samples=2)
         self.assertEqual(rc, 0, stdout.getvalue())
-        serial.Serial.assert_called_once_with("COM12", 115200, timeout=0.05, exclusive=True)
+        serial.Serial.assert_called_once_with("COM12", 115200, timeout=0.05, write_timeout=1.0, exclusive=True)
         rows = [json.loads(line) for line in stdout.getvalue().splitlines()]
         readings = [r for r in rows if r.get("type") in ("handshake", "reading")]
         self.assertEqual(len(readings), 2)

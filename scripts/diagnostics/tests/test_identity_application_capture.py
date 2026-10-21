@@ -1,12 +1,14 @@
 import json
 from pathlib import Path
 import subprocess
+import struct
 import tempfile
 import unittest
 from unittest.mock import patch
 
 from scripts.diagnostics.identity_application_capture import review, selected_profiles
 from scripts.diagnostics.tests import test_identity_capture as historical_fixtures
+from scripts.diagnostics.tests import test_identity_version_capture as version_fixtures
 
 
 class ApplicationIdentityTests(unittest.TestCase):
@@ -88,6 +90,53 @@ transportKind:'d-pdu-iso-tp',observation:'native-result-data',primitive:i===5?2:
             result, files = self.run_review(capture=capture)
             self.assertFalse(result['capture']['prefixComplete'])
             self.assertEqual(len(files['responses.jsonl'].splitlines()), 7)
+
+    def test_missing_end_statistics_keeps_values_but_blocks_version_rule_input(self):
+        data=(self.root/'observed.pcapng').read_bytes();pos=0
+        while pos<len(data):
+            kind,length=struct.unpack_from('<II',data,pos)
+            if kind==5:break
+            pos+=length
+        self.assertEqual(kind,5)
+        with tempfile.TemporaryDirectory() as tmp:
+            capture=Path(tmp)/'unclosed.pcapng';capture.write_bytes(data[:pos])
+            result,files=self.run_review(capture=capture)
+        self.assertTrue(result['capture']['prefixComplete'])
+        self.assertFalse(result['capture']['endStatisticsPresent'])
+        self.assertFalse(result['versionRuleComparison']['captureIntegrityComplete'])
+        self.assertEqual(len(files['responses.jsonl'].splitlines()),7)
+        self.assertEqual(len(files['identity-values.jsonl'].splitlines()),14)
+
+    def test_complete_version_candidates_are_withheld_without_the_closing_block(self):
+        profiles,language=version_fixtures.CaptureVersionRuleTests().fixture()
+        bindings=self.bindings()
+        bindings[0][1]['versionRoutes']=profiles[0]['versionRoutes']
+        script="""import fs from 'node:fs';import {createDiagnosticPduWriter} from './apps/desktop/electron/diagnostic-pdu-data.mjs';
+const file=JSON.parse(fs.readFileSync(0,'utf8'));const writer=createDiagnosticPduWriter(file,false);
+for(const [requestHex,pduHex] of [['22F187','62F1874100424344'],['22F189','62F18901']])writer.append({requestHex,pduHex,timestampUs:1000000,
+timestampSource:'host-pdu-observed',transportKind:'elm-iso-tp',observation:'reassembled-complete-pdu',duringCleanup:false},
+{targetProfileId:'source-pdk',runId:'selected',simulation:false});writer.finish('software fixture');"""
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);capture=root/'closed.pcapng'
+            subprocess.run(['node','--input-type=module','-e',script],input=json.dumps(str(capture)),
+                capture_output=True,text=True,check=True,timeout=15)
+            with patch('scripts.diagnostics.x431_variant_selection._load_version_language',return_value=language):
+                closed=review(capture,bindings,{},'981',2,'source-pdk','selected',root/'closed-output')
+            report=closed['versionRuleComparison']['reports'][0]
+            self.assertTrue(report['calculationComplete']);self.assertEqual(report['matchingCandidateCount'],2)
+            data=capture.read_bytes();pos=0
+            while pos<len(data):
+                kind,length=struct.unpack_from('<II',data,pos)
+                if kind==5:break
+                pos+=length
+            capture=root/'unclosed.pcapng';capture.write_bytes(data[:pos])
+            with patch('scripts.diagnostics.identity_version_capture.audit_application_version_observations') as calculate:
+                opened=review(capture,bindings,{},'981',2,'source-pdk','selected',root/'open-output')
+            calculate.assert_not_called()
+            report=opened['versionRuleComparison']['reports'][0]
+            self.assertEqual(report['status'],'capture-integrity-incomplete')
+            self.assertFalse(report['calculationComplete']);self.assertEqual(report['matchingCandidates'],[])
+            self.assertEqual(len((root/'open-output/responses.jsonl').read_text().splitlines()),2)
 
     def test_independent_reference_failure_and_nonfinite_values_do_not_lose_raw(self):
         with patch('scripts.diagnostics.identity_capture.reference_value', side_effect=ValueError('unresolved')):

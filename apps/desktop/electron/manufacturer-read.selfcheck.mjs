@@ -115,7 +115,7 @@ for (const device of ["bt:001122334455", "vnci:123"]) {
   assert.equal(typed.ecuId, 9); assert.equal(typed.generation, "981"); assert.equal(typed.deviceId, device);
   assert.equal(typed.profileId, request.profileId); assert.equal(typed.txId, undefined);
   emit(worker, "finished", { ...source, vehicleDataCollected: false, ok: false, error: "identity-mismatch",
-    completedCycles: 0, requestCount: 0, transport: { closed: true } });
+    completedCycles: 0, requestCount: 0, transport: { closed: true, closeErrors: [] } });
   assert.equal(gateway.gate.owner(), "session"); worker.emit("close", 1);
   assert.equal(gateway.gate.owner(), null); assert.equal(gateway.resumes(), 1);
 }
@@ -132,7 +132,7 @@ let status = h.manager.handle({ action: "status", sessionId: started.sessionId }
 assert.equal(status.events[0].transactions[0].pduHex, undefined);
 assert.equal(status.events[0].samples[0].value, 42);
 emit(child, "finished", { ...source, ok: false, error: "cancelled", completedCycles: 1, requestCount: 1,
-  transport: { closed: true, rawLog: [{ private: "raw" }] } });
+  transport: { closed: true, closeErrors: [], rawLog: [{ private: "raw" }] } });
 assert.equal(h.gate.owner(), "session", "a final frame alone never releases the device");
 assert.equal(h.manager.handle({ action: "status", sessionId: started.sessionId }, 1).state, "running");
 child.emit("close", 1);
@@ -147,7 +147,8 @@ await new Promise(resolve => setTimeout(resolve, 15));
 assert.equal(timeout.children[0].killed, true);
 assert.equal(timeout.manager.handle({ action: "status", sessionId: timed.sessionId }, 1).state, "closing");
 assert.equal(timeout.gate.owner(), "session");
-timeout.children[0].emit("close", 1); assert.equal((await stopped).ok, true);
+timeout.children[0].emit("close", 1);
+assert.equal((await stopped).error, "adapter_release_not_verified", "forced worker exit without a close report cannot authorize another device session");
 assert.equal(timeout.gate.owner(), null);
 
 const pending = harness(); let completeHandoff;
@@ -167,7 +168,7 @@ const vnciJob = await vnci.manager.handle(selection, 3);
 assert.equal(vnci.gate.owner(), "session");
 assert.equal(JSON.parse(vnci.children[0].input.trim()).deviceId, "vnci:123");
 emit(vnci.children[0], "finished", { ...source, ok: false, error: "vnci-device-identity-missing-or-ambiguous",
-  completedCycles: 0, vehicleDataCollected: false, requestCount: 0, transport: { closed: true } });
+  completedCycles: 0, vehicleDataCollected: false, requestCount: 0, transport: { closed: true, closeErrors: [] } });
 assert.equal(vnci.gate.owner(), "session");
 vnci.children[0].emit("close", 1);
 assert.equal(vnci.gate.owner(), null);
@@ -203,7 +204,7 @@ try {
   assert.equal(packets[0][24], frame.dataHex.length / 2);
   assert.equal(packets[0].subarray(28, 32).toString("hex").toUpperCase(), frame.dataHex);
   emit(c, "finished", { ...source, ok: false, error: "cancelled", completedCycles: 0,
-    vehicleDataCollected: false, requestCount: 0, transport: { closed: true } });
+    vehicleDataCollected: false, requestCount: 0, transport: { closed: true, closeErrors: [] } });
   c.emit("close", 1);
   await capture.manager.shutdown();
 } finally { recorder.shutdown(); fs.rmSync(scratch, { recursive: true, force: true }); }
@@ -219,7 +220,7 @@ assert.equal(application.pdus[0].profileId,selection.profileId);
 emit(ac,"cycle",{...cycle,ok:false,completedCycles:0,samples:[],transactions:[{...evidence,ok:false}],vehicleDataCollected:false,error:"negative-response"});
 const appStatus = application.manager.handle({action:"status",sessionId:applicationJob.sessionId},9);
 assert.ok(!JSON.stringify(appStatus).includes("7F2131"),"raw bytes never enter ordinary values/status");
-emit(ac,"finished",{...source,ok:false,error:"negative-response",completedCycles:0,vehicleDataCollected:false,requestCount:1,transport:{closed:true}});
+emit(ac,"finished",{...source,ok:false,error:"negative-response",completedCycles:0,vehicleDataCollected:false,requestCount:1,transport:{closed:true,closeErrors:[]}});
 assert.equal(application.gate.owner(),"session"); ac.emit("close",1); assert.equal(application.gate.owner(),null);
 await application.manager.shutdown();
 const invalidPdu = harness(); await invalidPdu.manager.handle(selection,10);

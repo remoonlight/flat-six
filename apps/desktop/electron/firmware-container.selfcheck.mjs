@@ -12,7 +12,7 @@ const directory = await fs.mkdtemp(path.join(os.tmpdir(), "flat-six-firmware-"))
 try {
   const identity = { generation: "981", vin: "WP0ZZZ98ZES000000", ecu: "dme", hardware: "TEST-HW", software: "TEST-SW" };
   const file = path.join(directory, "原厂 测试.odx");
-  const xml = '<ODX MODEL-VERSION="2.1.0"><FLASH><MEM><SESSION ID="S"><SHORT-NAME>测试会话</SHORT-NAME><DATABLOCK-REF ID-REF="B"/></SESSION><DATABLOCK ID="B"><FLASHDATA-REF ID-REF="F"/></DATABLOCK><FLASHDATA ID="F"><DATAFORMAT SELECTION="BINARY"/><DATA>0102FF</DATA></FLASHDATA></MEM></FLASH></ODX>';
+  const xml = '<ODX MODEL-VERSION="2.1.0"><FLASH><ECU-MEMS><ECU-MEM ID="M"><MEM><SESSION ID="S"><SHORT-NAME>测试会话</SHORT-NAME><EXPECTED-IDENTS><EXPECTED-IDENT ID="E"><SHORT-NAME>Part</SHORT-NAME><IDENT-VALUES><IDENT-VALUE TYPE="A_ASCIISTRING">TEST-HW  </IDENT-VALUE></IDENT-VALUES></EXPECTED-IDENT></EXPECTED-IDENTS><DATABLOCK-REF ID-REF="B"/></SESSION><DATABLOCK ID="B"><FLASHDATA-REF ID-REF="F"/></DATABLOCK><FLASHDATA ID="F"><DATAFORMAT SELECTION="BINARY"/><DATA>0102FF</DATA></FLASHDATA></MEM></ECU-MEM></ECU-MEMS><ECU-MEM-CONNECTORS><ECU-MEM-CONNECTOR ID="C"><ECU-MEM-REF ID-REF="M"/><SESSION-DESCS><SESSION-DESC DIRECTION="DOWNLOAD"><SESSION-SNREF SHORT-NAME="测试会话"/><DIAG-COMM-SNREF SHORT-NAME="ExternalFlashJob"/></SESSION-DESC></SESSION-DESCS></ECU-MEM-CONNECTOR></ECU-MEM-CONNECTORS></FLASH></ODX>';
   await fs.writeFile(file, xml);
   const bytes = Buffer.from(xml), sha256 = createHash("sha256").update(bytes).digest("hex");
   const manifest = path.join(directory, "manifest.json");
@@ -27,6 +27,9 @@ try {
   assert.equal(inspection.container.complete, true);
   assert.equal(inspection.container.file.sha256, sha256);
   assert.equal(inspection.container.documents[0].sessions[0].name, "测试会话");
+  assert.equal(inspection.container.documents[0].sessions[0].expectedIdentifiers[0].values[0].text, "TEST-HW  ");
+  assert.equal(inspection.container.documents[0].memoryConnectors[0].sessionDescriptions[0].sessionReference.targetId, "S");
+  assert.equal(inspection.container.documents[0].identityMatchQualified, false);
   assert.equal(inspection.container.documents[0].flashdata[0].payload.sha256, createHash("sha256").update(Buffer.from([1,2,255])).digest("hex"));
   let canceled = false, fail = null, exported = null, inspections = 0, saves = 0;
   const preparation = createDiagnosticPreparation({ directory: path.join(directory, "vault"),
@@ -58,5 +61,5 @@ try {
   assert.equal(saves, 1);
   assert.equal(inspections, 5);
   const after = await fs.readFile(file); assert.deepEqual(after, bytes);
-  console.log("firmware container PASS: real UTF-8 Python bridge, private picker scope, payload hash, complete export, cancel/failure invalidation and immutable input; no device/vehicle access");
+  console.log("firmware container PASS: real UTF-8 Python bridge, exact identity declarations and scoped session reference, private picker scope, payload hash, complete export, cancel/failure invalidation and immutable input; no device/vehicle access");
 } finally { await fs.rm(directory, { recursive: true, force: true }); }

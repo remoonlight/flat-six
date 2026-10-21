@@ -55,14 +55,15 @@ def valid_context(meta, stamp):
             or type(meta.get('duringCleanup')) is not bool): return False
     if not all(isinstance(meta.get(k),str) and 0 < len(meta[k]) <= 240 for k in ('targetProfileId','runId')): return False
     if meta.get('transportKind') == 'elm-iso-tp': return meta.get('observation') == 'reassembled-complete-pdu'
-    return (meta.get('transportKind') == 'd-pdu-iso-tp' and meta.get('observation') == 'native-result-data'
+    return (((meta.get('transportKind') == 'd-pdu-iso-tp' and meta.get('observation') == 'native-result-data')
+        or (meta.get('transportKind') == 'd-pdu-mode50' and meta.get('observation') == 'reassembled-complete-pdu'))
         and all(type(meta.get(k)) is int and 0 <= meta[k] <= 0xffffffff for k in ('primitive','uniqueId'))
         and ('expectedPrimitive' not in meta or type(meta['expectedPrimitive']) is int and 0 <= meta['expectedPrimitive'] <= 0xffffffff)
         and isinstance(meta.get('flagsHex'),str) and re.fullmatch(r'(?:[0-9A-F]{2}){0,16}',meta['flagsHex']) is not None)
 
 
 def native_result_error(meta):
-    if meta['transportKind']!='d-pdu-iso-tp':return None
+    if meta['transportKind'] not in ('d-pdu-iso-tp','d-pdu-mode50'):return None
     if 'expectedPrimitive' not in meta:return 'native-primitive-context-missing'
     if meta['expectedPrimitive']!=meta['primitive']:return 'native-primitive-mismatch'
     if meta['uniqueId']!=1 or any(bytes.fromhex(meta['flagsHex'])):return 'native-result-unqualified'
@@ -128,7 +129,17 @@ def scan_capture(file, visit):
                     visit(row)
                 elif kind == 5:
                     if not interface or len(body)<12: raise ValueError('capture-statistics-invalid')
-                    options(body[12:])
+                    if struct.unpack_from('<I',body)[0] != 0:
+                        raise ValueError('capture-statistics-interface-invalid')
+                    received = options(body[12:]).get(4, [])
+                    if len(received) != 1 or len(received[0]) != 8:
+                        raise ValueError('capture-statistics-count-invalid')
+                    if struct.unpack('<Q',received[0])[0] != summary['packets']:
+                        raise ValueError('capture-statistics-count-mismatch')
+                    # This project's writer emits one closing ISB. A marker
+                    # before more blocks does not close the observed prefix.
+                    if offset + length != before.st_size:
+                        raise ValueError('capture-statistics-not-final')
                     summary['endStatisticsPresent']=True
                 else: raise ValueError('capture-block-unsupported')
                 offset += length

@@ -940,7 +940,7 @@ class TestStdio(unittest.TestCase):
         root = _root()
         req = json.dumps({"action": "run", "profileId": "porsche-981-2014-dme", "mode": "simulation", "scenario": "success"}) + "\n"
         proc = subprocess.Popen(
-            [sys.executable, "-u", "-m", "scripts.diagnostics.sessions", "--stdio", "--artifact-root", str(root)],
+            [sys.executable, "-B", "-u", "-m", "scripts.diagnostics.sessions", "--stdio", "--artifact-root", str(root)],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -997,11 +997,75 @@ class TestDesktopReadLifecycle(unittest.TestCase):
         out = run_session(profile_id=self.PROFILE, session_task="clear", retain_artifacts=False)
         self.assertEqual(out["error"], "transient-task-not-allowed")
 
-    def live(self, ports, **kwargs):
+    def test_standard_engine_requires_manual_choice_and_retains_completed_pid(self):
+        first = self.breaking_port('010D')
+        out, opener = self.live([first], session_task='engine', sample_cycles=1, interval_ms=500, selected_pids=['0C', '0D'])
+        self.assertEqual(out['error'], 'manual-retry-required')
+        self.assertEqual(opener.call_count, 1)
+        self.assertEqual([s['pid'] for s in out['engine']['samples']], ['0C'])
+        self.assertEqual([e['phase'] for e in out['connectionEvents']], ['interrupted', 'failed'])
+        self.assertTrue(first.closed)
+
+    def test_standard_engine_four_explicit_attempts_keep_original_deadline_and_identity(self):
+        first, recovered = self.breaking_port('010D'), SessionSimPort(self.PROFILE)
+        deadlines = []
+        def choose(episode, attempt, deadline, notify):
+            self.assertTrue(first.closed)
+            deadlines.append(deadline); notify(); return True
+        events = []
+        out, opener = self.live([first, OSError('head missing'), OSError('head missing'), OSError('head missing'), recovered],
+            session_task='engine', sample_cycles=1, interval_ms=500, selected_pids=['0C', '0D'], wait_retry=choose, progress_sink=events.append)
+        self.assertTrue(out['ok'], out)
+        self.assertEqual(opener.call_count, 5)
+        self.assertEqual(len(set(deadlines)), 1)
+        self.assertEqual([e['attempt'] for e in out['connectionEvents'] if e['phase']=='retrying'], [1,2,3,4])
+        self.assertTrue(all(e['linkReleased'] for e in out['connectionEvents'] if e['phase']=='awaiting-retry'))
+        self.assertEqual([s['connectionEpoch'] for s in out['engine']['samples']], [1,2])
+        self.assertNotIn('010C', recovered.ecu_payloads)
+        self.assertEqual(out['connectionEvents'], [e['connection'] for e in events if e['type']=='connection-state'])
+        self.assertTrue(recovered.closed)
+
+    def test_standard_engine_terminate_or_deadline_wait_never_reopens(self):
+        for ending in ['cancel', 'deadline']:
+            cancel = threading.Event()
+            def choose(episode, attempt, deadline, notify):
+                notify()
+                if ending == 'cancel': cancel.set()
+                else:
+                    while time.monotonic() < deadline: cancel.wait(.005)
+                return False
+            out, opener = self.live([self.breaking_port('010D')], session_task='engine', sample_cycles=1,
+                interval_ms=500, selected_pids=['0C','0D'], wait_retry=choose, cancel_event=cancel, engine_remaining_ms=150)
+            self.assertEqual(opener.call_count,1)
+            self.assertEqual(out['error'], 'cancelled' if ending=='cancel' else 'deadline-expired')
+            self.assertEqual(len(out['engine']['samples']),1)
+
+    def test_standard_engine_identity_or_release_failure_does_not_offer_more_choices(self):
+        for kind in ['identity', 'close']:
+            first = self.breaking_port('010D')
+            if kind=='close': first.close = lambda: (_ for _ in ()).throw(OSError('fake-close-failed'))
+            decisions = []
+            def choose(episode, attempt, deadline, notify): decisions.append(attempt);notify();return True
+            out, opener = self.live([first, SessionSimPort(self.PROFILE, 'identity-mismatch')], session_task='engine',
+                sample_cycles=1, interval_ms=500, selected_pids=['0C','0D'], wait_retry=choose)
+            self.assertFalse(out['ok'])
+            self.assertEqual(opener.call_count, 2 if kind=='identity' else 1)
+            self.assertEqual(len(decisions), 1 if kind=='identity' else 0)
+            self.assertEqual(out['connectionEvents'][-1]['phase'],'failed')
+
+    def test_standard_engine_private_remaining_duration_is_bounded(self):
+        from scripts.diagnostics.sessions import _parse_request, SessionError
+        base = dict(action='run', profileId=self.PROFILE, sessionTask='engine')
+        for value in [0, 600001, True, '600000', None]:
+            with self.assertRaises(SessionError): _parse_request(json.dumps(dict(base, engineRemainingMs=value)))
+        self.assertEqual(_parse_request(json.dumps(dict(base,engineRemainingMs=600000)))['engineRemainingMs'],600000)
+        with self.assertRaises(SessionError): _parse_request(json.dumps(dict(base, sessionTask='read',engineRemainingMs=1000)))
+
+    def live(self, ports, *, device_id="bt:0425E85BD4CB", **kwargs):
         # Injected byte ports are synthetic tests of the live lifecycle, not vehicle evidence.
         with mock.patch("scripts.diagnostics.sessions._open_live_port", side_effect=ports) as opener:
             out = run_session(profile_id=self.PROFILE, mode="live", confirmed_read_only=True,
-                x431_inactive=True, device_id="bt:0425E85BD4CB", artifact_root=_root(), retain_artifacts=False, **kwargs)
+                x431_inactive=True, device_id=device_id, artifact_root=_root(), retain_artifacts=False, **kwargs)
         return out, opener
 
     def breaking_port(self, request="1800FF00"):
@@ -1034,6 +1098,26 @@ class TestDesktopReadLifecycle(unittest.TestCase):
         self.assertEqual(recovered.clear_tx_count, 0)
         self.assertTrue(all(call.kwargs["device_id"] == "bt:0425E85BD4CB" for call in opener.call_args_list))
 
+    def test_usb_and_tcp_read_recovery_requalifies_same_endpoint(self):
+        for device in ('usb:' + 'a' * 64, 'tcp:127.0.0.1:35000'):
+            with self.subTest(device=device):
+                first, second = self.breaking_port(), SessionSimPort(self.PROFILE)
+                out, opener = self.live([first, second], device_id=device, adapter_model='vLinker')
+                self.assertTrue(out['ok'], out)
+                self.assertTrue(first.closed and second.closed)
+                self.assertEqual(opener.call_count, 2)
+                self.assertTrue(all(call.kwargs['device_id'] == device for call in opener.call_args_list))
+                self.assertEqual(second.ecu_payloads[0], '1089')
+                self.assertEqual(second.clear_tx_count, 0)
+
+    def test_tcp_connect_cleanup_failure_stops_recovery(self):
+        from scripts.diagnostics.tcp_port import TcpCleanupError
+        out, opener = self.live([self.breaking_port(), TcpCleanupError('tcp-connect:timeout;tcp-close:failed')],
+            device_id='tcp:127.0.0.1:35000', adapter_model='vLinker')
+        self.assertFalse(out['ok'])
+        self.assertIn('tcp-close:failed', out['error'])
+        self.assertEqual(opener.call_count, 2, 'cleanup failure must not attempt another open')
+
     def test_three_failed_reopens_end_task(self):
         first = self.breaking_port()
         out, opener = self.live([first, OSError("head missing"), OSError("head missing"), OSError("head missing")])
@@ -1046,7 +1130,8 @@ class TestDesktopReadLifecycle(unittest.TestCase):
         second = self.breaking_port("010D")
         recovered = SessionSimPort(self.PROFILE)
         out, opener = self.live([first, second, recovered], session_task="engine", sample_cycles=1,
-            selected_pids=["0C", "0D"], interval_ms=500)
+            selected_pids=["0C", "0D"], interval_ms=500,
+            wait_retry=lambda episode, attempt, deadline, notify: (notify(), True)[1])
         self.assertTrue(out["ok"], out)
         self.assertEqual(opener.call_count, 3)
         self.assertEqual([len(episode["attempts"]) for episode in out["recovery"]], [1, 1])
@@ -1056,6 +1141,41 @@ class TestDesktopReadLifecycle(unittest.TestCase):
         self.assertEqual(recovered.clear_tx_count, 0)
         self.assertTrue(out["receivedCanFrames"])
         self.assertTrue(all(frame["timestampUs"] > 1_000_000 and frame["timestampSource"] == "host-chunk-arrival" for frame in out["receivedCanFrames"]))
+
+    def test_engine_unavailable_pid_keeps_other_pid_and_prior_values(self):
+        from scripts.diagnostics.session_simulator import ath1_prompt, isotp_ath1_lines, _sf_payload
+        port = SessionSimPort(self.PROFILE)
+        original = port.write; calls = 0
+        def write(data):
+            nonlocal calls
+            text = data.decode('ascii').strip().upper()
+            if not text.startswith('AT') and _sf_payload(text) == '010C':
+                calls += 1
+                if calls == 2:
+                    port.ecu_map['010C'] = ath1_prompt(isotp_ath1_lines(0x7E8, bytes.fromhex('7F0131')))
+            return original(data)
+        port.write = write
+        out, opener = self.live([port], session_task='engine', sample_cycles=3,
+            selected_pids=['0C', '0D'], interval_ms=500)
+        self.assertTrue(out['ok'], out)
+        self.assertEqual(opener.call_count, 1)
+        self.assertEqual(port.ecu_payloads.count('010C'), 2)
+        self.assertEqual(port.ecu_payloads.count('010D'), 3)
+        self.assertEqual(out['engine']['unsupportedPids'], ['0C'])
+        self.assertEqual(out['engine']['supportedPids'], ['0D'])
+        self.assertEqual([s['pid'] for s in out['engine']['samples']], ['0C','0D','0D','0D'])
+        self.assertTrue(port.closed)
+
+    def test_engine_security_denial_still_stops_batch_without_disabling_pid(self):
+        from scripts.diagnostics.session_simulator import ath1_prompt, isotp_ath1_lines
+        port = SessionSimPort(self.PROFILE)
+        port.ecu_map['010C'] = ath1_prompt(isotp_ath1_lines(0x7E8, bytes.fromhex('7F0133')))
+        out, _ = self.live([port], session_task='engine', sample_cycles=2,
+            selected_pids=['0C', '0D'], interval_ms=500)
+        self.assertFalse(out['ok'], out)
+        self.assertEqual(out['engine']['unsupportedPids'], [])
+        self.assertNotIn('010D', port.ecu_payloads)
+        self.assertTrue(port.closed)
 
     def test_identity_conflict_blocks_retry(self):
         first = self.breaking_port()

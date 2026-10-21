@@ -107,7 +107,7 @@ class ManufacturerVnciTests(unittest.TestCase):
         self.assertEqual(native.closed, 1)
 
     def test_negative_wrong_echo_or_short_group_never_makes_values(self):
-        for payload in [b'\x7F\x22\x31', b'\x62\xF1\x01\x2A\x07', b'\x62\xF1\x00\x2A']:
+        for payload in [b'\x62\xF1\x01\x2A\x07', b'\x62\xF1\x00\x2A']:
             with self.subTest(payload=payload):
                 result, native = self.run_case(native_fixture(measurement=payload))
                 self.assertFalse(result['ok']); self.assertEqual(result['samples'], [])
@@ -115,6 +115,9 @@ class ManufacturerVnciTests(unittest.TestCase):
                 # A matched physical PDU was received for the short group;
                 # it still yields no decoded values and no successful cycle.
                 self.assertEqual(result['vehicleDataCollected'], payload.startswith(b'\x62\xF1\x00'))
+        unsupported, native = self.run_case(native_fixture(measurement=b'\x7F\x22\x31'))
+        self.assertTrue(unsupported['ok']); self.assertEqual(unsupported['samples'], [])
+        self.assertEqual(len(unsupported['unavailableParameters']), 2)
 
     def test_cancel_after_cycle_preserves_batch_and_native_terminal_close(self):
         stop = threading.Event(); cycles = []

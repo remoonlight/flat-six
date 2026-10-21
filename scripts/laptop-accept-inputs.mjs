@@ -41,7 +41,7 @@ export function verifyAcceptanceKit(root) {
     || !/^[a-f0-9]{64}$/.test(kit.deliveryManifestSha256 || "") || !/^[a-f0-9]{64}$/.test(kit.definitionZipSha256 || "")) throw new Error("accept-kit-invalid");
   verifyRows(root, kit.files, new Set(["laptop-accept-manifest.json", ".local"]));
   for (const required of ["accept-laptop.cmd", "README.md", "package.json", "scripts/windows-runtime-accept.mjs",
-    "scripts/windows-runtime-source.mjs", "scripts/laptop-accept-inputs.mjs", "apps/desktop/electron/offline-diagnostics.mjs",
+    "scripts/windows-runtime-source.mjs", "scripts/laptop-accept-inputs.mjs", "scripts/obd-unidentified-ui-check.mjs", "apps/desktop/electron/offline-diagnostics.mjs",
     "apps/desktop/electron/installed-entry.mjs", "node_modules/playwright/index.mjs", "node_modules/playwright-core/index.mjs"])
     if (!kit.files.some(row => row.path === required)) throw new Error("accept-kit-file-missing:" + required);
   for (const name of ["playwright", "playwright-core"]) {

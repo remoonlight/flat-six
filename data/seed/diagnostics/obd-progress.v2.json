@@ -13,7 +13,6 @@
   "acceptanceRequirementsPreserved": true,
   "scopeChange": {
     "previousPolicyVersion": "milestones-48-v1",
-    "previousSource": "data/seed/diagnostics/obd-progress.v1.json",
     "previousCompleted": 24,
     "previousTotal": 48,
     "previousPercent": 50.0,
@@ -32,8 +31,8 @@
           "done": true,
           "evidence": [
             {
-              "file": "OBD_STATUS.md",
-              "locator": "## 2026-10-09 桌面接车来源查询与 Windows 实际导入"
+              "file": "docs/progress.md",
+              "locator": "`live-01`"
             }
           ],
           "id": "live-01"
@@ -44,8 +43,8 @@
           "done": true,
           "evidence": [
             {
-              "file": "OBD_STATUS.md",
-              "locator": "全部 52,299 项单参数读取组通过新的绑定检查"
+              "file": "docs/progress.md",
+              "locator": "`live-02`"
             }
           ],
           "id": "live-02"
@@ -56,12 +55,8 @@
           "done": true,
           "evidence": [
             {
-              "file": "OBD_STATUS.md",
-              "locator": "195 项相关 Python 测试"
-            },
-            {
-              "file": "OBD_STATUS.md",
-              "locator": "标准 DME 六项可连续读取"
+              "file": "docs/progress.md",
+              "locator": "`live-03`"
             }
           ],
           "id": "live-03"
@@ -76,8 +71,8 @@
               "locator": "elm-iso-tp"
             },
             {
-              "file": "OBD_STATUS.md",
-              "locator": "vLinker CLI 既有 DME/Gateway 身份与 DTC"
+              "file": "docs/progress.md",
+              "locator": "`live-04`"
             }
           ],
           "id": "live-04"
@@ -88,8 +83,8 @@
           "done": true,
           "evidence": [
             {
-              "file": "OBD_STATUS.md",
-              "locator": "## 2026-10-09 X431 厂商参数持续会话与完整批次"
+              "file": "docs/progress.md",
+              "locator": "`live-05`"
             }
           ],
           "id": "live-05"
@@ -100,12 +95,12 @@
           "done": true,
           "evidence": [
             {
-              "file": "OBD_STATUS.md",
-              "locator": "保存全部实际返回样本和每轮结果"
+              "file": "docs/progress.md",
+              "locator": "`live-06`"
             },
             {
               "file": "docs/obd-current-guide.md",
-              "locator": "完整保存均可用"
+              "locator": "停止后点击“保存记录”"
             }
           ],
           "id": "live-06"
@@ -116,8 +111,8 @@
           "done": true,
           "evidence": [
             {
-              "file": "docs/obd-current-guide.md",
-              "locator": "本轮 4 份文件共 34 帧通过"
+              "file": "apps/desktop/electron/internal-can-data.selfcheck.mjs",
+              "locator": "const writer = createCanPcapWriter(file, \"drive\");"
             }
           ],
           "id": "live-07"
@@ -128,12 +123,8 @@
           "done": true,
           "evidence": [
             {
-              "file": "OBD_STATUS.md",
-              "locator": "真实中断每次最多三次同头重开"
-            },
-            {
-              "file": "OBD_STATUS.md",
-              "locator": "## 2026-10-09 请求取消终态与关闭失败处理"
+              "file": "docs/progress.md",
+              "locator": "`live-08`"
             }
           ],
           "id": "live-08"
@@ -179,8 +170,8 @@
           "done": true,
           "evidence": [
             {
-              "file": "OBD_STATUS.md",
-              "locator": "原有 33,400／3,685／22,786 预览分类保持"
+              "file": "docs/progress.md",
+              "locator": "`coding-01`"
             }
           ],
           "id": "coding-01"
@@ -191,12 +182,12 @@
           "done": true,
           "evidence": [
             {
-              "file": "docs/obd-current-guide.md",
-              "locator": "首次完整基线按车辆/当前单元/版本固定"
+              "file": "apps/desktop/electron/diagnostic-preparation.selfcheck.mjs",
+              "locator": "later imports never replace original baseline"
             },
             {
-              "file": "OBD_STATUS.md",
-              "locator": "重启保留基线"
+              "file": "docs/progress.md",
+              "locator": "`coding-02`"
             }
           ],
           "id": "coding-02"
@@ -207,8 +198,8 @@
           "done": true,
           "evidence": [
             {
-              "file": "OBD_STATUS.md",
-              "locator": "备份失败零写入与重启保留基线"
+              "file": "docs/progress.md",
+              "locator": "`coding-03`"
             }
           ],
           "id": "coding-03"
@@ -219,8 +210,8 @@
           "done": true,
           "evidence": [
             {
-              "file": "OBD_STATUS.md",
-              "locator": "Mac 与 Windows 当前独立程序实际生产 IPC／界面通过数值 60000"
+              "file": "docs/progress.md",
+              "locator": "`coding-04`"
             }
           ],
           "id": "coding-04"
@@ -231,12 +222,12 @@
           "done": true,
           "evidence": [
             {
-              "file": "docs/obd-current-guide.md",
-              "locator": "演练先核对模拟身份/当前值"
+              "file": "apps/desktop/electron/diagnostic-preparation.selfcheck.mjs",
+              "locator": "const simulatedRestore = await vault.handle"
             },
             {
-              "file": "OBD_STATUS.md",
-              "locator": "当前单元设码／恢复模拟"
+              "file": "docs/progress.md",
+              "locator": "`coding-05`"
             }
           ],
           "id": "coding-05"
@@ -303,8 +294,8 @@
           "done": true,
           "evidence": [
             {
-              "file": "OBD_STATUS.md",
-              "locator": "完整哈希、三个具名函数区间及 Thumb 入口核对"
+              "file": "docs/progress.md",
+              "locator": "`x431-01`"
             }
           ],
           "id": "x431-01"
@@ -315,8 +306,8 @@
           "done": true,
           "evidence": [
             {
-              "file": "OBD_STATUS.md",
-              "locator": "去重后的车型／ECU／版本组合为 626"
+              "file": "docs/progress.md",
+              "locator": "`x431-02`"
             }
           ],
           "id": "x431-02"
@@ -327,8 +318,8 @@
           "done": true,
           "evidence": [
             {
-              "file": "OBD_STATUS.md",
-              "locator": "5,594/5,594 对配对"
+              "file": "docs/progress.md",
+              "locator": "`x431-03`"
             }
           ],
           "id": "x431-03"
@@ -339,12 +330,8 @@
           "done": true,
           "evidence": [
             {
-              "file": "OBD_STATUS.md",
-              "locator": "92,634 条实时源记录"
-            },
-            {
-              "file": "OBD_STATUS.md",
-              "locator": "全部 52,299 项单参数读取组"
+              "file": "docs/progress.md",
+              "locator": "`x431-04`"
             }
           ],
           "id": "x431-04"
@@ -355,8 +342,8 @@
           "done": true,
           "evidence": [
             {
-              "file": "OBD_STATUS.md",
-              "locator": "存储差异为零"
+              "file": "docs/progress.md",
+              "locator": "`x431-05`"
             }
           ],
           "id": "x431-05"
@@ -367,12 +354,8 @@
           "done": true,
           "evidence": [
             {
-              "file": "OBD_STATUS.md",
-              "locator": "3,920 个身份记录"
-            },
-            {
-              "file": "OBD_STATUS.md",
-              "locator": "74,865 条源记录"
+              "file": "docs/progress.md",
+              "locator": "`x431-06`"
             }
           ],
           "id": "x431-06"
@@ -383,8 +366,8 @@
           "done": true,
           "evidence": [
             {
-              "file": "OBD_STATUS.md",
-              "locator": "全部 404 种有界来源定义的 Windows 复验也已通过"
+              "file": "docs/progress.md",
+              "locator": "`x431-07`"
             }
           ],
           "id": "x431-07"
@@ -453,12 +436,8 @@
           "done": true,
           "evidence": [
             {
-              "file": "OBD_STATUS.md",
-              "locator": "完整 1,398 文件哈希核对通过"
-            },
-            {
-              "file": "OBD_STATUS.md",
-              "locator": "重复导入新增 0、相同 660"
+              "file": "docs/progress.md",
+              "locator": "`adaptation-02`"
             }
           ],
           "id": "adaptation-02"
@@ -469,12 +448,8 @@
           "done": true,
           "evidence": [
             {
-              "file": "OBD_STATUS.md",
-              "locator": "## 2026-10-09 当前诊断头配套与新版程序"
-            },
-            {
-              "file": "OBD_STATUS.md",
-              "locator": "## 2026-10-09 PT3G 实际函数绑定与版本错误"
+              "file": "docs/progress.md",
+              "locator": "`adaptation-03`"
             }
           ],
           "id": "adaptation-03"
@@ -485,12 +460,8 @@
           "done": true,
           "evidence": [
             {
-              "file": "OBD_STATUS.md",
-              "locator": "PT3G 已接入原生枚举、模块连接、监测与释放"
-            },
-            {
-              "file": "OBD_STATUS.md",
-              "locator": "两轮原生释放成功"
+              "file": "docs/progress.md",
+              "locator": "`adaptation-04`"
             }
           ],
           "id": "adaptation-04"
@@ -501,12 +472,8 @@
           "done": true,
           "evidence": [
             {
-              "file": "OBD_STATUS.md",
-              "locator": "Mac／Windows 各 211 项相关测试无跳过通过"
-            },
-            {
-              "file": "OBD_STATUS.md",
-              "locator": "## 2026-10-09 PT3G 读取传输软件与实际绑定"
+              "file": "docs/progress.md",
+              "locator": "`adaptation-05`"
             }
           ],
           "id": "adaptation-05"
@@ -517,8 +484,8 @@
           "done": true,
           "evidence": [
             {
-              "file": "OBD_STATUS.md",
-              "locator": "固件准备检查原厂来源声明、文件长度/SHA-256"
+              "file": "docs/progress.md",
+              "locator": "`adaptation-06`"
             }
           ],
           "id": "adaptation-06"
@@ -529,12 +496,12 @@
           "done": true,
           "evidence": [
             {
-              "file": "docs/obd-current-guide.md",
-              "locator": "Pull-X431-Capture.cmd"
+              "file": "scripts/diagnostics/tests/test_x431_capture.py",
+              "locator": "class CaptureTest(unittest.TestCase):"
             },
             {
-              "file": "OBD_STATUS.md",
-              "locator": "## 2026-10-09 X431 原始捕获取回与独立工具"
+              "file": "docs/progress.md",
+              "locator": "`adaptation-07`"
             }
           ],
           "id": "adaptation-07"
@@ -554,7 +521,7 @@
           "id": "adaptation-09"
         },
         {
-          "criterion": "已确认 CAN 参考/采集设备含 ESP32/Panda 的适用接收及不发送配置实现",
+          "criterion": "已确认 CAN 参考/采集设备含 ESP32 的适用接收及不发送配置实现",
           "level": "software",
           "done": false,
           "evidence": [],

@@ -105,6 +105,115 @@ try {
   await noWrites.append(noop.operationId, "completed", complete(unchanged));
   assert.equal((await noWrites.begin(unchanged)).phase, "backed-up"); cases++;
 
+  for (const phase of ["completed", "failed-before-write", "readback-reconciled"]) {
+    for (const cleanup of ["unlink", "rmdir"]) {
+      const name = `terminal-${phase}-${cleanup}`, directory = path.join(root, name);
+      let armed = false;
+      const filesystem = { ...fs, [cleanup]: async file => {
+        if (armed && String(file).endsWith(cleanup === "unlink" ? ".owner" : ".lock")) {
+          armed = false; throw new Error("injected-terminal-cleanup-failure");
+        }
+        return fs[cleanup](file);
+      } };
+      const original = journalAt(name, filesystem), started = await original.begin(vehicleMetadata);
+      if (phase !== "failed-before-write") {
+        for (const index of phase === "completed" ? [0, 1] : [0]) {
+          await original.append(started.operationId, "write-intent", forKey(metadata, index));
+          if (phase === "completed") {
+            await original.append(started.operationId, "write-returned", forKey(metadata, index));
+            await original.append(started.operationId, "block-verified", forKey(metadata, index));
+          }
+        }
+      }
+      const finish = () => phase === "readback-reconciled"
+        ? original.inspect(started.operationId).then(state => original.reconcile(started.operationId,
+          { capturedUtc: new Date().toISOString(), blocks: metadata.targets.map(({ key, sha256 }) => ({ key, sha256 })) }, state.lastSha256))
+        : original.append(started.operationId, phase, phase === "completed" ? complete(metadata) : { error: "synthetic refusal before any dispatch" });
+      armed = true; await assert.rejects(finish(), /terminal-cleanup-failure/);
+      const prior = await original.inspect(started.operationId), lock = path.join(directory, `scope-${metadata.scopeKey}.lock`);
+      assert.equal(prior.phase, phase); assert.equal(prior.requiresReconciliation, false);
+      assert.deepEqual(await fs.readdir(lock), cleanup === "unlink" ? [`${started.operationId}.owner`] : []);
+      // Reopen with the real filesystem: no live client or device is involved.
+      const reopened = journalAt(name), admitted = await reopened.begin(vehicleMetadata);
+      assert.notEqual(admitted.operationId, started.operationId);
+      assert.equal(await fs.readFile(path.join(lock, `${admitted.operationId}.owner`), "utf8"), admitted.operationId);
+      assert.equal((await reopened.inspect(started.operationId)).lastSha256, prior.lastSha256);
+      assert.deepEqual(admitted.intended, []); cases++;
+    }
+  }
+
+  {
+    const name = "terminal-cleanup-still-failing", directory = path.join(root, name);
+    const filesystem = { ...fs, rmdir: async file => {
+      if (String(file).endsWith(".lock")) throw new Error("injected-persistent-cleanup-failure");
+      return fs.rmdir(file);
+    } };
+    const journal = journalAt(name, filesystem), original = await journal.begin(vehicleMetadata);
+    await assert.rejects(journal.append(original.operationId, "failed-before-write", { error: "no dispatch" }), /cleanup-failure/);
+    const before = await fs.readdir(directory);
+    await assert.rejects(journal.begin(vehicleMetadata), /cleanup-failure/);
+    assert.deepEqual(await fs.readdir(directory), before); cases++;
+  }
+
+  {
+    const name = "terminal-keeps-new-owner", journal = journalAt(name);
+    const previous = await journal.begin(vehicleMetadata);
+    await journal.append(previous.operationId, "failed-before-write", { error: "no dispatch" });
+    const current = await journal.begin(vehicleMetadata);
+    await assert.rejects(journal.begin(vehicleMetadata), { code: "EEXIST" });
+    const lock = path.join(root, name, `scope-${metadata.scopeKey}.lock`);
+    assert.deepEqual(await fs.readdir(lock), [`${current.operationId}.owner`]);
+    await journal.append(current.operationId, "write-intent", forKey(metadata, 0));
+    await assert.rejects(journal.begin(vehicleMetadata), /unresolved-prior-write/);
+    assert.deepEqual(await fs.readdir(lock), [`${current.operationId}.owner`]); cases++;
+  }
+
+  {
+    const name = "terminal-keeps-other-scope", journal = journalAt(name);
+    const previous = await journal.begin(vehicleMetadata);
+    await journal.append(previous.operationId, "failed-before-write", { error: "no dispatch" });
+    const oldLock = path.join(root, name, `scope-${metadata.scopeKey}.lock`);
+    await fs.mkdir(oldLock); await fs.writeFile(path.join(oldLock, `${previous.operationId}.owner`), previous.operationId);
+    await journal.begin({ ...vehicleMetadata, scopeKey: "e".repeat(64) });
+    assert.deepEqual(await fs.readdir(oldLock), [`${previous.operationId}.owner`]); cases++;
+  }
+
+  {
+    const name = "terminal-cleanup-race", journal = journalAt(name);
+    const previous = await journal.begin(vehicleMetadata);
+    await journal.append(previous.operationId, "failed-before-write", { error: "no dispatch" });
+    const lock = path.join(root, name, `scope-${metadata.scopeKey}.lock`), owner = path.join(lock, `${previous.operationId}.owner`);
+    await fs.mkdir(lock); await fs.writeFile(owner, previous.operationId);
+    let enter, resume, paused = false;
+    const ready = new Promise(resolve => { enter = resolve; }), wait = new Promise(resolve => { resume = resolve; });
+    const filesystem = { ...fs, unlink: async file => {
+      if (!paused && String(file) === owner) { paused = true; enter(); await wait; }
+      return fs.unlink(file);
+    } };
+    const delayed = journalAt(name, filesystem).begin(vehicleMetadata);
+    // Observe rejection immediately, even if a test assertion fails first.
+    const settled = delayed.then(value => ({ value }), error => ({ error }));
+    let watchdog;
+    try {
+      await Promise.race([ready, new Promise((_, reject) => { watchdog = setTimeout(() => reject(new Error("terminal cleanup did not pause")), 3000); })]);
+      const current = await journal.begin(vehicleMetadata); resume();
+      assert.equal((await settled).error?.code, "EEXIST");
+      assert.deepEqual(await fs.readdir(lock), [`${current.operationId}.owner`]);
+      await journal.append(current.operationId, "write-intent", forKey(metadata, 0));
+    } finally { clearTimeout(watchdog); resume(); await settled; }
+    cases++;
+  }
+
+  {
+    const name = "terminal-legacy-lock", journal = journalAt(name);
+    const original = await journal.begin({ ...vehicleMetadata, targets: vehicleMetadata.targets.map(t => ({ ...t, changed: false })) });
+    // A completed no-change operation is sufficient to exercise legacy lock ownership.
+    await journal.append(original.operationId, "completed", complete({ ...vehicleMetadata, targets: vehicleMetadata.targets.map(t => ({ ...t, changed: false })) }));
+    const lock = path.join(root, name, `scope-${metadata.scopeKey}.lock`); await fs.writeFile(lock, original.operationId);
+    const next = await journal.begin(vehicleMetadata);
+    assert.deepEqual(await fs.readdir(lock), [`${next.operationId}.owner`]); cases++;
+  }
+
   const damaged = journalAt("damaged"), original = await damaged.begin(metadata);
   const eventFile = path.join(root, "damaged", original.operationId, "000000.json");
   const originalBytes = await fs.readFile(eventFile); const bad = JSON.parse(originalBytes); bad.event.data.backupId = "c".repeat(64);

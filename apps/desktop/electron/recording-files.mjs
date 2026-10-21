@@ -1,7 +1,10 @@
 import { validCanFrame } from "./internal-can-data.mjs";
+import { randomUUID } from "node:crypto";
+import path from "node:path";
+import { rename, unlink } from "node:fs/promises";
 
 /** Only a native Save As choice grants a destination; renderer paths are rejected. */
-export async function saveRecordingFile(input, { dialog, writeFile, window }) {
+export async function saveRecordingFile(input, deps) {
   try {
     if (!input || typeof input !== "object" || Array.isArray(input)
       || Object.keys(input).some((key) => !["fileName", "recording"].includes(key))
@@ -11,19 +14,14 @@ export async function saveRecordingFile(input, { dialog, writeFile, window }) {
     }
     const json = JSON.stringify(input.recording) + "\n";
     if (Buffer.byteLength(json, "utf8") > 8 * 1024 * 1024) return { ok: false, saved: false, error: "recording_too_large" };
-    const options = { title: "保存此次采集", defaultPath: input.fileName,
-      filters: [{ name: "采集记录 JSON", extensions: ["json"] }] };
-    const chosen = window ? await dialog.showSaveDialog(window, options) : await dialog.showSaveDialog(options);
-    if (chosen.canceled || !chosen.filePath) return { ok: true, saved: false, canceled: true };
-    await writeFile(chosen.filePath, json, "utf8");
-    return { ok: true, saved: true, filePath: chosen.filePath };
+    return saveArrayRecording(input.recording, [], input.fileName, deps);
   } catch (error) { return { ok: false, saved: false, error: error?.code || "recording_save_failed" }; }
 }
 
 /** Main-owned frame iterator only, never exposed as a renderer serialization API.
  * Packets stay in volatile memory until Save As; write bounded chunks without
  * materializing the entire batch or applying the ordinary IPC JSON size cap. */
-export async function saveInternalCanRecording(recording, { dialog, openFile, window }) {
+export async function saveInternalCanRecording(recording, deps) {
     if (recording?.kind !== "internal-can-acquisition" || !Number.isSafeInteger(recording.frameCount)
       || recording.frameCount < 1 || recording.retainedFrames !== recording.frameCount
       || recording.receivedTotal !== recording.frameCount || recording.retentionComplete !== true
@@ -31,7 +29,7 @@ export async function saveInternalCanRecording(recording, { dialog, openFile, wi
       return { ok: false, saved: false, error: "invalid_recording" };
     const { frames, ...summary } = recording;
     return saveArrayRecording(summary, [{ key: "frames", values: frames, count: recording.frameCount, valid: validCanFrame,
-      error: "recording-frame-mismatch" }], "internal-can-result.json", { dialog, openFile, window });
+      error: "recording-frame-mismatch" }], "internal-can-result.json", deps);
 }
 
 /** Standard samples and finite worker results are owned and validated by main.
@@ -68,15 +66,17 @@ export async function saveManufacturerRecording(recording, deps) {
   ], recording.simulation ? "manufacturer-rehearsal.json" : "manufacturer-read.json", deps);
 }
 
-async function saveArrayRecording(summary, arrays, fileName, { dialog, openFile, window }) {
-  let file;
+async function saveArrayRecording(summary, arrays, fileName, { dialog, openFile, window, renameFile = rename, unlinkFile = unlink }) {
+  let file, temporaryPath, temporaryOwned = false;
   try {
     const metadata = JSON.stringify(summary);
     const options = { title: "保存此次采集", defaultPath: fileName,
       filters: [{ name: "采集记录 JSON", extensions: ["json"] }] };
     const chosen = window ? await dialog.showSaveDialog(window, options) : await dialog.showSaveDialog(options);
     if (chosen.canceled || !chosen.filePath) return { ok: true, saved: false, canceled: true };
-    file = await openFile(chosen.filePath, "w");
+    temporaryPath = path.join(path.dirname(chosen.filePath), `.flat-six-${randomUUID()}.tmp`);
+    file = await openFile(temporaryPath, "wx");
+    temporaryOwned = true;
     async function put(text) {
       const bytes = Buffer.from(text);
       let offset = 0;
@@ -87,7 +87,7 @@ async function saveArrayRecording(summary, arrays, fileName, { dialog, openFile,
         offset += bytesWritten;
       }
     }
-    await put(metadata.slice(0, -1));
+    await put(arrays.length ? metadata.slice(0, -1) : metadata);
     const counts = {};
     for (const { key, values, count: expected, valid, error = "recording-item-mismatch" } of arrays) {
       await put("," + JSON.stringify(key) + ":[");
@@ -103,15 +103,19 @@ async function saveArrayRecording(summary, arrays, fileName, { dialog, openFile,
       await put("]");
       counts[key] = count;
     }
-    await put("}\n");
+    await put(arrays.length ? "}\n" : "\n");
+    await file.sync();
     await file.close(); file = null;
+    await renameFile(temporaryPath, chosen.filePath);
+    temporaryOwned = false;
     return { ok: true, saved: true, filePath: chosen.filePath,
-      ...(counts.frames !== undefined ? { frameCount: counts.frames } : { sampleCount: counts.samples }),
+      ...(counts.frames !== undefined ? { frameCount: counts.frames } : counts.samples !== undefined ? { sampleCount: counts.samples } : {}),
       ...(counts.runs !== undefined ? { runCount: counts.runs } : {}),
       ...(counts.cycleResults !== undefined ? { cycleCount: counts.cycleResults } : {}) };
   } catch (error) {
     return { ok: false, saved: false, error: error?.code || error?.message || "recording_save_failed" };
   } finally {
     if (file) { try { await file.close(); } catch { /* Preserve the first failure; never claim a saved file. */ } }
+    if (temporaryOwned) { try { await unlinkFile(temporaryPath); } catch { /* A failed temporary file is never published as a saved record. */ } }
   }
 }

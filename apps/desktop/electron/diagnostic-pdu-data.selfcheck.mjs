@@ -38,6 +38,30 @@ function read(file, layer = "application") {
   assert.equal(pos,data.length); assert.equal(stats,packets.length); return packets;
 }
 try {
+  const mode50 = {...pdu, transportKind:"d-pdu-mode50", observation:"reassembled-complete-pdu",
+    primitive:19, expectedPrimitive:19, uniqueId:1, flagsHex:"00000000"};
+  assert.equal(validDiagnosticPdu(mode50),true);
+  for (const extra of [{observation:"native-result-data"},{primitive:true},{uniqueId:true},
+    {expectedPrimitive:true},{flagsHex:"not-hex"}]) assert.equal(validDiagnosticPdu({...mode50,...extra}),false);
+  assert.equal(validDiagnosticPdu({...mode50,transportKind:"d-pdu-iso-tp"}),false);
+  const mode50File=path.join(scratch,"mode50-reassembled.pcapng");
+  const mode50Writer=createDiagnosticPduWriter(mode50File,true);
+  mode50Writer.append(mode50,{simulation:true,runId:"owned-raw-model"});mode50Writer.finish("software-test");
+  const [mode50Packet]=read(mode50File);
+  assert.equal(mode50Packet.hex,mode50.pduHex);
+  assert.equal(mode50Packet.metadata.transportKind,"d-pdu-mode50");
+  assert.equal(mode50Packet.metadata.observation,"reassembled-complete-pdu");
+  assert.equal(mode50Packet.metadata.primitive,mode50Packet.metadata.expectedPrimitive);
+  for (const transportKind of ["elm-mode30","d-pdu-mode30"]) {
+    const row={...mode50,transportKind};
+    if(transportKind==="elm-mode30")for(const key of ["primitive","expectedPrimitive","uniqueId","flagsHex"])delete row[key];
+    assert.equal(validDiagnosticPdu(row),true);
+    assert.equal(validDiagnosticPdu({...row,observation:"native-result-data"}),false);
+    const target=path.join(scratch,transportKind+".pcapng"),out=createDiagnosticPduWriter(target,true);
+    out.append(row,{simulation:true,runId:"tp20-raw-model"});out.finish("software-test");
+    const [packet]=read(target);assert.equal(packet.hex,row.pduHex);
+    assert.equal(packet.metadata.transportKind,transportKind);
+  }
   const file = path.join(scratch,"short-writes.pcapng");
   const writer = createDiagnosticPduWriter(file,true,{ write: (fd,b,offset,length) => fs.writeSync(fd,b,offset,Math.min(length,7)) });
   assert.throws(() => createDiagnosticPduWriter(file,true), /EEXIST/);
@@ -54,6 +78,31 @@ try {
   assert.throws(()=>createDiagnosticPduWriter(path.join(scratch,"failed.pcapng"),true,{
     write:()=>0,close:fd=>{fdClosed=true;fs.closeSync(fd);}
   }),/pcap-short-write/); assert.equal(fdClosed,true);
+
+  for (const partial of [false, true]) {
+    const failedFile = path.join(scratch, `lost-write-${partial}.pcapng`);
+    let fail = false, wrotePartial = false, closed = false;
+    const interrupted = createDiagnosticPduWriter(failedFile, true, {
+      write: (fd, bytes, offset, length) => {
+        if (fail) {
+          if (partial && !wrotePartial) { wrotePartial = true; return fs.writeSync(fd, bytes, offset, Math.min(5, length)); }
+          fail = false; throw Object.assign(new Error("disk write failed"), {code:"ENOSPC"});
+        }
+        return fs.writeSync(fd, bytes, offset, length);
+      }, close: fd => { fs.closeSync(fd); closed = true; },
+    });
+    interrupted.append(pdu, {simulation:true,targetProfileId:"requested",runId:"disk-fault"});
+    const prefix = fs.readFileSync(failedFile); fail = true;
+    assert.throws(() => interrupted.append(pdu, {}), /disk write failed/);
+    const failedBytes = fs.readFileSync(failedFile);
+    assert.throws(() => interrupted.append(pdu, {}), /pcap-write-failed/);
+    assert.deepEqual(fs.readFileSync(failedFile), failedBytes, "a recovered disk cannot resume the failed file");
+    interrupted.finish("recording-write-failed"); interrupted.finish("idempotent");
+    assert.equal(closed, true); assert.equal(interrupted.count, 1);
+    assert.deepEqual(fs.readFileSync(failedFile), failedBytes, "no normal end statistics after a write failure");
+    assert.deepEqual(failedBytes.subarray(0,prefix.length), prefix, "complete received prefix survives");
+    assert.throws(() => read(failedFile), undefined, "independent reader cannot accept it as a complete recording");
+  }
 
   const recorded = path.join(scratch,"explicit.pcapng"); let readyLayer, choices=0;
   const recorder = createDiagnosticCanRecorder({ chooseFile:async()=>{choices++;return recorded;},isLiveReady:layer=>{readyLayer=layer;return true;} });

@@ -16,11 +16,40 @@ from pathlib import Path
 from .allowlist import blocked_reason, clear_transaction_blocked, engine_transaction_blocked
 from .catalog import DEFAULT_CATALOG, catalog_cli_json, live_allowed_hex, load_catalog, operation, profile_by_id
 from .decode import decode_payload
-from .elm import ElmClient, ElmError
+from .elm import ElmClient, ElmError, parameter_unavailable_pdu
 from .engine_obd import ENGINE_PROFILE, EngineSpecError, decode_mode01, load_engine_spec, parse_0100, select_pids, split_support
 from .hashutil import sha256_file
 from .qualification import qualify_identity
 from .session_simulator import SCENARIOS, SessionSimPort
+
+
+class ManualReadRetry:
+    """One explicit decision for one pending episode; no queued future retries."""
+    def __init__(self, cancel):
+        self.cancel = cancel
+        self.condition = threading.Condition()
+        self.checkpoint = None
+        self.granted = False
+
+    def retry(self, episode, attempt):
+        with self.condition:
+            if type(episode) is not int or type(attempt) is not int or (episode, attempt) != self.checkpoint or self.granted:
+                return False
+            self.granted = True
+            self.condition.notify_all()
+            return True
+
+    def wait(self, episode, attempt, deadline, notify_waiting):
+        with self.condition:
+            self.checkpoint, self.granted = (episode, attempt), False
+            try:
+                notify_waiting()
+                while not self.granted and not self.cancel.is_set() and time.monotonic() < deadline:
+                    self.condition.wait(min(.1, max(0, deadline - time.monotonic())))
+                return self.granted and not self.cancel.is_set() and time.monotonic() < deadline
+            finally:
+                self.checkpoint, self.granted = None, False
+
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_ARTIFACT_ROOT = REPO_ROOT / ".local" / "diagnostics" / "sessions"
@@ -43,6 +72,8 @@ ALLOWED_KEYS = frozenset(
         "selectedPids",
         "deviceId",
         "adapterModel",
+        "serialBaud",
+        "engineRemainingMs",
     }
 )
 RUN_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{7,63}$")
@@ -549,7 +580,7 @@ def _utc() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def _open_live_port(serial_module=None, list_ports=None, *, device_id=None, discovery=None, adapter_model=None, require_clear_qualified=False):
+def _open_live_port(serial_module=None, list_ports=None, *, device_id=None, discovery=None, adapter_model=None, require_clear_qualified=False, serial_baud=None):
     from .connection import KNOWN_VLIKER, open_selected_port, pyserial_rows
 
     if not device_id:
@@ -559,7 +590,7 @@ def _open_live_port(serial_module=None, list_ports=None, *, device_id=None, disc
         rows, _err = pyserial_rows(list_ports)
         snapshot = {"platform": "win32", "serial": [], "bluetooth": [], "pyserial": rows, "errors": []}
     port, _com = open_selected_port(device_id, serial_module=serial_module, snapshot=snapshot,
-        adapter_model=adapter_model, require_clear_qualified=require_clear_qualified)
+        adapter_model=adapter_model, require_clear_qualified=require_clear_qualified, serial_baud=serial_baud)
     return port
 
 
@@ -614,8 +645,11 @@ def run_session(
     list_ports=None,
     device_id=None,
     adapter_model=None,
+    serial_baud=None,
     discovery=None,
     retain_artifacts: bool = True,
+    wait_retry=None,
+    engine_remaining_ms=None,
 ) -> dict:
     started = datetime.now(timezone.utc)
     root = Path(artifact_root) if artifact_root is not None else DEFAULT_ARTIFACT_ROOT
@@ -640,6 +674,9 @@ def run_session(
         "startedUtc": started.isoformat(),
         "hostStamp": started.isoformat(),
     }
+    if engine_remaining_ms is not None and (session_task != "engine" or type(engine_remaining_ms) is not int or not 1 <= engine_remaining_ms <= 600000):
+        result["error"] = "engine-remaining-invalid"
+        return result
     if not retain_artifacts and (session_task == "clear" or resume_run_id is not None):
         result["error"] = "transient-task-not-allowed"
         return result
@@ -873,7 +910,12 @@ def run_session(
         "profileId": profile_id, "simulation": simulation, "pdu": pdu})) if progress_sink else None
     vnci_live = mode == "live" and isinstance(device_id, str) and device_id.startswith("vnci:")
     try:
-        if mode == 'live' and session_task == 'clear' and adapter_model in ('ELM327', 'OBDKey', 'OBDLink'):
+        from .connection import validate_serial_baud
+        validate_serial_baud(device_id, serial_baud)
+        if serial_baud is not None and mode != 'live':
+            raise ElmError('serial-baud-live-only')
+        if mode == 'live' and session_task == 'clear' and (adapter_model in ('ELM327', 'OBDKey', 'OBDLink')
+                or isinstance(device_id, str) and device_id.startswith('tcp:')):
             raise ElmError('adapter-clear-not-qualified')
         if retain_artifacts:
             dest.mkdir(parents=True, exist_ok=True)
@@ -898,13 +940,17 @@ def run_session(
                     device_id=device_id,
                     discovery=discovery,
                     adapter_model=adapter_model,
+                    serial_baud=serial_baud,
                     require_clear_qualified=session_task == 'clear',
                 )
         if client is None:
             client = ElmClient(port, timeout_s=min(8.0, budget_s), cancel_event=cancel, pdu_sink=pdu_sink, expected_model=adapter_model,
                 frame_sink=(lambda frame: _emit(progress_sink, {"type": "can-frame", "runId": run_id, "profileId": profile_id,
                     "simulation": simulation, "frame": frame})) if progress_sink else None)
-        end = time.monotonic() + budget_s
+        engine_deadline = time.monotonic() + (engine_remaining_ms if engine_remaining_ms is not None else 600000) / 1000.0
+        end = min(engine_deadline, time.monotonic() + budget_s) if session_task == "engine" else time.monotonic() + budget_s
+        connection_epoch = 1
+        active_recovery = None
         ident_ops = IDENTITY_FIELDS[profile_id]
         dep_ops = plan["dependentOperations"]
         extra = (1 + len(dep_ops)) if session_task == "clear" else 0
@@ -940,8 +986,13 @@ def run_session(
             stage_guard()
 
         def transport_fault(exc) -> bool:
+            from .tcp_port import TcpCleanupError
+            if isinstance(exc, TcpCleanupError):
+                return False
             message = str(exc)
-            return isinstance(exc, (OSError, ConnectionError)) or message == "disconnect" or message.startswith(("port-io:", "short-write", "device-port-unavailable", "device-identity-missing"))
+            return (isinstance(exc, (OSError, ConnectionError)) or message == "disconnect"
+                or message.startswith(("port-io:", "short-write", "device-port-unavailable", "device-identity-missing"))
+                or session_task == "engine" and message.startswith(("prompt-timeout:", "nrc78-timeout", "pending-timeout")))
 
         def close_faulted_client() -> None:
             closed = client.close_restore()
@@ -949,25 +1000,59 @@ def run_session(
             if any(str(item).startswith("close:") for item in closed.get("errors", [])) or getattr(port, "is_open", False):
                 raise ElmError("recovery-close-failed")
 
-        def transaction(req_hex, deadline, allow, **kwargs):
-            nonlocal client, port
+        def notify_connection(episode, phase, attempt, exc=None):
+            reason = None
+            if exc is not None:
+                code = str(exc)
+                reason = 'transport-disconnected' if transport_fault(exc) else code if code in (
+                    'cancelled', 'deadline-expired', 'identity-mismatch', 'recovery-close-failed', 'manual-retry-required') else 'response-rejected' if code.startswith(('negative-response', 'nrc')) else 'recovery-failed'
+            events = result.setdefault('connectionEvents', [])
+            event = dict(sequence=len(events)+1, episode=episode, phase=phase, attempt=attempt,
+                connectionEpoch=connection_epoch, elapsedMs=(time.monotonic()-t0)*1000, observedUtc=_utc(),
+                reason=reason, sourceKind='standard-engine-read', simulation=False,
+                executionEnabled=True, liveVerified=False, writePayload=None)
+            if phase == 'awaiting-retry': event['linkReleased'] = True
+            events.append(event); result['connectionEventCount'] = len(events)
+            _emit(progress_sink, dict(type='connection-state', runId=run_id, profileId=profile_id, connection=event))
+
+        def _transaction(req_hex, deadline, allow, **kwargs):
+            nonlocal client, port, end, connection_epoch, active_recovery
             try:
                 return _one_request(client, req_hex, deadline, allow, **kwargs)
             except (ElmError, OSError, ConnectionError) as first:
-                if not transport_fault(first) or session_task not in ("read", "engine") or mode != "live" or not own_port or not isinstance(device_id, str) or not device_id.startswith("bt:"):
+                if not transport_fault(first) or session_task not in ("read", "engine") or mode != "live" or not own_port or not isinstance(device_id, str) or not device_id.startswith(("bt:", "usb:", "tcp:")):
+                    raise
+                manual = session_task == 'engine'
+                if manual and not (result.get('identityQualification') or {}).get('observedProfileMatch'):
                     raise
                 expected_identity = dict(identity)
                 prior_raw = list(client.raw_log)
-                close_faulted_client()
                 episode = {"unfinishedRequestHex": req_hex, "attempts": [], "recovered": False}
                 result.setdefault("recovery", []).append(episode)
-                for attempt in range(1, 4):
+                number = len(result['recovery'])
+                if manual:
+                    active_recovery = (number, 0)
+                    notify_connection(number, 'interrupted', 0, first)
+                close_faulted_client()
+                attempt = 0
+                while manual or attempt < 3:
+                    if manual:
+                        if wait_retry is None: raise ElmError('manual-retry-required')
+                        if not wait_retry(number, attempt, engine_deadline, lambda: notify_connection(number, 'awaiting-retry', attempt)):
+                            if cancel.is_set(): raise ElmError('cancelled')
+                            if time.monotonic() >= engine_deadline: raise ElmError('deadline-expired')
+                            raise ElmError('manual-retry-required')
+                        end = min(engine_deadline, time.monotonic() + budget_s)
                     stage_guard()
+                    attempt += 1
+                    if manual:
+                        active_recovery = (number, attempt)
+                        notify_connection(number, 'retrying', attempt)
                     prog("reconnecting")
                     entry = {"attempt": attempt, "ok": False}
                     episode["attempts"].append(entry)
                     try:
-                        port = _open_live_port(serial_module, list_ports, device_id=device_id, discovery=None, adapter_model=adapter_model)
+                        port = _open_live_port(serial_module, list_ports, device_id=device_id, discovery=None, adapter_model=adapter_model, serial_baud=serial_baud)
                         client = ElmClient(port, timeout_s=min(8.0, budget_s), cancel_event=cancel, pdu_sink=pdu_sink, expected_model=adapter_model,
                             frame_sink=(lambda frame: _emit(progress_sink, {"type": "can-frame", "runId": run_id, "profileId": profile_id,
                                 "simulation": simulation, "frame": frame})) if progress_sink else None)
@@ -994,6 +1079,9 @@ def run_session(
                         qualified = qualify_identity({"generation": "981", "ecuId": ECU_ID[profile_id], "identity": recovered_identity}, catalog, expected_generation="981")
                         if not qualified.get("observedProfileMatch") or any(recovered_identity.get(k) != v for k, v in expected_identity.items()):
                             raise ElmError("identity-mismatch")
+                        if manual:
+                            connection_epoch += 1
+                            notify_connection(number, 'qualified', attempt)
                         if session_task == "engine" and kwargs.get("engine_authorized"):
                             client.send_at("ATPC", end, require_ok=True)
                             client.configure_standard_engine(end)
@@ -1007,20 +1095,36 @@ def run_session(
                                     raise ElmError("engine-support-changed")
                         # Continue only the unfinished read; prior completed data stays intact.
                         reply = _one_request(client, req_hex, min(end, time.monotonic() + 15.0), allow, **kwargs)
+                        if manual and not reply.get('ok') and not parameter_unavailable_pdu(bytes.fromhex(req_hex), bytes.fromhex(reply.get('payload_hex') or '')):
+                            raise ElmError(reply.get('error') or 'response-rejected')
                         entry["ok"] = True
                         episode["recovered"] = True
+                        if manual:
+                            notify_connection(number, 'recovered', attempt)
+                            active_recovery = None
                         return reply
                     except (ElmError, OSError, ConnectionError) as recovery_error:
                         entry["error"] = str(recovery_error)
                         if not transport_fault(recovery_error):
                             raise
                         prior_raw = list(client.raw_log)
+                        if manual: notify_connection(number, 'retry-failed', attempt, recovery_error)
                         close_faulted_client()
-                        if attempt == 3:
+                        if not manual and attempt == 3:
                             raise ElmError("recovery-exhausted") from recovery_error
-                        if cancel.wait(0.25 * attempt):
+                        if not manual and cancel.wait(0.25 * attempt):
                             raise ElmError("cancelled")
                 raise ElmError("recovery-exhausted")
+
+        def transaction(req_hex, deadline, allow, **kwargs):
+            nonlocal active_recovery
+            try:
+                return _transaction(req_hex, deadline, allow, **kwargs)
+            except (ElmError, OSError, ConnectionError) as exc:
+                if active_recovery is not None:
+                    notify_connection(active_recovery[0], 'failed', active_recovery[1], exc)
+                    active_recovery = None
+                raise
 
         stage_guard()
         result["adapter"] = client.validate_adapter(min(10.0, max(0.0, end - time.monotonic())))
@@ -1153,10 +1257,20 @@ def run_session(
             n_cycles = engine_state["sampleCycles"]
             for cycle in range(1, n_cycles + 1):
                 for row in supported_rows:
+                    if row['pid'] in engine_state['unsupportedPids']:
+                        continue
                     stage_guard()
                     req_deadline = min(end, time.monotonic() + 15.0)
                     resp = transaction( row["requestHex"], req_deadline, None, engine_authorized=auth)
                     if not resp.get("ok"):
+                        if (resp.get('error') == 'negative-response' and parameter_unavailable_pdu(
+                                bytes.fromhex(row['requestHex']), bytes.fromhex(resp.get('payload_hex') or ''))):
+                            engine_state['unsupportedPids'].append(row['pid'])
+                            engine_state['supportedPids'].remove(row['pid'])
+                            completed += 1
+                            persist()
+                            prog('engine')
+                            continue
                         persist()
                         error = resp.get("error") or "engine-pid-failed"
                         raise ElmError(error)
@@ -1176,6 +1290,7 @@ def run_session(
                             "elapsedMs": int((time.monotonic() - t0) * 1000),
                             "cycle": cycle,
                             "synthetic": simulation,
+                            "connectionEpoch": connection_epoch,
                         }
                     )
                     completed += 1
@@ -1183,6 +1298,8 @@ def run_session(
                     prog("engine")
                 engine_state["completedCycles"] = cycle
                 persist()
+                if not engine_state['supportedPids']:
+                    break
                 if cycle < n_cycles:
                     wait_interval()
 
@@ -1570,6 +1687,8 @@ def _parse_request(raw: str) -> dict:
             select_pids(load_engine_spec(), obj["selectedPids"])
         except EngineSpecError as e:
             raise SessionError(e.code) from e
+    if 'engineRemainingMs' in obj and (task != 'engine' or type(obj['engineRemainingMs']) is not int or not 1 <= obj['engineRemainingMs'] <= 600000):
+        raise SessionError('engine-remaining-invalid')
     for opt in ("sampleCycles", "intervalMs"):
         if opt not in obj:
             continue
@@ -1589,6 +1708,13 @@ def _parse_request(raw: str) -> dict:
         from .connection import ELM_MODELS
         if not isinstance(obj['adapterModel'], str) or obj['adapterModel'] not in ELM_MODELS | {'VNCI', 'PT3G'}:
             raise SessionError('adapterModel-invalid')
+    from .connection import validate_serial_baud
+    try:
+        validate_serial_baud(obj.get('deviceId'), obj.get('serialBaud'))
+    except ElmError as error:
+        raise SessionError(str(error)) from error
+    if obj.get('serialBaud') is not None and obj.get('mode', 'simulation') != 'live':
+        raise SessionError('serial-baud-live-only')
     return obj
 
 
@@ -1643,6 +1769,7 @@ def stdio_loop(stdin=None, stdout=None, *, artifact_root: Path | None = None) ->
         return 0 if plan.get("ok") else 2
     cancel = threading.Event()
     stop_watch = threading.Event()
+    retry_control = ManualReadRetry(cancel)
 
     def watch() -> None:
         buf = b""
@@ -1674,6 +1801,9 @@ def stdio_loop(stdin=None, stdout=None, *, artifact_root: Path | None = None) ->
                     msg = json.loads(line)
                 except json.JSONDecodeError:
                     continue
+                if isinstance(msg, dict) and set(msg) == {'action', 'episode', 'attempt'} and msg['action'] == 'retry':
+                    retry_control.retry(msg['episode'], msg['attempt'])
+                    continue
                 if isinstance(msg, dict) and msg.get("action") == "cancel":
                     cancel.set()
                     return
@@ -1702,7 +1832,9 @@ def stdio_loop(stdin=None, stdout=None, *, artifact_root: Path | None = None) ->
             artifact_root=artifact_root,
             device_id=req.get("deviceId"),
             adapter_model=req.get('adapterModel'),
+            serial_baud=req.get('serialBaud'),
             retain_artifacts=req.get("sessionTask") == "clear" or os.environ.get("PORSCHE981_SESSION_TRANSIENT") != "1",
+            wait_retry=retry_control.wait, engine_remaining_ms=req.get('engineRemainingMs'),
         )
         _print_ndjson(out, outf)
         if out.get("status") == "cancelled":
@@ -1725,6 +1857,7 @@ def stdio_loop(stdin=None, stdout=None, *, artifact_root: Path | None = None) ->
                 "sampleCycles-range",
                 "intervalMs-type",
                 "intervalMs-range",
+                "engine-remaining-invalid",
                 "clear-flag-without-task",
                 "unknown-profile",
                 "operationIds-not-dependent",

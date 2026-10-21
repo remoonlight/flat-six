@@ -1,6 +1,6 @@
 # 981 PETKA 图号 GLB（本机）
 
-分件重建。**不提交** GLB；清单见 [`chassis-exhaust.json`](./chassis-exhaust.json)。
+分件重建。已有 `.local/petka-models/` GLB 按 `.gitignore` 精确白名单保存；清单见 [`chassis-exhaust.json`](./chassis-exhaust.json)。
 
 | 前缀 | system | X-ray 组 |
 |------|--------|----------|

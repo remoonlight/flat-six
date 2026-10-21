@@ -25,32 +25,36 @@ export function validDiagnosticPdu(pdu) {
       && pdu.startedTimestampUs > 0 && (pdu.startedTimestampUs <= pdu.timestampUs || pdu.startedMonotonicTimestampUs !== undefined)))
     && validCaptureClock(pdu)
     && typeof pdu.duringCleanup === "boolean"
-    && ((pdu.transportKind === "elm-iso-tp" && pdu.observation === "reassembled-complete-pdu")
-      || (pdu.transportKind === "d-pdu-iso-tp" && pdu.observation === "native-result-data"
+    && ((["elm-iso-tp", "elm-mode30"].includes(pdu.transportKind) && pdu.observation === "reassembled-complete-pdu")
+      || (((pdu.transportKind === "d-pdu-iso-tp" && pdu.observation === "native-result-data")
+        || (["d-pdu-mode50", "d-pdu-mode30"].includes(pdu.transportKind) && pdu.observation === "reassembled-complete-pdu"))
         && [pdu.primitive, pdu.uniqueId].every(n => Number.isInteger(n) && n >= 0 && n <= 0xffffffff)
         && (pdu.expectedPrimitive === undefined || (Number.isInteger(pdu.expectedPrimitive) && pdu.expectedPrimitive >= 0 && pdu.expectedPrimitive <= 0xffffffff))
         && typeof pdu.flagsHex === "string" && /^(?:[0-9A-F]{2}){0,16}$/.test(pdu.flagsHex)));
 }
 export function createDiagnosticPduWriter(file, simulation, { open = fs.openSync, write = fs.writeSync, close = fs.closeSync } = {}) {
-  let descriptor = open(file, "wx"), count = 0;
+  let descriptor = open(file, "wx"), count = 0, writeFailed = false;
   const startedAt = new Date().toISOString();
   function put(data) {
     let offset = 0;
-    while (offset < data.length) {
-      const n = write(descriptor, data, offset, data.length - offset);
-      if (!Number.isInteger(n) || n <= 0) throw new Error("pcap-short-write");
-      offset += n;
-    }
+    try {
+      while (offset < data.length) {
+        const n = write(descriptor, data, offset, data.length - offset);
+        if (!Number.isInteger(n) || n <= 0) throw new Error("pcap-short-write");
+        offset += n;
+      }
+    } catch (error) { writeFailed = true; throw error; }
   }
   try {
     const shb = Buffer.alloc(16); shb.writeUInt32LE(0x1a2b3c4d); shb.writeUInt16LE(1, 4); shb.writeBigInt64LE(-1n, 8);
-    put(block(0x0a0d0d0a, Buffer.concat([shb, option(1, `${simulation ? "SYNTHETIC; not vehicle evidence. " : ""}Received diagnostic application PDUs only. ELM: complete ISO-TP reassembly; D-PDU: native result bytes before qualification. No inferred TX or CAN frames. Host observation times; requested target is not proof of responder identity.`), end])));
+    put(block(0x0a0d0d0a, Buffer.concat([shb, option(1, `${simulation ? "SYNTHETIC; not vehicle evidence. " : ""}Received diagnostic application PDUs only. ELM: complete ISO-TP reassembly; D-PDU: native result bytes or source mode50 reassembly before qualification. No inferred TX or CAN frames. Host observation times; requested target is not proof of responder identity.`), end])));
     const idb = Buffer.alloc(8); idb.writeUInt16LE(252); idb.writeUInt32LE(8192, 4);
     put(block(1, Buffer.concat([idb, option(2, "diagnostic application RX"), option(9, Buffer.from([6])), end])));
   } catch (error) { close(descriptor); descriptor = null; throw error; }
   return {
     append(pdu, captureContext) {
       if (descriptor === null) throw new Error("pcap-closed");
+      if (writeFailed) throw new Error("pcap-write-failed");
       if (!validDiagnosticPdu(pdu)) throw new Error("pcap-invalid-pdu");
       const { pduHex: _bytes, ...metadata } = pdu;
       const comment = JSON.stringify({ ...metadata, ...captureContext });
@@ -67,6 +71,9 @@ export function createDiagnosticPduWriter(file, simulation, { open = fs.openSync
     finish(reason) {
       if (descriptor === null) return;
       try {
+        // Preserve the received prefix without certifying a file that lost a
+        // packet to a failed write. The existing reader requires the ISB.
+        if (writeFailed) return;
         const stamp = BigInt(Date.now()) * 1000n, isb = Buffer.alloc(12), received = Buffer.alloc(8);
         isb.writeUInt32LE(Number(stamp >> 32n), 4); isb.writeUInt32LE(Number(stamp & 0xffffffffn), 8);
         received.writeBigUInt64LE(BigInt(count));

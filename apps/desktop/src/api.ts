@@ -1,3 +1,4 @@
+import type { CodingSnapshot as CodingWorkspaceSnapshot, CodingReviewInput, CodingResultInput } from "./obd/coding-workspace-state.mjs";
 import type {
   AdapterIdentity,
   AnalysisBatch,
@@ -462,6 +463,10 @@ export type CodingCaptureResult = {
 };
 export type PorscheApi = {
   workshopFlashIndex?: () => Promise<WorkshopFlashResult>;
+  workshopExecution?: (request: WorkshopExecutionRequest) => Promise<WorkshopExecutionResult>;
+  firmwareVersions?: (request: FirmwareVersionRequest) => Promise<FirmwareVersionResult>;
+  codingWorkspace?: (request: CodingWorkspaceRequest) => Promise<CodingWorkspaceResponse>;
+  firmwareExecution?: (request: FirmwareExecutionRequest) => Promise<FirmwareExecutionResult>;
   workshopExportPreview?: (input: WorkshopPreviewInput) => Promise<{ saved: boolean }>;
   obdGetState: () => Promise<ObdRuntimeState>;
   obdStartSimulation: (input: { scenario: ObdScenario; budgetMs: number }) => Promise<ObdRuntimeState>;
@@ -614,6 +619,7 @@ export type PorscheApi = {
   openXrayTuneWindow?: (
     arg?: string | { scene?: string; asset?: string; assetId?: string },
   ) => Promise<{ ok: boolean }>;
+  setCodingDraftDirty?: (dirty: boolean) => Promise<{ ok: boolean }>;
   modelOemLinksGet?: () => Promise<ModelOemLinkFile>;
   modelOemLinksUpsert?: (link: {
     kind: ModelOemKind;
@@ -631,16 +637,19 @@ export type PorscheApi = {
   modelOemCatalog?: () => Promise<ModelOemCatalog>;
   getBridgeStatus?: () => Promise<BridgeStatus>;
   onBridgeStatus?: (cb: (status: BridgeStatus) => void) => () => void;
-  manufacturerStream?: (request: { action: "start" | "start-read" | "status" | "stop" | "save" | "discard"; profileId?: string; parameterIds?: string[]; continuous?: boolean; confirmedReadOnly?: boolean; x431Inactive?: boolean; sessionId?: string; cursor?: number; connectionCursor?: number }) => Promise<{
+  manufacturerStream?: (request: { action: "start" | "start-read" | "identify" | "identify-vehicle" | "read-dtc" | "status" | "retry" | "stop" | "save" | "discard"; generation?: "981" | "982"; ecuId?: number; profileId?: string; parameterIds?: string[]; continuous?: boolean; confirmedReadOnly?: boolean; x431Inactive?: boolean; expectedVehicleIdentitySha256?: string; sessionId?: string; cursor?: number; connectionCursor?: number; episode?: number; attempt?: number }) => Promise<{
     ok: boolean; error?: string | null; sessionId?: string; state?: string; stopReason?: string | null; cursor?: number; hasMore?: boolean; events?: OfflineDiagnosticsResult[]; result?: OfflineDiagnosticsResult | null;
-    saved?: boolean; canceled?: boolean; filePath?: string;
+    saved?: boolean; canceled?: boolean; filePath?: string; saveId?: string; released?: boolean; releaseVerified?: boolean; plotElapsedMs?: number | null;
     connectionEvents?: ManufacturerConnectionEvent[]; connectionCursor?: number; hasMoreConnectionEvents?: boolean;
+    unavailableParameters?: { parameterId: string; reason: string; nrc: number; processedUtc: string }[];
+    invalidParameters?: { parameterId: string; reason: string; processedUtc: string }[];
+    awaitingRetry?: boolean;
   }>;
   offlineDiagnostics?: (
     request: OfflineDiagnosticsRequest,
     operationId?: string,
   ) => Promise<OfflineDiagnosticsResult>;
-  diagnosticPreparation?: (request: { action: string; ecu: string; id?: string; did?: string; blockKey?: string; recordAt?: number; rawValue?: number; physicalValue?: string; scenario?: string; offset?: number }) => Promise<DiagnosticPreparationResult>;
+  diagnosticPreparation?: (request: { action: string; ecu: string; id?: string; did?: string; blockKey?: string; recordAt?: number; rawValue?: number; physicalValue?: string; scenario?: string; offset?: number; edits?: CodingDraftEdit[] }) => Promise<DiagnosticPreparationResult>;
   codingCapture?: (request: CodingCaptureRequest | CodingSourceCaptureRequest) => Promise<CodingCaptureResult>;
   measurementCapture?: (request: CodingCaptureRequest) => Promise<CodingCaptureResult>;
   dtcCapture?: (request: DtcCaptureRequest) => Promise<CodingCaptureResult>;
@@ -651,6 +660,7 @@ export type PorscheApi = {
   cancelOfflineDiagnostics?: (operationId: string) => Promise<OfflineDiagnosticsResult>;
   saveDiagnosticRecording?: (input: { fileName: string; recording: object }) =>
     Promise<{ ok: boolean; saved: boolean; canceled?: boolean; filePath?: string; error?: string }>;
+  revealParameterRecording?: (request: { saveId: string }) => Promise<{ ok: boolean; error?: string }>;
   acquisitionReplay?: (request: ReplayRequest) => Promise<ReplayResult>;
   readOnlySession?: (
     request: ReadOnlySessionRequest,
@@ -690,18 +700,35 @@ export type CodingOperationSummary = { operationId: string; scope: "current-ecu"
   ecu?: string; mode?: "simulation" | "vehicle"; phase?: string; backupId?: string; createdUtc?: string; updatedUtc?: string;
   targetBlocks?: number; changedBlocks?: number; intendedBlocks?: number; verifiedBlocks?: number; integrityError?: string;
   requiresReconciliation: boolean; automaticWriteRetry: false; executionEnabled: false };
+export type FirmwareIdentifierDeclaration = { id: string | null; name: string | null; longName: string | null;
+  values: { attributes: Record<string, string>; text: string; hasChildren: boolean }[] };
 export type FirmwareContainerInspection = {
   schemaVersion: 1; kind: "ecu-firmware-container-inspection";
   file: { name: string; bytes: number; sha256: string }; recognized: boolean; complete: boolean;
   counts: { documents: number; sessions: number; blocks: number; flashdata: number; externalPayloads: number; inlinePayloads: number; issues: number };
   documents: { member: string; modelVersion: string | null; partNumbers: string[];
-    sessions: { id: string | null; name: string | null }[];
+    identityMatchQualified: false;
+    sessions: { id: string | null; name: string | null; memoryId: string | null;
+      expectedIdentifiers: FirmwareIdentifierDeclaration[] }[];
+    blocks: { id: string | null; name: string | null; memoryId: string | null;
+      ownIdentifiers: FirmwareIdentifierDeclaration[] }[];
+    memoryConnectors: { id: string | null; name: string | null;
+      memoryReference: { attributes: Record<string, string> | null; resolved: boolean };
+      sessionDescriptions: { name: string | null; direction: string | null; partNumber: string | null;
+        sessionReference: { attributes: Record<string, string> | null; resolved: boolean; targetId: string | null };
+        diagnosticReferences: Record<string, string>[] }[];
+      identityDescriptions: { identifierReference: Record<string, string> | null;
+        localCandidates: { id: string | null; kind: string; ownerId: string | null; ownerKind: string }[];
+        diagnosticReferences: Record<string, string>[]; outputParameterReferences: Record<string, string>[] }[];
+      layerReferences: Record<string, string>[] }[];
     flashdata: { id: string | null; name: string | null; encryptCompressMethod: { text: string } | null;
       payload: { kind: string; resolved: boolean; bytes?: number; sha256?: string; declaredName?: string } | null }[] }[];
   issues: { reason: string; member?: string; declaredName?: string }[];
   executionEnabled: false; liveVerified: false; writePayload: null;
 };
-export type DiagnosticPreparationResult = { ok: boolean; error?: string; canceled?: boolean; saved?: boolean;
+export type CodingDraftEdit = { blockKey: string; recordAt: number; rawValue?: number; physicalValue?: string };
+export type DiagnosticPreparationResult = { ok: boolean; error?: string; canceled?: boolean; saved?: boolean; editCount?: number;
+  filePath?: string; id?: string; provenance?: string; freshReadProven?: boolean;
   operations?: CodingOperationSummary[];
   history?: { offset: number; limit: number; total: number; currentEcuTotal: number; unassignedTotal: number; requiresReconciliation: number };
   backups?: { id: string; identity: Record<string, string>; profileId: string; capturedUtc: string; original: boolean; blockCount: number; provenance?: string }[];
@@ -766,8 +793,9 @@ export type OfflineDiagnosticsRequest = {
 };
 
 export type ManufacturerConnectionEvent = {
-  sequence: number; episode: number; phase: "interrupted" | "retrying" | "qualified" | "recovered" | "retry-failed" | "failed";
+  sequence: number; episode: number; phase: "interrupted" | "awaiting-retry" | "retrying" | "qualified" | "recovered" | "retry-failed" | "failed";
   attempt: number; connectionEpoch: number; elapsedMs: number; observedUtc: string; reason: string | null;
+  linkReleased?: boolean;
 };
 
 export type OfflineDiagnosticsResult = {
@@ -783,10 +811,13 @@ export type ObdConnectionAction =
   | "list"
   | "select"
   | "configure"
+  | "configure-network"
+  | "configure-serial"
   | "record-start"
   | "record-stop"
   | "save-result"
   | "new-batch"
+  | "receive-stop"
   | "connect"
   | "voltage"
   | "disconnect"
@@ -794,13 +825,55 @@ export type ObdConnectionAction =
   | "status";
 
 export type ObdCanNetwork = "drive" | "chassis" | "comfort" | "crash" | "adas";
+export type CodingWorkspaceRequest = {action:"capability"|"read"|"backup";ecu:string}
+  | {action:"preview";ecu:string;readId:string;edits:({fieldId:string;optionId:string}|{fieldId:string;physicalValue:string}|{fieldId:string;textValue:string})[]}
+  | {action:"preview-restore";ecu:string;readId:string}
+  | {action:"write"|"restore";ecu:string;reviewId:string};
+export type CodingWorkspaceResponse = {ok:boolean;error?:string;readReady?:boolean;backupReady?:boolean;saved?:boolean;filePath?:string;
+  snapshot?:CodingWorkspaceSnapshot;review?:CodingReviewInput;result?:CodingResultInput};
+
+export type FirmwareVersionRequest = { action: "list"; ecu: string } | { action: "review"; ecu: string; listId: string; targetId: string }
+  | { action: "clear"; listId: string };
+export type FirmwareVersionResult = { ok: boolean; error?: string; ecu?: string; listId?: string; targetId?: string;
+  reviewId?: string; canStart?: boolean;
+  catalogueState?: "source-unavailable" | "no-match" | "matched";
+  executionEnabled: false; reason?: string; versions?: { id: string; version: string; notes?: string }[];
+  rows?: { ecu: string; label: string; currentVersion: string; targetVersion: string; operation: "upgrade" | "reflash" | "downgrade" }[] };
+export type FirmwareExecutionRequest = { action: "start"; ecu: string; listId: string; targetId: string; reviewId: string }
+  | { action: "status" | "cancel" | "dismiss"; jobId?: string }
+  | { action: "continue"; jobId: string; stepId: string };
+export type FirmwareExecutionResult = { ok: boolean; error?: string; busy?: boolean; job?: WorkshopExecutionJob & {
+  ecu: string; units: { ecu: string; label: string; originalVersion: string; targetVersion: string; actualVersion: string | null;
+    status: "waiting" | "flashing" | "checking" | "completed" | "failed" | "unconfirmed" | "unexecuted" }[];
+} | null };
+
+export type WorkshopExecutionRequest = {
+  action: "capability" | "start" | "status" | "cancel" | "continue" | "check-resume" | "resume" | "dismiss";
+  functionId?: string; generation?: "981" | "982"; jobId?: string; stepId?: string;
+  persistence?: "ignition-cycle" | "persistent";
+};
+export type WorkshopExecutionJob = {
+  id: string; functionId: string; generation: "981" | "982"; title: string;
+  phase: "preparing" | "running" | "waiting-manual" | "stopping" | "releasing" | "release-pending" | "checking-resume" | "resume-ready" | "completed" | "cancelled" | "failed";
+  currentIndex: number; cancelRequested: boolean; cancelNotApplied: boolean; released: boolean;
+  failure: { cause: string; remedy: string } | null;
+  releaseFailure: { cause: string; remedy: string } | null;
+  resumeFailure: { cause: string; remedy: string } | null;
+  connectionWarning: string | null; resumeSupported: boolean; liveVerified: false;
+  steps: { id: string; label: string; kind: "software" | "manual"; status: "pending" | "running" | "waiting-manual" | "completed" | "failed" | "unconfirmed" | "incomplete" }[];
+};
+export type WorkshopExecutionResult = { ok: boolean; error?: string; ready?: boolean; busy?: boolean;
+  reason?: string | null; connectedForDiagnostics?: boolean; job?: WorkshopExecutionJob | null };
 
 export type ObdConnectionRequest = {
   action: ObdConnectionAction;
   deviceId?: string;
-  model?: "vLinker" | "OBDLink MX+" | "ELM327" | "OBDKey" | "OBDLink" | "VNCI" | "PT3G";
+  model?: "vLinker" | "OBDLink MX+" | "ELM327" | "OBDKey" | "OBDLink" | "CANtieCAR" | "VNCI" | "PT3G";
   purpose?: "diagnostic" | "internal";
   canNetwork?: ObdCanNetwork;
+  host?: string | null;
+  port?: number | null;
+  serialBaud?: number | null;
 };
 
 export type ObdConnectionDevice = {
@@ -812,13 +885,16 @@ export type ObdConnectionDevice = {
   paired?: boolean;
   osStatus?: string | null;
   guidance?: string | null;
-  transport?: "d-pdu-usb" | "bluetooth-spp" | "usb-serial";
+  transport?: "d-pdu-usb" | "bluetooth-spp" | "usb-serial" | "tcp";
   serial?: string;
   address?: string | null;
 };
 
 export type ObdConnectionResult = {
   ok: boolean;
+  networkEndpoint?: { host: string; port: number } | null;
+  serialBaud?: number | null;
+  effectiveSerialBaud?: number | null;
   error?: string | null;
   connectionError?: string | null;
   adapterInfo?: { serial: string; driverVersion: string; firmwareImage: string;
@@ -835,6 +911,9 @@ export type ObdConnectionResult = {
   internal?: { startedAt: string; endedAt: string | null; frameCount: number; retainedFrames: number; frameLimit: number | null;
     retainedBytes?: number; allocatedBytes?: number; retentionComplete?: boolean;
     batchClosed: boolean; stopReason?: string | null; receiveBatchId?: string; receiveState?: "idle" | "starting" | "receiving" | "stopping" | "standby"; interruptions: { at: string; reason: string }[]; verifiedSignalCount: number;
+    parameterSampleCount?: number; plotElapsedMs?: number; signalDefinitionError?: boolean;
+    parameters?: { id: string; name: string; nameEn?: string; unit: string; value: number | null; lastElapsedMs: number | null;
+      invalid: boolean; segments: { elapsedMs: number; value: number }[][] }[];
     latest: { canId: number; extended: boolean; dataHex: string; timestampUs: number; timestampSource: string }[] } | null;
   recording?: { active: boolean; file: string; startedAt: string; frameCount: number; error?: string; reason?: string } | null;
   connected?: boolean;
@@ -874,7 +953,7 @@ export type ObdRegisteredDevice = {
   checkedAt: string;
 };
 
-export type ReadOnlySessionAction = "prepare" | "start" | "status" | "cancel" | "overview" | "saveEngine" | "discardEngine";
+export type ReadOnlySessionAction = "prepare" | "start" | "status" | "cancel" | "overview" | "saveEngine" | "discardEngine" | "retry";
 
 export type ReadOnlySessionRequest = {
   action: ReadOnlySessionAction;
@@ -898,6 +977,7 @@ export type ReadOnlySessionRequest = {
   selectedPids?: string[];
   engineBatchId?: string;
   jobId?: string;
+  episode?: number; attempt?: number;
 };
 
 export type ReadOnlySessionResult = {
@@ -913,8 +993,13 @@ export type ReadOnlySessionResult = {
   events?: unknown[];
   latest?: Record<string, unknown> | null;
   final?: Record<string, unknown> | null;
+  retainedEngine?: Record<string, unknown> | null;
   resumed?: boolean;
+  released?: boolean;
+  releaseVerified?: boolean;
+  plotElapsedMs?: number | null;
   engineBatchId?: string;
+  awaitingRetry?: boolean; connectionEvents?: ManufacturerConnectionEvent[];
   stopReason?: string | null;
   [key: string]: unknown;
 };

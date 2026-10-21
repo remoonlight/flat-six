@@ -138,13 +138,20 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--observation-json', type=Path, required=True,
                         help='Offline {path, capacity, transportReturn, frameHex}; no vehicle connection')
-    parser.add_argument('--porsche-mode30-wrapper', action='store_true',
+    routes = parser.add_mutually_exclusive_group()
+    routes.add_argument('--porsche-mode30-wrapper', action='store_true',
                         help='Audit explicitly supplied retained wrapper context; never selects a vehicle route')
+    routes.add_argument('--routine-helper-wrapper', action='store_true',
+                        help='Audit explicit helper, commandHex and communication; never executes a vehicle action')
     args = parser.parse_args(argv)
     try:
         observation = json.loads(args.observation_json.read_text(encoding='utf-8-sig'))
-        report = (audit_porsche_mode30_wrapper(observation) if args.porsche_mode30_wrapper
-                  else audit_internal_response(observation))
+        if args.routine_helper_wrapper:
+            from .routine_returns import audit_routine_helper_response
+            report = audit_routine_helper_response(observation)
+        else:
+            report = (audit_porsche_mode30_wrapper(observation) if args.porsche_mode30_wrapper
+                      else audit_internal_response(observation))
     except (OSError, ValueError) as error:
         parser.exit(2, f'{error}\n')
     print(json.dumps(report, ensure_ascii=True, indent=2))

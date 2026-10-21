@@ -4,7 +4,7 @@ type CapabilityNode = {
   sourceGenerations?: string[];
 } | null | undefined;
 
-export function topologyCapability(node: CapabilityNode, adapterModel?: string | null): {
+export function topologyCapability(node: CapabilityNode, adapterModel?: string | null, adapterDeviceId?: string | null): {
   readable: boolean;
   clearable: boolean;
   engine: boolean;

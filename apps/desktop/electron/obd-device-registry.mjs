@@ -9,6 +9,7 @@ const PROFILES = Object.freeze({
   ELM327: { name: "ELM327", connection: "USB / 蓝牙 SPP", features: ["连接与电压", "具名只读诊断", "发动机参数"], routes: ["session", "live"], note: "串口默认 38400；具名只读路径已接入，实物及本车待验收。清码、内网、设码和恢复未完成。" },
   OBDKey: { name: "OBDKey", connection: "USB / 蓝牙 SPP", features: ["连接与电压", "具名只读诊断", "发动机参数"], routes: ["session", "live"], note: "按参考配置使用 9600；必须通过 OBDKey 身份及全部所需 AT 设置。实物、车辆、清码、内网、设码和恢复未完成。" },
   OBDLink: { name: "OBDLink / STN", connection: "USB / 蓝牙 SPP", features: ["连接与电压", "具名只读诊断", "发动机参数"], routes: ["session", "live"], note: "串口默认 115200；不视为 MX+，不使用其专用内网配置。实物、车辆、清码、内网、设码和恢复未完成。" },
+  CANtieCAR: { name: "CANtieCAR", connection: "按当前模式核实", features: ["工作模式(未完成)"], routes: [], note: "ELM、J2534 与透明串口模式分别核实；当前不打开通道，不自动切模式或引脚，完整功能仍为目标。" },
   X431: { name: "Launch X431 Pro3S 诊断头", connection: "诊断头 ↔ 平板蓝牙", features: ["数据与日志回放", "设码原值记录"], routes: ["offline", "coding"], note: "经平板留存的诊断参考；项目不直接连接该蓝牙头，也不重放设码指令。" },
   "X431-tablet": { name: "X431 Android 平板", connection: "USB / ADB", features: ["诊断参考数据", "设码记录"], routes: ["offline", "coding"], note: "USB 存在与 ADB 授权分别核验；进入记录页面不会启动 ADB 或诊断。" },
   Espressif: { name: "Espressif USB 调试设备", connection: "USB 调试 / 串口", features: ["USB 识别"], routes: [], note: "完整板型、CAN 收发器与采集固件未确认；不作为可连接 OBD 诊断头。" },
@@ -33,7 +34,7 @@ export function readKnownDevices(file) {
 export function buildDeviceRegistry({ devices = [], host = {}, known = [], checkedAt = new Date().toISOString() }) {
   const records = new Map(known.map(identity).filter(Boolean).map((d) => [d.id, d]));
   for (const d of devices) {
-    if (!CONNECTABLE.has(d.brand)) continue;
+    if (!PROFILES[d.brand]) continue;
     const fresh = identity({ ...d, family: d.brand, lastSeenAt: checkedAt });
     if (fresh) records.set(d.id, { ...records.get(d.id), ...fresh });
   }
@@ -60,7 +61,8 @@ export function buildDeviceRegistry({ devices = [], host = {}, known = [], check
     const driver = host.drivers?.[record.family];
     const supportFailed = driver?.supportFilesQualified === false;
     const service = record.family === "PT3G" ? (host.services || []).find((s) => s.Name === "VciToolServerPORSCHE")?.State : null;
-    const state = current?.available && supportFailed ? "驱动配套未通过" : current?.available ? (paired ? "已配对 · 串口可用" : "模块可用")
+    const state = current?.available && record.family === "CANtieCAR" ? "工作模式(未完成)"
+      : current?.available && supportFailed ? "驱动配套未通过" : current?.available ? (paired ? "已配对 · 串口可用" : "模块可用")
       : current ? "已识别 · 暂不可连接" : usbPresent ? "USB 在线" : "本次未发现";
     if (current || usbPresent) record.lastSeenAt = checkedAt;
     return { ...record, name: record.name || profile.name, connection: record.id.startsWith("usb:") || current?.transport === "usb-serial" ? "USB / 串口" : profile.connection,

@@ -109,6 +109,7 @@ class PrerequisiteTests(unittest.TestCase):
         x431 = next(row for row in result['adapters'] if row['id'] == 'x431')
         self.assertTrue(x431['captureOnly'])
         self.assertFalse(x431['directProjectTransportImplemented'])
+        self.assertEqual([row['id'] for row in result['referenceCollectors']], ['esp32'])
         self.assertFalse(any(row['runtimePrerequisitesReady'] for row in result['referenceCollectors']))
         vnci.assert_not_called(); pt3g.assert_not_called(); devices.assert_not_called()
 

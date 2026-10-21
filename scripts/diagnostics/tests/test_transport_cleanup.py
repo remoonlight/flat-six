@@ -80,14 +80,20 @@ class NativeCloseReportTests(unittest.TestCase):
                 native.call = wait; reports = []
                 worker = threading.Thread(target=lambda: reports.append(native.close()))
                 worker.start()
+                second_reports, second_done = [], threading.Event()
+                def second_close():
+                    second_reports.append(native.close()); second_done.set()
+                second = threading.Thread(target=second_close)
                 try:
                     self.assertTrue(entered.wait(1))
-                    in_flight = native.close()
-                    self.assertTrue(in_flight['errors']); self.assertIn('close-in-progress', in_flight['errors'][0])
+                    second.start()
+                    self.assertFalse(second_done.wait(.05), 'second close cannot return a report before actual release')
                     self.assertEqual(len(calls), 1); self.assertEqual(native._directory.count, 0)
                 finally:
                     release.set(); worker.join(2)
+                    if second.ident is not None: second.join(2)
                 self.assertFalse(worker.is_alive()); self.assertEqual(reports[0]['errors'], [])
+                self.assertFalse(second.is_alive()); self.assertEqual(second_reports, reports)
                 self.assertEqual(native.close(), reports[0]); self.assertEqual(native._directory.count, 1)
 
     def test_base_native_dispatch_rejects_calls_after_close_before_loading_or_invoking(self):

@@ -1,0 +1,2194 @@
+{
+  "schemaVersion": 1,
+  "kind": "reviewed-gateway-coding-read-scopes",
+  "profiles": [
+    {
+      "profileId": "9x1:CAN_CAN_Gateway:CAN_CAN_Gateway_A3",
+      "definitionSha256": "070ca6bda9547e4c00ecfb2f949531f699158cc6cac45278bf244b8ee149d77b",
+      "definitionFieldCount": 139,
+      "completeScopeSource": {
+        "kind": "piwis-readable-configuration-record-set",
+        "project": "9x1",
+        "version": "2830.1.0",
+        "sourceFile": "0.0.0@EcuConfig_CAN_CAN_Gateway.ec.db",
+        "sourceSha256": "44e7e334642381d1d4d5f1a15f1df087ec5e459e32954100c5539b0999b8ce91",
+        "indexSha256": "2ae7b6e2bff7a92817d819f276ef3d47de6d58715446a3af1768e13fbf9b405c",
+        "datasetId": "#RtGen_CD_EcuConfig_CAN_CAN_Gateway_ConfigData_CAN_CAN_Gateway_A3",
+        "datasetSha256": "5017c4724d7dc6038ffbc2179c62b9f15981893f50b6a6db71f9124508b248ee",
+        "requestLengths": [
+          {
+            "requestHex": "220002",
+            "bytes": 9
+          },
+          {
+            "requestHex": "220004",
+            "bytes": 10
+          },
+          {
+            "requestHex": "220006",
+            "bytes": 50
+          },
+          {
+            "requestHex": "220007",
+            "bytes": 500
+          },
+          {
+            "requestHex": "22000A",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22000C",
+            "bytes": 1300
+          },
+          {
+            "requestHex": "22000D",
+            "bytes": 23
+          },
+          {
+            "requestHex": "22000E",
+            "bytes": 28
+          },
+          {
+            "requestHex": "2204FF",
+            "bytes": 1
+          },
+          {
+            "requestHex": "220600",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22C001",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22C002",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22C004",
+            "bytes": 7
+          },
+          {
+            "requestHex": "22C005",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1A0",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22F1A1",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22F1F0",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22F1F2",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F4",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1F5",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F7",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F8",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F9",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1FA",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1FB",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1FC",
+            "bytes": 1
+          }
+        ],
+        "aliases": [
+          {
+            "record": "DataRecord_Bem_Parameter_Block",
+            "requestHex": "22000C",
+            "canonicalRecord": "Bem_Parameter_Block",
+            "sourceSha256": "70f07f3f7d5187d8cd7001f304e78252ae9824b1e7c9eb9c59e3ac13f69c03fc"
+          }
+        ],
+        "excludedJobInputs": [
+          {
+            "record": "DataRecord_Datensatzdownload_Download_Flashcontainer",
+            "kind": "job-input-without-vehicle-read",
+            "job": "Datensatzdownload_Download_Flashcontainer",
+            "sourceSha256": "96ab410b777023f1d723e90e0b9c60afcd9fd1d9c3c70f48cabf8358219955b4",
+            "jobSourceSha256": "e879166bbb5ed3ef4b8a5c6c2592b9ed810ae48dcf45a604562f266f48032176"
+          }
+        ],
+        "sha256": "e7216e9739a82a7c2fc653276efabf3c607ed7ea3c85cc05be816675c05b4707"
+      },
+      "identityConstraints": {
+        "versionRules": [
+          "Alpha3#CAN/CAN Gateway"
+        ]
+      }
+    },
+    {
+      "profileId": "9x1:CAN_CAN_Gateway:CAN_CAN_Gateway_A4",
+      "definitionSha256": "35c4dace4f34890ec099282693d8d86f92e3a77d96fb18595d7f25a761c65627",
+      "definitionFieldCount": 139,
+      "completeScopeSource": {
+        "kind": "piwis-readable-configuration-record-set",
+        "project": "9x1",
+        "version": "2830.1.0",
+        "sourceFile": "0.0.0@EcuConfig_CAN_CAN_Gateway.ec.db",
+        "sourceSha256": "44e7e334642381d1d4d5f1a15f1df087ec5e459e32954100c5539b0999b8ce91",
+        "indexSha256": "2ae7b6e2bff7a92817d819f276ef3d47de6d58715446a3af1768e13fbf9b405c",
+        "datasetId": "#RtGen_CD_EcuConfig_CAN_CAN_Gateway_ConfigData_CAN_CAN_Gateway_A4",
+        "datasetSha256": "f27b9631d5fda0d6022f7332a3321ece652cff7f456ddb86657dc1f810b5387d",
+        "requestLengths": [
+          {
+            "requestHex": "220002",
+            "bytes": 9
+          },
+          {
+            "requestHex": "220004",
+            "bytes": 10
+          },
+          {
+            "requestHex": "220006",
+            "bytes": 50
+          },
+          {
+            "requestHex": "220007",
+            "bytes": 500
+          },
+          {
+            "requestHex": "22000A",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22000C",
+            "bytes": 1300
+          },
+          {
+            "requestHex": "22000D",
+            "bytes": 23
+          },
+          {
+            "requestHex": "22000E",
+            "bytes": 28
+          },
+          {
+            "requestHex": "2204FF",
+            "bytes": 1
+          },
+          {
+            "requestHex": "220600",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22C001",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22C002",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22C004",
+            "bytes": 7
+          },
+          {
+            "requestHex": "22C005",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1A0",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22F1A1",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22F1F0",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22F1F2",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F4",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1F5",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F7",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F8",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F9",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1FA",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1FB",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1FC",
+            "bytes": 1
+          }
+        ],
+        "aliases": [
+          {
+            "record": "DataRecord_Bem_Parameter_Block",
+            "requestHex": "22000C",
+            "canonicalRecord": "Bem_Parameter_Block",
+            "sourceSha256": "a3f308c78bb65aa30cbd0d7d2402cbf4cfa282a5fa738e9ad5d7afa86e4deaf4"
+          }
+        ],
+        "excludedJobInputs": [
+          {
+            "record": "DataRecord_Datensatzdownload_Download_Flashcontainer",
+            "kind": "job-input-without-vehicle-read",
+            "job": "Datensatzdownload_Download_Flashcontainer",
+            "sourceSha256": "4684c11e934af4b87ee5fb405497ac60278b8a699416892815cb7b08b1f9d00a",
+            "jobSourceSha256": "e879166bbb5ed3ef4b8a5c6c2592b9ed810ae48dcf45a604562f266f48032176"
+          }
+        ],
+        "sha256": "1d6a5dd5a11a685ac581dd0da211a4b5b8ac8857f7238dea6cf9b941006d6a2c"
+      },
+      "identityConstraints": {
+        "versionRules": [
+          "Alpha4#CAN/CAN Gateway"
+        ]
+      }
+    },
+    {
+      "profileId": "9x1:CAN_CAN_Gateway:CAN_CAN_Gateway_A4_1",
+      "definitionSha256": "aa3a6cf3a82fbf8ca645c906805d85b39efd2aca91f95eaf2fcf7faa0cc5ed7f",
+      "definitionFieldCount": 142,
+      "completeScopeSource": {
+        "kind": "piwis-readable-configuration-record-set",
+        "project": "9x1",
+        "version": "2830.1.0",
+        "sourceFile": "0.0.0@EcuConfig_CAN_CAN_Gateway.ec.db",
+        "sourceSha256": "44e7e334642381d1d4d5f1a15f1df087ec5e459e32954100c5539b0999b8ce91",
+        "indexSha256": "2ae7b6e2bff7a92817d819f276ef3d47de6d58715446a3af1768e13fbf9b405c",
+        "datasetId": "#RtGen_CD_EcuConfig_CAN_CAN_Gateway_ConfigData_CAN_CAN_Gateway_A4_1",
+        "datasetSha256": "9f29edd6d95d3ef8f8b706d482a0472334a691069e1a747807da29d1e2ce371b",
+        "requestLengths": [
+          {
+            "requestHex": "220002",
+            "bytes": 9
+          },
+          {
+            "requestHex": "220004",
+            "bytes": 10
+          },
+          {
+            "requestHex": "220006",
+            "bytes": 50
+          },
+          {
+            "requestHex": "220007",
+            "bytes": 500
+          },
+          {
+            "requestHex": "22000A",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22000C",
+            "bytes": 1300
+          },
+          {
+            "requestHex": "22000D",
+            "bytes": 23
+          },
+          {
+            "requestHex": "22000E",
+            "bytes": 28
+          },
+          {
+            "requestHex": "2204FF",
+            "bytes": 1
+          },
+          {
+            "requestHex": "220600",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22C001",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22C002",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22C004",
+            "bytes": 7
+          },
+          {
+            "requestHex": "22C005",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1A0",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22F1A1",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22F1F0",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22F1F2",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F4",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1F5",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F7",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F8",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F9",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1FA",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1FB",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1FC",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1FD",
+            "bytes": 2
+          }
+        ],
+        "aliases": [
+          {
+            "record": "DataRecord_Bem_Parameter_Block",
+            "requestHex": "22000C",
+            "canonicalRecord": "Bem_Parameter_Block",
+            "sourceSha256": "48ccc6ded687bc027378c32e229e5c40e8b5988a9995b718523e5a9043a03e31"
+          }
+        ],
+        "excludedJobInputs": [
+          {
+            "record": "DataRecord_Datensatzdownload_Download_Flashcontainer",
+            "kind": "job-input-without-vehicle-read",
+            "job": "Datensatzdownload_Download_Flashcontainer",
+            "sourceSha256": "96f69fec2affb0ff8d8c87e35d4a39930cf491c0af10fec402d7f7f73b38d4f8",
+            "jobSourceSha256": "e879166bbb5ed3ef4b8a5c6c2592b9ed810ae48dcf45a604562f266f48032176"
+          }
+        ],
+        "sha256": "2bebbd2321174cb53bbbecfb7dd0acfd7670907f8ec7cd9f61365ddab5a00eaa"
+      },
+      "identityConstraints": {
+        "versionRules": [
+          "A4.1  #CAN/CAN Gateway"
+        ]
+      }
+    },
+    {
+      "profileId": "9x1:CAN_CAN_Gateway:CAN_CAN_Gateway_A4_2",
+      "definitionSha256": "8ecdeef4728dc641a816145b36f243c5e25aab0dcc782602826c06c1dc847c85",
+      "definitionFieldCount": 142,
+      "completeScopeSource": {
+        "kind": "piwis-readable-configuration-record-set",
+        "project": "9x1",
+        "version": "2830.1.0",
+        "sourceFile": "0.0.0@EcuConfig_CAN_CAN_Gateway.ec.db",
+        "sourceSha256": "44e7e334642381d1d4d5f1a15f1df087ec5e459e32954100c5539b0999b8ce91",
+        "indexSha256": "2ae7b6e2bff7a92817d819f276ef3d47de6d58715446a3af1768e13fbf9b405c",
+        "datasetId": "#RtGen_CD_EcuConfig_CAN_CAN_Gateway_ConfigData_CAN_CAN_Gateway_A4_2",
+        "datasetSha256": "11006189e4d55de5131291d0cef247137b7f30e8e714a7b0efc78873d81a3457",
+        "requestLengths": [
+          {
+            "requestHex": "220002",
+            "bytes": 9
+          },
+          {
+            "requestHex": "220004",
+            "bytes": 10
+          },
+          {
+            "requestHex": "220006",
+            "bytes": 50
+          },
+          {
+            "requestHex": "220007",
+            "bytes": 500
+          },
+          {
+            "requestHex": "22000A",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22000C",
+            "bytes": 1300
+          },
+          {
+            "requestHex": "22000D",
+            "bytes": 23
+          },
+          {
+            "requestHex": "22000E",
+            "bytes": 28
+          },
+          {
+            "requestHex": "2204FF",
+            "bytes": 1
+          },
+          {
+            "requestHex": "220600",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22C001",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22C002",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22C004",
+            "bytes": 7
+          },
+          {
+            "requestHex": "22C005",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1A0",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22F1A1",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22F1F0",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22F1F2",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F4",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1F5",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F7",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F8",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F9",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1FA",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1FB",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1FC",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1FD",
+            "bytes": 2
+          }
+        ],
+        "aliases": [
+          {
+            "record": "DataRecord_Bem_Parameter_Block",
+            "requestHex": "22000C",
+            "canonicalRecord": "Bem_Parameter_Block",
+            "sourceSha256": "0193d4a26bfa2f464bfca5324f16db29284ccdeb7d956e8fcfb6de3c8e30314c"
+          }
+        ],
+        "excludedJobInputs": [
+          {
+            "record": "DataRecord_Datensatzdownload_Download_Flashcontainer",
+            "kind": "job-input-without-vehicle-read",
+            "job": "Datensatzdownload_Download_Flashcontainer",
+            "sourceSha256": "ed878d992e0f4624690adbba379607a1d5dddab4dd46bbe5755d64a7bbfb5642",
+            "jobSourceSha256": "e879166bbb5ed3ef4b8a5c6c2592b9ed810ae48dcf45a604562f266f48032176"
+          }
+        ],
+        "sha256": "a43347c30c7ee075d79607ed7d9e66ee0dd9deafba8fc4871e5594ae95b6db19"
+      },
+      "identityConstraints": {
+        "versionRules": [
+          "A4.2  #CAN/CAN Gateway"
+        ]
+      }
+    },
+    {
+      "profileId": "9x1:CAN_CAN_Gateway:CAN_CAN_Gateway_A5",
+      "definitionSha256": "7e46509b85cd4d028143eb25facee6812e9793271d571548610a07ac7a56ff0c",
+      "definitionFieldCount": 143,
+      "completeScopeSource": {
+        "kind": "piwis-readable-configuration-record-set",
+        "project": "9x1",
+        "version": "2830.1.0",
+        "sourceFile": "0.0.0@EcuConfig_CAN_CAN_Gateway.ec.db",
+        "sourceSha256": "44e7e334642381d1d4d5f1a15f1df087ec5e459e32954100c5539b0999b8ce91",
+        "indexSha256": "2ae7b6e2bff7a92817d819f276ef3d47de6d58715446a3af1768e13fbf9b405c",
+        "datasetId": "#RtGen_CD_EcuConfig_CAN_CAN_Gateway_ConfigData_CAN_CAN_Gateway_A5",
+        "datasetSha256": "8aa0a3ab52e161d450039b3942970957df179531e64176db8691a31650c436a8",
+        "requestLengths": [
+          {
+            "requestHex": "220002",
+            "bytes": 12
+          },
+          {
+            "requestHex": "220004",
+            "bytes": 12
+          },
+          {
+            "requestHex": "220006",
+            "bytes": 50
+          },
+          {
+            "requestHex": "220007",
+            "bytes": 500
+          },
+          {
+            "requestHex": "22000A",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22000C",
+            "bytes": 1500
+          },
+          {
+            "requestHex": "22000E",
+            "bytes": 28
+          },
+          {
+            "requestHex": "2204FF",
+            "bytes": 1
+          },
+          {
+            "requestHex": "220600",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22C001",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22C002",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22C004",
+            "bytes": 7
+          },
+          {
+            "requestHex": "22C005",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1A0",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22F1A1",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22F1F0",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22F1F2",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F4",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1F5",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F7",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F8",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1FA",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1FC",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1FD",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1FE",
+            "bytes": 1
+          }
+        ],
+        "aliases": [
+          {
+            "record": "DataRecord_Bem_Parameter_Block",
+            "requestHex": "22000C",
+            "canonicalRecord": "Bem_Parameter_Block",
+            "sourceSha256": "eb75d6cad4fdc8a18b19e2b4d3ebc8fe38c03f1084e2c0a0c13938dab5eb4625"
+          }
+        ],
+        "excludedJobInputs": [
+          {
+            "record": "DataRecord_Datensatzdownload_Download_Flashcontainer",
+            "kind": "job-input-without-vehicle-read",
+            "job": "Datensatzdownload_Download_Flashcontainer",
+            "sourceSha256": "7d1ca692bdb6ffc30572223a1eb8d4f195cc90578930f3318d54259bc35d9ed7",
+            "jobSourceSha256": "e879166bbb5ed3ef4b8a5c6c2592b9ed810ae48dcf45a604562f266f48032176"
+          }
+        ],
+        "sha256": "6dbbf32dd96de259f2121d27f962d31f27efbfd41ca50d73eb750dc10e3dd095"
+      },
+      "identityConstraints": {
+        "versionRules": [
+          "A5    #CAN/CAN Gateway"
+        ]
+      }
+    },
+    {
+      "profileId": "9x1:CAN_CAN_Gateway:CAN_CAN_Gateway_A5_1",
+      "definitionSha256": "9bd58974b5a3b63289112fd903aa8ab9da56a37dca4dff88040b598109e4dccb",
+      "definitionFieldCount": 143,
+      "completeScopeSource": {
+        "kind": "piwis-readable-configuration-record-set",
+        "project": "9x1",
+        "version": "2830.1.0",
+        "sourceFile": "0.0.0@EcuConfig_CAN_CAN_Gateway.ec.db",
+        "sourceSha256": "44e7e334642381d1d4d5f1a15f1df087ec5e459e32954100c5539b0999b8ce91",
+        "indexSha256": "2ae7b6e2bff7a92817d819f276ef3d47de6d58715446a3af1768e13fbf9b405c",
+        "datasetId": "#RtGen_CD_EcuConfig_CAN_CAN_Gateway_ConfigData_CAN_CAN_Gateway_A5_1",
+        "datasetSha256": "278229b894b0b04e5affeb9345a5d2ea5fc9454192178678cd43705654d406a0",
+        "requestLengths": [
+          {
+            "requestHex": "220002",
+            "bytes": 12
+          },
+          {
+            "requestHex": "220004",
+            "bytes": 12
+          },
+          {
+            "requestHex": "220006",
+            "bytes": 50
+          },
+          {
+            "requestHex": "220007",
+            "bytes": 500
+          },
+          {
+            "requestHex": "22000A",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22000C",
+            "bytes": 1500
+          },
+          {
+            "requestHex": "22000E",
+            "bytes": 28
+          },
+          {
+            "requestHex": "2204FF",
+            "bytes": 1
+          },
+          {
+            "requestHex": "220600",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22C001",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22C002",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22C004",
+            "bytes": 7
+          },
+          {
+            "requestHex": "22C005",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1A0",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22F1A1",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22F1F0",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22F1F2",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F4",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1F5",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F7",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F8",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1FA",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1FC",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1FD",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1FE",
+            "bytes": 1
+          }
+        ],
+        "aliases": [
+          {
+            "record": "DataRecord_Bem_Parameter_Block",
+            "requestHex": "22000C",
+            "canonicalRecord": "Bem_Parameter_Block",
+            "sourceSha256": "ee7ee1eec56f906e9e29ccb5d436475bffba0a9d2f2bee3f23a5696fc9723dfb"
+          }
+        ],
+        "excludedJobInputs": [
+          {
+            "record": "DataRecord_Datensatzdownload_Download_Flashcontainer",
+            "kind": "job-input-without-vehicle-read",
+            "job": "Datensatzdownload_Download_Flashcontainer",
+            "sourceSha256": "10f8c3a8bdf7ebb5098cd3cfa44a839f8b1e7f7cf16d8361f383783a01855e06",
+            "jobSourceSha256": "e879166bbb5ed3ef4b8a5c6c2592b9ed810ae48dcf45a604562f266f48032176"
+          }
+        ],
+        "sha256": "30fb5b3b7c0b8b4628987aa73ac28fae107d0b731ad3f767f59c0d0143c9ad48"
+      },
+      "identityConstraints": {
+        "versionRules": [
+          "A5.1  #CAN/CAN Gateway"
+        ]
+      }
+    },
+    {
+      "profileId": "9x1:CAN_CAN_Gateway:CAN_CAN_Gateway_A5_2",
+      "definitionSha256": "0b221d72449ee55599d3fcd71ec96bdd86bdc2063853c6a0805cf508c26b2eeb",
+      "definitionFieldCount": 143,
+      "completeScopeSource": {
+        "kind": "piwis-readable-configuration-record-set",
+        "project": "9x1",
+        "version": "2830.1.0",
+        "sourceFile": "0.0.0@EcuConfig_CAN_CAN_Gateway.ec.db",
+        "sourceSha256": "44e7e334642381d1d4d5f1a15f1df087ec5e459e32954100c5539b0999b8ce91",
+        "indexSha256": "2ae7b6e2bff7a92817d819f276ef3d47de6d58715446a3af1768e13fbf9b405c",
+        "datasetId": "#RtGen_CD_EcuConfig_CAN_CAN_Gateway_ConfigData_CAN_CAN_Gateway_A5_2",
+        "datasetSha256": "16fff9fd85094ce0f3bedcddd38d8b0b5169308786fa2f1800e722eb29923fc2",
+        "requestLengths": [
+          {
+            "requestHex": "220002",
+            "bytes": 12
+          },
+          {
+            "requestHex": "220004",
+            "bytes": 12
+          },
+          {
+            "requestHex": "220006",
+            "bytes": 50
+          },
+          {
+            "requestHex": "220007",
+            "bytes": 500
+          },
+          {
+            "requestHex": "22000A",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22000C",
+            "bytes": 1500
+          },
+          {
+            "requestHex": "22000E",
+            "bytes": 28
+          },
+          {
+            "requestHex": "2204FF",
+            "bytes": 1
+          },
+          {
+            "requestHex": "220600",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22C001",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22C002",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22C004",
+            "bytes": 7
+          },
+          {
+            "requestHex": "22C005",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1A0",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22F1A1",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22F1F0",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22F1F2",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F4",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1F5",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F7",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F8",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1FA",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1FC",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1FD",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1FE",
+            "bytes": 1
+          }
+        ],
+        "aliases": [
+          {
+            "record": "DataRecord_Bem_Parameter_Block",
+            "requestHex": "22000C",
+            "canonicalRecord": "Bem_Parameter_Block",
+            "sourceSha256": "7dbbc0060a5a4760da75131dd58083f0403c05700e9ffe7b214efe4d7ac48b80"
+          }
+        ],
+        "excludedJobInputs": [
+          {
+            "record": "DataRecord_Datensatzdownload_Download_Flashcontainer",
+            "kind": "job-input-without-vehicle-read",
+            "job": "Datensatzdownload_Download_Flashcontainer",
+            "sourceSha256": "5068109a4fe94d37f9a235f434971e9979f9a716a31ae54b665a90349c45e176",
+            "jobSourceSha256": "e879166bbb5ed3ef4b8a5c6c2592b9ed810ae48dcf45a604562f266f48032176"
+          }
+        ],
+        "sha256": "08db50124fa2010508b43a542cebb37cdcffc73558be682d2a51ad0006a85ae1"
+      },
+      "identityConstraints": {
+        "versionRules": [
+          "A5.2  #CAN/CAN Gateway"
+        ]
+      }
+    },
+    {
+      "profileId": "9x1:CAN_CAN_Gateway:CAN_CAN_Gateway_A5_3",
+      "definitionSha256": "946880e56ef277b75b4efe899acf1f29dd2ff62b667ba2440858bce20102929e",
+      "definitionFieldCount": 143,
+      "completeScopeSource": {
+        "kind": "piwis-readable-configuration-record-set",
+        "project": "9x1",
+        "version": "2830.1.0",
+        "sourceFile": "0.0.0@EcuConfig_CAN_CAN_Gateway.ec.db",
+        "sourceSha256": "44e7e334642381d1d4d5f1a15f1df087ec5e459e32954100c5539b0999b8ce91",
+        "indexSha256": "2ae7b6e2bff7a92817d819f276ef3d47de6d58715446a3af1768e13fbf9b405c",
+        "datasetId": "#RtGen_CD_EcuConfig_CAN_CAN_Gateway_ConfigData_CAN_CAN_Gateway_A5_3",
+        "datasetSha256": "9b4bf49e3b49a812514cb98ad35aff2d0dcdb8ea926bc38c1a3193d8a31aa80b",
+        "requestLengths": [
+          {
+            "requestHex": "220002",
+            "bytes": 12
+          },
+          {
+            "requestHex": "220004",
+            "bytes": 12
+          },
+          {
+            "requestHex": "220006",
+            "bytes": 50
+          },
+          {
+            "requestHex": "220007",
+            "bytes": 500
+          },
+          {
+            "requestHex": "22000A",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22000C",
+            "bytes": 1500
+          },
+          {
+            "requestHex": "22000E",
+            "bytes": 28
+          },
+          {
+            "requestHex": "2204FF",
+            "bytes": 1
+          },
+          {
+            "requestHex": "220600",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22C001",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22C002",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22C004",
+            "bytes": 7
+          },
+          {
+            "requestHex": "22C005",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1A0",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22F1A1",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22F1F0",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22F1F2",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F4",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1F5",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F7",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F8",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1FA",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1FC",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1FD",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1FE",
+            "bytes": 1
+          }
+        ],
+        "aliases": [
+          {
+            "record": "DataRecord_Bem_Parameter_Block",
+            "requestHex": "22000C",
+            "canonicalRecord": "Bem_Parameter_Block",
+            "sourceSha256": "20bbdb0c89a39c86045cd5f1c06a38ed1f3844d4cbb1760259e8a4847bf6f28f"
+          }
+        ],
+        "excludedJobInputs": [
+          {
+            "record": "DataRecord_Datensatzdownload_Download_Flashcontainer",
+            "kind": "job-input-without-vehicle-read",
+            "job": "Datensatzdownload_Download_Flashcontainer",
+            "sourceSha256": "2ee5e256a58cb274a27ff97602b90219ec1e698c35a75d75c04707335a2e1a8d",
+            "jobSourceSha256": "e879166bbb5ed3ef4b8a5c6c2592b9ed810ae48dcf45a604562f266f48032176"
+          }
+        ],
+        "sha256": "8054d68a5033580bbcdd0ed5ff43f3047b4c6db382dc3073743d529b61d0f0ad"
+      },
+      "identityConstraints": {
+        "versionRules": [
+          "A5.3  #CAN/CAN Gateway"
+        ]
+      }
+    },
+    {
+      "profileId": "9x1:CAN_CAN_Gateway:CAN_CAN_Gateway_A6",
+      "definitionSha256": "9d684339033113a3e16b1a7423c7da9748cd1b4cd3c31384b71e92d949d65d82",
+      "definitionFieldCount": 145,
+      "completeScopeSource": {
+        "kind": "piwis-readable-configuration-record-set",
+        "project": "9x1",
+        "version": "2830.1.0",
+        "sourceFile": "0.0.0@EcuConfig_CAN_CAN_Gateway.ec.db",
+        "sourceSha256": "44e7e334642381d1d4d5f1a15f1df087ec5e459e32954100c5539b0999b8ce91",
+        "indexSha256": "2ae7b6e2bff7a92817d819f276ef3d47de6d58715446a3af1768e13fbf9b405c",
+        "datasetId": "#RtGen_CD_EcuConfig_CAN_CAN_Gateway_ConfigData_CAN_CAN_Gateway_A6",
+        "datasetSha256": "7b5a5893955a74a41408183b1a21424be36aeca5b730906077d251494b692955",
+        "requestLengths": [
+          {
+            "requestHex": "220002",
+            "bytes": 12
+          },
+          {
+            "requestHex": "220004",
+            "bytes": 12
+          },
+          {
+            "requestHex": "220006",
+            "bytes": 50
+          },
+          {
+            "requestHex": "220007",
+            "bytes": 500
+          },
+          {
+            "requestHex": "22000A",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22000C",
+            "bytes": 1500
+          },
+          {
+            "requestHex": "22000E",
+            "bytes": 28
+          },
+          {
+            "requestHex": "2204FF",
+            "bytes": 1
+          },
+          {
+            "requestHex": "220600",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22C001",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22C002",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22C004",
+            "bytes": 7
+          },
+          {
+            "requestHex": "22C005",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1A0",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22F1A1",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22F1F0",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22F1F2",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F4",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1F5",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F7",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F8",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F9",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1FA",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1FB",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1FC",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1FD",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1FE",
+            "bytes": 1
+          }
+        ],
+        "aliases": [
+          {
+            "record": "DataRecord_Bem_Parameter_Block",
+            "requestHex": "22000C",
+            "canonicalRecord": "Bem_Parameter_Block",
+            "sourceSha256": "d21b3d5633a13eca12d3b2d7645d221a9325e479cfd2513c0ae5e8c349f601cc"
+          }
+        ],
+        "excludedJobInputs": [
+          {
+            "record": "DataRecord_Datensatzdownload_Download_Flashcontainer",
+            "kind": "job-input-without-vehicle-read",
+            "job": "Datensatzdownload_Download_Flashcontainer",
+            "sourceSha256": "ce6c68cc99b94c42426cf6f100cdf67272d54732ab6a8b04eb486adec0a6d445",
+            "jobSourceSha256": "e879166bbb5ed3ef4b8a5c6c2592b9ed810ae48dcf45a604562f266f48032176"
+          }
+        ],
+        "sha256": "cb234ba555b9d221b3b9e6428b43be8736f66f1a82e465feedc4cd7351be0ab6"
+      },
+      "identityConstraints": {
+        "versionRules": [
+          "A6    #CAN/CAN Gateway"
+        ]
+      }
+    },
+    {
+      "profileId": "9x1:CAN_CAN_Gateway:CAN_CAN_Gateway_A6_1",
+      "definitionSha256": "a7ca72e5674f26567cc2adcd86391e99bbef499ecaa88b625a9e76a6cc548481",
+      "definitionFieldCount": 145,
+      "completeScopeSource": {
+        "kind": "piwis-readable-configuration-record-set",
+        "project": "9x1",
+        "version": "2830.1.0",
+        "sourceFile": "0.0.0@EcuConfig_CAN_CAN_Gateway.ec.db",
+        "sourceSha256": "44e7e334642381d1d4d5f1a15f1df087ec5e459e32954100c5539b0999b8ce91",
+        "indexSha256": "2ae7b6e2bff7a92817d819f276ef3d47de6d58715446a3af1768e13fbf9b405c",
+        "datasetId": "#RtGen_CD_EcuConfig_CAN_CAN_Gateway_ConfigData_CAN_CAN_Gateway_A6_1",
+        "datasetSha256": "2b39ed4c860dd5f6d2d0dc94218f57509a6661755b7a1cfdae0dbfd516a2052d",
+        "requestLengths": [
+          {
+            "requestHex": "220002",
+            "bytes": 12
+          },
+          {
+            "requestHex": "220004",
+            "bytes": 12
+          },
+          {
+            "requestHex": "220006",
+            "bytes": 50
+          },
+          {
+            "requestHex": "220007",
+            "bytes": 500
+          },
+          {
+            "requestHex": "22000A",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22000C",
+            "bytes": 1500
+          },
+          {
+            "requestHex": "22000E",
+            "bytes": 28
+          },
+          {
+            "requestHex": "2204FF",
+            "bytes": 1
+          },
+          {
+            "requestHex": "220600",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22C001",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22C002",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22C004",
+            "bytes": 7
+          },
+          {
+            "requestHex": "22C005",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1A0",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22F1A1",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22F1F0",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22F1F2",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F4",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1F5",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F7",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F8",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F9",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1FA",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1FB",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1FC",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1FD",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1FE",
+            "bytes": 1
+          }
+        ],
+        "aliases": [
+          {
+            "record": "DataRecord_Bem_Parameter_Block",
+            "requestHex": "22000C",
+            "canonicalRecord": "Bem_Parameter_Block",
+            "sourceSha256": "be519745e24ad64e32e77f6db6350591030283081b7efeb28bdf06e9fc931224"
+          }
+        ],
+        "excludedJobInputs": [
+          {
+            "record": "DataRecord_Datensatzdownload_Download_Flashcontainer",
+            "kind": "job-input-without-vehicle-read",
+            "job": "Datensatzdownload_Download_Flashcontainer",
+            "sourceSha256": "f46b39d14ffa6adecbde6bd63a2965c8f14fc43a1c5c1a773805866f7f30755c",
+            "jobSourceSha256": "e879166bbb5ed3ef4b8a5c6c2592b9ed810ae48dcf45a604562f266f48032176"
+          }
+        ],
+        "sha256": "beb0ad808227013321df33776f0d6c2ea94426f3a5ee4a668c131cc2e1537401"
+      },
+      "identityConstraints": {
+        "versionRules": [
+          "A6.1  #CAN/CAN Gateway"
+        ]
+      }
+    },
+    {
+      "profileId": "9x1:CAN_CAN_Gateway:CAN_CAN_Gateway_A6_2",
+      "definitionSha256": "520c2e54495df0f15d410897a33414a94a49deed708eb80fb1276b2fcc9c564e",
+      "definitionFieldCount": 145,
+      "completeScopeSource": {
+        "kind": "piwis-readable-configuration-record-set",
+        "project": "9x1",
+        "version": "2830.1.0",
+        "sourceFile": "0.0.0@EcuConfig_CAN_CAN_Gateway.ec.db",
+        "sourceSha256": "44e7e334642381d1d4d5f1a15f1df087ec5e459e32954100c5539b0999b8ce91",
+        "indexSha256": "2ae7b6e2bff7a92817d819f276ef3d47de6d58715446a3af1768e13fbf9b405c",
+        "datasetId": "#RtGen_CD_EcuConfig_CAN_CAN_Gateway_ConfigData_CAN_CAN_Gateway_A6_2",
+        "datasetSha256": "806255b843ef89a93716d9bd82973dadccad34fd6651d47840672109300da6f0",
+        "requestLengths": [
+          {
+            "requestHex": "220002",
+            "bytes": 12
+          },
+          {
+            "requestHex": "220004",
+            "bytes": 12
+          },
+          {
+            "requestHex": "220006",
+            "bytes": 50
+          },
+          {
+            "requestHex": "220007",
+            "bytes": 500
+          },
+          {
+            "requestHex": "22000A",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22000C",
+            "bytes": 1500
+          },
+          {
+            "requestHex": "22000E",
+            "bytes": 28
+          },
+          {
+            "requestHex": "2204FF",
+            "bytes": 1
+          },
+          {
+            "requestHex": "220600",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22C001",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22C002",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22C004",
+            "bytes": 7
+          },
+          {
+            "requestHex": "22C005",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1A0",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22F1A1",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22F1F0",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22F1F2",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F4",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1F5",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F7",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F8",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F9",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1FA",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1FB",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1FC",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1FD",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1FE",
+            "bytes": 1
+          }
+        ],
+        "aliases": [
+          {
+            "record": "DataRecord_Bem_Parameter_Block",
+            "requestHex": "22000C",
+            "canonicalRecord": "Bem_Parameter_Block",
+            "sourceSha256": "b2f8bfcecf7fdf7c766e46b10b7a427dca19568eccb207bfdd633622a6e3d806"
+          }
+        ],
+        "excludedJobInputs": [
+          {
+            "record": "DataRecord_Datensatzdownload_Download_Flashcontainer",
+            "kind": "job-input-without-vehicle-read",
+            "job": "Datensatzdownload_Download_Flashcontainer",
+            "sourceSha256": "c8c47f0cf878311060bf32d3e8b3a9e69b8b4560e8cda6dee4124873058d03fe",
+            "jobSourceSha256": "e879166bbb5ed3ef4b8a5c6c2592b9ed810ae48dcf45a604562f266f48032176"
+          }
+        ],
+        "sha256": "e3bca13a2b2c0150e44a6fc83b1549337693f9e4772d40fec83bfffa8fba05b6"
+      },
+      "identityConstraints": {
+        "versionRules": [
+          "A6.2  #CAN/CAN Gateway"
+        ]
+      }
+    },
+    {
+      "profileId": "9x1:CAN_CAN_Gateway:CAN_CAN_Gateway_A6_3",
+      "definitionSha256": "4ef31c5e4f34ce0020b008565ea818959308df585639ddb07afa3bf27ff98e78",
+      "definitionFieldCount": 145,
+      "completeScopeSource": {
+        "kind": "piwis-readable-configuration-record-set",
+        "project": "9x1",
+        "version": "2830.1.0",
+        "sourceFile": "0.0.0@EcuConfig_CAN_CAN_Gateway.ec.db",
+        "sourceSha256": "44e7e334642381d1d4d5f1a15f1df087ec5e459e32954100c5539b0999b8ce91",
+        "indexSha256": "2ae7b6e2bff7a92817d819f276ef3d47de6d58715446a3af1768e13fbf9b405c",
+        "datasetId": "#RtGen_CD_EcuConfig_CAN_CAN_Gateway_ConfigData_CAN_CAN_Gateway_A6_2",
+        "datasetSha256": "806255b843ef89a93716d9bd82973dadccad34fd6651d47840672109300da6f0",
+        "requestLengths": [
+          {
+            "requestHex": "220002",
+            "bytes": 12
+          },
+          {
+            "requestHex": "220004",
+            "bytes": 12
+          },
+          {
+            "requestHex": "220006",
+            "bytes": 50
+          },
+          {
+            "requestHex": "220007",
+            "bytes": 500
+          },
+          {
+            "requestHex": "22000A",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22000C",
+            "bytes": 1500
+          },
+          {
+            "requestHex": "22000E",
+            "bytes": 28
+          },
+          {
+            "requestHex": "2204FF",
+            "bytes": 1
+          },
+          {
+            "requestHex": "220600",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22C001",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22C002",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22C004",
+            "bytes": 7
+          },
+          {
+            "requestHex": "22C005",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1A0",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22F1A1",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22F1F0",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22F1F2",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F4",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1F5",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F7",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F8",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F9",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1FA",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1FB",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1FC",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1FD",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1FE",
+            "bytes": 1
+          }
+        ],
+        "aliases": [
+          {
+            "record": "DataRecord_Bem_Parameter_Block",
+            "requestHex": "22000C",
+            "canonicalRecord": "Bem_Parameter_Block",
+            "sourceSha256": "b2f8bfcecf7fdf7c766e46b10b7a427dca19568eccb207bfdd633622a6e3d806"
+          }
+        ],
+        "excludedJobInputs": [
+          {
+            "record": "DataRecord_Datensatzdownload_Download_Flashcontainer",
+            "kind": "job-input-without-vehicle-read",
+            "job": "Datensatzdownload_Download_Flashcontainer",
+            "sourceSha256": "c8c47f0cf878311060bf32d3e8b3a9e69b8b4560e8cda6dee4124873058d03fe",
+            "jobSourceSha256": "e879166bbb5ed3ef4b8a5c6c2592b9ed810ae48dcf45a604562f266f48032176"
+          }
+        ],
+        "sha256": "e3bca13a2b2c0150e44a6fc83b1549337693f9e4772d40fec83bfffa8fba05b6"
+      },
+      "identityConstraints": {
+        "versionRules": [
+          "A6.3  #CAN/CAN Gateway"
+        ]
+      }
+    },
+    {
+      "profileId": "9x1:CAN_CAN_Gateway:CAN_CAN_Gateway_A6_4",
+      "definitionSha256": "7de22b08702bee19f994f3ed1c387fdde3a8d36946f0244747bb39276017736b",
+      "definitionFieldCount": 145,
+      "completeScopeSource": {
+        "kind": "piwis-readable-configuration-record-set",
+        "project": "9x1",
+        "version": "2830.1.0",
+        "sourceFile": "0.0.0@EcuConfig_CAN_CAN_Gateway.ec.db",
+        "sourceSha256": "44e7e334642381d1d4d5f1a15f1df087ec5e459e32954100c5539b0999b8ce91",
+        "indexSha256": "2ae7b6e2bff7a92817d819f276ef3d47de6d58715446a3af1768e13fbf9b405c",
+        "datasetId": "#RtGen_CD_EcuConfig_CAN_CAN_Gateway_ConfigData_CAN_CAN_Gateway_A6_4",
+        "datasetSha256": "1492432b384577e03b8f413f6705ff16b149f5418986ead928cfac089fe88ad2",
+        "requestLengths": [
+          {
+            "requestHex": "220002",
+            "bytes": 12
+          },
+          {
+            "requestHex": "220004",
+            "bytes": 12
+          },
+          {
+            "requestHex": "220006",
+            "bytes": 50
+          },
+          {
+            "requestHex": "220007",
+            "bytes": 500
+          },
+          {
+            "requestHex": "22000A",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22000C",
+            "bytes": 1500
+          },
+          {
+            "requestHex": "22000E",
+            "bytes": 28
+          },
+          {
+            "requestHex": "2204FF",
+            "bytes": 1
+          },
+          {
+            "requestHex": "220600",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22C001",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22C002",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22C004",
+            "bytes": 7
+          },
+          {
+            "requestHex": "22C005",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1A0",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22F1A1",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22F1F0",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22F1F2",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F4",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1F5",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F7",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F8",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F9",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1FA",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1FB",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1FC",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1FD",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1FE",
+            "bytes": 1
+          }
+        ],
+        "aliases": [
+          {
+            "record": "DataRecord_Bem_Parameter_Block",
+            "requestHex": "22000C",
+            "canonicalRecord": "Bem_Parameter_Block",
+            "sourceSha256": "3067902819c00c66cab3fa42bc65663bcfa6cdcdf4f96518606e136169518b26"
+          }
+        ],
+        "excludedJobInputs": [
+          {
+            "record": "DataRecord_Datensatzdownload_Download_Flashcontainer",
+            "kind": "job-input-without-vehicle-read",
+            "job": "Datensatzdownload_Download_Flashcontainer",
+            "sourceSha256": "5909f01d8573089e3bbe15d06242113d59f9ba153a69ed32c8523810adaa7252",
+            "jobSourceSha256": "e879166bbb5ed3ef4b8a5c6c2592b9ed810ae48dcf45a604562f266f48032176"
+          }
+        ],
+        "sha256": "d0575d9252c39726c3f7b973d6f335cfef479cbf10277a82c127d7ac0f814857"
+      },
+      "identityConstraints": {
+        "versionRules": [
+          "A6.4  #CAN/CAN Gateway"
+        ]
+      }
+    },
+    {
+      "profileId": "9x1:CAN_CAN_Gateway:CAN_CAN_Gateway_A7_0",
+      "definitionSha256": "e08eb4a7e244bf5db0cc6b7858b4f0552a95ed7cc6730f505880eaa9f8d4d4d8",
+      "definitionFieldCount": 148,
+      "completeScopeSource": {
+        "kind": "piwis-readable-configuration-record-set",
+        "project": "9x1",
+        "version": "2830.1.0",
+        "sourceFile": "0.0.0@EcuConfig_CAN_CAN_Gateway.ec.db",
+        "sourceSha256": "44e7e334642381d1d4d5f1a15f1df087ec5e459e32954100c5539b0999b8ce91",
+        "indexSha256": "2ae7b6e2bff7a92817d819f276ef3d47de6d58715446a3af1768e13fbf9b405c",
+        "datasetId": "#RtGen_CD_EcuConfig_CAN_CAN_Gateway_ConfigData_CAN_CAN_Gateway_A7_0",
+        "datasetSha256": "25d5b5ac577f9509817f02270419469bd5197f45bda0edbc66d06c9a482b4a7d",
+        "requestLengths": [
+          {
+            "requestHex": "220002",
+            "bytes": 12
+          },
+          {
+            "requestHex": "220004",
+            "bytes": 12
+          },
+          {
+            "requestHex": "220006",
+            "bytes": 50
+          },
+          {
+            "requestHex": "220007",
+            "bytes": 500
+          },
+          {
+            "requestHex": "22000A",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22000C",
+            "bytes": 1500
+          },
+          {
+            "requestHex": "22000E",
+            "bytes": 28
+          },
+          {
+            "requestHex": "2204FF",
+            "bytes": 1
+          },
+          {
+            "requestHex": "220600",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22C001",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22C002",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22C004",
+            "bytes": 7
+          },
+          {
+            "requestHex": "22C005",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1A0",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22F1A1",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22F1F0",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22F1F2",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F4",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1F5",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F7",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F8",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F9",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1FA",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1FB",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1FC",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1FD",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1FE",
+            "bytes": 1
+          }
+        ],
+        "aliases": [
+          {
+            "record": "DataRecord_Bem_Parameter_Block",
+            "requestHex": "22000C",
+            "canonicalRecord": "Bem_Parameter_Block",
+            "sourceSha256": "184292292e2c5d65eb7de92bd52b7272bc4cfd737305d4441a252a73fa98cc76"
+          }
+        ],
+        "excludedJobInputs": [
+          {
+            "record": "DataRecord_Datensatzdownload_Download_Flashcontainer",
+            "kind": "job-input-without-vehicle-read",
+            "job": "Datensatzdownload_Download_Flashcontainer",
+            "sourceSha256": "4a10a49b4cc6924a454c9f4fd4ace75ef85bed44e60e1f475e94dfc9ec0c7f3a",
+            "jobSourceSha256": "e879166bbb5ed3ef4b8a5c6c2592b9ed810ae48dcf45a604562f266f48032176"
+          }
+        ],
+        "sha256": "395d7ea8c9b32b31afd880af0a303122b4cc55d2ee906958ae84e33387470cd7"
+      },
+      "identityConstraints": {
+        "versionRules": [
+          "A7.0  #CAN/CAN Gateway"
+        ]
+      }
+    },
+    {
+      "profileId": "9x1:CAN_CAN_Gateway:CAN_CAN_Gateway_A7_2_China",
+      "definitionSha256": "dc90813930cf776d0848f897fbb7d7d0be9c227b110b3e3d4c804f37e926d015",
+      "definitionFieldCount": 150,
+      "completeScopeSource": {
+        "kind": "piwis-readable-configuration-record-set",
+        "project": "9x1",
+        "version": "2830.1.0",
+        "sourceFile": "0.0.0@EcuConfig_CAN_CAN_Gateway.ec.db",
+        "sourceSha256": "44e7e334642381d1d4d5f1a15f1df087ec5e459e32954100c5539b0999b8ce91",
+        "indexSha256": "2ae7b6e2bff7a92817d819f276ef3d47de6d58715446a3af1768e13fbf9b405c",
+        "datasetId": "#RtGen_CD_EcuConfig_CAN_CAN_Gateway_ConfigData_CAN_CAN_Gateway_A7_1",
+        "datasetSha256": "9b19134563e6d565fe8b4a9cc6bae74cd7f0bfb689f42cfdbb2a5b0b7df9e654",
+        "requestLengths": [
+          {
+            "requestHex": "220002",
+            "bytes": 12
+          },
+          {
+            "requestHex": "220004",
+            "bytes": 12
+          },
+          {
+            "requestHex": "220006",
+            "bytes": 50
+          },
+          {
+            "requestHex": "220007",
+            "bytes": 500
+          },
+          {
+            "requestHex": "22000A",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22000C",
+            "bytes": 1500
+          },
+          {
+            "requestHex": "22000E",
+            "bytes": 28
+          },
+          {
+            "requestHex": "220010",
+            "bytes": 1
+          },
+          {
+            "requestHex": "2204FF",
+            "bytes": 1
+          },
+          {
+            "requestHex": "220600",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22C001",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22C002",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22C004",
+            "bytes": 7
+          },
+          {
+            "requestHex": "22C005",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1A0",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22F1A1",
+            "bytes": 4
+          },
+          {
+            "requestHex": "22F1F0",
+            "bytes": 11
+          },
+          {
+            "requestHex": "22F1F2",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F3",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F4",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1F5",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F7",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F8",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1F9",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1FA",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1FB",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1FC",
+            "bytes": 1
+          },
+          {
+            "requestHex": "22F1FD",
+            "bytes": 2
+          },
+          {
+            "requestHex": "22F1FE",
+            "bytes": 1
+          }
+        ],
+        "aliases": [
+          {
+            "record": "DataRecord_Bem_Parameter_Block",
+            "requestHex": "22000C",
+            "canonicalRecord": "Bem_Parameter_Block",
+            "sourceSha256": "a01b937cc9445ce284e1984ce14fd966d78b9e8f9757bcc17e575fe02a6a7e95"
+          }
+        ],
+        "excludedJobInputs": [
+          {
+            "record": "DataRecord_Datensatzdownload_Download_Flashcontainer",
+            "kind": "job-input-without-vehicle-read",
+            "job": "Datensatzdownload_Download_Flashcontainer",
+            "sourceSha256": "1da2138b067584f4662f7f67eecf3cf3b20621672d2ee0601cf33650968db7ab",
+            "jobSourceSha256": "e879166bbb5ed3ef4b8a5c6c2592b9ed810ae48dcf45a604562f266f48032176"
+          }
+        ],
+        "sha256": "306e6e9d39fbc33900df5e286dbbf390eaae793a7abb91cb189ab9fb7a1bed85"
+      },
+      "identityConstraints": {
+        "versionRules": [
+          "A7.2  #CAN/CAN Gateway"
+        ]
+      }
+    }
+  ]
+}

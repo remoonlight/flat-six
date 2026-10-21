@@ -8,7 +8,8 @@ from unittest.mock import patch
 
 from scripts.diagnostics.x431_access_math import (
     GUARDS, SOURCE_SHA256, audit_source, main, transform_1c940, transform_1cd20,
-    transform_mode2, transform_mode6, transform_bde_cod_w06, transform_gateway, transform_psm)
+    transform_mode2, transform_mode6, transform_bde_cod_w06, transform_gateway, transform_psm, transform_pdk,
+    transform_kombi_9x1, transform_bcm_v_h, transform_swsg, transform_rdk)
 
 
 def apply_columns(columns, word):
@@ -43,19 +44,26 @@ class AccessIntegerMathTests(unittest.TestCase):
         for fn, vectors in [
             (transform_bde_cod_w06, [(0,0),(1,1),(0x12345678,0xedcba987),(0xdeadbeef,0x21524110),(0xffffffff,0)]),
             (transform_gateway, [(0,0xc07ae41b),(1,0x1726e6cd),(0x12345678,0xb66cb38b),(0xffffffff,0x73e4f5d9)]),
-            (transform_psm, [(0,0),(1,1),(0x400,0x400),(0x1042,0x2104),(0x1234,4),(0xffff,0x8000)])]:
+            (transform_psm, [(0,0),(1,1),(0x400,0x400),(0x1042,0x2104),(0x1234,4),(0xffff,0x8000)]),
+            (transform_pdk, [(0,0),(1,1),(0x10,0x10),(0x400,0),(0x1042,0),(0x1234,0x3375),(0x8000,0x8000),(0xffff,0)]),
+            (transform_kombi_9x1, [(0,0x01020304),(0xffffffff,0xf8f905f5),(0x12345678,0x7794037a),(0x98109820,0x199a036c)]),
+            (transform_bcm_v_h, [(0,0xeca1f6f7),(0xffffffff,0x47bde2fd),(0x12345678,0x4af151e7),(0x98109820,0x7359f0b7)]),
+            (transform_swsg, [(0,0xe265c4d5),(0xffffffff,0x51fa151f),(0x12345678,0xda812ca5),(0x98109820,0x6696de95)]),
+            (transform_rdk, [(0,0xb60d9cfb),(0xffffffff,0x7e523cf9),(0x12345678,0xb45b48ab),(0x98109820,0x3a3eb6bb)])]:
             for word, expected in vectors:
                 with self.subTest(fn=fn.__name__,word=hex(word)):
                     self.assertEqual(fn(word),expected)
 
     def test_named_words_reject_wrong_width_and_implicit_types(self):
-        for fn,bits in [(transform_bde_cod_w06,32),(transform_gateway,32),(transform_psm,16)]:
+        for fn,bits in [(transform_bde_cod_w06,32),(transform_gateway,32),(transform_psm,16),(transform_pdk,16),(transform_kombi_9x1,32),(transform_bcm_v_h,32),(transform_swsg,32),(transform_rdk,32)]:
             for word in (None,True,False,-1,1<<bits,0.0,'0',b'\0',bytearray(4)):
                 with self.subTest(fn=fn.__name__,word=word),self.assertRaises(ValueError):fn(word)
 
     def test_named_cli_reports_explicit_source_bytes_without_vehicle_qualification(self):
         for entry, value, expected in [('bde-cod-w06','12345678','edcba987'),
-                                       ('gateway','12345678','b66cb38b'),('psm','ffff','8000')]:
+                                       ('gateway','12345678','b66cb38b'),('psm','ffff','8000'),('pdk','1234','3375'),
+                                       ('kombi-9x1','12345678','7794037a'),('bcm-v-h','12345678','4af151e7'),
+                                       ('swsg','12345678','da812ca5'),('rdk','12345678','b45b48ab')]:
             with patch('scripts.diagnostics.x431_access_math.audit_source',return_value=dict(**GUARDS)), \
                     patch('pathlib.Path.read_bytes',return_value=b'controlled source fixture'), \
                     contextlib.redirect_stdout(io.StringIO()) as output:
@@ -70,6 +78,20 @@ class AccessIntegerMathTests(unittest.TestCase):
 
     def test_named_cli_rejects_wrong_byte_width_and_unused_clock(self):
         for args in [('--entry','psm','--window-hex','0000ffff'),
+                     ('--entry','rdk','--window-hex','1234'),
+                     ('--entry','rdk','--window-hex','0012345678'),
+                     ('--entry','rdk','--window-hex','12345678','--hour','0'),
+                     ('--entry','bcm-v-h','--window-hex','1234'),
+                     ('--entry','bcm-v-h','--window-hex','0012345678'),
+                     ('--entry','swsg','--window-hex','1234'),
+                     ('--entry','swsg','--window-hex','0012345678'),
+                     ('--entry','bcm-v-h','--window-hex','12345678','--hour','0'),
+                     ('--entry','swsg','--window-hex','12345678','--second','0'),
+                     ('--entry','kombi-9x1','--window-hex','1234'),
+                     ('--entry','kombi-9x1','--window-hex','0012345678'),
+                     ('--entry','kombi-9x1','--window-hex','12345678','--second','0'),
+                     ('--entry','pdk','--window-hex','0000ffff'),
+                     ('--entry','pdk','--window-hex','1234','--second','0'),
                      ('--entry','gateway','--window-hex','ffff'),
                      ('--entry','bde-cod-w06','--window-hex','12345678','--second','0')]:
             with patch('scripts.diagnostics.x431_access_math.audit_source',return_value=dict(**GUARDS)), \

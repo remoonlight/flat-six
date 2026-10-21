@@ -52,6 +52,34 @@ def _observed_row(spec: dict, dtc_hex: str, status_hex: str) -> dict:
     return extra
 
 
+def _reference_row(spec: dict, dtc_hex: str) -> dict:
+    """Same catalog profile's source text, never an observed vehicle/status claim."""
+    catalog = spec.get("referenceCatalog")
+    if (not isinstance(catalog, dict)
+            or catalog.get("kind") != "x431-source-dtc-text-reference"
+            or catalog.get("binding") != "static-capture-associated"
+            or catalog.get("referenceOnly") is not True
+            or catalog.get("ecuVersionQualified") is not False
+            or not all(isinstance(catalog.get(key), str) and catalog[key]
+                       for key in ("profileId", "module", "variant"))
+            or not all(isinstance(catalog.get(key), str)
+                       and re.fullmatch(r"[0-9a-f]{64}", catalog[key])
+                       for key in ("dataSha256", "variantsSha256"))):
+        return {}
+    records = catalog.get("records")
+    row = records.get(dtc_hex.upper()) if isinstance(records, dict) else None
+    text = row.get("text") if isinstance(row, dict) else None
+    if not isinstance(text, str) or not text.strip() or len(text) > 4096:
+        return {}
+    return {
+        "referenceText": text,
+        "referenceTextSource": {key: catalog[key] for key in
+                                ("profileId", "module", "variant", "dataSha256", "variantsSha256")},
+        "referenceTextIsObservedVehicleText": False,
+        "referenceTextQualifiesEcuVersion": False,
+    }
+
+
 def decode_payload(payload_hex: str, spec: dict) -> dict:
     payload = bytes.fromhex(payload_hex or "")
     kind = spec.get("type")
@@ -101,6 +129,7 @@ def decode_payload(payload_hex: str, spec: dict) -> dict:
                 "statusHex": status,
                 "displayCode": sae_from_two_byte(dtc),
             }
+            row.update(_reference_row(spec, dtc))
             row.update(_observed_row(spec, dtc, status))
             records.append(row)
         return {"type": kind, "ok": True, "records": records, "rawHex": payload.hex().upper()}
@@ -125,6 +154,7 @@ def decode_payload(payload_hex: str, spec: dict) -> dict:
             dtc = rec[:3].hex().upper()
             status = f"{rec[3]:02X}"
             row = {"dtcHex": dtc, "statusHex": status, "displayCode": dtc, "manufacturerCode": True}
+            row.update(_reference_row(spec, dtc))
             row.update(_observed_row(spec, dtc, status))
             records.append(row)
         return {

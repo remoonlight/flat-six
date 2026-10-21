@@ -14,7 +14,7 @@ from .elm import ElmError
 from .pt3g import DEVICE_RE, NativeAdapter, module_device, vendor_root
 from .pt3g_read_source import read_source_contract
 from .pt3g_transport_source import audit_transport_source
-from .vnci import DpuClient, NativeDpu, U32, UINT_PARAMETER_CLASSES, _check
+from .vnci import DpuClient, NativeDpu, U32, UINT_PARAMETER_CLASSES, _check, _serialized_native
 
 METADATA_APIS = frozenset(('PDUConstruct', 'PDUDestruct', 'PDUDestroyItem',
                           'PDUGetObjectId', 'PDUGetModuleIds'))
@@ -61,7 +61,9 @@ class NativeReadTransport(NativeDpu):
                 raise ElmError('pt3g-read-binding-cleanup-failed:' + ';'.join(cleanup['errors'])) from error
             raise
 
+    @_serialized_native
     def call(self, name, *args):
+        NativeAdapter._require_open(self)
         if name not in METADATA_APIS:
             self._require_physical_qualification()
             if name not in self.export_signatures():
@@ -93,6 +95,7 @@ class NativeReadTransport(NativeDpu):
         # physical transport authorization. Its missing evidence is explicit.
         raise ElmError(BLOCK_REASON)
 
+    @_serialized_native
     def create_link(self, protocol, tx, rx, *, connect=True):
         matches = [r for r in self.contract['routes'] if r['protocol'] == protocol
                    and r['txId'] == f'{tx:03X}' and r['rxId'] == f'{rx:03X}'] if (
@@ -101,6 +104,7 @@ class NativeReadTransport(NativeDpu):
             raise ElmError('pt3g-read-route-not-in-source-contract')
         return super().create_link(protocol, tx, rx, connect=connect)
 
+    @_serialized_native
     def event(self):
         # NativeDpu.event accesses PDUGetEventItem directly for the empty-queue
         # return code. Guard that entry as well as the normal call dispatcher.

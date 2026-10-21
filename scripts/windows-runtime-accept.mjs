@@ -7,7 +7,25 @@ import os from "node:os";
 import { spawnSync } from "node:child_process";
 import { resolvePythonCandidates } from "../apps/desktop/electron/offline-diagnostics.mjs";
 import { verifyLaptopAcceptanceInputs } from "./laptop-accept-inputs.mjs";
+import { verifyUnidentifiedLiveUi,verifyUnreadCodingUi } from './obd-unidentified-ui-check.mjs';
 
+function parameterRows(file) {
+  const bytes = fs.readFileSync(file), rows = [];
+  for (let offset = 0; offset < bytes.length;) {
+    const length = bytes.readUInt32LE(offset + 4);
+    assert.ok(length >= 12 && length % 4 === 0);
+    assert.equal(bytes.readUInt32LE(offset + length - 4), length);
+    if (bytes.readUInt32LE(offset) === 6) {
+      const captured = bytes.readUInt32LE(offset + 20);
+      const row = JSON.parse(bytes.subarray(offset + 40, offset + 28 + captured).toString("utf8"));
+      assert.deepEqual(Object.keys(row), ["name", "value", "unit", "capturedUtc"]); rows.push(row);
+    }
+    offset += length;
+  }
+  assert.match(bytes.toString(), /SYNTHETIC/);
+  assert.doesNotMatch(bytes.toString(), /rawLog|requestHex|pduHex|rawValue|transactions/);
+  return rows;
+}
 const root = path.resolve(import.meta.dirname, "..");
 const args = process.argv.slice(2);
 const checkOnly = args.at(-1) === "--check-only";
@@ -166,65 +184,40 @@ try {
   const wrongBlock = await page.evaluate((id) => window.porsche981.diagnosticPreparation({ action: "coding-preview", ecu: "dme", id,
     blockKey: "DID:0001", recordAt: 4047899, rawValue: 0 }), importedCoding[0].id);
   assert.equal(wrongBlock.error, "coding_field_block_mismatch");
-  await page.locator('nav.side button[data-tab="obd"]').click();
-  await page.locator('[data-obd-tab="live"]').click();
-  await page.getByTestId("eng-system").selectOption("dme");
-  await page.getByTestId("eng-data-source").selectOption("x431");
-  await page.getByTestId("offline-parameters").locator('input[type="checkbox"]').first().check();
-  assert.equal(await page.getByTestId("manufacturer-read").isDisabled(), true);
-  await page.getByTestId("manufacturer-x431-inactive").check();
-  await page.getByTestId("manufacturer-readonly").check();
-  assert.equal(await page.getByTestId("obd-recording-controls").count(), 0);
-  await page.getByTestId("manufacturer-read").click();
-  await page.getByTestId("manufacturer-error").waitFor();
-  assert.match(await page.getByTestId("manufacturer-error").innerText(), /live_not_enabled/);
-  assert.equal(await page.getByTestId("manufacturer-save").isDisabled(), true);
-  await page.getByTestId("eng-system").selectOption("gateway");
-  await page.waitForFunction(() => document.querySelector('[data-testid="offline-selection-count"]')?.textContent.includes("共 1151 项"));
-  assert.match(await page.getByTestId("offline-version").innerText(), /CAN_CAN_Gateway_A7_1/);
-  await page.getByTestId("offline-search").fill("里程");
-  await page.getByTestId("offline-select-5fd482040869539e351eb1e79edd82be0d9d9ccf6bd794c4373f68d0ca75301e").check();
-  await page.getByTestId("manufacturer-x431-inactive").check();
-  await page.getByTestId("manufacturer-readonly").check();
-  await page.getByTestId("manufacturer-read").click();
-  await page.getByTestId("manufacturer-error").waitFor();
-  assert.match(await page.getByTestId("manufacturer-error").innerText(), /live_not_enabled/);
-  assert.equal(await page.getByTestId("manufacturer-save").isDisabled(), true);
-  await page.getByTestId("manufacturer-start").click();
-  await page.waitForFunction(() => /[2-9] 轮/.test(document.querySelector('[data-testid="manufacturer-state"]')?.textContent || ""));
-  assert.equal(await page.getByTestId("eng-system").isDisabled(), true);
-  await page.getByTestId("manufacturer-stop").click();
-  await page.waitForFunction(() => !document.querySelector('[data-testid="manufacturer-save"]').disabled);
-  const gatewayFile = path.join(output, "gateway-complete-batch.json");
-  await app.evaluate(({ dialog }, filePath) => { dialog.showSaveDialog = async () => ({ canceled: false, filePath }); }, gatewayFile);
-  await page.getByTestId("manufacturer-save").click();
-  await page.getByTestId("manufacturer-saved").waitFor();
-  const gateway = JSON.parse(fs.readFileSync(gatewayFile, "utf8"));
-  assert.equal(gateway.profileId, "9x1:CAN_CAN_Gateway:CAN_CAN_Gateway_A7_1");
-  assert.equal(gateway.simulation, true); assert.equal(gateway.vehicleDataCollected, false);
-  assert.ok(gateway.cycleResults.length >= 2); assert.equal(gateway.samples.length, gateway.cycleResults.length);
-  assert.ok(gateway.samples.every(s => s.synthetic && s.value === "126380"));
-  assert.equal(gateway.cycles[0].transport.closed, true);
-  assert.equal(gateway.cycles[0].transport.rawLog.filter(row => row.req === "1003").length, 1);
-  assert.equal(gateway.cycles[0].readContract.identityRequests.length, 7);
-  assert.equal(gateway.cycles[0].readContract.ecuId, 9);
-  assert.equal(gateway.cycles[0].readContract.rxId, 0x77A);
+  await verifyUnidentifiedLiveUi(page);
+  // Keep the backend rehearsal qualification without restoring a product button.
+  const gatewayProfile = "9x1:CAN_CAN_Gateway:CAN_CAN_Gateway_A7_1";
+  const gatewayStart = await page.evaluate(profileId => window.porsche981.manufacturerStream({ action: "start", profileId,
+    parameterIds: ["5fd482040869539e351eb1e79edd82be0d9d9ccf6bd794c4373f68d0ca75301e"], continuous: true }), gatewayProfile);
+  assert.equal(gatewayStart.ok, true, JSON.stringify(gatewayStart));
+  let gatewayStatus, gatewayStopped = false;
+  for (let attempt = 0; attempt < 150; attempt++) {
+    gatewayStatus = await page.evaluate(sessionId => window.porsche981.manufacturerStream({ action: "status", sessionId }), gatewayStart.sessionId);
+    assert.equal(gatewayStatus.ok, true, JSON.stringify(gatewayStatus));
+    if (!gatewayStopped && gatewayStatus.events.length >= 2) {
+      await page.evaluate(sessionId => window.porsche981.manufacturerStream({ action: "stop", sessionId }), gatewayStart.sessionId); gatewayStopped = true;
+    }
+    if (gatewayStatus.state === "finished") break;
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+  assert.equal(gatewayStopped, true); assert.equal(gatewayStatus.state, "finished");
+  const gatewayValues = gatewayStatus.events.flatMap(event => event.samples), gateway = gatewayStatus.result;
+  assert.ok(gatewayValues.length >= 2); assert.ok(gatewayValues.every(s => s.synthetic && s.value === "126380"));
+  assert.equal(gateway.transport.closed, true);
+  assert.equal(gateway.transport.rawLog.filter(row => row.req === "1003").length, 1);
+  assert.equal(gateway.readContract.identityRequests.length, 7);
+  assert.equal(gateway.readContract.ecuId, 9); assert.equal(gateway.readContract.rxId, 0x77A);
+  const isolatedDesktop = path.join(output, "Desktop"); fs.mkdirSync(isolatedDesktop);
+  await app.evaluate(({ app }, folder) => app.setPath("desktop", folder), isolatedDesktop);
+  const gatewaySaved = await page.evaluate(sessionId => window.porsche981.manufacturerStream({ action: "save", sessionId }), gatewayStart.sessionId);
+  assert.equal(gatewaySaved.saved, true, JSON.stringify(gatewaySaved));
+  assert.equal(path.dirname(gatewaySaved.filePath), isolatedDesktop);
+  const gatewayRows = parameterRows(gatewaySaved.filePath);
+  assert.equal(gatewayRows.length, gatewayValues.length);
+  assert.ok(gatewayRows.every(s => s.value === "126380"));
+  fs.writeFileSync(path.join(output, "gateway-backend-rehearsal.json"), JSON.stringify(gatewayStatus));
   await page.screenshot({ path: path.join(output, "gateway-stopped.png"), fullPage: true });
-  await page.locator('[data-obd-tab="coding"]').click();
-  await page.locator('[data-coding-system="dme"]').click();
-  await page.locator('[data-coding-category="coding"]').click();
-  await page.getByLabel("原码范围版本").selectOption(profileId);
-  await page.getByTestId("coding-read-scope-result").waitFor();
-  assert.match(await page.getByTestId("coding-read-scope-result").innerText(), /39 个来源字段/);
-  assert.match(await page.getByTestId("coding-read-scope-result").innerText(), /编码块的完整长度.*尚未确认/);
-  await page.getByText("查看全部 28 个编码读取组", { exact: true }).click();
-  await page.getByLabel("码值备份", { exact: true }).selectOption(importedCoding[0].id);
-  await page.getByLabel("码值块", { exact: true }).selectOption("LID:01");
-  await page.getByLabel("设码字段", { exact: true }).selectOption("4047899");
-  await page.getByText("查看备份中的完整原始码值", { exact: true }).click();
-  assert.match(await page.getByTestId("diagnostic-preparation").innerText(), /DID 0001：\s*7E/);
-  assert.match(await page.getByTestId("coding-read-scope-result").innerText(), /LID A4/);
-  await page.getByText("查看全部 28 个编码读取组", { exact: true }).click();
+  await verifyUnreadCodingUi(page);
   assert.ok(fs.existsSync(path.join(userData, "garage.db")), "bundled Node initialized the fresh SQLite database");
   assert.equal(fs.readdirSync(runtime.sessionArtifacts).length, 0, "completed transient reads must not persist unsaved results");
   for (const file of ["model-oem-links.json", "xray-mesh-state.json", "xray-transforms.json"])

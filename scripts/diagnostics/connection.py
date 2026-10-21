@@ -14,6 +14,7 @@ from typing import Any
 
 from . import BAUD, VLIKER_MAC
 from .elm import ElmClient, ElmError
+from .tcp_port import TcpBytePort, TcpEndpoint
 
 DEVICE_ID_RE = re.compile(r"^(?:bt:[0-9A-F]{12}|usb:[0-9a-f]{64}|(?:vnci|pt3g):[0-9]{1,16})$")
 VOLT_RE = re.compile(r"(\d+(?:\.\d+)?)\s*V", re.I)
@@ -23,10 +24,25 @@ VOLT_MAX = 20.0
 ATRV_INTERVAL_S = 2.0
 MONITOR_AT_TIMEOUT_S = 4.0
 RAW_LOG_CAP = 8
+SERIAL_WRITE_TIMEOUT_S = 1.0
 KNOWN_VLIKER = VLIKER_MAC.upper().replace(":", "")
 PS_TIMEOUT_S = 8.0
+CANTIECAR_HINT = '工作模式(未完成)：须核实当前 ELM/J2534/透明串口模式、驱动及引脚；当前不打开通道。'
 ELM_MODELS = frozenset({'vLinker', 'OBDLink MX+', 'ELM327', 'OBDKey', 'OBDLink'})
 ELM_BAUDS = {'vLinker': BAUD, 'OBDLink MX+': BAUD, 'ELM327': 38400, 'OBDKey': 9600, 'OBDLink': 115200}
+# Host UART settings only; the user must match the head's existing configuration.
+# These choices are not evidence that every head supports every rate.
+ELM_SERIAL_BAUDS = (9600, 38400, 115200, 230400)
+
+
+def validate_serial_baud(device_id, serial_baud):
+    if serial_baud is None:
+        return
+    if type(serial_baud) is not int or serial_baud not in ELM_SERIAL_BAUDS:
+        raise ElmError('serial-baud-invalid')
+    if not isinstance(device_id, str) or not device_id.startswith(('bt:', 'usb:')):
+        raise ElmError('serial-baud-transport-mismatch')
+
 
 GUIDANCE_NO_COM = "已配对，但没有可用的 Bluetooth SPP 串口。请在 Windows 蓝牙设置中为该适配器打开串行端口后再刷新。"
 UNRESOLVED_HINT = "系统未给出可识别的适配器名称。连接前请选择实际诊断头型号；普通串口不代表诊断头。"
@@ -91,6 +107,8 @@ def classify_brand(name: str | None, mac: str | None) -> str:
         return "OBDLink MX+"
     if "OBDLINK" in n:
         return "OBDLink"
+    if "CANTIECAR" in n:
+        return "CANtieCAR"
     if "OBDKEY" in n:
         return "OBDKey"
     if "ELM327" in n or "ELM 327" in n:
@@ -102,7 +120,7 @@ def classify_brand(name: str | None, mac: str | None) -> str:
 
 def is_obd_name(name: str | None) -> bool:
     n = (name or "").upper()
-    return classify_brand(n, None) in ELM_MODELS or bool(re.search(r"\bOBD(?:II|2)\b", n))
+    return classify_brand(n, None) in ELM_MODELS | {"CANtieCAR"} or bool(re.search(r"\bOBD(?:II|2)\b", n))
 
 
 def device_id_for_mac(mac: str) -> str:
@@ -110,6 +128,12 @@ def device_id_for_mac(mac: str) -> str:
 
 
 def valid_device_id(value: str | None) -> bool:
+    if isinstance(value, str) and value.startswith('tcp:'):
+        try:
+            TcpEndpoint.from_device_id(value)
+            return True
+        except ValueError:
+            return False
     return isinstance(value, str) and bool(DEVICE_ID_RE.fullmatch(value))
 
 
@@ -384,6 +408,8 @@ def enumerate_devices(snapshot: dict | None = None, **collect_kw) -> dict:
         rec["available"] = bool(rec["comPort"])
         if not rec["available"]:
             rec["guidance"] = rec.get("guidance") or (GUIDANCE_NO_COM if rec["paired"] else None)
+        elif rec["brand"] == "CANtieCAR":
+            rec["guidance"] = CANTIECAR_HINT
         elif rec["brand"] == "unresolved":
             rec["guidance"] = rec.get("guidance") or UNRESOLVED_HINT
         rec["identitySource"] = sorted(set(rec["identitySource"]))
@@ -405,10 +431,10 @@ def enumerate_devices(snapshot: dict | None = None, **collect_kw) -> dict:
                 continue
             rec = by_usb.setdefault(did, {"id": did, "brand": brand, "name": row.get("name") or row.get("description"),
                 "usbInstanceId": instance.upper(), "comPort": com.upper(), "available": True, "paired": False,
-                "transport": "usb-serial", "guidance": UNRESOLVED_HINT if brand == 'unresolved' else None, "identitySource": []})
+                "transport": "usb-serial", "guidance": CANTIECAR_HINT if brand == "CANtieCAR" else UNRESOLVED_HINT if brand == 'unresolved' else None, "identitySource": []})
             rec["identitySource"].append(src_key)
-            if rec['brand'] == 'unresolved' and brand in ELM_MODELS:
-                rec.update(brand=brand, name=row.get('name') or row.get('description'), guidance=None)
+            if rec['brand'] == 'unresolved' and brand in ELM_MODELS | {'CANtieCAR'}:
+                rec.update(brand=brand, name=row.get('name') or row.get('description'), guidance=CANTIECAR_HINT if brand == 'CANtieCAR' else None)
             if rec["comPort"] != com.upper() or (brand != 'unresolved' and rec["brand"] != brand):
                 rec["available"] = False
                 rec["guidance"] = "同一 USB 设备出现多个串口或型号，已拒绝猜测。"
@@ -464,8 +490,23 @@ def resolve_port(device_id: str, snapshot: dict | None = None, **collect_kw) -> 
 
 
 def open_selected_port(device_id: str, *, serial_module=None, snapshot=None, adapter_model=None,
-                       require_clear_qualified=False, **collect_kw):
+                       require_clear_qualified=False, serial_baud=None, **collect_kw):
+    if adapter_model == "CANtieCAR":
+        raise ElmError("adapter-mode-not-qualified")
+    validate_serial_baud(device_id, serial_baud)
+    if isinstance(device_id, str) and device_id.startswith('tcp:'):
+        try:
+            endpoint = TcpEndpoint.from_device_id(device_id)
+        except ValueError as exc:
+            raise ElmError('device-id-invalid') from exc
+        if adapter_model not in ELM_MODELS:
+            raise ElmError('device-model-required')
+        if require_clear_qualified:
+            raise ElmError('adapter-clear-not-qualified')
+        return TcpBytePort(endpoint), device_id
     rec = resolve_device(device_id, snapshot, **collect_kw)
+    if rec['brand'] == 'CANtieCAR':
+        raise ElmError('adapter-mode-not-qualified')
     model = adapter_model or rec['brand']
     if model not in ELM_MODELS:
         raise ElmError('device-model-required')
@@ -476,10 +517,10 @@ def open_selected_port(device_id: str, *, serial_module=None, snapshot=None, ada
     com = rec['comPort']
     if serial_module is None:
         import serial as serial_module  # lazy
-    return serial_module.Serial(com, ELM_BAUDS[model], timeout=0.05, exclusive=True), com
+    return serial_module.Serial(com, serial_baud if serial_baud is not None else ELM_BAUDS[model], timeout=0.05, write_timeout=SERIAL_WRITE_TIMEOUT_S, exclusive=True), com
 
 
-def probe_adapter(device_id: str, *, kind: str = "connect", serial_module=None, snapshot=None, port=None, adapter_model=None, **collect_kw) -> dict:
+def probe_adapter(device_id: str, *, kind: str = "connect", serial_module=None, snapshot=None, port=None, adapter_model=None, serial_baud=None, **collect_kw) -> dict:
     own = port is None
     client = None
     opened = None
@@ -501,8 +542,9 @@ def probe_adapter(device_id: str, *, kind: str = "connect", serial_module=None, 
         "at": _utc(),
     }
     try:
+        validate_serial_baud(device_id, serial_baud)
         if port is None:
-            port, com = open_selected_port(device_id, serial_module=serial_module, snapshot=snapshot, adapter_model=adapter_model, **collect_kw)
+            port, com = open_selected_port(device_id, serial_module=serial_module, snapshot=snapshot, adapter_model=adapter_model, serial_baud=serial_baud, **collect_kw)
             opened = port
             out["comPort"] = com
             out["openedPort"] = True
@@ -626,6 +668,7 @@ def run_voltage_monitor(
     stop_event=None,
     max_samples: int | None = None,
     adapter_model=None,
+    serial_baud=None,
     **collect_kw,
 ) -> int:
     """Persistent ATRV on one serial open. Identity once. No ECU bytes."""
@@ -640,6 +683,11 @@ def run_voltage_monitor(
         _emit(outf, {"ok": False, "type": "error", "error": "device-id-invalid", **flags})
         return 2
 
+    try:
+        validate_serial_baud(device_id, serial_baud)
+    except ElmError as error:
+        _emit(outf, {"ok": False, "type": "error", "error": str(error), **flags})
+        return 2
     if device_id.startswith("vnci:"):
         from .vnci import run_monitor
         return run_monitor(device_id, stdout=outf, stdin=stdin, stop_event=stop_event, max_samples=max_samples)
@@ -657,7 +705,7 @@ def run_voltage_monitor(
         _watch_stdin_stop(stdin, stop)
 
     def fail(err: str, extra=None) -> int:
-        _emit(outf, {"ok": False, "type": "error", "error": err, "serialOpens": serial_opens, **flags, **(extra or {})})
+        _emit(outf, {"ok": False, "type": "error", "error": err, "serialOpens": 0 if device_id.startswith("tcp:") else serial_opens, "tcpOpens": serial_opens if device_id.startswith("tcp:") else 0, **flags, **(extra or {})})
         return 1
 
     def collect():
@@ -667,7 +715,7 @@ def run_voltage_monitor(
                 if stop.is_set():
                     return 0
                 port, com = open_selected_port(device_id, serial_module=serial_module, snapshot=snapshot,
-                    adapter_model=adapter_model, **collect_kw)
+                    adapter_model=adapter_model, serial_baud=serial_baud, **collect_kw)
                 opened = port
                 serial_opens += 1
             else:
@@ -691,7 +739,7 @@ def run_voltage_monitor(
                     "atrv": ident.get("atrv"),
                     "volts": volts,
                     "voltageSource": "atrv",
-                    "serialOpens": serial_opens,
+                    "serialOpens": 0 if device_id.startswith("tcp:") else serial_opens, "tcpOpens": serial_opens if device_id.startswith("tcp:") else 0,
                     "identityOnce": True,
                     "commOk": True,
                     "at": _utc(),
@@ -716,7 +764,7 @@ def run_voltage_monitor(
                         "atrv": atrv,
                         "volts": volts,
                         "voltageSource": "atrv",
-                        "serialOpens": serial_opens,
+                        "serialOpens": 0 if device_id.startswith("tcp:") else serial_opens, "tcpOpens": serial_opens if device_id.startswith("tcp:") else 0,
                         "at": _utc(),
                         **flags,
                     },
@@ -743,10 +791,10 @@ def run_voltage_monitor(
         if restoration["errors"]:
             status = 1
             _emit(outf, {"ok": False, "type": "error", "error": "elm-cleanup-failed",
-                "restoration": restoration, "deviceId": device_id, "serialOpens": serial_opens, **flags})
+                "restoration": restoration, "deviceId": device_id, "serialOpens": 0 if device_id.startswith("tcp:") else serial_opens, "tcpOpens": serial_opens if device_id.startswith("tcp:") else 0, **flags})
         else:
             _emit(outf, {"ok": True, "type": "stopped", "restoration": restoration,
-                "deviceId": device_id, "serialOpens": serial_opens, **flags})
+                "deviceId": device_id, "serialOpens": 0 if device_id.startswith("tcp:") else serial_opens, "tcpOpens": serial_opens if device_id.startswith("tcp:") else 0, **flags})
     return status
 
 
@@ -764,13 +812,18 @@ def stdio_loop(stdin=None, stdout=None) -> int:
     if not isinstance(req, dict):
         outf.write(json.dumps({"ok": False, "error": "stdin-not-object", "liveVerified": False, "writePayload": None}) + "\n")
         return 2
-    extra = set(req) - {"action", "deviceId", "kind", "purpose", "canNetwork", "receiveMilliseconds", "receiveBatchId", "adapterModel"}
+    extra = set(req) - {"action", "deviceId", "kind", "purpose", "canNetwork", "receiveMilliseconds", "receiveBatchId", "adapterModel", "serialBaud"}
     if extra:
         outf.write(json.dumps({"ok": False, "error": "unexpected-keys", "liveVerified": False, "writePayload": None}) + "\n")
         return 2
     action = req.get("action")
     if 'adapterModel' in req and (not isinstance(req['adapterModel'], str) or req['adapterModel'] not in ELM_MODELS | {'VNCI', 'PT3G'}):
         _emit(outf, {"ok": False, "type": "error", "error": "adapter-model-invalid"})
+        return 2
+    try:
+        validate_serial_baud(req.get('deviceId'), req.get('serialBaud'))
+    except ElmError as error:
+        _emit(outf, {"ok": False, "type": "error", "error": str(error)})
         return 2
     if ({"receiveMilliseconds", "receiveBatchId"} & set(req)
             and (action != "monitor" or req.get("purpose") != "internal")):
@@ -800,8 +853,8 @@ def stdio_loop(stdin=None, stdout=None) -> int:
         if req.get("purpose") == "internal":
             from .internal_stream import run_internal_monitor
             return run_internal_monitor(did, req.get("canNetwork"), stdout=outf, stdin=inf,
-                receive_ms=req.get("receiveMilliseconds", 600000), batch_id=req.get("receiveBatchId", "standalone"))
-        return run_voltage_monitor(did, stdout=outf, stdin=inf, adapter_model=req.get('adapterModel'))
+                receive_ms=req.get("receiveMilliseconds", 600000), batch_id=req.get("receiveBatchId", "standalone"), serial_baud=req.get("serialBaud"))
+        return run_voltage_monitor(did, stdout=outf, stdin=inf, adapter_model=req.get('adapterModel'), serial_baud=req.get('serialBaud'))
     if action == "probe":
         did = req.get("deviceId")
         kind = req.get("kind") or "connect"
@@ -814,7 +867,7 @@ def stdio_loop(stdin=None, stdout=None) -> int:
                 + "\n"
             )
             return 2
-        out = probe_adapter(did, kind=kind, adapter_model=req.get('adapterModel'))
+        out = probe_adapter(did, kind=kind, adapter_model=req.get('adapterModel'), serial_baud=req.get('serialBaud'))
         outf.write(json.dumps(out, ensure_ascii=False) + "\n")
         return 0 if out.get("ok") else 1
     outf.write(json.dumps({"ok": False, "error": "invalid-action", "liveVerified": False, "writePayload": None}) + "\n")

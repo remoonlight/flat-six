@@ -61,7 +61,7 @@ class GatewayTests(unittest.TestCase):
     def run_case(self, *, device='elm', identity=None, measurement=MEASUREMENT,
                  modify=lambda client: None, req_changes=None, **kwargs):
         native = native_fixture(identity, measurement); ports = []
-        def opened(_device, *, adapter_model=None):
+        def opened(_device, *, adapter_model=None, serial_baud=None):
             self.assertIsNone(adapter_model)
             port = SessionSimPort(CATALOG, identity_text=identity)
             port.ecu_map['22F102'] = ath1_prompt(isotp_ath1_lines(0x77A, measurement))
@@ -140,10 +140,16 @@ class GatewayTests(unittest.TestCase):
 
     def test_negative_wrong_echo_short_and_session_mismatch_make_no_values(self):
         for device in ['elm', 'vnci']:
-            for payload in [b'\x7F\x22\x31', b'\x62\xF1\x03\x2A\x07', b'\x62\xF1\x02\x2A']:
+            for payload in [b'\x62\xF1\x03\x2A\x07']:
                 result, _clients = self.run_case(device=device, measurement=payload)
                 self.assertFalse(result['ok']); self.assertEqual(result['samples'], [])
                 self.assertTrue(result['transport']['closed'])
+            unsupported, _ = self.run_case(device=device, measurement=b'\x7F\x22\x31')
+            self.assertTrue(unsupported['ok']); self.assertEqual(unsupported['samples'], [])
+            self.assertEqual(len(unsupported['unavailableParameters']), 2)
+            partial, _ = self.run_case(device=device, measurement=b'\x62\xF1\x02\x2A')
+            self.assertFalse(partial['ok']); self.assertEqual(partial['samples'], [])
+            self.assertEqual(partial['invalidParameters'], [])
         def wrong_session(port): port.ecu_map['1003'] = ath1_prompt(isotp_ath1_lines(0x77A, b'\x50\x89'))
         result, clients = self.run_case(modify=wrong_session)
         self.assertEqual(result['error'], 'wrong-sid-or-did-echo'); self.assertNotIn('22F102', clients[0].ecu_payloads)
@@ -167,8 +173,11 @@ class GatewayTests(unittest.TestCase):
                     if data.startswith(b'03 22 F1 02'): raise ConnectionError('disconnect')
                     return write(data)
                 port.write = interrupted
-        result, ports = self.run_case(modify=fail_first)
+        decisions = []
+        def retry(*args): decisions.append(args); return True
+        result, ports = self.run_case(modify=fail_first, wait_retry=retry)
         self.assertTrue(result['ok'], result); self.assertEqual(len(ports), 2)
+        self.assertEqual(len(decisions), 1)
         self.assertTrue(all(p.closed and p.ecu_payloads[0] == '1003' for p in ports))
         self.assertTrue(result['transport']['recovery'][0]['recovered'])
 

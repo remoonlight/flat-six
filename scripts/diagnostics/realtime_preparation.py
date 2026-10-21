@@ -103,9 +103,11 @@ def resolve_dynamic_name(text, lookup, seen=frozenset()):
         if key in seen:
             return None, []
         value, nested = resolve_dynamic_name(lookup(key), lookup, seen | {key})
-        if not value:
+        if value is None:
             return None, []
-        names.append(value); refs.extend([key, *nested])
+        if value:
+            names.append(value)
+        refs.extend([key, *nested])
     return ' · '.join(names), refs
 
 
@@ -438,10 +440,10 @@ def compile_bundle(match_dir, output, variants_path=DEFAULT_VARIANTS, hci_path=S
     report = ['# 实时数据离线准备', '', f"{len(unit_index)} 个菜单单元，{stats['profiles']} 个变体，{stats['parameters']} 个去重参数。",
         f"身份记录 {stats['identityRecords']}，可离线解码 {stats['identityDecoders']}；已有响应的参数 {stats['replayParameters']}。", '',
         f"参数名称已展开 {stats['resolvedNames']} 项，来源缺名称 {stats['parameters'] - stats['resolvedNames']} 项。动态名称按来源组成显示，不声称复现原生排版。",
-        '列表、分组计划和历史回放可在桌面实时数据页使用；这些清单不构成本车装配或独立车辆验证。',
+        '参数目录与分组计划用于当前版本匹配，识别成功后开放选参；历史数据只保存为文件。目录不构成本车装配或独立车辆验证。',
         '每个变体保留缺口；不支持的公式或版本条件仍需补静态证据，不能用相近版本替代。', '',
         '身份布局证据：VERF GetOdxXmlVesInfoEx 0x13810..0x13846，PorscheVerInfo 0x129b4..0x129f2。',
-        '图形时间来自 btsnoop 记录微秒；不同适配器、地址、采集阶段分开回放。', '']
+        '保留的历史样本时间来自 btsnoop 记录微秒，仅供离线软件核验，不代替当前车辆采集时间。', '']
     for u in unit_index:
         report.append(f"- {u['label']}：{len(u['variants'])} 个变体；{u['status']}")
     (output / 'report.md').write_text('\n'.join(report) + '\n', encoding='utf-8')
@@ -566,7 +568,8 @@ def handle_ready(req, root=None, *, cancel_event=None, on_cycle=None, on_connect
     try:
         if req['action'].startswith('catalog-'):
             return handle_catalog(req)
-        if req.get('generation', '981') != '981':
+        generation=req.get('generation','981')
+        if generation not in ('981','982'):
             raise ValueError('wrong-generation')
         if not (root / 'manifest.json').is_file():
             return result(present=False, units=[], counts={}) if req['action'] == 'ready-units' else {'ok': False, 'error': 'preparation-missing', **FLAGS}
@@ -575,9 +578,35 @@ def handle_ready(req, root=None, *, cancel_event=None, on_cycle=None, on_connect
         verify_source(root / 'index.json', known['index.json']['sha256'])
         index = load(root / 'index.json')
         if req['action'] == 'ready-units':
-            return result(present=True, units=index['units'], counts=index['counts'], selectionLimit=SELECTION_LIMIT)
+            if generation=='981':
+                return result(present=True, units=index['units'], counts=index['counts'], selectionLimit=SELECTION_LIMIT)
+            # The prepared capture directory belongs to 981. Overlay only its
+            # matching definition metadata on the full 982 source catalogue;
+            # never carry a historical identity or sample count into 982.
+            catalogue=handle_catalog({'action':'catalog-units','generation':'982'})
+            if not catalogue.get('present'):
+                raise ValueError('preparation-missing')
+            prepared={r['profileId']:r for r in index['profiles']}
+            prepared_units={u['ecuId']:u for u in index['units']}
+            units=[]
+            for unit in catalogue['units']:
+                variants=[]
+                for variant in unit['variants']:
+                    row=prepared.get(variant['profileId'])
+                    definition={**variant,**{k:v for k,v in (row or {}).items()
+                        if k not in ('file','sha256','ecuIds','checklist')}}
+                    definition.update(status='definition-only',replayParameterCount=0)
+                    variants.append(definition)
+                label=prepared_units.get(unit['ecuId'],{}).get('label',unit['label'])
+                units.append({**unit,'label':label,'variants':variants})
+            unique={v['profileId']:v for u in units for v in u['variants']}
+            return result(present=True,units=units,counts={'units':len(units),
+                'profiles':len(unique),
+                'parameters':sum(v['parameterCount'] for v in unique.values())},selectionLimit=SELECTION_LIMIT)
         row = next((p for p in index['profiles'] if p['profileId'] == req.get('profileId')), None)
         if row is None:
+            if generation=='982' and req['action']=='ready-parameters':
+                return handle_catalog({**req,'action':'catalog-parameters'})
             raise ValueError('unknown-profile')
         if type(req.get('ecuId')) is not int or req['ecuId'] not in row['ecuIds']:
             raise ValueError('profile-ecu-mismatch')
@@ -586,8 +615,14 @@ def handle_ready(req, root=None, *, cancel_event=None, on_cycle=None, on_connect
             raise ValueError('invalid-profile-file')
         verify_source(root / file, row['sha256'])
         profile = load(root / file)
-        if profile.get('generation') == '982':
+        if profile.get('generation') not in (None,'9x1',generation):
             raise ValueError('wrong-generation')
+        profile={**profile,'requestedGeneration':generation,'selectedEcuId':req['ecuId']}
+        if generation=='982':
+            if req['action'] in ('ready-acquire','ready-replay'):
+                raise ValueError('historical-scope-mismatch')
+            profile={**profile,'status':'definition-only','identityReplay':[],
+                'parameters':[{**p,'status':'definition-only','decodedSampleCount':0,'replay':[]} for p in profile['parameters']]}
         if req['action'] == 'ready-parameters':
             query = (req.get('search') or '').casefold()
             visible = [p for p in profile['parameters'] if not zero_definition(p)]

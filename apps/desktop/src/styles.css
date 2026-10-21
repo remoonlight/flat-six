@@ -54,9 +54,9 @@
 .coding-plan-step { padding: 16px 0; border-bottom: 1px solid var(--line); }
 .coding-plan-step p { font-size: 13px; line-height: 1.6; }
 .coding-record-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0; }
-.coding-snapshot, .coding-license { padding: 16px 0; border-top: 1px solid var(--line); }
-.coding-snapshot summary, .coding-license summary { cursor: pointer; line-height: 1.7; }
-.coding-snapshot pre, .coding-license pre { white-space: pre-wrap; overflow-wrap: anywhere; color: var(--muted); font-size: 12px; }
+.coding-license { padding: 16px 0; border-top: 1px solid var(--line); }
+.coding-license summary { cursor: pointer; line-height: 1.7; }
+.coding-license pre { white-space: pre-wrap; overflow-wrap: anywhere; color: var(--muted); font-size: 12px; }
 @media (max-width: 1050px) { .coding-heading { align-items: start; flex-direction: column; } .coding-filters { grid-template-columns: 1fr 1fr; } .coding-layout { grid-template-columns: 1fr; } .coding-catalog { max-height: 380px; } }
 @media (max-width: 650px) { .coding-filters, .coding-record-fields { grid-template-columns: 1fr; } .coding-actionbar { flex-wrap: wrap; } }
 
@@ -136,37 +136,6 @@ main.content {
   min-width: 0;
 }
 
-
-.obd-recording-bar {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  margin: -8px 0 20px;
-  padding: 12px 16px;
-  background: var(--bg);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  box-shadow: 0 3px 12px #0000000b;
-  font-size: 12px;
-}
-.obd-recording-bar > strong { display: block; margin-bottom: 8px; }
-.obd-recording-group { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
-.obd-recording-group label { display: flex; align-items: center; gap: 6px; }
-.obd-recording-group select { max-width: 210px; }
-.obd-recording-group button {
-  padding: 8px 12px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: #fff;
-  color: var(--ink);
-  font: inherit;
-  cursor: pointer;
-}
-.obd-recording-group button:disabled { opacity: .5; cursor: default; }
-.obd-recording-info { margin-top: 8px; color: var(--muted); }
-.obd-recording-info summary { cursor: pointer; }
-.obd-recording-info p { overflow-wrap: anywhere; line-height: 1.6; }
-.obd-recording-bar p[role="alert"] { color: var(--bad); }
 
 .bridge-banner {
   margin: -8px 0 16px;

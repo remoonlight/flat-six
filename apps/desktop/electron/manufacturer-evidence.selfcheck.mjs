@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import fs from "node:fs/promises";
-import { validateManufacturerEvidence as validate } from "./manufacturer-evidence.mjs";
+import { validateManufacturerEvidence as validate, validManufacturerIdentityInfo } from "./manufacturer-evidence.mjs";
 const hash = pdu => createHash("sha256").update(Buffer.from(pdu, "hex")).digest("hex");
 const sourceKind = "historical-fixture-rehearsal";
 const response = (requestHex, pduHex, elapsedMs, connectionEpoch = 1) => ({ requestHex, pduHex,
@@ -49,4 +49,26 @@ if (process.env.PORSCHE981_EVIDENCE_FIXTURE) {
  for (const event of events) { prior = validate(event, prior); assert.ok(prior, "production Python cycle evidence rejected"); producerCycles++; }
  assert.ok(producerCycles > 1);
 }
-console.log(JSON.stringify({ ok: true, cases, producerCycles, deviceIO: false, independentDecoderQualification: false }));
+const identityPdu = hash('62F1000100');
+const identity = { readContract: { identityRequests: [{ requestHex:'22F100', records:[
+  { name:null, labels:[{text:'编程状态'},{text:'数据记录不可靠'}] },
+  { name:null, labels:[{text:'编程状态'},{text:'可编程'},{text:''}] },
+] }] }, identityInfo: [
+  { label:'编程状态 / 数据记录不可靠', value:'1', requestHex:'22F100', recordIndex:0, pduSha256:identityPdu },
+  { label:'编程状态 / 可编程', value:'0', requestHex:'22F100', recordIndex:1, pduSha256:identityPdu },
+] };
+const observedIdentity = new Map([['22F100',identityPdu]]);
+assert.equal(validManufacturerIdentityInfo(identity, observedIdentity), true);
+for (const mutate of [
+  doc=>{doc.identityInfo[0].label='编程状态';},
+  doc=>{doc.identityInfo[0].label='数据记录不可靠';},
+  doc=>{doc.identityInfo[0].label=doc.identityInfo[1].label;},
+  doc=>{doc.identityInfo[0].pduSha256='0'.repeat(64);},
+]) { const changed=structuredClone(identity);mutate(changed);assert.equal(validManufacturerIdentityInfo(changed,observedIdentity),false); }
+const namedIdentity=structuredClone(identity);namedIdentity.readContract.identityRequests[0].records[0].name='明确来源字段';
+assert.equal(validManufacturerIdentityInfo(namedIdentity,observedIdentity),false);
+namedIdentity.identityInfo[0].label='明确来源字段';assert.equal(validManufacturerIdentityInfo(namedIdentity,observedIdentity),true);
+namedIdentity.readContract.identityRequests[0].records[0].name='SubIndexNum=123';
+assert.equal(validManufacturerIdentityInfo(namedIdentity,observedIdentity),false);
+namedIdentity.identityInfo[0].label=identity.identityInfo[0].label;assert.equal(validManufacturerIdentityInfo(namedIdentity,observedIdentity),true);
+console.log(JSON.stringify({ ok: true, cases, producerCycles, sourceIdentityLabelChecks:9, deviceIO: false, independentDecoderQualification: false }));

@@ -178,9 +178,9 @@ export function normalizeRecordDtc(rec: unknown): SnapshotDtc | null {
 
 function observedVin(final: Record<string, unknown> | null | undefined): string | null {
   if (!final) return null;
-  if (isValidVin(final.vin)) return String(final.vin);
-  if (isValidVin(final.vehicleKey) && !GENERIC_UNKNOWN.test(String(final.vehicleKey))) return String(final.vehicleKey);
-  return null;
+  const vins = new Set([final.vin, final.vehicleKey].filter(isValidVin));
+  if (vins.size > 1) throw new Error("diag_vehicle_identity_conflict");
+  return vins.values().next().value ?? null;
 }
 
 export function identityFieldsFromFinal(final: Record<string, unknown> | null | undefined): Record<string, string> {
@@ -264,7 +264,10 @@ export function normalizeTopologyCapture(input: {
   const captureEventId = input.captureEventId || eventIdFromResults(input.results);
   const nodeById = new Map(input.nodes.map((n) => [n.id, n]));
   const firstFinal = input.results.find((r) => r.doc?.final)?.doc?.final as Record<string, unknown> | undefined;
-  const ident2 = identityFromCapture(firstFinal ?? null);
+  const vins = new Set(input.results.map((r) => observedVin(r.doc?.final)).filter((vin) => vin !== null));
+  if (vins.size > 1) throw new Error("diag_vehicle_identity_conflict");
+  const vin = vins.values().next().value;
+  const ident2 = identityFromCapture(vin ? { vin } : firstFinal ?? null);
   const modules: SnapshotModule[] = [];
   const seen = new Set<string>();
   const moduleKeys = new Set<string>();

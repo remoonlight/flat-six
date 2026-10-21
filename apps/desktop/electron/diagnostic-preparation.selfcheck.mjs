@@ -58,7 +58,8 @@ await assert.rejects(runCodingRehearsal(plan, { ...dependencies, simulation: fal
 const inputs = [path.join(directory, "input-original.json"), path.join(directory, "input-current.json")];
 await fs.writeFile(inputs[0], JSON.stringify(backup())); await fs.writeFile(inputs[1], JSON.stringify(backup("A4", "2026-10-05T00:01:00Z")));
 let inputIndex = 0;
-const vault = createDiagnosticPreparation({ directory: path.join(directory, "vault"), chooseOpenFile: async () => inputs[inputIndex++],
+const desktopDirectory = path.join(directory, "Desktop"); await fs.mkdir(desktopDirectory);
+const vault = createDiagnosticPreparation({ directory: path.join(directory, "vault"), desktopDirectory, chooseOpenFile: async () => inputs[inputIndex++],
   saveFile: async (_name, data) => ({ ok: true, saved: true, data }), connectionStatus: () => null,
   previewField: async () => ({ ok: true, afterHex: "A4", beforeHex: "A5", changedBitMaskHex: "01" }) });
 const first = await vault.handle({ action: "import-backup", ecu: "dme" });
@@ -66,6 +67,15 @@ const second = await vault.handle({ action: "import-backup", ecu: "dme" });
 assert.equal(first.ok, true); assert.equal(second.ok, true);
 assert.equal(second.backups.find((row) => row.original).id, first.id, "later imports never replace original baseline");
 assert.equal(second.backups.length, 2);
+const exportedOriginal = await vault.handle({ action: "export-backup", ecu: "dme", id: second.id });
+assert.equal(exportedOriginal.saved, true); assert.equal(exportedOriginal.id, first.id);
+assert.equal(exportedOriginal.freshReadProven, false); assert.equal(exportedOriginal.executionEnabled, false);
+assert.equal(path.dirname(exportedOriginal.filePath), desktopDirectory);
+assert.equal(JSON.parse(await fs.readFile(exportedOriginal.filePath)).blocks[0].dataHex, "A5");
+assert.equal((await vault.handle({ action: "export-backup", ecu: "dme", id: first.id })).filePath, exportedOriginal.filePath);
+assert.equal((await vault.handle({ action: "export-backup", ecu: "gateway", id: second.id })).error, "backup-current-ecu-mismatch");
+assert.equal((await vault.handle({ action: "export-backup", ecu: "dme", id: second.id, rawValue: 1 })).error, "preparation-request-invalid");
+assert.equal((await fs.readdir(desktopDirectory)).length, 1);
 const restored = await vault.handle({ action: "restore-plan", ecu: "dme", id: second.id });
 assert.equal(restored.plan.changedBlocks, 1);
 const simulatedRestore = await vault.handle({ action: "simulate-restore", ecu: "dme", id: second.id });
@@ -75,6 +85,15 @@ assert.equal(operationBackup.backup.provenance, "simulation"); assert.equal(oper
 assert.equal((await vault.handle({ action: "restore-plan", ecu: "gateway", id: second.id })).error, "backup-current-ecu-mismatch");
 assert.equal((await vault.handle({ action: "backup", ecu: "dme", id: "../../other" })).error, "backup-id-invalid");
 assert.equal((await vault.handle({ action: "backup", ecu: "dme", id: second.id, path: "elsewhere" })).error, "preparation-request-invalid");
+const versionInput = path.join(directory, "input-new-version.json"); inputs.push(versionInput);
+await fs.writeFile(versionInput, JSON.stringify({ ...backup("33"), identity: { ...identity, software: "new-version" } }));
+const newVersion = await vault.handle({ action: "import-backup", ecu: "dme" });
+assert.equal(newVersion.ok, true); assert.equal(newVersion.backups.filter(row => row.original).length, 1);
+assert.equal(newVersion.backups.find(row => row.original).id, first.id);
+assert.equal((await vault.handle({ action: "restore-plan", ecu: "dme", id: newVersion.id })).error, "restore-identity-version-mismatch",
+  "a software change cannot turn the new version's first import into the vehicle/unit's original");
+assert.equal((await vault.handle({ action: "export-backup", ecu: "dme", id: newVersion.id })).id, first.id);
+assert.equal((await vault.handle({ action: "restore-plan", ecu: "dme", id: second.id })).plan.changedBlocks, 1);
 const file = path.join(directory, "vault", `${second.id}.json`);
 const altered = JSON.parse(await fs.readFile(file, "utf8")); altered.backup.blocks[0].dataHex = "FF";
 await fs.writeFile(file, JSON.stringify(altered));
@@ -133,6 +152,67 @@ const typedInterrupted = await typedVault.handle({ action: "simulate-restore", e
 assert.equal(typedInterrupted.result.writeAttemptCount, 1); assert.equal(typedInterrupted.result.automaticWriteRetry, false);
 assert.equal((await typedVault.handle({ action: "coding-preview", ecu: "dme", id: typedFirst.id,
   blockKey: "LID:10", did: "0010", recordAt: 10, rawValue: 0 })).error, "coding-field-invalid");
+// Named batch edits compose across fields/typed blocks, preserve unknown bits,
+// and reject incompatible aliases before a rehearsal backup or write intent.
+const batchCalls = [];
+const bitRecords = [{ at: 10, mask: 1 }, { at: 11, mask: 2 }, { at: 12, mask: 1 }, { at: 13, mask: 4 }];
+const batchVault = createDiagnosticPreparation({ directory: path.join(directory, "batch-vault"),
+  chooseOpenFile: async () => typedInputs[0], saveFile: async () => ({ ok: true }), connectionStatus: () => null,
+  previewField: async req => {
+    batchCalls.push(req);
+    const rec = bitRecords.find(r => r.at === req.recordAt);
+    if (!rec) return { ok: false, error: "source-field-not-defined" };
+    const value = req.rawValue ?? Number(req.physicalValue);
+    if (![0, 1].includes(value)) return { ok: false, error: "coding_value_not_defined" };
+    const before = parseInt(req.dataHex, 16), after = value ? before | rec.mask : before & ~rec.mask;
+    const decoded = (byte, mask) => ({ raw: byte & mask ? 1 : 0, text: byte & mask ? "on" : "off" });
+    return { ok: true, beforeHex: req.dataHex, afterHex: after.toString(16).padStart(2, "0").toUpperCase(),
+      changedBitMaskHex: (before ^ after).toString(16).padStart(2, "0").toUpperCase(),
+      effects: bitRecords.filter(r => (before & r.mask) !== (after & r.mask)).map(r => ({ sourceOffset: r.at,
+        selected: r.at === req.recordAt, name: `source-field-${r.at}`, before: decoded(before, r.mask), after: decoded(after, r.mask) })) };
+  } });
+const batchOriginal = await batchVault.handle({ action: "import-backup", ecu: "dme" });
+const batchRequest = { ecu: "dme", id: batchOriginal.id, edits: [
+  { blockKey: "LID:10", recordAt: 10, rawValue: 0 },
+  { blockKey: "LID:10", recordAt: 11, rawValue: 1 },
+  { blockKey: "DID:0010", recordAt: 11, rawValue: 0 },
+] };
+const batch = await batchVault.handle({ ...batchRequest, action: "coding-batch-preview" });
+assert.equal(batch.ok, true); assert.equal(batch.editCount, 3); assert.equal(batch.plan.changedBlocks, 2);
+assert.equal(batch.plan.blocks.find(b => codingBlockKey(b) === "LID:10").targetHex, "A6");
+assert.equal(batch.plan.blocks.find(b => codingBlockKey(b) === "DID:0010").targetHex, "7C");
+assert.equal(batch.executionEnabled, false); assert.equal(batch.writePayload, null);
+assert.ok(batchCalls.some(c => c.expectedReadRequestHex === "2110"));
+assert.ok(batchCalls.some(c => c.expectedReadRequestHex === "220010"));
+assert.deepEqual(batch.effects.filter(e => e.selected).map(e => [e.blockKey, e.sourceOffset, e.before.raw, e.after.raw]),
+  [["LID:10", 10, 1, 0], ["LID:10", 11, 0, 1], ["DID:0010", 11, 1, 0]]);
+const batchSim = await batchVault.handle({ ...batchRequest, action: "simulate-coding-batch" });
+assert.equal(batchSim.result.ok, true); assert.equal(batchSim.result.writeAttemptCount, 2);
+assert.equal(batchSim.result.readbacks.length, 2);
+const beforeInvalid = (await batchVault.handle({ action: "list", ecu: "dme" })).backups.length;
+const conflicting = await batchVault.handle({ action: "simulate-coding-batch", ecu: "dme", id: batchOriginal.id,
+  edits: [{ blockKey: "LID:10", recordAt: 10, rawValue: 0 }, { blockKey: "LID:10", recordAt: 12, rawValue: 1 }] });
+assert.equal(conflicting.error, "coding-batch-target-conflict");
+assert.equal((await batchVault.handle({ action: "list", ecu: "dme" })).backups.length, beforeInvalid);
+assert.equal((await batchVault.handle({ action: "operation-history", ecu: "dme" })).operations.length, 1);
+const callCount = batchCalls.length;
+for (const edits of [[], [batchRequest.edits[0], batchRequest.edits[0]],
+  [{ ...batchRequest.edits[0], targetHex: "FF" }], [{ ...batchRequest.edits[0], physicalValue: "1" }],
+  [{ ...batchRequest.edits[0], blockKey: "DID:FFFF" }], [{ ...batchRequest.edits[0], recordAt: 1.5 }]]) {
+  assert.equal((await batchVault.handle({ ...batchRequest, action: "coding-batch-preview", edits })).ok, false);
+}
+assert.equal(batchCalls.length, callCount, "malformed/duplicate/unknown-block inputs never reach the source decoder");
+assert.equal((await batchVault.handle({ ...batchRequest, action: "coding-batch-preview", ecu: "gateway" })).error, "backup-current-ecu-mismatch");
+assert.equal((await batchVault.handle({ ...batchRequest, action: "restore-plan" })).error, "preparation-request-invalid");
+const numericBatch = await batchVault.handle({ ...batchRequest, action: "coding-batch-preview", edits: [{ blockKey: "LID:10", recordAt: 13, physicalValue: "0" }] });
+assert.equal(numericBatch.ok, true);
+assert.ok(batchCalls.some(c => c.physicalValue === "0" && c.rawValue === undefined));
+const failedBatch = await batchVault.handle({ ...batchRequest, action: "simulate-coding-batch", scenario: "backup-failed" });
+assert.equal(failedBatch.result.writeAttemptCount, 0); assert.equal(failedBatch.result.ok, false);
+const interruptedBatch = await batchVault.handle({ ...batchRequest, action: "simulate-coding-batch", scenario: "disconnect" });
+assert.equal(interruptedBatch.result.writeAttemptCount, 1); assert.equal(interruptedBatch.result.operationState, "outcome-unknown");
+assert.equal(interruptedBatch.result.readbacks.length, 0);
+
 const typedPlan = codingRestorePlan(typed, typedBackup("A4", "2026-10-05T01:01:00Z"));
 const typedMemory = new Map([["DID:0010", "7E"], ["LID:10", "A4"]]);
 const unintended = await runCodingRehearsal(typedPlan, { simulation: true,

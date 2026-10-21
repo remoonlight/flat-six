@@ -26,7 +26,7 @@ assert.equal(manufacturerTiming([value(0), value(Infinity)]).points.length, 1);
 assert.deepEqual(recovery.map(s => s.elapsedMs), [12, 1142, 9800, 10935], "no inserted samples or input mutation");
 console.log("PASS manufacturer host observation intervals, reconnect segments, text/time gaps and legacy observations");
 assert.equal(manufacturerConnectionMessage(null), "");
-assert.match(manufacturerConnectionMessage({ phase: "retrying", attempt: 2, reason: null }), /第 2\/3 次重连/);
+assert.match(manufacturerConnectionMessage({ phase: "retrying", attempt: 2, reason: null }), /第 2 次手动重连/);
 assert.match(manufacturerConnectionMessage({ phase: "qualified", attempt: 1, reason: null }), /等待未完成请求的响应/);
 assert.doesNotMatch(manufacturerConnectionMessage({ phase: "qualified", attempt: 1, reason: null }), /已恢复/);
 assert.match(manufacturerConnectionMessage({ phase: "failed", attempt: 1, reason: "identity-mismatch" }), /身份不符/);
@@ -35,3 +35,5 @@ assert.match(manufacturerConnectionMessage({ phase: "failed", attempt: 1, reason
 assert.equal(manufacturerConnectionMessage({ phase: "unknown", attempt: 1, reason: null }), "");
 assert.match(manufacturerConnectionMessage({ phase: "retrying", attempt: 1, reason: null }, true), /本批已结束.*未确认/);
 console.log("PASS manufacturer recovery messages distinguish qualified identity, received answer and terminal failure");
+
+assert.match(manufacturerConnectionMessage({ phase: "awaiting-retry", attempt: 0, reason: null }), /重试继续.*终止/);

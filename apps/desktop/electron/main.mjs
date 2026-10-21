@@ -35,12 +35,14 @@ import {
   upsertModelOemLink,
 } from "./model-oem-links.mjs";
 import { createManufacturerStream } from "./manufacturer-stream.mjs";
-import { createOfflineOperations, runWorkbench } from "./offline-diagnostics.mjs";
-import { createDiagnosticPreparation } from "./diagnostic-preparation.mjs";
+import { createCodingWorkspace } from './coding-workspace.mjs';
+import { createOfflineOperations, runWorkbench, runCodingDraft } from "./offline-diagnostics.mjs";
+import { createDiagnosticPreparation, createFirmwareVersionSelection } from "./diagnostic-preparation.mjs";
 import { createCodingCapture } from "./coding-capture.mjs";
 import { runDefinitionBundle } from "./definition-bundle.mjs";
 import { createDiagnosticCanRecorder } from "./diagnostic-can-recording.mjs";
-import { saveRecordingFile, saveInternalCanRecording, saveEngineRecording, saveManufacturerRecording } from "./recording-files.mjs";
+import { saveRecordingFile } from "./recording-files.mjs";
+import { createParameterRecordingService } from "./parameter-recording.mjs";
 import { createAcquisitionReplay } from "./acquisition-replay.mjs";
 import { installedRuntime } from "./installed-runtime.mjs";
 import {
@@ -49,7 +51,7 @@ import {
 } from "./read-only-session.mjs";
 import { CONNECTION_CHANNEL, attachSessionHandoff, createObdConnectionManager, createTransportGate } from "./obd-connection.mjs";
 import { CAN_CAPTURE_CHANNEL, createCanCaptureManager } from "./can-capture.mjs";
-import { readWorkshopFlashIndex, prepareWorkshopExport } from "./piwis-workshop.mjs";
+import { readWorkshopFlashIndex, prepareWorkshopExport, createWorkshopExecution, createFirmwareExecution } from "./piwis-workshop.mjs";
 
 
 
@@ -95,20 +97,26 @@ function broadcastBridgeStatus(status) {
 
 
 const transportGate = createTransportGate();
+const parameterRecordings = createParameterRecordingService({ desktopPath: () => app.getPath("desktop"),
+  openFile: (...args) => fs.promises.open(...args),
+  revealFile: filePath => shell.showItemInFolder(filePath),
+});
+app.on("web-contents-created", (_event, contents) => {
+  const owner = contents.id;
+  contents.once("destroyed", () => parameterRecordings.clearOwner(owner));
+});
 const connMgr = createObdConnectionManager({ repoRoot, gate: transportGate,
   chooseRecordingFile: async () => {
     const result = await dialog.showSaveDialog({ title: "记录原始 CAN 报文", defaultPath: "can-recording.pcapng",
       filters: [{ name: "Wireshark 捕获", extensions: ["pcapng"] }] });
     return result.canceled ? null : result.filePath;
   },
-  saveResult: async (recording) => saveInternalCanRecording(recording, {
-    dialog, openFile: fs.promises.open, window: BrowserWindow.getFocusedWindow(),
-  }),
+  saveResult: (recording, owner) => parameterRecordings.save(recording, owner),
 });
 const canCaptureMgr = createCanCaptureManager({ repoRoot, conn: connMgr, gate: transportGate });
 const diagnosticCanRecorder = createDiagnosticCanRecorder({
   isLiveReady: (layer) => { const status = connMgr.snapshot(); return status.purpose === "diagnostic"
-    && (layer === "application" ? /^(?:bt:|usb:|vnci:)/.test(connMgr.selectedId() || "") : ["vLinker", "OBDLink MX+", "ELM327", "OBDKey", "OBDLink"].includes(status.model))
+    && (layer === "application" ? /^(?:bt:|usb:|tcp:|vnci:)/.test(connMgr.selectedId() || "") : ["vLinker", "OBDLink MX+", "ELM327", "OBDKey", "OBDLink"].includes(status.model))
     && (status.connected || status.linkState === "diagnostic"); },
   chooseFile: async (simulation, layer) => {
     const chosen = await dialog.showSaveDialog({ title: layer === "application" ? "记录实际收到的完整诊断应用响应" : "开始记录诊断头实际报告的接收 CAN 帧", defaultPath: `${simulation ? "simulated-" : ""}diagnostic-${layer}-rx-${Date.now()}.pcapng`, filters: [{ name: "PCAPNG", extensions: ["pcapng"] }] });
@@ -122,10 +130,8 @@ const sessionMgr = attachSessionHandoff(
     gate: transportGate,
     getLiveDeviceId: () => connMgr.selectedId(),
     getLiveAdapterModel: () => connMgr.snapshot().model,
-    saveEngineRecording: (recording, ownerId) => saveEngineRecording(recording, {
-      dialog, openFile: fs.promises.open,
-      window: BrowserWindow.getAllWindows().find(window => window.webContents.id === ownerId),
-    }),
+    getLiveSerialBaud: () => connMgr.snapshot().serialBaud,
+    saveEngineRecording: (recording, ownerId) => parameterRecordings.save(recording, ownerId),
     onCanFrame: (event) => diagnosticCanRecorder.onFrame(event),
     onDiagnosticPdu: (event) => diagnosticCanRecorder.onPdu(event),
     onSessionEnded: (job) => {
@@ -134,16 +140,29 @@ const sessionMgr = attachSessionHandoff(
   }),
 );
 const manufacturerStream = createManufacturerStream({ repoRoot, connection: connMgr, gate: transportGate,
-  saveRecording: (recording, ownerId) => saveManufacturerRecording(recording, {
-    dialog, openFile: fs.promises.open,
-    window: BrowserWindow.getAllWindows().find(window => window.webContents.id === ownerId),
-  }),
+  saveRecording: (recording, ownerId) => parameterRecordings.save(recording, ownerId),
   onCanFrame: (event) => diagnosticCanRecorder.onFrame(event),
   onDiagnosticPdu: (event) => diagnosticCanRecorder.onPdu(event),
 });
 let bundleBusy = false;
+let codingWorkspace = null;
+const workshopExecution = createWorkshopExecution({ connection: connMgr, gate: transportGate,
+  isVehicleBusy: () => bundleBusy || !sessionMgr.isIdle() || !manufacturerStream.isIdle() || !codingCapture.isIdle() || !firmwareExecution.isIdle() || !!obdCtrl.production.snapshot().op,
+});
+// No archive rule or imported manifest is a qualified flash job. Production
+// stays empty until original applicability and fresh vehicle clients are bound.
+const firmwareVersions = createFirmwareVersionSelection({
+  isVehicleBusy: () => bundleBusy || !sessionMgr.isIdle() || !manufacturerStream.isIdle() || !codingCapture.isIdle()
+    || writeTaskBusy() || !!obdCtrl.production.snapshot().op,
+  canExecute: plan => firmwareExecution.canBind(plan),
+});
+const firmwareExecution = createFirmwareExecution({ selection: firmwareVersions, connection: connMgr, gate: transportGate,
+  isVehicleBusy: () => bundleBusy || !sessionMgr.isIdle() || !manufacturerStream.isIdle() || !codingCapture.isIdle()
+    || !workshopExecution.isIdle() || !!obdCtrl.production.snapshot().op,
+});
+const writeTaskBusy = () => !workshopExecution.isIdle() || !firmwareExecution.isIdle() || codingWorkspace?.isIdle() === false;
 const codingCapture = createCodingCapture({ repoRoot,
-  isVehicleBusy: () => bundleBusy || !sessionMgr.isIdle() || !manufacturerStream.isIdle()
+  isVehicleBusy: () => bundleBusy || !sessionMgr.isIdle() || !manufacturerStream.isIdle() || writeTaskBusy()
     || connMgr.snapshot().linkState !== "idle" || !!transportGate.owner() || !!diagnosticCanRecorder.snapshot().recording?.active,
   chooseOpen: async owner => {
     const window = BrowserWindow.getAllWindows().find(win => win.webContents.id === owner);
@@ -306,6 +325,42 @@ function loadAppUrl(win, hash = "") {
 }
 
 let xrayTuneWin = null;
+const codingDraftWindows = new Set();
+const codingExitReviews = new Map();
+let quitReviewPending = false;
+
+function reviewCodingExit(win) {
+  if (codingExitReviews.has(win.id)) return codingExitReviews.get(win.id);
+  if (!codingDraftWindows.has(win.id)) return Promise.resolve(true);
+  const review = dialog.showMessageBox(win, {
+    type: "question",
+    title: "退出项目",
+    message: "尚有未写入的设码调整",
+    detail: "选择继续修改，或丢弃这些调整并退出。已保存的原码备份保留。",
+    buttons: ["继续修改", "丢弃调整并退出"],
+    defaultId: 0,
+    cancelId: 0,
+    noLink: true,
+  }).then(({ response }) => {
+    if (response !== 1) return false;
+    codingDraftWindows.delete(win.id);
+    return true;
+  }).catch(() => false).finally(() => codingExitReviews.delete(win.id));
+  codingExitReviews.set(win.id, review);
+  return review;
+}
+
+let workshopExitNotice = null;
+function explainWorkshopExit(win) {
+  if (workshopExitNotice) return workshopExitNotice;
+  const options = { type: "info", title: "退出项目", message: "车辆作业尚未结束",
+    detail: codingWorkspace?.isIdle() === false
+      ? "正在读取或保存原车设码，请等待本次操作结束后再退出项目。"
+      : "请先在当前流程中点击取消执行，等待流程结束后，再手动退出项目。", buttons: ["知道了"], noLink: true };
+  workshopExitNotice = (win && !win.isDestroyed() ? dialog.showMessageBox(win, options) : dialog.showMessageBox(options))
+    .catch(() => {}).finally(() => { workshopExitNotice = null; });
+  return workshopExitNotice;
+}
 
 function openXrayTuneWindow(arg) {
   let hash = "xray-tune";
@@ -538,20 +593,20 @@ function registerIpc() {
     },
     "obd:live": () => obdCtrl.production.snapshot(),
     "obd:listAdapters": () => obdCtrl.production.listAdapters(),
-    "obd:selectAdapter": (a) => obdCtrl.production.selectAdapter(a),
-    "obd:connect": () => obdCtrl.production.connect(),
-    "obd:disconnect": () => obdCtrl.production.disconnect(),
-    "obd:pollStatus": () => obdCtrl.production.pollStatus(),
-    "obd:scanFaults": () => obdCtrl.production.scanFaults(),
-    "obd:clearDtcs": () => obdCtrl.production.clearDtcs(),
-    "obd:listEcus": () => obdCtrl.production.listEcus(),
+    "obd:selectAdapter": (a) => !writeTaskBusy() ? obdCtrl.production.selectAdapter(a) : { ok: false, error: "busy" },
+    "obd:connect": () => !writeTaskBusy() ? obdCtrl.production.connect() : { ok: false, error: "busy" },
+    "obd:disconnect": () => !writeTaskBusy() ? obdCtrl.production.disconnect() : { ok: false, error: "busy" },
+    "obd:pollStatus": () => !writeTaskBusy() ? obdCtrl.production.pollStatus() : { ok: false, error: "busy" },
+    "obd:scanFaults": () => !writeTaskBusy() ? obdCtrl.production.scanFaults() : { ok: false, error: "busy" },
+    "obd:clearDtcs": () => !writeTaskBusy() ? obdCtrl.production.clearDtcs() : { ok: false, error: "busy" },
+    "obd:listEcus": () => !writeTaskBusy() ? obdCtrl.production.listEcus() : { ok: false, error: "busy" },
     "obd:listSavedVehicles": () => obdCtrl.production.listSavedVehicles(),
     "obd:getSavedVehicle": () => obdCtrl.production.getSavedVehicle(),
     "obd:setSavedVehicle": (vehicleKey) => obdCtrl.production.setSavedVehicle(vehicleKey),
     "obd:listSavedEcus": (vehicleKey) => obdCtrl.production.listSavedEcus(vehicleKey),
     "obd:listChanges": (vehicleKey) => obdCtrl.production.listChanges(vehicleKey),
-    "obd:openBluetooth": () => obdCtrl.production.openBluetooth(),
-    "obd:readAnalysis": (selections) => obdCtrl.production.readAnalysis(selections),
+    "obd:openBluetooth": () => !writeTaskBusy() ? obdCtrl.production.openBluetooth() : { ok: false, error: "busy" },
+    "obd:readAnalysis": (selections) => !writeTaskBusy() ? obdCtrl.production.readAnalysis(selections) : { ok: false, error: "busy" },
   };
   for (const [channel, handler] of Object.entries(obdHandlers)) {
     ipcMain.handle(channel, (event, input) => {
@@ -635,6 +690,13 @@ function registerIpc() {
   ipcMain.handle("window:openXrayTune", (_e, assetId) =>
     openXrayTuneWindow(assetId),
   );
+  ipcMain.handle("window:codingDraftDirty", (event, dirty) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (typeof dirty !== "boolean" || !win || win === xrayTuneWin) return { ok: false };
+    if (dirty) codingDraftWindows.add(win.id);
+    else codingDraftWindows.delete(win.id);
+    return { ok: true };
+  });
   ipcMain.handle("modelOem:get", () => loadModelOemLinks());
   ipcMain.handle("modelOem:upsert", (_e, link) => upsertModelOemLink(link));
   ipcMain.handle("modelOem:remove", (_e, payload) =>
@@ -646,8 +708,9 @@ function registerIpc() {
     ),
   );
   ipcMain.handle("diagnostics:manufacturerStream", (e, request) => {
-    if (!codingCapture.isIdle() && ["start", "start-read"].includes(request?.action)) return { ok: false, error: "capture-busy" };
-    if (bundleBusy && ["start", "start-read"].includes(request?.action)) return { ok: false, error: "definition-bundle-busy" };
+    if (writeTaskBusy() && ["start", "start-read", "identify", "identify-vehicle", "read-dtc"].includes(request?.action)) return { ok: false, error: "busy" };
+    if (!codingCapture.isIdle() && ["start", "start-read", "identify", "identify-vehicle", "read-dtc"].includes(request?.action)) return { ok: false, error: "capture-busy" };
+    if (bundleBusy && ["start", "start-read", "identify", "identify-vehicle", "read-dtc"].includes(request?.action)) return { ok: false, error: "definition-bundle-busy" };
     return manufacturerStream.handle(request, e.sender.id);
   });
   ipcMain.handle("diagnostics:offline", (e, request, operationId) =>
@@ -655,18 +718,30 @@ function registerIpc() {
   ipcMain.handle("diagnostics:offlineCancel", (e, operationId) =>
     offlineOperations.cancel(e.sender.id, operationId));
   ipcMain.handle("diagnostics:saveRecording", (e, input) => saveRecordingFile(input, {
-    dialog, writeFile: fs.promises.writeFile, window: BrowserWindow.fromWebContents(e.sender),
+    dialog, openFile: fs.promises.open, window: BrowserWindow.fromWebContents(e.sender),
   }));
+  ipcMain.handle("diagnostics:revealParameterRecording", (e, request) => parameterRecordings.reveal(request, e.sender.id));
   ipcMain.handle("diagnostics:acquisitionReplay", (e, request) => acquisitionReplay.handle(request, e.sender.id));
-  ipcMain.handle("diagnostics:canRecording", (_e, request) => !codingCapture.isIdle() && request?.action === "start"
+  ipcMain.handle("diagnostics:canRecording", (_e, request) => (!codingCapture.isIdle() || writeTaskBusy()) && request?.action === "start"
     ? { ok: false, error: "capture-busy" } : diagnosticCanRecorder.handle(request));
   ipcMain.handle("diagnostics:codingCapture", (e, request) => codingCapture.handle(request, e.sender.id));
+  codingWorkspace = createCodingWorkspace({
+    directory: path.join(app.isPackaged || process.env.PORSCHE981_USER_DATA ? app.getPath("userData") : path.join(repoRoot, ".local"), "diagnostics", "coding-backups"),
+    desktopDirectory: () => app.getPath("desktop"),
+    readClient: (ecuId, owner) => manufacturerStream.readCoding(ecuId, owner),
+    draftClient: (input,signal) => runCodingDraft(input,{repoRoot,signal,variantsPath:process.env.PORSCHE981_VARIANTS||undefined}),
+    isVehicleBusy: () => bundleBusy || !sessionMgr.isIdle() || !manufacturerStream.isIdle() || !codingCapture.isIdle()
+      || !workshopExecution.isIdle() || !firmwareExecution.isIdle() || !!obdCtrl.production.snapshot().op
+      || !!diagnosticCanRecorder.snapshot().recording?.active,
+  });
+  ipcMain.handle("diagnostics:codingWorkspace", (e, request) => codingWorkspace.handle(request, e.sender.id));
   ipcMain.handle("diagnostics:measurementCapture", (e, request) => codingCapture.handle(request, e.sender.id, "measurement"));
   ipcMain.handle("diagnostics:dtcCapture", (e, request) => codingCapture.handle(request, e.sender.id, "dtc"));
   ipcMain.handle("diagnostics:identityCapture", (e, request) => codingCapture.handle(request, e.sender.id, "identity"));
 
   const preparation = createDiagnosticPreparation({
     directory: path.join(app.isPackaged || process.env.PORSCHE981_USER_DATA ? app.getPath("userData") : path.join(repoRoot, ".local"), "diagnostics", "coding-backups"),
+    desktopDirectory: () => app.getPath("desktop"),
     connectionStatus: () => connMgr.snapshot(),
     previewField: (request) => runWorkbench(request, { repoRoot, variantsPath: process.env.PORSCHE981_VARIANTS || undefined }),
     inspectFirmware: (file) => runWorkbench({ action: "firmware-container" }, { repoRoot, firmwareFile: file, timeoutMs: 60000 }),
@@ -676,9 +751,14 @@ function registerIpc() {
       const selected = await dialog.showOpenDialog(options);
       return selected.canceled ? null : selected.filePaths[0];
     },
-    saveFile: (fileName, recording) => saveRecordingFile({ fileName, recording }, { dialog, writeFile: fs.promises.writeFile }),
+    saveFile: (fileName, recording) => saveRecordingFile({ fileName, recording }, { dialog, openFile: fs.promises.open }),
   });
   ipcMain.handle("diagnostics:preparation", (_e, request) => preparation.handle(request));
+  ipcMain.handle("diagnostics:firmwareVersions", (e, request) => firmwareVersions.handle(request, e.sender.id));
+  ipcMain.handle("diagnostics:firmwareExecution", (e, request) => {
+    if ((quitReviewPending || shutdownPending || quitReady) && request?.action === "start") return { ok: false, error: "firmware-app-closing" };
+    return firmwareExecution.handle(request, e.sender.id);
+  });
   ipcMain.handle("diagnostics:definitionBundle", async (_e, request) => {
     if (!request || Object.keys(request).length !== 1 || !["export", "import"].includes(request.action)) return { ok: false, error: "bundle-request-invalid" };
     if (bundleBusy || !codingCapture.isIdle() || !sessionMgr.isIdle() || !manufacturerStream.isIdle() || connMgr.snapshot().linkState !== "idle" || transportGate.owner()) return { ok: false, error: "bundle-busy-disconnect-first" };
@@ -695,6 +775,11 @@ function registerIpc() {
   });
 
   const workshopIndexPath = path.join(runtime.definitionsRoot, ".local", "diagnostics", "piwis-workshop", "flash-index.json");
+  ipcMain.handle("workshop:execution", (e, request) => {
+    if ((quitReviewPending || shutdownPending || quitReady) && ["start", "resume", "check-resume"].includes(request?.action))
+      return { ok: false, error: "workshop-app-closing" };
+    return workshopExecution.handle(request, e.sender.id);
+  });
   ipcMain.handle("workshop:flashIndex", () => readWorkshopFlashIndex(workshopIndexPath));
   ipcMain.handle("workshop:exportPreview", async (_e, input) => {
     const preview = await prepareWorkshopExport(input, workshopIndexPath);
@@ -709,24 +794,27 @@ function registerIpc() {
   });
 
   ipcMain.handle(SESSION_CHANNEL, async (e, request) => {
+    if (writeTaskBusy() && ["start", "prepare"].includes(request?.action)) return { ok: false, error: "busy" };
     if (!codingCapture.isIdle() && ["start", "prepare"].includes(request?.action)) return { ok: false, error: "capture-busy" };
     if (bundleBusy && ["start", "prepare"].includes(request?.action)) return { ok: false, error: "definition-bundle-busy" };
     const out = await sessionMgr.handle(request, { ownerId: e.sender.id });
     if (request?.action === "overview" && out?.ok) {
       const v = connMgr.voltageView();
-      return { ...out, ...v, voltageLabel: connMgr.snapshot().voltageLabel };
+      return { ...out, ...v, taskState: !manufacturerStream.isIdle() || writeTaskBusy() ? "running" : out.taskState,
+        voltageLabel: connMgr.snapshot().voltageLabel };
     }
     return out;
   });
 
-  ipcMain.handle(CONNECTION_CHANNEL, async (_e, request) => {
+  ipcMain.handle(CONNECTION_CHANNEL, async (e, request) => {
+    if (writeTaskBusy() && request?.action !== "status") return { ok: false, error: "busy" };
     if (!codingCapture.isIdle() && request?.action === "connect") return { ok: false, error: "capture-busy" };
     if (bundleBusy && !["status", "list", "disconnect"].includes(request?.action)) return { ok: false, error: "definition-bundle-busy" };
-    const out = await connMgr.handle(request);
-    if (out.ok && ["select", "configure", "disconnect", "clear"].includes(request?.action)) diagnosticCanRecorder.stop("connection-settings-changed");
+    const out = await connMgr.handle(request, e.sender.id);
+    if (out.ok && ["select", "configure", "configure-network", "configure-serial", "disconnect", "clear"].includes(request?.action)) diagnosticCanRecorder.stop("connection-settings-changed");
     return out;
   });
-  ipcMain.handle(CAN_CAPTURE_CHANNEL, (e, request) => !codingCapture.isIdle() && request?.action === "start"
+  ipcMain.handle(CAN_CAPTURE_CHANNEL, (e, request) => (!codingCapture.isIdle() || writeTaskBusy()) && request?.action === "start"
     ? { ok: false, error: "capture-busy" } : canCaptureMgr.handle(request, { ownerId: e.sender.id }));
 
   ipcMain.handle("modelOem:catalog", async () => {
@@ -758,9 +846,33 @@ app.whenReady().then(() => {
 
 });
 
+app.on("browser-window-created", (_event, win) => {
+  win.on("close", (event) => {
+    if (!quitReady && (workshopExecution.isOwnedActive(win.webContents.id) || firmwareExecution.isOwnedActive(win.webContents.id)
+      || writeTaskBusy() && BrowserWindow.getAllWindows().length === 1)) {
+      event.preventDefault(); void explainWorkshopExit(win); return;
+    }
+    // Include auxiliary windows: the final window must survive until release.
+    if (!quitReady && transportGate.owner() && BrowserWindow.getAllWindows().length === 1) {
+      event.preventDefault();
+      if (!quitReviewPending && !shutdownPending) app.quit();
+      return;
+    }
+    if (!codingDraftWindows.has(win.id)) return;
+    event.preventDefault();
+    if (quitReviewPending) return;
+    void reviewCodingExit(win).then((discard) => {
+      if (discard && !quitReviewPending && !win.isDestroyed()) win.close();
+    });
+  });
+  win.once("closed", () => codingDraftWindows.delete(win.id));
+});
+
 app.on("web-contents-created", (_e, contents) => {
   contents.once("destroyed", () => {
+    firmwareVersions.clearOwned(contents.id);
     acquisitionReplay.clearOwned(contents.id);
+    codingWorkspace?.cancelOwned(contents.id);
     manufacturerStream.cancelOwned(contents.id);
     offlineOperations.cancelOwned(contents.id);
     sessionMgr.cancelOwned(contents.id);
@@ -773,11 +885,29 @@ let shutdownPending = false, quitReady = false;
 app.on("before-quit", (e) => {
   if (quitReady) return;
   e.preventDefault();
-  if (shutdownPending) return;
-  shutdownPending = true;
-  diagnosticCanRecorder.shutdown();
-  Promise.allSettled([manufacturerStream.shutdown(), sessionMgr.shutdown(), canCaptureMgr.shutdown(), connMgr.shutdown(), codingCapture.shutdown(), obdCtrl.shutdown()])
-    .finally(() => { bridgeCtrl.stop(); quitReady = true; app.quit(); });
+  if (writeTaskBusy()) { void explainWorkshopExit(BrowserWindow.getFocusedWindow()); return; }
+  if (shutdownPending || quitReviewPending) return;
+  quitReviewPending = true;
+  void (async () => {
+    try {
+      for (const win of BrowserWindow.getAllWindows()) {
+        if (!await reviewCodingExit(win)) return;
+      }
+      shutdownPending = true;
+      diagnosticCanRecorder.shutdown();
+      await Promise.allSettled([manufacturerStream.shutdown(), sessionMgr.shutdown(), canCaptureMgr.shutdown(), connMgr.shutdown(), codingCapture.shutdown(), obdCtrl.shutdown()]);
+      if (transportGate.owner() || !manufacturerStream.isIdle() || !sessionMgr.isIdle() || !codingCapture.isIdle()) {
+        await dialog.showMessageBox({ type: "info", title: "退出项目",
+          message: "正在等待诊断任务和诊断头释放",
+          detail: "项目保持打开。结束后请再次退出。", buttons: ["知道了"], noLink: true,
+        }).catch(() => {});
+        return;
+      }
+      bridgeCtrl.stop();
+      quitReady = true;
+      app.quit();
+    } finally { quitReviewPending = false; if (!quitReady) shutdownPending = false; }
+  })();
 });
 
 

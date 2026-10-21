@@ -1,4 +1,28 @@
 /** Shared one-owner transport gate for session jobs vs ATRV monitor. */
+// Explicit literals only: configuration/listing never resolves DNS or probes a host.
+export function tcpEndpointId(host, port) {
+  if (typeof host !== "string" || !Number.isInteger(port) || port < 1 || port > 65535) return null;
+  const ipv6 = host.includes(":");
+  if (ipv6 ? !/^[0-9a-fA-F:]+$/.test(host) : !/^(?:0|[1-9][0-9]{0,2})(?:\.(?:0|[1-9][0-9]{0,2})){3}$/.test(host)) return null;
+  if (!ipv6 && host.split(".").some(v => Number(v) > 255)) return null;
+  try {
+    const url = new URL(`tcp://${ipv6 ? `[${host}]` : host}:${port}`);
+    return `tcp:${url.hostname}:${port}`;
+  } catch { return null; }
+}
+
+export function parseTcpDeviceId(value) {
+  if (typeof value !== "string" || value.length > 64) return null;
+  const hit = value.match(/^tcp:(\[[0-9a-f:]+\]|[0-9.]+):([1-9][0-9]{0,4})$/);
+  if (!hit) return null;
+  const host = hit[1].startsWith("[") ? hit[1].slice(1, -1) : hit[1], port = Number(hit[2]);
+  return tcpEndpointId(host, port) === value ? { host, port } : null;
+}
+
+export function validObdDeviceId(value) {
+  return typeof value === "string" && (/^(?:bt:[0-9A-F]{12}|usb:[0-9a-f]{64}|(?:vnci|pt3g):[0-9]{1,16})$/.test(value) || !!parseTcpDeviceId(value));
+}
+
 export function createTransportGate() {
   let owner = null;
   return {
@@ -42,6 +66,13 @@ export function voltageFresh(at, now, ttlMs) {
 
 // Observed X431 (local HCI): Bluetooth ACL retained minutes–hours. Not a voltage sample period.
 // Product design defaults — NOT measured X431 ATRV cadence:
+export const ELM_SERIAL_BAUDS = Object.freeze([9600, 38400, 115200, 230400]);
+export const ELM_DEFAULT_BAUDS = Object.freeze({ vLinker: 115200, "OBDLink MX+": 115200,
+  ELM327: 38400, OBDKey: 9600, OBDLink: 115200 });
+export function validSerialBaud(value) { return value === null || ELM_SERIAL_BAUDS.includes(value); }
+export function supportsSerialBaud(deviceId, model) {
+  return /^(bt|usb):/.test(deviceId || "") && Object.hasOwn(ELM_DEFAULT_BAUDS, model);
+}
 export const ATRV_INTERVAL_MS = 2000;
 export const VOLTAGE_FRESH_MS = 6000;
 // Windows CPython and Date.now() can differ by 1 ms at receipt. Bound that

@@ -266,7 +266,8 @@ class TestAdapterCheck(_LockIsolated):
         with tempfile.TemporaryDirectory() as tmp:
             out = _run(factory, tmp)
             self.assertFalse(out["ok"])
-            self.assertEqual(out["reopenCount"], 1)
+            self.assertEqual(out["reopenCount"], 0)
+            self.assertEqual(n["i"], 2, "failed open stops remaining reopen checks")
             self.assertIn("fake-reopen-fail", out["error"] or "")
             self.assertTrue((Path(tmp) / "raw-traffic.json").is_file())
             self.assertTrue(out["lockReleased"])

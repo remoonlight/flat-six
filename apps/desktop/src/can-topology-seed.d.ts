@@ -16,7 +16,9 @@ declare module "*can-topology-logic.mjs" {
   ): Record<string, number>;
   export function statusText(entry: Record<string, unknown>, opts?: { simulated?: boolean }): string;
   export function dtcLabel(rec: unknown): string;
-  export function dtcDetail(rec: unknown): string;
+  export function dtcDetail(rec: unknown, profileId?: string): string;
+  export function manualDtcTitle(rec: unknown, scope: { generation: string; module: string; namespace: string } | undefined): { title: string; language: string; page: number } | null;
+  export function orderDtcRecords<T>(records: readonly T[] | null | undefined): T[];
   export function dtcBadgeCount(entry: Record<string, unknown> | undefined): number | null;
   export function mergeStatusAfterJob(
     prev: Record<string, unknown> | undefined,
@@ -34,6 +36,15 @@ declare module "*can-topology-logic.mjs" {
     totalNodes?: number;
   }): string;
   export function failureReasonZh(error: unknown): string;
+  export function prepareScanRetry(opts: {
+    invoke: (req: Record<string, unknown>) => Promise<Record<string, unknown>>;
+    connection?: (req: Record<string, unknown>) => Promise<Record<string, unknown>>;
+    jobId?: string | null;
+    mode: string;
+    deviceId?: string | null;
+    model?: string | null;
+    cancelled?: () => boolean;
+  }): Promise<{ ok: boolean; error?: string }>;
   export function buildExportReport(opts: Record<string, unknown>): Record<string, unknown>;
   export function createScanQueue(opts: {
     invoke: (req: Record<string, unknown>) => Promise<Record<string, unknown>>;
@@ -44,6 +55,9 @@ declare module "*can-topology-logic.mjs" {
   }): {
     readonly busy: boolean;
     readonly jobId: string | null;
+    readonly cancelled: boolean;
+    readonly stopRequested: boolean;
+    stopAfterCurrent: () => boolean;
     cancel: () => Promise<void>;
     run: (opts: {
       nodes: unknown[];
@@ -52,9 +66,10 @@ declare module "*can-topology-logic.mjs" {
         onKind?: (id: string, classified: Record<string, unknown>) => void;
         onStatus?: (doc: Record<string, unknown>) => void;
         onJob?: (jobId: string) => void;
+        onInterrupted?: (checkpoint: { row: { jobId?: string; classified: Record<string, unknown> }; remaining: unknown[]; readback?: boolean; canRetry: boolean }) => Promise<"retry" | "terminate">;
         statusOf?: (id: string) => Record<string, unknown> | undefined;
       };
-    }) => Promise<{ error: string | null; results: unknown[] }>;
+    }) => Promise<{ error: string | null; stopped: boolean; results: unknown[]; clearResults: unknown[]; clearOutcomeUnconfirmed: boolean; readbackStarted: boolean }>;
   };
 }
 
@@ -69,6 +84,13 @@ declare module "@can-topology" {
 
 declare module "*read-only-session-logic.mjs";
 declare module "*obd-connection-logic.mjs" {
+  export const ELM_SERIAL_BAUDS: readonly number[];
+  export const ELM_DEFAULT_BAUDS: Readonly<Record<string, number>>;
+  export function validSerialBaud(value: unknown): boolean;
+  export function supportsSerialBaud(deviceId: unknown, model: unknown): boolean;
+  export function tcpEndpointId(host: string, port: number): string | null;
+  export function parseTcpDeviceId(value: unknown): { host: string; port: number } | null;
+  export function validObdDeviceId(value: unknown): boolean;
   export function formatHeaderVoltage(volts: number | null | undefined): string;
   export function parseVoltageVolts(text: string | null | undefined): number | null;
   export function voltageFresh(at: number, now: number, ttlMs: number): boolean;

@@ -21,14 +21,15 @@ export function manufacturerTiming(series) {
 
 export function manufacturerConnectionMessage(event, finished = false) {
   if (!event) return "";
-  if (finished && ["interrupted", "retrying", "qualified", "retry-failed"].includes(event.phase))
+  if (finished && ["interrupted", "awaiting-retry", "retrying", "qualified", "retry-failed"].includes(event.phase))
     return "本批已结束，通信恢复结果未确认，已保留中断记录";
   switch (event.phase) {
     case "interrupted": return "通信中断，保留已收结果，正在释放旧连接";
-    case "retrying": return `正在第 ${event.attempt}/3 次重连并核对身份`;
+    case "awaiting-retry": return "旧连接已释放，等待选择重试继续或终止；原十分钟截止时间不变";
+    case "retrying": return `正在第 ${event.attempt} 次手动重连并核对身份`;
     case "qualified": return "身份核对一致，等待未完成请求的响应";
     case "recovered": return "通信已恢复，继续当前参数组";
-    case "retry-failed": return `第 ${event.attempt}/3 次重连未收到有效响应`;
+    case "retry-failed": return `第 ${event.attempt} 次重连未收到有效响应，正在释放本次连接`;
     case "failed": return event.reason === "identity-mismatch" ? "身份不符，停止本批并保留已收结果"
       : event.reason === "cancelled" ? "恢复已取消，正在结束本批"
       : event.reason === "deadline-expired" ? "本次读取期限已到，正在结束本批"

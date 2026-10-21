@@ -6,6 +6,20 @@ import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
+function parameterRows(file) {
+  const bytes = fs.readFileSync(file), rows = [];
+  for (let offset = 0; offset < bytes.length;) {
+    const length = bytes.readUInt32LE(offset + 4);
+    assert.ok(length >= 12 && length % 4 === 0);
+    assert.equal(bytes.readUInt32LE(offset + length - 4), length);
+    if (bytes.readUInt32LE(offset) === 6) {
+      const captured = bytes.readUInt32LE(offset + 20);
+      rows.push(JSON.parse(bytes.subarray(offset + 40, offset + 28 + captured).toString("utf8")));
+    }
+    offset += length;
+  }
+  return rows;
+}
 const root = path.resolve(import.meta.dirname, "..");
 const temp = fs.mkdtempSync(path.join(os.tmpdir(), "porsche-obd-workspace-"));
 const output = path.resolve(process.env.PORSCHE981_ACCEPT_OUTPUT || path.join(root, ".local/obd-workspace-accept"));
@@ -22,6 +36,11 @@ const checks = [];
 const device = { id: "bt:000000000001", brand: "vLinker", name: "Synthetic adapter", comPort: "COM999",
   available: true, paired: true, transport: "bluetooth-spp" };
 const alternateDevice = { ...device, id: "bt:000000000002", brand: "OBDLink MX+", name: "Synthetic alternate adapter", comPort: "COM998" };
+async function stopAfterSamples(page, minimum) {
+  await page.waitForFunction(n => Number(document.querySelector('[data-testid="eng-batch-count"]')?.textContent?.match(/本批保留 (\d+)/)?.[1] || 0) >= n, minimum, { timeout: 60000 });
+  await page.getByTestId("eng-cancel").click();
+  await page.waitForFunction(() => !document.querySelector('[data-testid="eng-export"]')?.disabled);
+}
 let app;
 async function open() {
   app = await electron.launch({ args: [path.join(root, "apps/desktop")], env, timeout: 30000 });
@@ -46,7 +65,14 @@ async function open() {
         let timer;
         const reading = () => child.stdout.write(JSON.stringify({ ok: true, type: "handshake", volts: 12.6,
           voltageSource: "atrv", simulation: false, deviceId: args.device.id, at: Date.now() }) + "\n");
-        child.stdin.once("data", () => { reading(); timer = setInterval(reading, 1000); });
+        child.stdin.on("data", bytes => {
+          const request = JSON.parse(String(bytes));
+          if (request.action === "stop") {
+            clearInterval(timer);
+            child.stdout.write(JSON.stringify({ type: "stopped", ok: true, restoration: { errors: [] } }) + "\n");
+            queueMicrotask(() => { child.exitCode = 0; child.emit("close", 0); });
+          } else if (!timer) { reading(); timer = setInterval(reading, 1000); }
+        });
         child.kill = () => { clearInterval(timer); child.exitCode = 0; child.emit("close", 0); return true; };
         return child;
       } });
@@ -80,9 +106,12 @@ try {
   for (const retired of ["faults", "session", "offline", "guide", "compare", "broadcast", "developer", "analysis", "vehicle"]) {
     assert.equal(await page.locator(`[data-obd-tab="${retired}"]`).count(), 0);
   }
-  // Startup does not connect or scan; unidentified candidates cannot be cleared.
+  // Startup opens connection settings without selecting/connecting a head.
+  assert.match(await page.locator('[data-obd-tab="connection"]').getAttribute("class"), /active/);
+  await page.locator('[data-obd-tab="topology"]').click();
+  // Entering unconnected topology cannot scan; unidentified candidates cannot be cleared.
   assert.deepEqual(await page.getByTestId("topo-detail").locator("button").allTextContents(),
-    ["保存结果", "读取所有单元故障码(未完成)", "清除所有单元故障码(未完成)"]);
+    ["读取所有单元故障码(未完成)", "清除所有单元故障码(未完成)"]);
   assert.equal(await page.getByTestId("topo-detail").locator("dl").count(), 0);
   assert.match(await page.getByTestId("topo-detail").locator("h3").innerText(), /GW/);
   assert.doesNotMatch(await page.locator("body").innerText(), /仅读取 GW、DME 的身份与故障码；其他系统跳过。|此模块尚未接入车辆诊断，可先查看离线资料。/);
@@ -108,7 +137,7 @@ try {
   assert.equal(snapshotsAfterRead, 0, "a rejected start has no capture event to save");
   assert.equal(await page.getByTestId("topo-persist-retry").count(), 0);
   assert.doesNotMatch(await page.getByTestId("topo-detail").innerText(), /诊断快照未保存|diag_capture_event_required/);
-  assert.equal(await page.getByTestId("topo-save-result").isDisabled(), true);
+  assert.equal(await page.getByTestId("topo-save-result").count(), 0);
   await page.locator('[data-testid="topo-node-pdk"]').first().click();
   assert.equal((await page.getByTestId("topo-read-selected").innerText()).trim(), "读取故障码(未完成)");
   assert.equal((await page.getByTestId("topo-clear-selected").innerText()).trim(), "清除故障码(未完成)");
@@ -143,6 +172,8 @@ try {
   await page.getByTestId("obd-conn-state").getByText("已连接", { exact: true }).waitFor();
   await page.waitForFunction(() => document.querySelector('[data-testid="obd-header-voltage"]').textContent.trim() === "电压 12.6 V");
   assert.equal(await page.getByTestId("obd-header-device").innerText(), "已连接设备：vLinker");
+  await page.getByTestId("obd-conn-disconnect").click();
+  await page.waitForFunction(() => document.querySelector('[data-testid="obd-header-device"]')?.textContent.trim() === "已连接设备：无");
   await page.getByTestId(`obd-device-${alternateDevice.id}`).check();
   await page.waitForFunction(() => !document.querySelector('[data-testid="obd-conn-connect"]').disabled);
   await page.waitForFunction(() => document.querySelector('[data-testid="obd-header-device"]').textContent.trim() === "已连接设备：无");
@@ -157,7 +188,7 @@ try {
   await page.locator('[data-obd-tab="topology"]').click();
   assert.equal(await page.getByTestId("obd-header-device").innerText(), "已连接设备：vLinker");
   await page.waitForFunction(() => document.querySelector('[data-testid="topo-progress"]')?.textContent.includes("失败 1"));
-  assert.equal(await page.getByTestId("topo-save-result").isDisabled(), true, "denied automatic scan has no result to save");
+  assert.equal(await page.getByTestId("topo-save-result").count(), 0, "ordinary fault results have no save action");
   await shot("topology-connected.png");
   await page.locator('[data-obd-tab="connection"]').click();
   await page.waitForFunction(() => document.querySelector('[data-testid="obd-header-device"]').textContent.trim() === "已连接设备：vLinker");
@@ -168,6 +199,7 @@ try {
   checks.push("single-device selection disconnects previous adapter; header reflects explicit connection/disconnection, voltage cleared on disconnect");
 
   await page.locator('[data-obd-tab="live"]').click();
+  await page.getByTestId("eng-system").selectOption("");
   await page.getByTestId("eng-select-unit").waitFor();
   assert.equal(await page.getByTestId("eng-start").count(), 0);
   await page.getByTestId("eng-system").selectOption("gateway");
@@ -177,54 +209,45 @@ try {
   await page.getByTestId("eng-system").selectOption("dme");
   assert.equal(await page.getByTestId("eng-parameters").locator('input').count(), 6);
   assert.equal(await page.getByTestId("eng-start").count(), 0);
-  await page.getByTestId("eng-select-all").click();
+  await page.getByTestId("eng-select-all").click(); await page.getByTestId("eng-mode").selectOption("simulation");
   const denied = await page.evaluate(() => window.porsche981.readOnlySession({ action: "start",
     profileId: "porsche-981-2014-dme", mode: "live", sessionTask: "engine", confirmedReadOnly: true, x431Inactive: true }));
   assert.equal(denied.error, "live_not_enabled");
-  await page.getByTestId("eng-continuous").uncheck();
-  await page.getByTestId("eng-cycles").fill("1");
-  await page.getByTestId("eng-interval").fill("500");
-  await page.getByTestId("eng-prepare").click();
-  await page.waitForFunction(() => document.querySelector('[data-testid="eng-plan"]').textContent.includes("转速"));
   await page.getByTestId("eng-start").click();
-  await page.waitForFunction(() => document.querySelector('[data-testid="eng-kind"]').getAttribute("data-freshness") === "simulated", null, { timeout: 60000 });
+  await stopAfterSamples(page, 6);
   assert.equal(await page.getByTestId("eng-pids").getAttribute("data-live"), "0");
   assert.equal(await page.locator('[data-testid="eng-pids"] > li').count(), 6);
-  const exported = path.join(temp, "engine.json");
-  await app.evaluate(({ dialog }, filename) => { dialog.showSaveDialog = async () => ({ canceled: false, filePath: filename }); }, exported);
-  await page.getByTestId("eng-export").click();
-  const deadline = Date.now() + 5000;
-  while (!fs.existsSync(exported) && Date.now() < deadline) await new Promise((resolve) => setTimeout(resolve, 50));
-  const saved = JSON.parse(fs.readFileSync(exported, "utf8"));
-  assert.equal(saved.simulation, true);
-  assert.equal(saved.kind, "engine-acquisition-batch");
-  assert.equal(saved.samples.length, 6);
-  assert.equal(saved.runs.length, 1);
-  assert.equal(saved.retentionComplete, true);
-  assert.equal(await page.locator('.eng-chart').count(), 6);
+  const parameterDesktop = path.join(temp, "parameter-desktop"); fs.mkdirSync(parameterDesktop);
+  await app.evaluate(({ app }, directory) => app.setPath("desktop", directory), parameterDesktop);
+  await page.getByTestId("eng-export").click(); await page.getByTestId("eng-saved").waitFor();
+  const [firstCapture] = fs.readdirSync(parameterDesktop).filter(file => file.endsWith(".pcapng"));
+  const saved = parameterRows(path.join(parameterDesktop, firstCapture));
+  assert.ok(saved.length >= 6);
+  for (const row of saved) assert.deepEqual(Object.keys(row), ["name", "value", "unit", "capturedUtc"]);
+  assert.equal(await page.locator('.eng-chart').count(), 0);
   await page.getByTestId("eng-display-text").click();
   assert.equal(await page.locator('.eng-chart').count(), 0);
   assert.match(await page.getByTestId("eng-pids").innerText(), /2000 rpm/);
   await page.getByTestId("eng-display-graph").click();
-  assert.equal(await page.locator('.eng-chart').count(), 6);
+  assert.equal(await page.locator('.eng-chart').count(), 4);
   await page.getByTestId("eng-display-both").click();
   await shot("engine.png");
+  await page.getByTestId("eng-selection").locator("summary").click();
   for (const pid of ["04", "05", "0D", "0F", "11"]) await page.getByTestId(`eng-select-${pid}`).uncheck();
   assert.equal(await page.getByTestId("eng-kind").getAttribute("data-freshness"), "idle");
   assert.equal(await page.locator('.eng-chart').count(), 0);
-  await page.getByTestId("eng-cycles").fill("3");
   await page.getByTestId("eng-start").click();
-  await page.waitForFunction(() => document.querySelector('[data-testid="eng-kind"]').getAttribute("data-freshness") === "simulated", null, { timeout: 60000 });
+  await stopAfterSamples(page, 3);
+  await page.getByTestId("eng-display-both").click();
   assert.equal(await page.locator('[data-testid="eng-pids"] > li').count(), 1);
-  assert.equal(await page.getByTestId("eng-chart-0C").locator('circle').count(), 3);
-  const selectedExport = path.join(temp, "engine-selected.json");
-  await app.evaluate(({ dialog }, filename) => { dialog.showSaveDialog = async () => ({ canceled: false, filePath: filename }); }, selectedExport);
-  await page.getByTestId("eng-export").click();
-  const selectedDeadline = Date.now() + 5000;
-  while (!fs.existsSync(selectedExport) && Date.now() < selectedDeadline) await new Promise((resolve) => setTimeout(resolve, 50));
-  const selectedSaved = JSON.parse(fs.readFileSync(selectedExport, "utf8"));
-  assert.deepEqual(selectedSaved.runs[0].engine.selectedPids, ["0C"]);
-  assert.deepEqual([...new Set(selectedSaved.samples.map((s) => s.pid))], ["0C"]);
+  assert.ok(await page.locator('[data-curve-id="0C"]').locator('circle').count() >= 3);
+  await page.getByTestId("eng-export").click(); await page.getByTestId("eng-saved").waitFor();
+  const secondCapture = fs.readdirSync(parameterDesktop).filter(file => file.endsWith(".pcapng") && file !== firstCapture);
+  assert.equal(secondCapture.length, 1);
+  const selectedSaved = parameterRows(path.join(parameterDesktop, secondCapture[0]));
+  assert.ok(selectedSaved.length >= 3);
+  assert.deepEqual([...new Set(selectedSaved.map(s => s.name))], ["转速"]);
+  assert.ok(selectedSaved.every(s => s.unit === "rpm" && s.value === 2000));
   await page.setViewportSize({ width: 760, height: 900 });
   const layout = await page.locator('[data-page="engine-session"]').evaluate(root => {
     const rect = root.getBoundingClientRect();
@@ -258,8 +281,8 @@ try {
   await page.locator('[data-testid="topo-node-dme"]').first().click();
   await page.getByTestId("topo-open-live").click();
   assert.equal(await page.getByTestId("eng-system").inputValue(), "dme");
-  assert.equal(await page.getByTestId("eng-start").count(), 0);
-  checks.push("topology real-time action opens the selected control unit without starting acquisition");
+  assert.equal(await page.getByTestId("eng-cancel").isDisabled(), true);
+  checks.push("topology real-time action opens the selected control unit and retains completed data without starting acquisition");
 
   await page.locator('[data-obd-tab="coding"]').click();
   await page.getByRole("heading", { name: "请选择系统", exact: true }).waitFor();
@@ -273,7 +296,9 @@ try {
 
   page = await open();
   await page.locator('[data-obd-tab="connection"]').click();
-  await page.waitForFunction((id) => document.querySelector(`[data-testid="obd-device-${id}"]`)?.checked, device.id);
+  await page.getByTestId(`obd-device-${device.id}`).waitFor();
+  assert.equal(await page.locator('input[name="obd-device"]:checked').count(), 0);
+  assert.equal(await page.getByTestId("obd-purpose-diagnostic").isChecked(), true);
   assert.equal((await page.evaluate(() => window.porsche981.obdConnection({ action: "status" }))).connected, false);
   assert.equal(await page.getByTestId("obd-conn-clear").count(), 0);
   assert.deepEqual(await page.getByTestId("obd-connection").getByRole("button").allTextContents(), ["刷新", "连接设备", "断开设备"]);
@@ -292,10 +317,10 @@ try {
   page = await open();
   await page.locator('[data-obd-tab="connection"]').click();
   await page.getByTestId("obd-purpose-crash").waitFor();
-  assert.equal(await page.getByTestId("obd-purpose-crash").isChecked(), true);
+  assert.equal(await page.getByTestId("obd-purpose-diagnostic").isChecked(), true);
   await page.getByTestId("obd-purpose-diagnostic").check();
-  checks.push("five visible purposes persist on refresh/restart; migration/scope/version controls and topology frame recording removed");
-  checks.push("restart: selected device without auto-connect; retired faults tab remains absent");
+  checks.push("five visible purposes persist on refresh; restart defaults to diagnostic; migration/scope/version controls and topology frame recording removed");
+  checks.push("restart: no selected device and no auto-connect; retired faults tab remains absent");
   assert.equal(await page.locator('[data-obd-tab="faults"]').count(), 0);
   await page.setViewportSize({ width: 760, height: 900 });
   assert.ok(await page.locator('[data-page="obd"]').evaluate((el) => el.scrollWidth <= el.clientWidth));

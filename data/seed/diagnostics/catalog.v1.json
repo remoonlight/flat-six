@@ -44,13 +44,21 @@
           "serviceFamily": "kwp-2000-like",
           "requestHex": "1A9F",
           "positivePrefixHex": "5A9F",
-          "decode": { "type": "ascii", "offset": 2, "length": 4, "unit": null },
+          "decode": {
+            "type": "ascii",
+            "offset": 2,
+            "length": 4,
+            "unit": null
+          },
           "expectedValue": "P200",
           "evidenceStatus": "observed-x431-capture",
           "provenance": {
             "runId": "20260926-233624-327076",
             "framesSha256": "89CC9714D1F83C8804D5C0760C9116F7370A2B4EA6E4E148C7F2FE16960C41E4",
-            "frameIndices": [54, 55]
+            "frameIndices": [
+              54,
+              55
+            ]
           }
         },
         {
@@ -60,13 +68,23 @@
           "serviceFamily": "kwp-2000-like",
           "requestHex": "1A95",
           "positivePrefixHex": "5A95",
-          "decode": { "type": "ascii", "offset": 2, "length": 15, "unit": null },
+          "decode": {
+            "type": "ascii",
+            "offset": 2,
+            "length": 15,
+            "unit": null
+          },
           "expectedValue": "W06C30C1348CD1L",
           "evidenceStatus": "observed-x431-capture",
           "provenance": {
             "runId": "20260926-233624-327076",
             "framesSha256": "89CC9714D1F83C8804D5C0760C9116F7370A2B4EA6E4E148C7F2FE16960C41E4",
-            "frameIndices": [56, 57, 59, 60]
+            "frameIndices": [
+              56,
+              57,
+              59,
+              60
+            ]
           }
         },
         {
@@ -76,13 +94,21 @@
           "serviceFamily": "kwp-2000-like",
           "requestHex": "1A93",
           "positivePrefixHex": "5A93",
-          "decode": { "type": "ascii", "offset": 2, "length": 3, "unit": null },
+          "decode": {
+            "type": "ascii",
+            "offset": 2,
+            "length": 3,
+            "unit": null
+          },
           "expectedValue": "H04",
           "evidenceStatus": "observed-x431-capture",
           "provenance": {
             "runId": "20260926-233624-327076",
             "framesSha256": "89CC9714D1F83C8804D5C0760C9116F7370A2B4EA6E4E148C7F2FE16960C41E4",
-            "frameIndices": [68, 69]
+            "frameIndices": [
+              68,
+              69
+            ]
           }
         },
         {
@@ -92,13 +118,22 @@
           "serviceFamily": "kwp-2000-like",
           "requestHex": "1A87",
           "positivePrefixHex": "5A87",
-          "decode": { "type": "ascii", "offset": 2, "length": 11, "unit": null },
+          "decode": {
+            "type": "ascii",
+            "offset": 2,
+            "length": 11,
+            "unit": null
+          },
           "expectedValue": "98161864015",
           "evidenceStatus": "observed-x431-capture",
           "provenance": {
             "runId": "20260926-233624-327076",
             "framesSha256": "89CC9714D1F83C8804D5C0760C9116F7370A2B4EA6E4E148C7F2FE16960C41E4",
-            "frameIndices": [70, 71, 73]
+            "frameIndices": [
+              70,
+              71,
+              73
+            ]
           }
         },
         {
@@ -108,13 +143,22 @@
           "serviceFamily": "kwp-2000-like",
           "requestHex": "1A91",
           "positivePrefixHex": "5A91",
-          "decode": { "type": "ascii", "offset": 2, "length": 11, "unit": null },
+          "decode": {
+            "type": "ascii",
+            "offset": 2,
+            "length": 11,
+            "unit": null
+          },
           "expectedValue": "99161860203",
           "evidenceStatus": "observed-x431-capture",
           "provenance": {
             "runId": "20260926-233624-327076",
             "framesSha256": "89CC9714D1F83C8804D5C0760C9116F7370A2B4EA6E4E148C7F2FE16960C41E4",
-            "frameIndices": [81, 82, 84]
+            "frameIndices": [
+              81,
+              82,
+              84
+            ]
           }
         },
         {
@@ -124,13 +168,23 @@
           "serviceFamily": "kwp-2000-like",
           "requestHex": "1A90",
           "positivePrefixHex": "5A90",
-          "decode": { "type": "vin-ascii", "offset": 2, "length": 17, "unit": null },
+          "decode": {
+            "type": "vin-ascii",
+            "offset": 2,
+            "length": 17,
+            "unit": null
+          },
           "expectedValue": null,
           "evidenceStatus": "observed-x431-capture",
           "provenance": {
             "runId": "20260926-233624-327076",
             "framesSha256": "89CC9714D1F83C8804D5C0760C9116F7370A2B4EA6E4E148C7F2FE16960C41E4",
-            "frameIndices": [87, 88, 90, 91]
+            "frameIndices": [
+              87,
+              88,
+              90,
+              91
+            ]
           }
         },
         {
@@ -161,6 +215,2494 @@
                 "statusText": "超出极限值",
                 "source": "x431-diagnosing-2026-09-26"
               }
+            },
+            "referenceCatalog": {
+              "kind": "x431-source-dtc-text-reference",
+              "profileId": "9x1:DME_BDE_Continental:SDI9_1_981_3_4L_EU5",
+              "module": "DME_BDE_Continental",
+              "variant": "SDI9_1_981_3_4L_EU5",
+              "dataSha256": "f32173d768ca9f8d2caf109bc7159fa43bde816f924fea5a91f1f202a2a76a2e",
+              "variantsSha256": "8a9e0ee94c25e98b11affbc083615bbd4c8113fe9c2a820ca8e4147aa16d5c20",
+              "binding": "static-capture-associated",
+              "referenceOnly": true,
+              "ecuVersionQualified": false,
+              "records": {
+                "000A": {
+                  "text": "进气凸轮轴位置响应慢，气缸组 1",
+                  "sourceOffset": 4054992,
+                  "textIdRawHex": "F1003B73"
+                },
+                "000C": {
+                  "text": "进气凸轮轴位置响应慢，气缸组 2",
+                  "sourceOffset": 4055014,
+                  "textIdRawHex": "F1003B74"
+                },
+                "0010": {
+                  "text": "进气凸轮轴位置执行器电路，气缸组 1",
+                  "sourceOffset": 4055036,
+                  "textIdRawHex": "F1003B75"
+                },
+                "0011": {
+                  "text": "进气凸轮轴位置正时，气缸组 1",
+                  "sourceOffset": 4055058,
+                  "textIdRawHex": "F1003B76"
+                },
+                "0016": {
+                  "text": "气缸组 1 曲轴相对于进气凸轮轴的位置",
+                  "sourceOffset": 4055080,
+                  "textIdRawHex": "F1003B77"
+                },
+                "0018": {
+                  "text": "气缸组 2 曲轴相对于进气凸轮轴的位置",
+                  "sourceOffset": 4055102,
+                  "textIdRawHex": "F1003B78"
+                },
+                "0020": {
+                  "text": "进气凸轮轴位置执行器电路，气缸组 2",
+                  "sourceOffset": 4055124,
+                  "textIdRawHex": "F1003B79"
+                },
+                "0021": {
+                  "text": "进气凸轮轴位置正时，气缸组 2",
+                  "sourceOffset": 4055146,
+                  "textIdRawHex": "F1003B7A"
+                },
+                "0030": {
+                  "text": "氧传感器加热器控制电路（气缸组 1，传感器 1）",
+                  "sourceOffset": 4055168,
+                  "textIdRawHex": "F1003B7B"
+                },
+                "0031": {
+                  "text": "氧传感器加热器控制电路（气缸组 1，传感器 1）",
+                  "sourceOffset": 4055190,
+                  "textIdRawHex": "F1003B7B"
+                },
+                "0032": {
+                  "text": "氧传感器加热器控制电路（气缸组 1，传感器 1）",
+                  "sourceOffset": 4055212,
+                  "textIdRawHex": "F1003B7B"
+                },
+                "0036": {
+                  "text": "加热式氧传感器控制电路，气缸组 1 传感器 2",
+                  "sourceOffset": 4055234,
+                  "textIdRawHex": "F1003B7C"
+                },
+                "0037": {
+                  "text": "加热式氧传感器控制电路，气缸组 1 传感器 2",
+                  "sourceOffset": 4055256,
+                  "textIdRawHex": "F1003B7C"
+                },
+                "0038": {
+                  "text": "加热式氧传感器控制电路，气缸组 1 传感器 2",
+                  "sourceOffset": 4055278,
+                  "textIdRawHex": "F1003B7C"
+                },
+                "0040": {
+                  "text": "催化转换器前的氧传感器被交换",
+                  "sourceOffset": 4055300,
+                  "textIdRawHex": "F1003B7D"
+                },
+                "0041": {
+                  "text": "催化转换器后的氧传感器被交换",
+                  "sourceOffset": 4055322,
+                  "textIdRawHex": "F1003B7E"
+                },
+                "0050": {
+                  "text": "氧传感器加热器控制电路（气缸组 2，传感器 1）",
+                  "sourceOffset": 4055344,
+                  "textIdRawHex": "F1003B7F"
+                },
+                "0051": {
+                  "text": "氧传感器加热器控制电路（气缸组 2，传感器 1）",
+                  "sourceOffset": 4055366,
+                  "textIdRawHex": "F1003B7F"
+                },
+                "0052": {
+                  "text": "氧传感器加热器控制电路（气缸组 2，传感器 1）",
+                  "sourceOffset": 4055388,
+                  "textIdRawHex": "F1003B7F"
+                },
+                "0053": {
+                  "text": "气缸组 1 催化转化器前的氧传感器加热器",
+                  "sourceOffset": 4055410,
+                  "textIdRawHex": "F1003B80"
+                },
+                "0056": {
+                  "text": "加热式氧传感器控制电路，气缸组 2 传感器 2",
+                  "sourceOffset": 4055432,
+                  "textIdRawHex": "F1003B81"
+                },
+                "0057": {
+                  "text": "加热式氧传感器控制电路，气缸组 2 传感器 2",
+                  "sourceOffset": 4055454,
+                  "textIdRawHex": "F1003B81"
+                },
+                "0058": {
+                  "text": "加热式氧传感器控制电路，气缸组 2 传感器 2",
+                  "sourceOffset": 4055476,
+                  "textIdRawHex": "F1003B81"
+                },
+                "0059": {
+                  "text": "气缸组 2 催化转化器前的氧传感器加热器",
+                  "sourceOffset": 4055498,
+                  "textIdRawHex": "F1003B82"
+                },
+                "0068": {
+                  "text": "质量空气流量不可靠",
+                  "sourceOffset": 4055520,
+                  "textIdRawHex": "F1003B83"
+                },
+                "0069": {
+                  "text": "压力传感器信号比较",
+                  "sourceOffset": 4055542,
+                  "textIdRawHex": "F1003B84"
+                },
+                "0071": {
+                  "text": "通过 CAN 提供的环境温度",
+                  "sourceOffset": 4055564,
+                  "textIdRawHex": "F1003B85"
+                },
+                "0072": {
+                  "text": "通过 CAN 提供的环境温度",
+                  "sourceOffset": 4055586,
+                  "textIdRawHex": "F1003B85"
+                },
+                "0073": {
+                  "text": "通过 CAN 提供的环境温度",
+                  "sourceOffset": 4055608,
+                  "textIdRawHex": "F1003B85"
+                },
+                "0076": {
+                  "text": "气门升程控制驱动器，气缸组 1",
+                  "sourceOffset": 4055630,
+                  "textIdRawHex": "F1003B86"
+                },
+                "0077": {
+                  "text": "气门升程控制驱动器，气缸组 1",
+                  "sourceOffset": 4055652,
+                  "textIdRawHex": "F1003B86"
+                },
+                "0082": {
+                  "text": "气门升程控制驱动器，气缸组 2",
+                  "sourceOffset": 4055674,
+                  "textIdRawHex": "F1003B87"
+                },
+                "0083": {
+                  "text": "气门升程控制驱动器，气缸组 2",
+                  "sourceOffset": 4055696,
+                  "textIdRawHex": "F1003B87"
+                },
+                "00B7": {
+                  "text": "发动机冷却液切断阀或节温器卡在关闭位置（执行系统测试）",
+                  "sourceOffset": 4055718,
+                  "textIdRawHex": "F1003B88"
+                },
+                "0106": {
+                  "text": "进气歧管传感器不可靠",
+                  "sourceOffset": 4055740,
+                  "textIdRawHex": "F1003B89"
+                },
+                "0107": {
+                  "text": "进气管压力传感器： 电气故障",
+                  "sourceOffset": 4055762,
+                  "textIdRawHex": "F1003B8A"
+                },
+                "0108": {
+                  "text": "进气管压力传感器： 电气故障",
+                  "sourceOffset": 4055784,
+                  "textIdRawHex": "F1003B8A"
+                },
+                "0111": {
+                  "text": "进气温度不可靠",
+                  "sourceOffset": 4055806,
+                  "textIdRawHex": "F1003B8B"
+                },
+                "0112": {
+                  "text": "进气温度传感器：电气故障",
+                  "sourceOffset": 4055828,
+                  "textIdRawHex": "F1003B8C"
+                },
+                "0113": {
+                  "text": "进气温度传感器：电气故障",
+                  "sourceOffset": 4055850,
+                  "textIdRawHex": "F1003B8C"
+                },
+                "0114": {
+                  "text": "进气温度传感器：电气故障",
+                  "sourceOffset": 4055872,
+                  "textIdRawHex": "F1003B8C"
+                },
+                "0116": {
+                  "text": "发动机冷却液温度过高",
+                  "sourceOffset": 4055894,
+                  "textIdRawHex": "F1003B8D"
+                },
+                "0117": {
+                  "text": "发动机冷却液温度电路低输入",
+                  "sourceOffset": 4055916,
+                  "textIdRawHex": "F1003B8E"
+                },
+                "0118": {
+                  "text": "发动机冷却液温度电路高输入",
+                  "sourceOffset": 4055938,
+                  "textIdRawHex": "F1003B8F"
+                },
+                "0119": {
+                  "text": "发动机冷却液温度电路间歇",
+                  "sourceOffset": 4055960,
+                  "textIdRawHex": "F1003B90"
+                },
+                "0121": {
+                  "text": "油门踏板电位计 1",
+                  "sourceOffset": 4055982,
+                  "textIdRawHex": "F1003B91"
+                },
+                "0122": {
+                  "text": "油门踏板电位计 1",
+                  "sourceOffset": 4056004,
+                  "textIdRawHex": "F1003B91"
+                },
+                "0123": {
+                  "text": "油门踏板电位计 1",
+                  "sourceOffset": 4056026,
+                  "textIdRawHex": "F1003B91"
+                },
+                "0131": {
+                  "text": "氧传感器，气缸组 1 传感器 1",
+                  "sourceOffset": 4056048,
+                  "textIdRawHex": "F1003B92"
+                },
+                "0132": {
+                  "text": "氧传感器，气缸组 1 传感器 1",
+                  "sourceOffset": 4056070,
+                  "textIdRawHex": "F1003B92"
+                },
+                "0133": {
+                  "text": "氧传感器电路响应慢，气缸组 1 传感器 1",
+                  "sourceOffset": 4056092,
+                  "textIdRawHex": "F1003B93"
+                },
+                "0135": {
+                  "text": "加热器电路，氧传感器，气缸组 1 传感器 1",
+                  "sourceOffset": 4056114,
+                  "textIdRawHex": "F1003B94"
+                },
+                "0137": {
+                  "text": "氧传感器，气缸组 1 传感器 2",
+                  "sourceOffset": 4056136,
+                  "textIdRawHex": "F1003B95"
+                },
+                "0138": {
+                  "text": "氧传感器，气缸组 1 传感器 2",
+                  "sourceOffset": 4056158,
+                  "textIdRawHex": "F1003B95"
+                },
+                "013A": {
+                  "text": "氧传感器，气缸组 1 传感器 2",
+                  "sourceOffset": 4056180,
+                  "textIdRawHex": "F1003B95"
+                },
+                "013B": {
+                  "text": "氧传感器，气缸组 1 传感器 2",
+                  "sourceOffset": 4056202,
+                  "textIdRawHex": "F1003B95"
+                },
+                "013C": {
+                  "text": "氧传感器，气缸组 2 传感器 2",
+                  "sourceOffset": 4056224,
+                  "textIdRawHex": "F1003B96"
+                },
+                "013D": {
+                  "text": "氧传感器，气缸组 2 传感器 2",
+                  "sourceOffset": 4056246,
+                  "textIdRawHex": "F1003B96"
+                },
+                "013E": {
+                  "text": "氧传感器，气缸组 1 传感器 2",
+                  "sourceOffset": 4056268,
+                  "textIdRawHex": "F1003B95"
+                },
+                "013F": {
+                  "text": "氧传感器，气缸组 1 传感器 2",
+                  "sourceOffset": 4056290,
+                  "textIdRawHex": "F1003B95"
+                },
+                "0140": {
+                  "text": "氧传感器，气缸组 1 传感器 2",
+                  "sourceOffset": 4056312,
+                  "textIdRawHex": "F1003B95"
+                },
+                "0141": {
+                  "text": "加热器电路，氧传感器，气缸组 1 传感器 2",
+                  "sourceOffset": 4056334,
+                  "textIdRawHex": "F1003B97"
+                },
+                "014A": {
+                  "text": "氧传感器，气缸组 2 传感器 2",
+                  "sourceOffset": 4056356,
+                  "textIdRawHex": "F1003B96"
+                },
+                "014B": {
+                  "text": "氧传感器，气缸组 2 传感器 2",
+                  "sourceOffset": 4056378,
+                  "textIdRawHex": "F1003B96"
+                },
+                "0151": {
+                  "text": "氧传感器，气缸组 2 传感器 1",
+                  "sourceOffset": 4056400,
+                  "textIdRawHex": "F1003B98"
+                },
+                "0152": {
+                  "text": "氧传感器，气缸组 2 传感器 1",
+                  "sourceOffset": 4056422,
+                  "textIdRawHex": "F1003B98"
+                },
+                "0153": {
+                  "text": "氧传感器电路响应慢，气缸组 2 传感器 1",
+                  "sourceOffset": 4056444,
+                  "textIdRawHex": "F1003B99"
+                },
+                "0155": {
+                  "text": "三元催化器上游的氧传感器，气缸列 2 - 加热不足",
+                  "sourceOffset": 4056466,
+                  "textIdRawHex": "F1005529"
+                },
+                "0157": {
+                  "text": "氧传感器，气缸组 2 传感器 2",
+                  "sourceOffset": 4056488,
+                  "textIdRawHex": "F1003B96"
+                },
+                "0158": {
+                  "text": "氧传感器，气缸组 2 传感器 2",
+                  "sourceOffset": 4056510,
+                  "textIdRawHex": "F1003B96"
+                },
+                "0160": {
+                  "text": "氧传感器，气缸组 2 传感器 2",
+                  "sourceOffset": 4056532,
+                  "textIdRawHex": "F1003B96"
+                },
+                "0161": {
+                  "text": "三元催化器下游的氧传感器，气缸列 2 - 加热不足",
+                  "sourceOffset": 4056554,
+                  "textIdRawHex": "F1005527"
+                },
+                "0171": {
+                  "text": "系统过稀（气缸组 1）",
+                  "sourceOffset": 4056576,
+                  "textIdRawHex": "F1003B9C"
+                },
+                "0172": {
+                  "text": "系统过浓（气缸组 1）",
+                  "sourceOffset": 4056598,
+                  "textIdRawHex": "F1003B9D"
+                },
+                "0174": {
+                  "text": "气缸组 2 Lambda 控制自适应：系统过稀",
+                  "sourceOffset": 4056620,
+                  "textIdRawHex": "F1003B9E"
+                },
+                "0175": {
+                  "text": "系统过浓（气缸组 2）",
+                  "sourceOffset": 4056642,
+                  "textIdRawHex": "F1003B9F"
+                },
+                "0190": {
+                  "text": "输油轨压力传感器电路故障",
+                  "sourceOffset": 4056664,
+                  "textIdRawHex": "F1003BA0"
+                },
+                "0192": {
+                  "text": "输油轨压力传感器电路低输入",
+                  "sourceOffset": 4056686,
+                  "textIdRawHex": "F1003BA1"
+                },
+                "0195": {
+                  "text": "机油温度停滞（低位停滞）",
+                  "sourceOffset": 4056708,
+                  "textIdRawHex": "F1003BA2"
+                },
+                "0197": {
+                  "text": "发动机机油温度传感器间歇",
+                  "sourceOffset": 4056730,
+                  "textIdRawHex": "F1003BA3"
+                },
+                "0198": {
+                  "text": "发动机机油温度传感器间歇",
+                  "sourceOffset": 4056752,
+                  "textIdRawHex": "F1003BA3"
+                },
+                "0201": {
+                  "text": "喷油器，气缸 1",
+                  "sourceOffset": 4056774,
+                  "textIdRawHex": "F1003BA4"
+                },
+                "0202": {
+                  "text": "喷油器，气缸 2",
+                  "sourceOffset": 4056796,
+                  "textIdRawHex": "F1003BA5"
+                },
+                "0203": {
+                  "text": "喷油器，气缸 3",
+                  "sourceOffset": 4056818,
+                  "textIdRawHex": "F1003BA6"
+                },
+                "0204": {
+                  "text": "喷油器，气缸 4",
+                  "sourceOffset": 4056840,
+                  "textIdRawHex": "F1003BA7"
+                },
+                "0205": {
+                  "text": "喷油器，气缸 5",
+                  "sourceOffset": 4056862,
+                  "textIdRawHex": "F1003BA8"
+                },
+                "0206": {
+                  "text": "喷油器，气缸 6",
+                  "sourceOffset": 4056884,
+                  "textIdRawHex": "F1003BA9"
+                },
+                "0222": {
+                  "text": "油门踏板电位计 2",
+                  "sourceOffset": 4056906,
+                  "textIdRawHex": "F1003BAA"
+                },
+                "0223": {
+                  "text": "油门踏板电位计 2",
+                  "sourceOffset": 4056928,
+                  "textIdRawHex": "F1003BAA"
+                },
+                "025A": {
+                  "text": "燃油泵控制单元，启动",
+                  "sourceOffset": 4056950,
+                  "textIdRawHex": "F1003BAB"
+                },
+                "025C": {
+                  "text": "燃油泵控制单元，启动",
+                  "sourceOffset": 4056972,
+                  "textIdRawHex": "F1003BAB"
+                },
+                "025D": {
+                  "text": "燃油泵控制单元，启动",
+                  "sourceOffset": 4056994,
+                  "textIdRawHex": "F1003BAB"
+                },
+                "0261": {
+                  "text": "喷油器，气缸 1",
+                  "sourceOffset": 4057016,
+                  "textIdRawHex": "F1003BA4"
+                },
+                "0262": {
+                  "text": "喷油器，气缸 1",
+                  "sourceOffset": 4057038,
+                  "textIdRawHex": "F1003BA4"
+                },
+                "0264": {
+                  "text": "喷油器，气缸 2",
+                  "sourceOffset": 4057060,
+                  "textIdRawHex": "F1003BA5"
+                },
+                "0265": {
+                  "text": "喷油器，气缸 2",
+                  "sourceOffset": 4057082,
+                  "textIdRawHex": "F1003BA5"
+                },
+                "0267": {
+                  "text": "喷油器，气缸 3",
+                  "sourceOffset": 4057104,
+                  "textIdRawHex": "F1003BA6"
+                },
+                "0268": {
+                  "text": "喷油器，气缸 3",
+                  "sourceOffset": 4057126,
+                  "textIdRawHex": "F1003BA6"
+                },
+                "0270": {
+                  "text": "喷油器，气缸 4",
+                  "sourceOffset": 4057148,
+                  "textIdRawHex": "F1003BA7"
+                },
+                "0271": {
+                  "text": "喷油器，气缸 4",
+                  "sourceOffset": 4057170,
+                  "textIdRawHex": "F1003BA7"
+                },
+                "0273": {
+                  "text": "喷油器，气缸 5",
+                  "sourceOffset": 4057192,
+                  "textIdRawHex": "F1003BA8"
+                },
+                "0274": {
+                  "text": "喷油器，气缸 5",
+                  "sourceOffset": 4057214,
+                  "textIdRawHex": "F1003BA8"
+                },
+                "0276": {
+                  "text": "喷油器，气缸 6",
+                  "sourceOffset": 4057236,
+                  "textIdRawHex": "F1003BA9"
+                },
+                "0277": {
+                  "text": "喷油器，气缸 6",
+                  "sourceOffset": 4057258,
+                  "textIdRawHex": "F1003BA9"
+                },
+                "0298": {
+                  "text": "机油温度过高（高位停滞）",
+                  "sourceOffset": 4057280,
+                  "textIdRawHex": "F1003BAC"
+                },
+                "0300": {
+                  "text": "检测到随机/多个缺火",
+                  "sourceOffset": 4057302,
+                  "textIdRawHex": "F1003BAD"
+                },
+                "0301": {
+                  "text": "缺火，气缸 1",
+                  "sourceOffset": 4057324,
+                  "textIdRawHex": "F1003BAE"
+                },
+                "0302": {
+                  "text": "缺火，气缸 2",
+                  "sourceOffset": 4057346,
+                  "textIdRawHex": "F1003BAF"
+                },
+                "0303": {
+                  "text": "缺火，气缸 3",
+                  "sourceOffset": 4057368,
+                  "textIdRawHex": "F1003BB0"
+                },
+                "0304": {
+                  "text": "缺火，气缸 4",
+                  "sourceOffset": 4057390,
+                  "textIdRawHex": "F1003BB1"
+                },
+                "0305": {
+                  "text": "缺火，气缸 5",
+                  "sourceOffset": 4057412,
+                  "textIdRawHex": "F1003BB2"
+                },
+                "0306": {
+                  "text": "缺火，气缸 6",
+                  "sourceOffset": 4057434,
+                  "textIdRawHex": "F1003BB3"
+                },
+                "0326": {
+                  "text": "爆震传感器 1",
+                  "sourceOffset": 4057456,
+                  "textIdRawHex": "F1003BB4"
+                },
+                "0327": {
+                  "text": "爆震传感器 1",
+                  "sourceOffset": 4057478,
+                  "textIdRawHex": "F1003BB4"
+                },
+                "0331": {
+                  "text": "爆震传感器 2",
+                  "sourceOffset": 4057500,
+                  "textIdRawHex": "F1003BB5"
+                },
+                "0332": {
+                  "text": "爆震传感器 2",
+                  "sourceOffset": 4057522,
+                  "textIdRawHex": "F1003BB5"
+                },
+                "0335": {
+                  "text": "曲轴传感器",
+                  "sourceOffset": 4057544,
+                  "textIdRawHex": "F1003BB6"
+                },
+                "0336": {
+                  "text": "曲轴传感器",
+                  "sourceOffset": 4057566,
+                  "textIdRawHex": "F1003BB6"
+                },
+                "0341": {
+                  "text": "气缸组 1 进气凸轮轴传感器",
+                  "sourceOffset": 4057588,
+                  "textIdRawHex": "F1003BB7"
+                },
+                "0342": {
+                  "text": "气缸组 1 进气凸轮轴传感器",
+                  "sourceOffset": 4057610,
+                  "textIdRawHex": "F1003BB7"
+                },
+                "0343": {
+                  "text": "气缸组 1 进气凸轮轴传感器",
+                  "sourceOffset": 4057632,
+                  "textIdRawHex": "F1003BB7"
+                },
+                "0344": {
+                  "text": "气缸组 1 进气凸轮轴传感器",
+                  "sourceOffset": 4057654,
+                  "textIdRawHex": "F1003BB7"
+                },
+                "0346": {
+                  "text": "气缸组 2 进气凸轮轴传感器",
+                  "sourceOffset": 4057676,
+                  "textIdRawHex": "F1003BB8"
+                },
+                "0347": {
+                  "text": "气缸组 2 进气凸轮轴传感器",
+                  "sourceOffset": 4057698,
+                  "textIdRawHex": "F1003BB8"
+                },
+                "0348": {
+                  "text": "气缸组 2 进气凸轮轴传感器",
+                  "sourceOffset": 4057720,
+                  "textIdRawHex": "F1003BB8"
+                },
+                "0349": {
+                  "text": "气缸组 2 进气凸轮轴传感器",
+                  "sourceOffset": 4057742,
+                  "textIdRawHex": "F1003BB8"
+                },
+                "0350": {
+                  "text": "电源，杆式点火模块",
+                  "sourceOffset": 4057764,
+                  "textIdRawHex": "F1003BB9"
+                },
+                "0351": {
+                  "text": "杆式点火模块，气缸 1",
+                  "sourceOffset": 4057786,
+                  "textIdRawHex": "F1003BBA"
+                },
+                "0352": {
+                  "text": "杆式点火模块，气缸 2",
+                  "sourceOffset": 4057808,
+                  "textIdRawHex": "F1003BBB"
+                },
+                "0353": {
+                  "text": "杆式点火模块，气缸 3",
+                  "sourceOffset": 4057830,
+                  "textIdRawHex": "F1003BBC"
+                },
+                "0354": {
+                  "text": "杆式点火模块，气缸 4",
+                  "sourceOffset": 4057852,
+                  "textIdRawHex": "F1003BBD"
+                },
+                "0355": {
+                  "text": "杆式点火模块，气缸 5",
+                  "sourceOffset": 4057874,
+                  "textIdRawHex": "F1003BBE"
+                },
+                "0356": {
+                  "text": "杆式点火模块，气缸 6",
+                  "sourceOffset": 4057896,
+                  "textIdRawHex": "F1003BBF"
+                },
+                "0370": {
+                  "text": "曲轴传感器",
+                  "sourceOffset": 4057918,
+                  "textIdRawHex": "F1003BB6"
+                },
+                "0371": {
+                  "text": "曲轴传感器",
+                  "sourceOffset": 4057940,
+                  "textIdRawHex": "F1003BB6"
+                },
+                "0373": {
+                  "text": "曲轴传感器",
+                  "sourceOffset": 4057962,
+                  "textIdRawHex": "F1003BB6"
+                },
+                "0421": {
+                  "text": "气缸组 1 初级催化转换器，效果不够",
+                  "sourceOffset": 4057984,
+                  "textIdRawHex": "F1003BC0"
+                },
+                "0431": {
+                  "text": "气缸组 2 初级催化转换器，效果不够",
+                  "sourceOffset": 4058006,
+                  "textIdRawHex": "F1003BC1"
+                },
+                "0441": {
+                  "text": "燃油箱通风装置",
+                  "sourceOffset": 4058028,
+                  "textIdRawHex": "F1003BC2"
+                },
+                "0444": {
+                  "text": "油箱通风阀驱动器",
+                  "sourceOffset": 4058050,
+                  "textIdRawHex": "F1003BC3"
+                },
+                "0450": {
+                  "text": "切换至油箱泄漏诊断模块：电气故障",
+                  "sourceOffset": 4058072,
+                  "textIdRawHex": "F1003BC4"
+                },
+                "0451": {
+                  "text": "切换至油箱泄漏诊断模块故障",
+                  "sourceOffset": 4058094,
+                  "textIdRawHex": "F1003BC5"
+                },
+                "0452": {
+                  "text": "切换至油箱泄漏诊断模块：电气故障",
+                  "sourceOffset": 4058116,
+                  "textIdRawHex": "F1003BC4"
+                },
+                "0453": {
+                  "text": "切换至油箱泄漏诊断模块：电气故障",
+                  "sourceOffset": 4058138,
+                  "textIdRawHex": "F1003BC4"
+                },
+                "0456": {
+                  "text": "油箱系统细微泄漏",
+                  "sourceOffset": 4058160,
+                  "textIdRawHex": "F1003BC6"
+                },
+                "0458": {
+                  "text": "油箱通风阀驱动器",
+                  "sourceOffset": 4058182,
+                  "textIdRawHex": "F1003BC3"
+                },
+                "0459": {
+                  "text": "油箱通风阀驱动器",
+                  "sourceOffset": 4058204,
+                  "textIdRawHex": "F1003BC3"
+                },
+                "0461": {
+                  "text": "燃油油位传感器电路间歇",
+                  "sourceOffset": 4058226,
+                  "textIdRawHex": "F1003BC7"
+                },
+                "0464": {
+                  "text": "燃油油位传感器电路间歇",
+                  "sourceOffset": 4058248,
+                  "textIdRawHex": "F1003BC7"
+                },
+                "0480": {
+                  "text": "风扇控制装置 1 的驱动器（右）",
+                  "sourceOffset": 4058270,
+                  "textIdRawHex": "F100B8E0"
+                },
+                "0481": {
+                  "text": "风扇控制装置 2 的驱动器（左）",
+                  "sourceOffset": 4058292,
+                  "textIdRawHex": "F100B8E1"
+                },
+                "0502": {
+                  "text": "PSM 车速信号",
+                  "sourceOffset": 4058314,
+                  "textIdRawHex": "F1003BCA"
+                },
+                "0503": {
+                  "text": "PSM 车速信号",
+                  "sourceOffset": 4058336,
+                  "textIdRawHex": "F1003BCA"
+                },
+                "0506": {
+                  "text": "怠速转速控制",
+                  "sourceOffset": 4058358,
+                  "textIdRawHex": "F1003BCB"
+                },
+                "0507": {
+                  "text": "怠速转速控制",
+                  "sourceOffset": 4058380,
+                  "textIdRawHex": "F1003BCB"
+                },
+                "050A": {
+                  "text": "冷起动后的怠速转速控制",
+                  "sourceOffset": 4058402,
+                  "textIdRawHex": "F1003BCC"
+                },
+                "050B": {
+                  "text": "怠速转速下的冷起动点火正时",
+                  "sourceOffset": 4058424,
+                  "textIdRawHex": "F1003BCD"
+                },
+                "050D": {
+                  "text": "冷起动后的怠速转速控制",
+                  "sourceOffset": 4058446,
+                  "textIdRawHex": "F1003BCC"
+                },
+                "0513": {
+                  "text": "前端电子设备的防盗码错误",
+                  "sourceOffset": 4058468,
+                  "textIdRawHex": "F1003BCE"
+                },
+                "0521": {
+                  "text": "机油压力传感器",
+                  "sourceOffset": 4058490,
+                  "textIdRawHex": "F1003BCF"
+                },
+                "0522": {
+                  "text": "机油压力传感器",
+                  "sourceOffset": 4058512,
+                  "textIdRawHex": "F1003BCF"
+                },
+                "0523": {
+                  "text": "机油压力传感器",
+                  "sourceOffset": 4058534,
+                  "textIdRawHex": "F1003BCF"
+                },
+                "0524": {
+                  "text": "机油压力传感器",
+                  "sourceOffset": 4058556,
+                  "textIdRawHex": "F1003BCF"
+                },
+                "052A": {
+                  "text": "冷起动进气凸轮轴位置正时，气缸组 1",
+                  "sourceOffset": 4058578,
+                  "textIdRawHex": "F1003BD0"
+                },
+                "052C": {
+                  "text": "冷起动进气凸轮轴位置正时，气缸组 2",
+                  "sourceOffset": 4058600,
+                  "textIdRawHex": "F1003BD1"
+                },
+                "053F": {
+                  "text": "冷启动后的燃油高压",
+                  "sourceOffset": 4058622,
+                  "textIdRawHex": "F1003BD2"
+                },
+                "0556": {
+                  "text": "制动真空传感器不可靠 - 冷却系统故障",
+                  "sourceOffset": 4058644,
+                  "textIdRawHex": "F1003BD3"
+                },
+                "0557": {
+                  "text": "制动真空传感器：电气故障 - 冷却系统故障",
+                  "sourceOffset": 4058666,
+                  "textIdRawHex": "F100F60D"
+                },
+                "0558": {
+                  "text": "制动真空传感器：电气故障 - 冷却系统故障",
+                  "sourceOffset": 4058688,
+                  "textIdRawHex": "F100F60D"
+                },
+                "0564": {
+                  "text": "巡航控制操纵杆",
+                  "sourceOffset": 4058710,
+                  "textIdRawHex": "F1003BD5"
+                },
+                "0568": {
+                  "text": "巡航控制设置信号故障",
+                  "sourceOffset": 4058732,
+                  "textIdRawHex": "F1003BD6"
+                },
+                "0571": {
+                  "text": "制动灯开关",
+                  "sourceOffset": 4058754,
+                  "textIdRawHex": "F1003BD7"
+                },
+                "0597": {
+                  "text": "节温器驱动器",
+                  "sourceOffset": 4058776,
+                  "textIdRawHex": "F1003BD8"
+                },
+                "0598": {
+                  "text": "节温器驱动器",
+                  "sourceOffset": 4058798,
+                  "textIdRawHex": "F1003BD8"
+                },
+                "0599": {
+                  "text": "节温器驱动器",
+                  "sourceOffset": 4058820,
+                  "textIdRawHex": "F1003BD8"
+                },
+                "0601": {
+                  "text": "内部控制模块存储器校验和错误",
+                  "sourceOffset": 4058842,
+                  "textIdRawHex": "F1003BD9"
+                },
+                "0603": {
+                  "text": "内部控制模块不失效存储器 （KAM） 错误",
+                  "sourceOffset": 4058864,
+                  "textIdRawHex": "F1003BDA"
+                },
+                "0604": {
+                  "text": "内部控制模块随机存取存储器 （RAM） 错误",
+                  "sourceOffset": 4058886,
+                  "textIdRawHex": "F1003BDB"
+                },
+                "0605": {
+                  "text": "内部控制模块只读存储器 （ROM） 错误",
+                  "sourceOffset": 4058908,
+                  "textIdRawHex": "F1003BDC"
+                },
+                "0606": {
+                  "text": "PCM 处理器故障",
+                  "sourceOffset": 4058930,
+                  "textIdRawHex": "F1003BDD"
+                },
+                "0607": {
+                  "text": "控制单元故障，重置",
+                  "sourceOffset": 4058952,
+                  "textIdRawHex": "F1003BDE"
+                },
+                "0611": {
+                  "text": "DME 控制单元故障",
+                  "sourceOffset": 4058974,
+                  "textIdRawHex": "F1003BDF"
+                },
+                "0627": {
+                  "text": "燃油泵继电器驱动器 1",
+                  "sourceOffset": 4058996,
+                  "textIdRawHex": "F1003BE0"
+                },
+                "0628": {
+                  "text": "燃油泵继电器驱动器 1",
+                  "sourceOffset": 4059018,
+                  "textIdRawHex": "F1003BE0"
+                },
+                "0629": {
+                  "text": "燃油泵继电器驱动器 1",
+                  "sourceOffset": 4059040,
+                  "textIdRawHex": "F1003BE0"
+                },
+                "0642": {
+                  "text": "传感器电压 1 [5V]",
+                  "sourceOffset": 4059062,
+                  "textIdRawHex": "F1003BE1"
+                },
+                "0643": {
+                  "text": "传感器电压 1 [5V]",
+                  "sourceOffset": 4059084,
+                  "textIdRawHex": "F1003BE1"
+                },
+                "0652": {
+                  "text": "传感器电压 2 [5V]",
+                  "sourceOffset": 4059106,
+                  "textIdRawHex": "F1003BE2"
+                },
+                "0653": {
+                  "text": "传感器电压 2 [5V]",
+                  "sourceOffset": 4059128,
+                  "textIdRawHex": "F1003BE2"
+                },
+                "0658": {
+                  "text": "电源端子 87",
+                  "sourceOffset": 4059150,
+                  "textIdRawHex": "F1003BE3"
+                },
+                "0659": {
+                  "text": "电源端子 87",
+                  "sourceOffset": 4059172,
+                  "textIdRawHex": "F1003BE3"
+                },
+                "0660": {
+                  "text": "进气歧管切换驱动器",
+                  "sourceOffset": 4059194,
+                  "textIdRawHex": "F1003BE4"
+                },
+                "0661": {
+                  "text": "进气歧管切换驱动器",
+                  "sourceOffset": 4059216,
+                  "textIdRawHex": "F1003BE4"
+                },
+                "0662": {
+                  "text": "进气歧管切换驱动器",
+                  "sourceOffset": 4059238,
+                  "textIdRawHex": "F1003BE4"
+                },
+                "0663": {
+                  "text": "进气歧管切换驱动器 2",
+                  "sourceOffset": 4059260,
+                  "textIdRawHex": "F1003BE5"
+                },
+                "0664": {
+                  "text": "进气歧管切换驱动器 2",
+                  "sourceOffset": 4059282,
+                  "textIdRawHex": "F1003BE5"
+                },
+                "0665": {
+                  "text": "进气歧管切换驱动器 2",
+                  "sourceOffset": 4059304,
+                  "textIdRawHex": "F1003BE5"
+                },
+                "0685": {
+                  "text": "欠压导致的起动延迟",
+                  "sourceOffset": 4059326,
+                  "textIdRawHex": "F1003BE6"
+                },
+                "0686": {
+                  "text": "主继电器",
+                  "sourceOffset": 4059348,
+                  "textIdRawHex": "F1003BE7"
+                },
+                "0687": {
+                  "text": "主继电器",
+                  "sourceOffset": 4059370,
+                  "textIdRawHex": "F1003BE7"
+                },
+                "0700": {
+                  "text": "变速器控制单元中存在故障",
+                  "sourceOffset": 4059392,
+                  "textIdRawHex": "F1003BE8"
+                },
+                "0701": {
+                  "text": "变速箱电子装置 （PDK） 控制单元的扭矩干预不可靠",
+                  "sourceOffset": 4059414,
+                  "textIdRawHex": "F1007C2C"
+                },
+                "0716": {
+                  "text": "手动变速器转速传感器： 发动机转速差",
+                  "sourceOffset": 4059436,
+                  "textIdRawHex": "F1003BEA"
+                },
+                "0717": {
+                  "text": "手动变速器转速传感器： 无信号",
+                  "sourceOffset": 4059458,
+                  "textIdRawHex": "F1003BEB"
+                },
+                "0718": {
+                  "text": "手动变速器转速传感器不可靠",
+                  "sourceOffset": 4059480,
+                  "textIdRawHex": "F1003BEC"
+                },
+                "0720": {
+                  "text": "手动变速箱转速传感器输出",
+                  "sourceOffset": 4059502,
+                  "textIdRawHex": "F1003BED"
+                },
+                "0830": {
+                  "text": "上部离合器开关",
+                  "sourceOffset": 4059524,
+                  "textIdRawHex": "F1003BEE"
+                },
+                "0831": {
+                  "text": "上部离合器开关",
+                  "sourceOffset": 4059546,
+                  "textIdRawHex": "F1003BEE"
+                },
+                "0832": {
+                  "text": "上部离合器开关",
+                  "sourceOffset": 4059568,
+                  "textIdRawHex": "F1003BEE"
+                },
+                "0834": {
+                  "text": "下部离合器开关",
+                  "sourceOffset": 4059590,
+                  "textIdRawHex": "F1003BEF"
+                },
+                "0835": {
+                  "text": "下部离合器开关",
+                  "sourceOffset": 4059612,
+                  "textIdRawHex": "F1003BEF"
+                },
+                "083F": {
+                  "text": "与离合器行程传感器相比，离合器开关不可靠（驻车制动控制单元）",
+                  "sourceOffset": 4059634,
+                  "textIdRawHex": "F1003BF0"
+                },
+                "0850": {
+                  "text": "驻车/空档输入信号",
+                  "sourceOffset": 4059656,
+                  "textIdRawHex": "F1003BF1"
+                },
+                "0851": {
+                  "text": "驻车/空档输入信号",
+                  "sourceOffset": 4059678,
+                  "textIdRawHex": "F1003BF1"
+                },
+                "0857": {
+                  "text": "来自 PSM 的扭矩请求不可靠",
+                  "sourceOffset": 4059700,
+                  "textIdRawHex": "F1003BF2"
+                },
+                "1021": {
+                  "text": "燃油高压量",
+                  "sourceOffset": 4059722,
+                  "textIdRawHex": "F1003BF3"
+                },
+                "1023": {
+                  "text": "启动时燃油压力/量过低",
+                  "sourceOffset": 4059744,
+                  "textIdRawHex": "F1003BF4"
+                },
+                "1024": {
+                  "text": "发动机关闭后燃油高压过高",
+                  "sourceOffset": 4059766,
+                  "textIdRawHex": "F1003BF5"
+                },
+                "1025": {
+                  "text": "燃油高压自适应",
+                  "sourceOffset": 4059788,
+                  "textIdRawHex": "F1003BF6"
+                },
+                "1026": {
+                  "text": "燃油高压不可靠",
+                  "sourceOffset": 4059810,
+                  "textIdRawHex": "F1003BF7"
+                },
+                "1027": {
+                  "text": "燃油高压波动",
+                  "sourceOffset": 4059832,
+                  "textIdRawHex": "F1003BF8"
+                },
+                "1030": {
+                  "text": "燃油高压传感器卡滞",
+                  "sourceOffset": 4059854,
+                  "textIdRawHex": "F1003BF9"
+                },
+                "1031": {
+                  "text": "起动时燃油高压传感器卡滞",
+                  "sourceOffset": 4059876,
+                  "textIdRawHex": "F1003BFA"
+                },
+                "1041": {
+                  "text": "空气滤清器活门电磁阀驱动器",
+                  "sourceOffset": 4059898,
+                  "textIdRawHex": "F1003BFB"
+                },
+                "1042": {
+                  "text": "空气滤清器活门电磁阀驱动器",
+                  "sourceOffset": 4059920,
+                  "textIdRawHex": "F1003BFB"
+                },
+                "1043": {
+                  "text": "空气滤清器活门电磁阀驱动器",
+                  "sourceOffset": 4059942,
+                  "textIdRawHex": "F1003BFB"
+                },
+                "1044": {
+                  "text": "声音模拟装置电磁阀驱动器级",
+                  "sourceOffset": 4059964,
+                  "textIdRawHex": "F1003BFC"
+                },
+                "1045": {
+                  "text": "声音模拟装置电磁阀驱动器级",
+                  "sourceOffset": 4059986,
+                  "textIdRawHex": "F1003BFC"
+                },
+                "1046": {
+                  "text": "声音模拟装置电磁阀驱动器级",
+                  "sourceOffset": 4060008,
+                  "textIdRawHex": "F1003BFC"
+                },
+                "1069": {
+                  "text": "怠速转速下的质量空气流量过高（偏慢）",
+                  "sourceOffset": 4060030,
+                  "textIdRawHex": "F1003BFD"
+                },
+                "1070": {
+                  "text": "怠速转速下的质量空气流量过低（偏慢）",
+                  "sourceOffset": 4060052,
+                  "textIdRawHex": "F1003BFE"
+                },
+                "1071": {
+                  "text": "怠速转速下的质量空气流量过高（偏快）",
+                  "sourceOffset": 4060074,
+                  "textIdRawHex": "F1003BFF"
+                },
+                "1074": {
+                  "text": "部分载荷下的质量空气流量过高",
+                  "sourceOffset": 4060096,
+                  "textIdRawHex": "F1003C00"
+                },
+                "1075": {
+                  "text": "部分载荷下的质量空气流量过低",
+                  "sourceOffset": 4060118,
+                  "textIdRawHex": "F1003C01"
+                },
+                "1076": {
+                  "text": "高载荷范围内的质量空气流量过高",
+                  "sourceOffset": 4060140,
+                  "textIdRawHex": "F1003C02"
+                },
+                "1077": {
+                  "text": "高载荷范围内的质量空气流量过低",
+                  "sourceOffset": 4060162,
+                  "textIdRawHex": "F1003C03"
+                },
+                "1111": {
+                  "text": "环境温度传感器：偏差",
+                  "sourceOffset": 4060184,
+                  "textIdRawHex": "F1003C04"
+                },
+                "1114": {
+                  "text": "进气温度传感器：偏差",
+                  "sourceOffset": 4060206,
+                  "textIdRawHex": "F1003C05"
+                },
+                "1147": {
+                  "text": "机油压力调节阀系统电压",
+                  "sourceOffset": 4060228,
+                  "textIdRawHex": "F1003C06"
+                },
+                "1148": {
+                  "text": "机油压力调节阀系统电压",
+                  "sourceOffset": 4060250,
+                  "textIdRawHex": "F1003C06"
+                },
+                "1149": {
+                  "text": "机油压力调节阀系统电压",
+                  "sourceOffset": 4060272,
+                  "textIdRawHex": "F1003C06"
+                },
+                "1150": {
+                  "text": "机油压力调节阀启用",
+                  "sourceOffset": 4060294,
+                  "textIdRawHex": "F1003C07"
+                },
+                "1151": {
+                  "text": "机油压力调节阀启用",
+                  "sourceOffset": 4060316,
+                  "textIdRawHex": "F1003C07"
+                },
+                "1152": {
+                  "text": "机油压力调节阀启用",
+                  "sourceOffset": 4060338,
+                  "textIdRawHex": "F1003C07"
+                },
+                "1154": {
+                  "text": "发动机舱温度不可靠",
+                  "sourceOffset": 4060360,
+                  "textIdRawHex": "F1003C08"
+                },
+                "1157": {
+                  "text": "发动机舱温度传感器",
+                  "sourceOffset": 4060382,
+                  "textIdRawHex": "F1003C09"
+                },
+                "1158": {
+                  "text": "发动机舱温度传感器",
+                  "sourceOffset": 4060404,
+                  "textIdRawHex": "F1003C09"
+                },
+                "115A": {
+                  "text": "气缸组 1 废气不可靠",
+                  "sourceOffset": 4060426,
+                  "textIdRawHex": "F1003C0A"
+                },
+                "115B": {
+                  "text": "气缸组 2 废气不可靠",
+                  "sourceOffset": 4060448,
+                  "textIdRawHex": "F1003C0B"
+                },
+                "115C": {
+                  "text": "气缸组 1 废气不可靠",
+                  "sourceOffset": 4060470,
+                  "textIdRawHex": "F1003C0A"
+                },
+                "115D": {
+                  "text": "气缸组 2 废气不可靠",
+                  "sourceOffset": 4060492,
+                  "textIdRawHex": "F1003C0B"
+                },
+                "1183": {
+                  "text": "进气管压力传感器： 电气故障",
+                  "sourceOffset": 4060514,
+                  "textIdRawHex": "F1003B8A"
+                },
+                "1184": {
+                  "text": "进气管压力传感器： 电气故障",
+                  "sourceOffset": 4060536,
+                  "textIdRawHex": "F1003B8A"
+                },
+                "1186": {
+                  "text": "环境气压传感器不可靠",
+                  "sourceOffset": 4060558,
+                  "textIdRawHex": "F1003C0C"
+                },
+                "1187": {
+                  "text": "环境压力传感器：电气故障",
+                  "sourceOffset": 4060580,
+                  "textIdRawHex": "F1003C0D"
+                },
+                "1188": {
+                  "text": "环境压力传感器：电气故障",
+                  "sourceOffset": 4060602,
+                  "textIdRawHex": "F1003C0D"
+                },
+                "1265": {
+                  "text": "碰撞信号",
+                  "sourceOffset": 4060624,
+                  "textIdRawHex": "F100129F"
+                },
+                "1280": {
+                  "text": "燃油泵控制单元",
+                  "sourceOffset": 4060646,
+                  "textIdRawHex": "F1003C0E"
+                },
+                "1281": {
+                  "text": "燃油泵",
+                  "sourceOffset": 4060668,
+                  "textIdRawHex": "F1003C0F"
+                },
+                "1282": {
+                  "text": "燃油泵：机械故障",
+                  "sourceOffset": 4060690,
+                  "textIdRawHex": "F1003C10"
+                },
+                "1283": {
+                  "text": "燃油泵",
+                  "sourceOffset": 4060712,
+                  "textIdRawHex": "F1003C0F"
+                },
+                "1284": {
+                  "text": "燃油泵电气故障",
+                  "sourceOffset": 4060734,
+                  "textIdRawHex": "F1003C11"
+                },
+                "1285": {
+                  "text": "燃油泵电气故障",
+                  "sourceOffset": 4060756,
+                  "textIdRawHex": "F1003C11"
+                },
+                "1286": {
+                  "text": "燃油泵转速偏差",
+                  "sourceOffset": 4060778,
+                  "textIdRawHex": "F1003C12"
+                },
+                "1287": {
+                  "text": "燃油泵暂时存在故障",
+                  "sourceOffset": 4060800,
+                  "textIdRawHex": "F1003C13"
+                },
+                "12A1": {
+                  "text": "燃油高压传感器不可靠",
+                  "sourceOffset": 4060822,
+                  "textIdRawHex": "F1003C14"
+                },
+                "12A2": {
+                  "text": "燃油高压传感器不可靠",
+                  "sourceOffset": 4060844,
+                  "textIdRawHex": "F1003C14"
+                },
+                "1324": {
+                  "text": "气缸组 2 进气正时",
+                  "sourceOffset": 4060866,
+                  "textIdRawHex": "F1003C15"
+                },
+                "1340": {
+                  "text": "气缸组 1 进气正时",
+                  "sourceOffset": 4060888,
+                  "textIdRawHex": "F1003C16"
+                },
+                "1346": {
+                  "text": "气门升程控制，气缸组 1",
+                  "sourceOffset": 4060910,
+                  "textIdRawHex": "F1003C17"
+                },
+                "1347": {
+                  "text": "气门升程控制，气缸组 2",
+                  "sourceOffset": 4060932,
+                  "textIdRawHex": "F1003C18"
+                },
+                "1359": {
+                  "text": "气门升程控制，气缸 1",
+                  "sourceOffset": 4060954,
+                  "textIdRawHex": "F1003C19"
+                },
+                "1360": {
+                  "text": "气门升程控制，气缸 6",
+                  "sourceOffset": 4060976,
+                  "textIdRawHex": "F1003C1A"
+                },
+                "1361": {
+                  "text": "气门升程控制，气缸 2",
+                  "sourceOffset": 4060998,
+                  "textIdRawHex": "F1003C1B"
+                },
+                "1362": {
+                  "text": "气门升程控制，气缸 4",
+                  "sourceOffset": 4061020,
+                  "textIdRawHex": "F1003C1C"
+                },
+                "1363": {
+                  "text": "气门升程控制，气缸 3",
+                  "sourceOffset": 4061042,
+                  "textIdRawHex": "F1003C1D"
+                },
+                "1364": {
+                  "text": "气门升程控制，气缸 5",
+                  "sourceOffset": 4061064,
+                  "textIdRawHex": "F1003C1E"
+                },
+                "1380": {
+                  "text": "爆震检测",
+                  "sourceOffset": 4061086,
+                  "textIdRawHex": "F1003C1F"
+                },
+                "1381": {
+                  "text": "气门升程控制 - 一个气缸组升程错误",
+                  "sourceOffset": 4061108,
+                  "textIdRawHex": "F1003C20"
+                },
+                "1382": {
+                  "text": "气门升程控制 - 一个气缸组升程错误",
+                  "sourceOffset": 4061130,
+                  "textIdRawHex": "F1003C20"
+                },
+                "13A1": {
+                  "text": "冷启动后气缸组 1 缺火",
+                  "sourceOffset": 4061152,
+                  "textIdRawHex": "F1003C21"
+                },
+                "13A2": {
+                  "text": "冷启动后气缸组 2 缺火",
+                  "sourceOffset": 4061174,
+                  "textIdRawHex": "F1003C22"
+                },
+                "13EA": {
+                  "text": "非怠速转速下的冷起动点火正时",
+                  "sourceOffset": 4061196,
+                  "textIdRawHex": "F1003C23"
+                },
+                "1401": {
+                  "text": "空气/燃油混合气偏差，气缸 1",
+                  "sourceOffset": 4061218,
+                  "textIdRawHex": "F1003C24"
+                },
+                "1402": {
+                  "text": "空气/燃油混合气偏差，气缸 2",
+                  "sourceOffset": 4061240,
+                  "textIdRawHex": "F1003C25"
+                },
+                "1403": {
+                  "text": "空气/燃油混合气偏差，气缸 3",
+                  "sourceOffset": 4061262,
+                  "textIdRawHex": "F1003C26"
+                },
+                "1404": {
+                  "text": "空气/燃油混合气偏差，气缸 4",
+                  "sourceOffset": 4061284,
+                  "textIdRawHex": "F1003C27"
+                },
+                "1405": {
+                  "text": "空气/燃油混合气偏差，气缸 5",
+                  "sourceOffset": 4061306,
+                  "textIdRawHex": "F1003C28"
+                },
+                "1406": {
+                  "text": "空气/燃油混合气偏差，气缸 6",
+                  "sourceOffset": 4061328,
+                  "textIdRawHex": "F1003C29"
+                },
+                "1432": {
+                  "text": "真空系统泄漏 - 冷却系统故障",
+                  "sourceOffset": 4061350,
+                  "textIdRawHex": "F1003C2A"
+                },
+                "1433": {
+                  "text": "真空系统泄漏 - 冷却系统故障",
+                  "sourceOffset": 4061372,
+                  "textIdRawHex": "F1003C2A"
+                },
+                "1460": {
+                  "text": "散热器风扇 1：温度过高",
+                  "sourceOffset": 4061394,
+                  "textIdRawHex": "F10054ED"
+                },
+                "1461": {
+                  "text": "散热器风扇 1（右）： 电气故障",
+                  "sourceOffset": 4061416,
+                  "textIdRawHex": "F100B8E3"
+                },
+                "1462": {
+                  "text": "散热器风扇 1（右）： 内部电源",
+                  "sourceOffset": 4061438,
+                  "textIdRawHex": "F100B8E4"
+                },
+                "1463": {
+                  "text": "散热器风扇 2：温度过高",
+                  "sourceOffset": 4061460,
+                  "textIdRawHex": "F100F60C"
+                },
+                "1464": {
+                  "text": "散热器风扇 2（左）： 电气故障",
+                  "sourceOffset": 4061482,
+                  "textIdRawHex": "F100B8E6"
+                },
+                "1465": {
+                  "text": "散热器风扇 2：内部电源",
+                  "sourceOffset": 4061504,
+                  "textIdRawHex": "F10054F0"
+                },
+                "1466": {
+                  "text": "散热器风扇：机械故障",
+                  "sourceOffset": 4061526,
+                  "textIdRawHex": "F1003C31"
+                },
+                "1467": {
+                  "text": "散热器风扇 2：机械故障",
+                  "sourceOffset": 4061548,
+                  "textIdRawHex": "F1003C32"
+                },
+                "1477": {
+                  "text": "发动机冷却液切断阀卡在打开位置",
+                  "sourceOffset": 4061570,
+                  "textIdRawHex": "F1003C33"
+                },
+                "1478": {
+                  "text": "节温器卡在关闭位置",
+                  "sourceOffset": 4061592,
+                  "textIdRawHex": "F1003C34"
+                },
+                "1502": {
+                  "text": "节气门调节单元",
+                  "sourceOffset": 4061614,
+                  "textIdRawHex": "F1003C35"
+                },
+                "1506": {
+                  "text": "节气门调节单元",
+                  "sourceOffset": 4061636,
+                  "textIdRawHex": "F1003C35"
+                },
+                "1507": {
+                  "text": "节气门调节单元 - 放大器校准",
+                  "sourceOffset": 4061658,
+                  "textIdRawHex": "F1003C36"
+                },
+                "1508": {
+                  "text": "功能监控：扭矩比较",
+                  "sourceOffset": 4061680,
+                  "textIdRawHex": "F1003C37"
+                },
+                "1509": {
+                  "text": "扭矩限制，标称扭矩 - 永久限制",
+                  "sourceOffset": 4061702,
+                  "textIdRawHex": "F1003C38"
+                },
+                "1512": {
+                  "text": "起动机启动但传动系统关闭",
+                  "sourceOffset": 4061724,
+                  "textIdRawHex": "F1003C39"
+                },
+                "1517": {
+                  "text": "节气门调节单元 - 由于环境条件导致自适应中止",
+                  "sourceOffset": 4061746,
+                  "textIdRawHex": "F1003C3A"
+                },
+                "1528": {
+                  "text": "通过 CAN 提供的环境温度",
+                  "sourceOffset": 4061768,
+                  "textIdRawHex": "F1003B85"
+                },
+                "1530": {
+                  "text": "关闭时间故障",
+                  "sourceOffset": 4061790,
+                  "textIdRawHex": "F1003C3B"
+                },
+                "1536": {
+                  "text": "机油压力控制，高于上限",
+                  "sourceOffset": 4061812,
+                  "textIdRawHex": "F1003C3C"
+                },
+                "1537": {
+                  "text": "机油压力控制，高于上限",
+                  "sourceOffset": 4061834,
+                  "textIdRawHex": "F1003C3C"
+                },
+                "1538": {
+                  "text": "机油泵启用",
+                  "sourceOffset": 4061856,
+                  "textIdRawHex": "F1003C3D"
+                },
+                "1539": {
+                  "text": "机油泵启用",
+                  "sourceOffset": 4061878,
+                  "textIdRawHex": "F1003C3D"
+                },
+                "1540": {
+                  "text": "节气门调节单元",
+                  "sourceOffset": 4061900,
+                  "textIdRawHex": "F1003C35"
+                },
+                "1541": {
+                  "text": "节气门调节单元",
+                  "sourceOffset": 4061922,
+                  "textIdRawHex": "F1003C35"
+                },
+                "1542": {
+                  "text": "节气门调节单元",
+                  "sourceOffset": 4061944,
+                  "textIdRawHex": "F1003C35"
+                },
+                "1543": {
+                  "text": "节气门调节单元",
+                  "sourceOffset": 4061966,
+                  "textIdRawHex": "F1003C35"
+                },
+                "1544": {
+                  "text": "节气门调节单元",
+                  "sourceOffset": 4061988,
+                  "textIdRawHex": "F1003C35"
+                },
+                "1546": {
+                  "text": "左前轮速度不可靠",
+                  "sourceOffset": 4062010,
+                  "textIdRawHex": "F1003C3E"
+                },
+                "1547": {
+                  "text": "右前轮速度不可靠",
+                  "sourceOffset": 4062032,
+                  "textIdRawHex": "F1003C3F"
+                },
+                "1548": {
+                  "text": "左后轮速度不可靠",
+                  "sourceOffset": 4062054,
+                  "textIdRawHex": "F1003C40"
+                },
+                "1549": {
+                  "text": "右后车轮速度不可靠",
+                  "sourceOffset": 4062076,
+                  "textIdRawHex": "F1003C41"
+                },
+                "1550": {
+                  "text": "功能监控：转数",
+                  "sourceOffset": 4062098,
+                  "textIdRawHex": "F1003C42"
+                },
+                "1552": {
+                  "text": "功能监控，控制单元故障组 a",
+                  "sourceOffset": 4062120,
+                  "textIdRawHex": "F1003C43"
+                },
+                "1556": {
+                  "text": "DME 控制单元故障",
+                  "sourceOffset": 4062142,
+                  "textIdRawHex": "F1003BDF"
+                },
+                "1557": {
+                  "text": "DME 控制单元故障",
+                  "sourceOffset": 4062164,
+                  "textIdRawHex": "F1003BDF"
+                },
+                "1558": {
+                  "text": "DME 控制单元故障",
+                  "sourceOffset": 4062186,
+                  "textIdRawHex": "F1003BDF"
+                },
+                "1559": {
+                  "text": "操作期间控制单元重新启动（预热重置）",
+                  "sourceOffset": 4062208,
+                  "textIdRawHex": "F1003C44"
+                },
+                "1561": {
+                  "text": "巡航控制系统",
+                  "sourceOffset": 4062230,
+                  "textIdRawHex": "F1003C45"
+                },
+                "1563": {
+                  "text": "巡航控制系统",
+                  "sourceOffset": 4062252,
+                  "textIdRawHex": "F1003C45"
+                },
+                "1565": {
+                  "text": "自适应巡航控制系统 （ACC） 不可靠",
+                  "sourceOffset": 4062274,
+                  "textIdRawHex": "F1003C46"
+                },
+                "1570": {
+                  "text": "内部电源 （R/C）",
+                  "sourceOffset": 4062296,
+                  "textIdRawHex": "F1003C47"
+                },
+                "1575": {
+                  "text": "油门行程",
+                  "sourceOffset": 4062318,
+                  "textIdRawHex": "F1003C48"
+                },
+                "1577": {
+                  "text": "巡航控制系统由于组合仪表中的准备就绪灯出现故障而关闭",
+                  "sourceOffset": 4062340,
+                  "textIdRawHex": "F1003C49"
+                },
+                "1582": {
+                  "text": "DME 控制单元故障：RAM",
+                  "sourceOffset": 4062362,
+                  "textIdRawHex": "F1003C4A"
+                },
+                "1599": {
+                  "text": "空档位置不可靠 - 无动力传输",
+                  "sourceOffset": 4062384,
+                  "textIdRawHex": "F1003C4B"
+                },
+                "15A0": {
+                  "text": "空档位置传感器：B+ 断路/短路",
+                  "sourceOffset": 4062406,
+                  "textIdRawHex": "F1003C4C"
+                },
+                "15A1": {
+                  "text": "空档位置不可靠 - 有动力传输",
+                  "sourceOffset": 4062428,
+                  "textIdRawHex": "F1003C4D"
+                },
+                "15A2": {
+                  "text": "空档位置传感器：接地短路或磁铁丢失",
+                  "sourceOffset": 4062450,
+                  "textIdRawHex": "F1003C4E"
+                },
+                "1600": {
+                  "text": "PSM 控制单元通信",
+                  "sourceOffset": 4062472,
+                  "textIdRawHex": "F10038B6"
+                },
+                "1603": {
+                  "text": "安全气囊触发单元存在故障",
+                  "sourceOffset": 4062494,
+                  "textIdRawHex": "F1003C4F"
+                },
+                "161A": {
+                  "text": "通信，活顶控制单元",
+                  "sourceOffset": 4062516,
+                  "textIdRawHex": "F1003C50"
+                },
+                "1620": {
+                  "text": "碰撞信号",
+                  "sourceOffset": 4062538,
+                  "textIdRawHex": "F100129F"
+                },
+                "1626": {
+                  "text": "通信，安全气囊",
+                  "sourceOffset": 4062560,
+                  "textIdRawHex": "F1003C51"
+                },
+                "1641": {
+                  "text": "控制单元故障（氧传感器 IC 1）",
+                  "sourceOffset": 4062582,
+                  "textIdRawHex": "F1003C52"
+                },
+                "1642": {
+                  "text": "控制单元故障（氧传感器 IC 2）",
+                  "sourceOffset": 4062604,
+                  "textIdRawHex": "F1003C53"
+                },
+                "1651": {
+                  "text": "变速器液的冷却液切换阀驱动器",
+                  "sourceOffset": 4062626,
+                  "textIdRawHex": "F1003C54"
+                },
+                "1652": {
+                  "text": "变速器液的冷却液切换阀驱动器",
+                  "sourceOffset": 4062648,
+                  "textIdRawHex": "F1003C54"
+                },
+                "1653": {
+                  "text": "变速器液的冷却液切换阀驱动器",
+                  "sourceOffset": 4062670,
+                  "textIdRawHex": "F1003C54"
+                },
+                "1654": {
+                  "text": "输出阶段，冷却液切换阀，离合器机油 （PDK）",
+                  "sourceOffset": 4062692,
+                  "textIdRawHex": "F1003C55"
+                },
+                "1655": {
+                  "text": "输出阶段，冷却液切换阀，离合器机油 （PDK）",
+                  "sourceOffset": 4062714,
+                  "textIdRawHex": "F1003C55"
+                },
+                "1656": {
+                  "text": "输出阶段，冷却液切换阀，离合器机油 （PDK）",
+                  "sourceOffset": 4062736,
+                  "textIdRawHex": "F1003C55"
+                },
+                "1660": {
+                  "text": "发动机的冷却液切换阀驱动器",
+                  "sourceOffset": 4062758,
+                  "textIdRawHex": "F1003C56"
+                },
+                "1661": {
+                  "text": "发动机的冷却液切换阀驱动器",
+                  "sourceOffset": 4062780,
+                  "textIdRawHex": "F1003C56"
+                },
+                "1662": {
+                  "text": "发动机的冷却液切换阀驱动器",
+                  "sourceOffset": 4062802,
+                  "textIdRawHex": "F1003C56"
+                },
+                "1670": {
+                  "text": "发动机舱净化风扇 1：电气故障",
+                  "sourceOffset": 4062824,
+                  "textIdRawHex": "F1003C57"
+                },
+                "1671": {
+                  "text": "发动机舱净化风扇 1： 失速",
+                  "sourceOffset": 4062846,
+                  "textIdRawHex": "F1003C58"
+                },
+                "1672": {
+                  "text": "发动机舱净化风扇 2：电气故障",
+                  "sourceOffset": 4062868,
+                  "textIdRawHex": "F1003C59"
+                },
+                "1673": {
+                  "text": "发动机舱净化风扇 2： 失速",
+                  "sourceOffset": 4062890,
+                  "textIdRawHex": "F1003C5A"
+                },
+                "1674": {
+                  "text": "发动机舱净化风扇的驱动器",
+                  "sourceOffset": 4062912,
+                  "textIdRawHex": "F1003C5B"
+                },
+                "1675": {
+                  "text": "发动机舱净化风扇无效",
+                  "sourceOffset": 4062934,
+                  "textIdRawHex": "F1003C5C"
+                },
+                "1676": {
+                  "text": "发动机舱净化风扇继电器\"高/低\"切换",
+                  "sourceOffset": 4062956,
+                  "textIdRawHex": "F1003C5D"
+                },
+                "1677": {
+                  "text": "发动机舱净化风扇继电器\"高/低\"切换",
+                  "sourceOffset": 4062978,
+                  "textIdRawHex": "F1003C5D"
+                },
+                "1686": {
+                  "text": "发动机舱净化风扇的驱动器（低速阶段）",
+                  "sourceOffset": 4063000,
+                  "textIdRawHex": "F1003C5E"
+                },
+                "1687": {
+                  "text": "发动机舱净化风扇继电器启动",
+                  "sourceOffset": 4063022,
+                  "textIdRawHex": "F1003C5F"
+                },
+                "1688": {
+                  "text": "发动机舱净化风扇继电器启动",
+                  "sourceOffset": 4063044,
+                  "textIdRawHex": "F1003C5F"
+                },
+                "169B": {
+                  "text": "变速器机油油温传感器不可靠",
+                  "sourceOffset": 4063066,
+                  "textIdRawHex": "F1003C60"
+                },
+                "169C": {
+                  "text": "变速器机油温度过高",
+                  "sourceOffset": 4063088,
+                  "textIdRawHex": "F1003C61"
+                },
+                "169D": {
+                  "text": "变速器机油温度过高",
+                  "sourceOffset": 4063110,
+                  "textIdRawHex": "F1003C61"
+                },
+                "169E": {
+                  "text": "变速器油温传感器卡滞",
+                  "sourceOffset": 4063132,
+                  "textIdRawHex": "F1003C62"
+                },
+                "169F": {
+                  "text": "变速器油温传感器：电气故障",
+                  "sourceOffset": 4063154,
+                  "textIdRawHex": "F1003C63"
+                },
+                "16A0": {
+                  "text": "变速器油温传感器：电气故障",
+                  "sourceOffset": 4063176,
+                  "textIdRawHex": "F1003C63"
+                },
+                "2024": {
+                  "text": "油箱泄漏诊断模块：信号线",
+                  "sourceOffset": 4063198,
+                  "textIdRawHex": "F1003C64"
+                },
+                "2025": {
+                  "text": "油箱泄漏诊断模块：电子设备故障",
+                  "sourceOffset": 4063220,
+                  "textIdRawHex": "F1003C65"
+                },
+                "2026": {
+                  "text": "油箱泄漏诊断模块：信号线",
+                  "sourceOffset": 4063242,
+                  "textIdRawHex": "F1003C64"
+                },
+                "2027": {
+                  "text": "油箱泄漏诊断模块：信号线",
+                  "sourceOffset": 4063264,
+                  "textIdRawHex": "F1003C64"
+                },
+                "2088": {
+                  "text": "进气凸轮轴位置执行器电路，气缸组 1",
+                  "sourceOffset": 4063286,
+                  "textIdRawHex": "F1003B75"
+                },
+                "2089": {
+                  "text": "进气凸轮轴位置执行器电路，气缸组 1",
+                  "sourceOffset": 4063308,
+                  "textIdRawHex": "F1003B75"
+                },
+                "2092": {
+                  "text": "进气凸轮轴位置执行器电路，气缸组 2",
+                  "sourceOffset": 4063330,
+                  "textIdRawHex": "F1003B79"
+                },
+                "2093": {
+                  "text": "进气凸轮轴位置执行器电路，气缸组 2",
+                  "sourceOffset": 4063352,
+                  "textIdRawHex": "F1003B79"
+                },
+                "2096": {
+                  "text": "催化剂后燃油修正系统过稀，气缸组 1",
+                  "sourceOffset": 4063374,
+                  "textIdRawHex": "F1003C66"
+                },
+                "2097": {
+                  "text": "催化剂后燃油修正系统过浓，气缸组 1",
+                  "sourceOffset": 4063396,
+                  "textIdRawHex": "F1003C67"
+                },
+                "2098": {
+                  "text": "催化剂后燃油修正系统过稀，气缸组 2",
+                  "sourceOffset": 4063418,
+                  "textIdRawHex": "F1003C68"
+                },
+                "2099": {
+                  "text": "催化剂后燃油修正系统过浓，气缸组 2",
+                  "sourceOffset": 4063440,
+                  "textIdRawHex": "F1003C69"
+                },
+                "2100": {
+                  "text": "节气门调节单元驱动器",
+                  "sourceOffset": 4063462,
+                  "textIdRawHex": "F1003C6A"
+                },
+                "2101": {
+                  "text": "节气门调节单元 - 位置偏差",
+                  "sourceOffset": 4063484,
+                  "textIdRawHex": "F1003C6B"
+                },
+                "2103": {
+                  "text": "节气门控制器控制电机电路电压高",
+                  "sourceOffset": 4063506,
+                  "textIdRawHex": "F1003C6C"
+                },
+                "2121": {
+                  "text": "节气门电位计 1",
+                  "sourceOffset": 4063528,
+                  "textIdRawHex": "F1003C6D"
+                },
+                "2122": {
+                  "text": "节气门电位计 1",
+                  "sourceOffset": 4063550,
+                  "textIdRawHex": "F1003C6D"
+                },
+                "2123": {
+                  "text": "节气门电位计 1",
+                  "sourceOffset": 4063572,
+                  "textIdRawHex": "F1003C6D"
+                },
+                "2126": {
+                  "text": "节气门电位计 2",
+                  "sourceOffset": 4063594,
+                  "textIdRawHex": "F1003C6E"
+                },
+                "2127": {
+                  "text": "节气门电位计 2",
+                  "sourceOffset": 4063616,
+                  "textIdRawHex": "F1003C6E"
+                },
+                "2128": {
+                  "text": "节气门电位计 2",
+                  "sourceOffset": 4063638,
+                  "textIdRawHex": "F1003C6E"
+                },
+                "2138": {
+                  "text": "节气门调节单元",
+                  "sourceOffset": 4063660,
+                  "textIdRawHex": "F1003C35"
+                },
+                "2148": {
+                  "text": "喷油器：气缸 1 和 4 的电源",
+                  "sourceOffset": 4063682,
+                  "textIdRawHex": "F1003C6F"
+                },
+                "2151": {
+                  "text": "喷油器：气缸 2 和 5 的电源",
+                  "sourceOffset": 4063704,
+                  "textIdRawHex": "F1003C70"
+                },
+                "2154": {
+                  "text": "喷油器：气缸 6 和 3 的电源",
+                  "sourceOffset": 4063726,
+                  "textIdRawHex": "F1003C71"
+                },
+                "2181": {
+                  "text": "节温器卡在打开位置",
+                  "sourceOffset": 4063748,
+                  "textIdRawHex": "F1003C72"
+                },
+                "2183": {
+                  "text": "散热器输出处的发动机冷却液温度不可靠",
+                  "sourceOffset": 4063770,
+                  "textIdRawHex": "F1003C73"
+                },
+                "2184": {
+                  "text": "发动机冷却液温度传感器，散热器输出，电气故障",
+                  "sourceOffset": 4063792,
+                  "textIdRawHex": "F1003C74"
+                },
+                "2185": {
+                  "text": "发动机冷却液温度传感器，散热器输出，电气故障",
+                  "sourceOffset": 4063814,
+                  "textIdRawHex": "F1003C74"
+                },
+                "2186": {
+                  "text": "发动机冷却液温度传感器，散热器输出不可靠",
+                  "sourceOffset": 4063836,
+                  "textIdRawHex": "F1003C75"
+                },
+                "2195": {
+                  "text": "氧传感器信号偏置/持续为稀，气缸组 1 传感器 1",
+                  "sourceOffset": 4063858,
+                  "textIdRawHex": "F1003C76"
+                },
+                "2196": {
+                  "text": "氧传感器信号偏置/持续为浓，气缸组 1 传感器 1",
+                  "sourceOffset": 4063880,
+                  "textIdRawHex": "F1003C77"
+                },
+                "2197": {
+                  "text": "氧传感器信号偏置/持续为稀，气缸组 2 传感器 1",
+                  "sourceOffset": 4063902,
+                  "textIdRawHex": "F1003C78"
+                },
+                "2198": {
+                  "text": "氧传感器信号偏置/持续为浓，气缸组 2 传感器 1",
+                  "sourceOffset": 4063924,
+                  "textIdRawHex": "F1003C79"
+                },
+                "219C": {
+                  "text": "空气/燃油混合气偏差，气缸 1",
+                  "sourceOffset": 4063946,
+                  "textIdRawHex": "F1003C24"
+                },
+                "219D": {
+                  "text": "空气/燃油混合气偏差，气缸 2",
+                  "sourceOffset": 4063968,
+                  "textIdRawHex": "F1003C25"
+                },
+                "219E": {
+                  "text": "空气/燃油混合气偏差，气缸 3",
+                  "sourceOffset": 4063990,
+                  "textIdRawHex": "F1003C26"
+                },
+                "219F": {
+                  "text": "空气/燃油混合气偏差，气缸 4",
+                  "sourceOffset": 4064012,
+                  "textIdRawHex": "F1003C27"
+                },
+                "21A0": {
+                  "text": "空气/燃油混合气偏差，气缸 5",
+                  "sourceOffset": 4064034,
+                  "textIdRawHex": "F1003C28"
+                },
+                "21A1": {
+                  "text": "空气/燃油混合气偏差，气缸 6",
+                  "sourceOffset": 4064056,
+                  "textIdRawHex": "F1003C29"
+                },
+                "2227": {
+                  "text": "环境气压不可靠",
+                  "sourceOffset": 4064078,
+                  "textIdRawHex": "F1003C7A"
+                },
+                "2228": {
+                  "text": "环境压力传感器：电气故障",
+                  "sourceOffset": 4064100,
+                  "textIdRawHex": "F1003C0D"
+                },
+                "2229": {
+                  "text": "环境压力传感器：电气故障",
+                  "sourceOffset": 4064122,
+                  "textIdRawHex": "F1003C0D"
+                },
+                "2237": {
+                  "text": "氧传感器，气缸组 1 传感器 1",
+                  "sourceOffset": 4064144,
+                  "textIdRawHex": "F1003B92"
+                },
+                "2240": {
+                  "text": "氧传感器，气缸组 2 传感器 1",
+                  "sourceOffset": 4064166,
+                  "textIdRawHex": "F1003B98"
+                },
+                "2243": {
+                  "text": "氧传感器参考电压电路/断路，气缸组 1 传感器 1",
+                  "sourceOffset": 4064188,
+                  "textIdRawHex": "F1003C7B"
+                },
+                "2247": {
+                  "text": "氧传感器参考电压电路/断路，气缸组 2 传感器 1",
+                  "sourceOffset": 4064210,
+                  "textIdRawHex": "F1003C7C"
+                },
+                "2270": {
+                  "text": "氧传感器持续为稀，气缸组 1 传感器 2",
+                  "sourceOffset": 4064232,
+                  "textIdRawHex": "F1003C7D"
+                },
+                "2271": {
+                  "text": "氧传感器信号偏置/持续为浓，气缸组 1 传感器 2",
+                  "sourceOffset": 4064254,
+                  "textIdRawHex": "F1003C7E"
+                },
+                "2272": {
+                  "text": "氧传感器持续为稀，气缸组 1 传感器 2",
+                  "sourceOffset": 4064276,
+                  "textIdRawHex": "F1003C7D"
+                },
+                "2273": {
+                  "text": "氧传感器信号偏置/持续为浓，气缸组 2 传感器 2",
+                  "sourceOffset": 4064298,
+                  "textIdRawHex": "F1003C7F"
+                },
+                "2294": {
+                  "text": "油量控制阀 2 的输出级",
+                  "sourceOffset": 4064320,
+                  "textIdRawHex": "F1003C80"
+                },
+                "2295": {
+                  "text": "油量控制阀 2 的输出级",
+                  "sourceOffset": 4064342,
+                  "textIdRawHex": "F1003C80"
+                },
+                "2296": {
+                  "text": "油量控制阀 2 的输出级",
+                  "sourceOffset": 4064364,
+                  "textIdRawHex": "F1003C80"
+                },
+                "2297": {
+                  "text": "气缸组 1 催化转化器前面的氧传感器信号不可靠（超速运转关闭期间）",
+                  "sourceOffset": 4064386,
+                  "textIdRawHex": "F1003C81"
+                },
+                "2298": {
+                  "text": "气缸组 2 催化转化器前面的氧传感器信号不可靠（超速运转关闭期间）",
+                  "sourceOffset": 4064408,
+                  "textIdRawHex": "F1003C82"
+                },
+                "2300": {
+                  "text": "杆式点火模块，气缸 1",
+                  "sourceOffset": 4064430,
+                  "textIdRawHex": "F1003BBA"
+                },
+                "2301": {
+                  "text": "杆式点火模块，气缸 1",
+                  "sourceOffset": 4064452,
+                  "textIdRawHex": "F1003BBA"
+                },
+                "2302": {
+                  "text": "气缸 1 上的杆式点火模块， 软关闭",
+                  "sourceOffset": 4064474,
+                  "textIdRawHex": "F1003C83"
+                },
+                "2303": {
+                  "text": "杆式点火模块，气缸 2",
+                  "sourceOffset": 4064496,
+                  "textIdRawHex": "F1003BBB"
+                },
+                "2304": {
+                  "text": "杆式点火模块，气缸 2",
+                  "sourceOffset": 4064518,
+                  "textIdRawHex": "F1003BBB"
+                },
+                "2305": {
+                  "text": "气缸 2 上的杆式点火模块， 软关闭",
+                  "sourceOffset": 4064540,
+                  "textIdRawHex": "F1003C84"
+                },
+                "2306": {
+                  "text": "杆式点火模块，气缸 3",
+                  "sourceOffset": 4064562,
+                  "textIdRawHex": "F1003BBC"
+                },
+                "2307": {
+                  "text": "杆式点火模块，气缸 3",
+                  "sourceOffset": 4064584,
+                  "textIdRawHex": "F1003BBC"
+                },
+                "2308": {
+                  "text": "气缸 3 上的杆式点火模块， 软关闭",
+                  "sourceOffset": 4064606,
+                  "textIdRawHex": "F1003C85"
+                },
+                "2309": {
+                  "text": "杆式点火模块，气缸 4",
+                  "sourceOffset": 4064628,
+                  "textIdRawHex": "F1003BBD"
+                },
+                "2310": {
+                  "text": "杆式点火模块，气缸 4",
+                  "sourceOffset": 4064650,
+                  "textIdRawHex": "F1003BBD"
+                },
+                "2311": {
+                  "text": "气缸 4 上的杆式点火模块， 软关闭",
+                  "sourceOffset": 4064672,
+                  "textIdRawHex": "F1003C86"
+                },
+                "2312": {
+                  "text": "杆式点火模块，气缸 5",
+                  "sourceOffset": 4064694,
+                  "textIdRawHex": "F1003BBE"
+                },
+                "2313": {
+                  "text": "杆式点火模块，气缸 5",
+                  "sourceOffset": 4064716,
+                  "textIdRawHex": "F1003BBE"
+                },
+                "2314": {
+                  "text": "气缸 5 上的杆式点火模块， 软关闭",
+                  "sourceOffset": 4064738,
+                  "textIdRawHex": "F1003C87"
+                },
+                "2315": {
+                  "text": "杆式点火模块，气缸 6",
+                  "sourceOffset": 4064760,
+                  "textIdRawHex": "F1003BBF"
+                },
+                "2316": {
+                  "text": "杆式点火模块，气缸 6",
+                  "sourceOffset": 4064782,
+                  "textIdRawHex": "F1003BBF"
+                },
+                "2317": {
+                  "text": "气缸 6 上的杆式点火模块， 软关闭",
+                  "sourceOffset": 4064804,
+                  "textIdRawHex": "F1003C88"
+                },
+                "2414": {
+                  "text": "氧传感器废气样本错误，气缸组 1 传感器 1",
+                  "sourceOffset": 4064826,
+                  "textIdRawHex": "F1003C89"
+                },
+                "2415": {
+                  "text": "氧传感器废气样本错误，气缸组 2 传感器 1",
+                  "sourceOffset": 4064848,
+                  "textIdRawHex": "F1003C8A"
+                },
+                "250C": {
+                  "text": "发动机机油油位传感器：电气故障",
+                  "sourceOffset": 4064870,
+                  "textIdRawHex": "F1003C8B"
+                },
+                "250D": {
+                  "text": "发动机机油油位传感器：电气故障",
+                  "sourceOffset": 4064892,
+                  "textIdRawHex": "F1003C8B"
+                },
+                "2525": {
+                  "text": "油箱泄漏诊断模块：诊断过程中电源中断",
+                  "sourceOffset": 4064914,
+                  "textIdRawHex": "F1003C8C"
+                },
+                "2531": {
+                  "text": "电源端子 15",
+                  "sourceOffset": 4064936,
+                  "textIdRawHex": "F1003C8D"
+                },
+                "2532": {
+                  "text": "电源端子 15",
+                  "sourceOffset": 4064958,
+                  "textIdRawHex": "F1003C8D"
+                },
+                "2626": {
+                  "text": "氧传感器泵送电流修正电路/断路，气缸组 1 传感器 1",
+                  "sourceOffset": 4064980,
+                  "textIdRawHex": "F1003C8E"
+                },
+                "2629": {
+                  "text": "氧传感器泵送电流修正电路/断路，气缸组 2 传感器 1",
+                  "sourceOffset": 4065002,
+                  "textIdRawHex": "F1003C8F"
+                },
+                "2A00": {
+                  "text": "氧传感器电路范围/性能，气缸组 1 传感器 1",
+                  "sourceOffset": 4065024,
+                  "textIdRawHex": "F1003C90"
+                },
+                "2A03": {
+                  "text": "氧传感器电路范围/性能，气缸组 2 传感器 1",
+                  "sourceOffset": 4065046,
+                  "textIdRawHex": "F1003C91"
+                },
+                "3052": {
+                  "text": "起动机继电器启动",
+                  "sourceOffset": 4065068,
+                  "textIdRawHex": "F1003C92"
+                },
+                "3053": {
+                  "text": "起动机继电器启动",
+                  "sourceOffset": 4065090,
+                  "textIdRawHex": "F1003C92"
+                },
+                "3081": {
+                  "text": "发动机冷却液温度不可靠",
+                  "sourceOffset": 4065112,
+                  "textIdRawHex": "F1003C93"
+                },
+                "3082": {
+                  "text": "发动机冷却液温度停滞",
+                  "sourceOffset": 4065134,
+                  "textIdRawHex": "F1003C94"
+                },
+                "C073": {
+                  "text": "与驱动 CAN 通信",
+                  "sourceOffset": 4065156,
+                  "textIdRawHex": "F1003A3D"
+                },
+                "C101": {
+                  "text": "与变速箱电子装置 （PDK） 控制单元通信",
+                  "sourceOffset": 4065178,
+                  "textIdRawHex": "F1007C2D"
+                },
+                "C111": {
+                  "text": "与网关控制单元通信",
+                  "sourceOffset": 4065200,
+                  "textIdRawHex": "F1003C95"
+                },
+                "C114": {
+                  "text": "与保时捷牵引力控制管理系统 （PTM） 控制单元通信",
+                  "sourceOffset": 4065222,
+                  "textIdRawHex": "F1007C2E"
+                },
+                "C126": {
+                  "text": "与方向盘电子元件控制单元（CAN 底盘）通信",
+                  "sourceOffset": 4065244,
+                  "textIdRawHex": "F1003B2D"
+                },
+                "C128": {
+                  "text": "与驻车制动控制单元通信",
+                  "sourceOffset": 4065266,
+                  "textIdRawHex": "F1003985"
+                },
+                "C129": {
+                  "text": "与 PSM 控制单元通信",
+                  "sourceOffset": 4065288,
+                  "textIdRawHex": "F1003A40"
+                },
+                "C141": {
+                  "text": "与前端电子设备控制单元通信",
+                  "sourceOffset": 4065310,
+                  "textIdRawHex": "F1003B33"
+                },
+                "C142": {
+                  "text": "与后端电子设备控制单元通信",
+                  "sourceOffset": 4065332,
+                  "textIdRawHex": "F1003B34"
+                },
+                "C146": {
+                  "text": "与网关控制单元（CAN 驱动）通信",
+                  "sourceOffset": 4065354,
+                  "textIdRawHex": "F1003C97"
+                },
+                "C155": {
+                  "text": "与组合仪表通信",
+                  "sourceOffset": 4065376,
+                  "textIdRawHex": "F1003A46"
+                },
+                "C159": {
+                  "text": "与驻车辅助通信",
+                  "sourceOffset": 4065398,
+                  "textIdRawHex": "F1003C98"
+                },
+                "C164": {
+                  "text": "与空调控制单元通信",
+                  "sourceOffset": 4065420,
+                  "textIdRawHex": "F1003993"
+                },
+                "C199": {
+                  "text": "与驾驶员侧车门控制单元通信",
+                  "sourceOffset": 4065442,
+                  "textIdRawHex": "F1003C99"
+                },
+                "C212": {
+                  "text": "与方向盘电子元件控制单元通信",
+                  "sourceOffset": 4065464,
+                  "textIdRawHex": "F1003C9A"
+                },
+                "C235": {
+                  "text": "与自适应巡航控制系统控制单元通信",
+                  "sourceOffset": 4065486,
+                  "textIdRawHex": "F1003B3F"
+                },
+                "C300": {
+                  "text": "DME 控制单元编程",
+                  "sourceOffset": 4065508,
+                  "textIdRawHex": "F1003C9B"
+                },
+                "C302": {
+                  "text": "变速箱电子装置 （PDK） 控制单元编码",
+                  "sourceOffset": 4065530,
+                  "textIdRawHex": "F1007C2F"
+                },
+                "C314": {
+                  "text": "保时捷牵引力控制管理系统 （PTM） 控制单元编码",
+                  "sourceOffset": 4065552,
+                  "textIdRawHex": "F1007C30"
+                },
+                "C318": {
+                  "text": "与 PSM 控制单元通信",
+                  "sourceOffset": 4065574,
+                  "textIdRawHex": "F1003A40"
+                },
+                "C402": {
+                  "text": "检查变速器控制单元故障记忆内容",
+                  "sourceOffset": 4065596,
+                  "textIdRawHex": "F1000023"
+                },
+                "C412": {
+                  "text": "检查网关控制单元故障记忆内容",
+                  "sourceOffset": 4065618,
+                  "textIdRawHex": "F1000151"
+                },
+                "C414": {
+                  "text": "检查变速器控制单元故障记忆内容",
+                  "sourceOffset": 4065640,
+                  "textIdRawHex": "F1000023"
+                },
+                "C417": {
+                  "text": "检查驻车制动控制单元故障记忆内容",
+                  "sourceOffset": 4065662,
+                  "textIdRawHex": "F100399E"
+                },
+                "C418": {
+                  "text": "检查 PSM 控制单元故障记忆内容",
+                  "sourceOffset": 4065684,
+                  "textIdRawHex": "F1000003"
+                },
+                "C423": {
+                  "text": "检查组合仪表故障记忆内容",
+                  "sourceOffset": 4065706,
+                  "textIdRawHex": "F10039A6"
+                },
+                "C424": {
+                  "text": "检查空调控制单元故障记忆内容",
+                  "sourceOffset": 4065728,
+                  "textIdRawHex": "F1000050"
+                },
+                "C428": {
+                  "text": "检查方向盘电子元件控制单元故障记忆内容",
+                  "sourceOffset": 4065750,
+                  "textIdRawHex": "F1003C9E"
+                },
+                "C429": {
+                  "text": "检查方向盘电子元件控制单元故障记忆内容",
+                  "sourceOffset": 4065772,
+                  "textIdRawHex": "F1003C9E"
+                },
+                "C431": {
+                  "text": "检查前端电子控制单元故障记忆内容",
+                  "sourceOffset": 4065794,
+                  "textIdRawHex": "F10039A4"
+                },
+                "C433": {
+                  "text": "检查自适应巡航控制系统控制单元故障记忆内容",
+                  "sourceOffset": 4065816,
+                  "textIdRawHex": "F1003B51"
+                },
+                "C443": {
+                  "text": "检查后端电子设备控制单元故障记忆内容",
+                  "sourceOffset": 4065838,
+                  "textIdRawHex": "F10039A5"
+                },
+                "C447": {
+                  "text": "检查网关控制单元故障记忆内容",
+                  "sourceOffset": 4065860,
+                  "textIdRawHex": "F1000151"
+                }
+              }
             }
           },
           "expectedValue": "C44728 C41221",
@@ -171,7 +2713,11 @@
           "provenance": {
             "runId": "20260926-233624-327076",
             "framesSha256": "89CC9714D1F83C8804D5C0760C9116F7370A2B4EA6E4E148C7F2FE16960C41E4",
-            "frameIndices": [170, 171, 173]
+            "frameIndices": [
+              170,
+              171,
+              173
+            ]
           }
         }
       ]
@@ -215,13 +2761,23 @@
           "serviceFamily": "uds-like",
           "requestHex": "22F187",
           "positivePrefixHex": "62F187",
-          "decode": { "type": "ascii", "offset": 3, "length": 11, "unit": null },
+          "decode": {
+            "type": "ascii",
+            "offset": 3,
+            "length": 11,
+            "unit": null
+          },
           "expectedValue": "95B907530N",
           "evidenceStatus": "observed-x431-capture",
           "provenance": {
             "runId": "20260926-234115-903227",
             "framesSha256": "D11AFF7542A902750EEA278A4D431D1202BF8A55521C325A42EF8E2CE3A89273",
-            "frameIndices": [60, 61, 63, 64]
+            "frameIndices": [
+              60,
+              61,
+              63,
+              64
+            ]
           }
         },
         {
@@ -231,13 +2787,23 @@
           "serviceFamily": "uds-like",
           "requestHex": "22F191",
           "positivePrefixHex": "62F191",
-          "decode": { "type": "ascii", "offset": 3, "length": 11, "unit": null },
+          "decode": {
+            "type": "ascii",
+            "offset": 3,
+            "length": 11,
+            "unit": null
+          },
           "expectedValue": "95B907530N",
           "evidenceStatus": "observed-x431-capture",
           "provenance": {
             "runId": "20260926-234115-903227",
             "framesSha256": "D11AFF7542A902750EEA278A4D431D1202BF8A55521C325A42EF8E2CE3A89273",
-            "frameIndices": [122, 123, 125, 126]
+            "frameIndices": [
+              122,
+              123,
+              125,
+              126
+            ]
           }
         },
         {
@@ -247,13 +2813,22 @@
           "serviceFamily": "uds-like",
           "requestHex": "22F1A2",
           "positivePrefixHex": "62F1A2",
-          "decode": { "type": "ascii", "offset": 3, "length": 4, "unit": null },
+          "decode": {
+            "type": "ascii",
+            "offset": 3,
+            "length": 4,
+            "unit": null
+          },
           "expectedValue": "A7.1",
           "evidenceStatus": "observed-x431-capture",
           "provenance": {
             "runId": "20260926-234115-903227",
             "framesSha256": "D11AFF7542A902750EEA278A4D431D1202BF8A55521C325A42EF8E2CE3A89273",
-            "frameIndices": [2, 3, 5]
+            "frameIndices": [
+              2,
+              3,
+              5
+            ]
           }
         },
         {
@@ -263,13 +2838,23 @@
           "serviceFamily": "uds-like",
           "requestHex": "22F197",
           "positivePrefixHex": "62F197",
-          "decode": { "type": "ascii", "offset": 3, "length": 13, "unit": null },
+          "decode": {
+            "type": "ascii",
+            "offset": 3,
+            "length": 13,
+            "unit": null
+          },
           "expectedValue": "zentr Gateway",
           "evidenceStatus": "observed-x431-capture",
           "provenance": {
             "runId": "20260926-234115-903227",
             "framesSha256": "D11AFF7542A902750EEA278A4D431D1202BF8A55521C325A42EF8E2CE3A89273",
-            "frameIndices": [41, 42, 44, 45]
+            "frameIndices": [
+              41,
+              42,
+              44,
+              45
+            ]
           }
         },
         {
@@ -279,13 +2864,23 @@
           "serviceFamily": "uds-like",
           "requestHex": "22F19E",
           "positivePrefixHex": "62F19E",
-          "decode": { "type": "ascii", "offset": 3, "length": 16, "unit": null },
+          "decode": {
+            "type": "ascii",
+            "offset": 3,
+            "length": 16,
+            "unit": null
+          },
           "expectedValue": "CAN/CAN Gateway",
           "evidenceStatus": "observed-x431-capture",
           "provenance": {
             "runId": "20260926-234115-903227",
             "framesSha256": "D11AFF7542A902750EEA278A4D431D1202BF8A55521C325A42EF8E2CE3A89273",
-            "frameIndices": [6, 7, 9, 10]
+            "frameIndices": [
+              6,
+              7,
+              9,
+              10
+            ]
           }
         },
         {
@@ -295,13 +2890,21 @@
           "serviceFamily": "uds-like",
           "requestHex": "22F1A3",
           "positivePrefixHex": "62F1A3",
-          "decode": { "type": "ascii", "offset": 3, "length": 3, "unit": null },
+          "decode": {
+            "type": "ascii",
+            "offset": 3,
+            "length": 3,
+            "unit": null
+          },
           "expectedValue": "430",
           "evidenceStatus": "observed-x431-capture",
           "provenance": {
             "runId": "20260926-234115-903227",
             "framesSha256": "D11AFF7542A902750EEA278A4D431D1202BF8A55521C325A42EF8E2CE3A89273",
-            "frameIndices": [70, 71]
+            "frameIndices": [
+              70,
+              71
+            ]
           }
         },
         {
@@ -311,13 +2914,22 @@
           "serviceFamily": "uds-like",
           "requestHex": "22F182",
           "positivePrefixHex": "62F182",
-          "decode": { "type": "ascii", "offset": 3, "length": 8, "unit": null },
+          "decode": {
+            "type": "ascii",
+            "offset": 3,
+            "length": 8,
+            "unit": null
+          },
           "expectedValue": "40222051",
           "evidenceStatus": "observed-x431-capture",
           "provenance": {
             "runId": "20260926-234115-903227",
             "framesSha256": "D11AFF7542A902750EEA278A4D431D1202BF8A55521C325A42EF8E2CE3A89273",
-            "frameIndices": [72, 73, 75]
+            "frameIndices": [
+              72,
+              73,
+              75
+            ]
           }
         },
         {
@@ -327,13 +2939,23 @@
           "serviceFamily": "uds-like",
           "requestHex": "22F190",
           "positivePrefixHex": "62F190",
-          "decode": { "type": "vin-ascii", "offset": 3, "length": 17, "unit": null },
+          "decode": {
+            "type": "vin-ascii",
+            "offset": 3,
+            "length": 17,
+            "unit": null
+          },
           "expectedValue": null,
           "evidenceStatus": "observed-x431-capture",
           "provenance": {
             "runId": "20260926-234115-903227",
             "framesSha256": "D11AFF7542A902750EEA278A4D431D1202BF8A55521C325A42EF8E2CE3A89273",
-            "frameIndices": [50, 51, 53, 54]
+            "frameIndices": [
+              50,
+              51,
+              53,
+              54
+            ]
           }
         },
         {
@@ -358,6 +2980,869 @@
                 "statusText": "启用",
                 "source": "x431-diagnosing-2026-09-26"
               }
+            },
+            "referenceCatalog": {
+              "kind": "x431-source-dtc-text-reference",
+              "profileId": "9x1:CAN_CAN_Gateway:CAN_CAN_Gateway_A7_1",
+              "module": "CAN_CAN_Gateway",
+              "variant": "CAN_CAN_Gateway_A7_1",
+              "dataSha256": "f32173d768ca9f8d2caf109bc7159fa43bde816f924fea5a91f1f202a2a76a2e",
+              "variantsSha256": "8a9e0ee94c25e98b11affbc083615bbd4c8113fe9c2a820ca8e4147aa16d5c20",
+              "binding": "static-capture-associated",
+              "referenceOnly": true,
+              "ecuVersionQualified": false,
+              "records": {
+                "000400": {
+                  "text": "电流分配器，监视器重置",
+                  "sourceOffset": 974025,
+                  "textIdRawHex": "F1003B14"
+                },
+                "000401": {
+                  "text": "电流分配器，端子 30 重置",
+                  "sourceOffset": 974047,
+                  "textIdRawHex": "F1003B15"
+                },
+                "000402": {
+                  "text": "配电器，功能限制",
+                  "sourceOffset": 974069,
+                  "textIdRawHex": "F1003B16"
+                },
+                "000403": {
+                  "text": "配电器，继电器端子 30F",
+                  "sourceOffset": 974091,
+                  "textIdRawHex": "F1003B17"
+                },
+                "000404": {
+                  "text": "配电器，继电器端子 30SD",
+                  "sourceOffset": 974113,
+                  "textIdRawHex": "F1003B18"
+                },
+                "000405": {
+                  "text": "配电器，继电器端子 15",
+                  "sourceOffset": 974135,
+                  "textIdRawHex": "F1003B19"
+                },
+                "000406": {
+                  "text": "电源分配器，温度保险丝断路",
+                  "sourceOffset": 974157,
+                  "textIdRawHex": "F1003B1A"
+                },
+                "000407": {
+                  "text": "电流分配器，运输连接器不可靠",
+                  "sourceOffset": 974179,
+                  "textIdRawHex": "F1003B1B"
+                },
+                "000502": {
+                  "text": "蓄电池传感器，功能限制",
+                  "sourceOffset": 974201,
+                  "textIdRawHex": "F1003B1C"
+                },
+                "000600": {
+                  "text": "发电机机械故障 （eEm）",
+                  "sourceOffset": 974223,
+                  "textIdRawHex": "F1003B1D"
+                },
+                "000601": {
+                  "text": "发电机电气故障 （eEM）",
+                  "sourceOffset": 974245,
+                  "textIdRawHex": "F1003B1E"
+                },
+                "000602": {
+                  "text": "闭路电流，超出极限值 （eEm）",
+                  "sourceOffset": 974267,
+                  "textIdRawHex": "F1003B1F"
+                },
+                "000603": {
+                  "text": "负载中断 （eEm）",
+                  "sourceOffset": 974289,
+                  "textIdRawHex": "F1003B20"
+                },
+                "000604": {
+                  "text": "DC/DC 转换器 1 （eEm）",
+                  "sourceOffset": 974311,
+                  "textIdRawHex": "F1003B21"
+                },
+                "000605": {
+                  "text": "DC/DC 转换器 2 （eEm）",
+                  "sourceOffset": 974333,
+                  "textIdRawHex": "F1003B22"
+                },
+                "000606": {
+                  "text": "DC/DC 转换器，旁路继电器 1 （eEm）",
+                  "sourceOffset": 974355,
+                  "textIdRawHex": "F1003B23"
+                },
+                "000607": {
+                  "text": "DC/DC 转换器，旁路继电器 2 （eEm）",
+                  "sourceOffset": 974377,
+                  "textIdRawHex": "F1003B24"
+                },
+                "000608": {
+                  "text": "eEM NV/HV充电请求",
+                  "sourceOffset": 974399,
+                  "textIdRawHex": "F1006C4E"
+                },
+                "000609": {
+                  "text": "eEM TE 继电器卡滞",
+                  "sourceOffset": 974421,
+                  "textIdRawHex": "F1006C4F"
+                },
+                "00060A": {
+                  "text": "电池保养 - BMS（电池管理系统）传感器系统不可信",
+                  "sourceOffset": 974443,
+                  "textIdRawHex": "F10078D7"
+                },
+                "00060B": {
+                  "text": "电池保养 - BMS（电池管理系统）传感器系统故障",
+                  "sourceOffset": 974465,
+                  "textIdRawHex": "F1006C51"
+                },
+                "00060C": {
+                  "text": "电池保养 - 深度放电电池",
+                  "sourceOffset": 974487,
+                  "textIdRawHex": "F1006C52"
+                },
+                "00060D": {
+                  "text": "锂离子起动器电池隔板",
+                  "sourceOffset": 974509,
+                  "textIdRawHex": "F1006C53"
+                },
+                "00060E": {
+                  "text": "电池保养 - BMS（电池管理系统）传感器系统故障",
+                  "sourceOffset": 974531,
+                  "textIdRawHex": "F1006C51"
+                },
+                "00060F": {
+                  "text": "电池保养 - 保险丝故障",
+                  "sourceOffset": 974553,
+                  "textIdRawHex": "F10078D8"
+                },
+                "000610": {
+                  "text": "Diagnosefilter nicht aktiviert",
+                  "sourceOffset": 974575,
+                  "textIdRawHex": "F100F609"
+                },
+                "000690": {
+                  "text": "Bus overload detected (diag/MMI)",
+                  "sourceOffset": 974597,
+                  "textIdRawHex": "F100EE68"
+                },
+                "C11000": {
+                  "text": "电源电压低于极限值",
+                  "sourceOffset": 974619,
+                  "textIdRawHex": "F1003978"
+                },
+                "C11001": {
+                  "text": "电源电压高于极限值",
+                  "sourceOffset": 974641,
+                  "textIdRawHex": "F1003979"
+                },
+                "C11004": {
+                  "text": "编程",
+                  "sourceOffset": 974663,
+                  "textIdRawHex": "F100397C"
+                },
+                "C11005": {
+                  "text": "控制单元，功能限制",
+                  "sourceOffset": 974685,
+                  "textIdRawHex": "F100397D"
+                },
+                "C11006": {
+                  "text": "编码",
+                  "sourceOffset": 974707,
+                  "textIdRawHex": "F1000083"
+                },
+                "C11007": {
+                  "text": "端子 15 信号不可靠",
+                  "sourceOffset": 974729,
+                  "textIdRawHex": "F1003B2B"
+                },
+                "C11008": {
+                  "text": "控制单元，功能限制",
+                  "sourceOffset": 974751,
+                  "textIdRawHex": "F100397D"
+                },
+                "C11009": {
+                  "text": "控制单元，功能限制",
+                  "sourceOffset": 974773,
+                  "textIdRawHex": "F100397D"
+                },
+                "C11010": {
+                  "text": "控制单元，功能限制",
+                  "sourceOffset": 974795,
+                  "textIdRawHex": "F100397D"
+                },
+                "C11011": {
+                  "text": "控制单元，功能限制",
+                  "sourceOffset": 974817,
+                  "textIdRawHex": "F100397D"
+                },
+                "C11012": {
+                  "text": "与辅助水加热器控制单元通信",
+                  "sourceOffset": 974839,
+                  "textIdRawHex": "F1003995"
+                },
+                "C12002": {
+                  "text": "与发动机控制单元无通信",
+                  "sourceOffset": 974861,
+                  "textIdRawHex": "F1003ABE"
+                },
+                "C12003": {
+                  "text": "与后差速锁控制单元通信",
+                  "sourceOffset": 974883,
+                  "textIdRawHex": "F1003981"
+                },
+                "C12004": {
+                  "text": "与变速箱控制单元通信",
+                  "sourceOffset": 974905,
+                  "textIdRawHex": "F1003B2C"
+                },
+                "C12005": {
+                  "text": "与选档杆通信",
+                  "sourceOffset": 974927,
+                  "textIdRawHex": "F1003A3F"
+                },
+                "C12006": {
+                  "text": "与 POSIP 触发单元通信",
+                  "sourceOffset": 974949,
+                  "textIdRawHex": "F1003983"
+                },
+                "C12007": {
+                  "text": "与 PSM 控制单元通信",
+                  "sourceOffset": 974971,
+                  "textIdRawHex": "F1003A40"
+                },
+                "C12008": {
+                  "text": "与驻车制动控制单元通信",
+                  "sourceOffset": 974993,
+                  "textIdRawHex": "F1003985"
+                },
+                "C12009": {
+                  "text": "与组合传感器通信",
+                  "sourceOffset": 975015,
+                  "textIdRawHex": "F1003A42"
+                },
+                "C1200A": {
+                  "text": "与 PDCC 控制单元通信",
+                  "sourceOffset": 975037,
+                  "textIdRawHex": "F1003986"
+                },
+                "C1200B": {
+                  "text": "与方向盘电子元件控制单元（CAN 底盘）通信",
+                  "sourceOffset": 975059,
+                  "textIdRawHex": "F1003B2D"
+                },
+                "C1200C": {
+                  "text": "与 PASM 控制单元通信",
+                  "sourceOffset": 975081,
+                  "textIdRawHex": "F1003988"
+                },
+                "C1200D": {
+                  "text": "与座椅控制单元通信，驾驶员",
+                  "sourceOffset": 975103,
+                  "textIdRawHex": "F1003B2E"
+                },
+                "C1200E": {
+                  "text": "与座椅控制单元通信，乘客",
+                  "sourceOffset": 975125,
+                  "textIdRawHex": "F1003B2F"
+                },
+                "C1200F": {
+                  "text": "与方向盘电子元件（CAN 舒适系统）通信",
+                  "sourceOffset": 975147,
+                  "textIdRawHex": "F1003B30"
+                },
+                "C12010": {
+                  "text": "与尾门控制单元通信",
+                  "sourceOffset": 975169,
+                  "textIdRawHex": "F1003B31"
+                },
+                "C12011": {
+                  "text": "与 AWS 控制单元通信",
+                  "sourceOffset": 975191,
+                  "textIdRawHex": "F100398D"
+                },
+                "C12012": {
+                  "text": "与拖车挂接装置控制单元通信",
+                  "sourceOffset": 975213,
+                  "textIdRawHex": "F1003A45"
+                },
+                "C12013": {
+                  "text": "与驾驶员侧车门控制单元无通信",
+                  "sourceOffset": 975235,
+                  "textIdRawHex": "F100398F"
+                },
+                "C12014": {
+                  "text": "与车门控制单元通信，乘客",
+                  "sourceOffset": 975257,
+                  "textIdRawHex": "F1003B32"
+                },
+                "C12015": {
+                  "text": "与 TPM 控制单元通信",
+                  "sourceOffset": 975279,
+                  "textIdRawHex": "F1003991"
+                },
+                "C12016": {
+                  "text": "与前端电子设备控制单元通信",
+                  "sourceOffset": 975301,
+                  "textIdRawHex": "F1003B33"
+                },
+                "C12017": {
+                  "text": "与后端电子设备控制单元通信",
+                  "sourceOffset": 975323,
+                  "textIdRawHex": "F1003B34"
+                },
+                "C12018": {
+                  "text": "与组合仪表通信",
+                  "sourceOffset": 975345,
+                  "textIdRawHex": "F1003A46"
+                },
+                "C12019": {
+                  "text": "与空调控制单元通信",
+                  "sourceOffset": 975367,
+                  "textIdRawHex": "F1003993"
+                },
+                "C1201A": {
+                  "text": "与停车辅助系统控制单元通信",
+                  "sourceOffset": 975389,
+                  "textIdRawHex": "F1003B35"
+                },
+                "C1201B": {
+                  "text": "与辅助热水器控制单元通信",
+                  "sourceOffset": 975411,
+                  "textIdRawHex": "F1003B36"
+                },
+                "C1201C": {
+                  "text": "与倒车摄像头控制单元通信",
+                  "sourceOffset": 975433,
+                  "textIdRawHex": "F1003B37"
+                },
+                "C1201D": {
+                  "text": "与 PCM/CDR 通信",
+                  "sourceOffset": 975455,
+                  "textIdRawHex": "F1003997"
+                },
+                "C1201E": {
+                  "text": "与 Servotronic（伺服电子系统）控制单元通信",
+                  "sourceOffset": 975477,
+                  "textIdRawHex": "F1003B38"
+                },
+                "C12020": {
+                  "text": "与活顶控制单元通信",
+                  "sourceOffset": 975499,
+                  "textIdRawHex": "F1003B39"
+                },
+                "C12021": {
+                  "text": "与后端电子设备控制单元通信",
+                  "sourceOffset": 975521,
+                  "textIdRawHex": "F1003B34"
+                },
+                "C12022": {
+                  "text": "与扰流板控制单元通信",
+                  "sourceOffset": 975543,
+                  "textIdRawHex": "F1003B3A"
+                },
+                "C12023": {
+                  "text": "与中央差速锁控制单元通信",
+                  "sourceOffset": 975565,
+                  "textIdRawHex": "F1003B3B"
+                },
+                "C12024": {
+                  "text": "与大灯控制单元通信，左侧",
+                  "sourceOffset": 975587,
+                  "textIdRawHex": "F1003B3C"
+                },
+                "C12025": {
+                  "text": "与大灯控制单元通信，右侧",
+                  "sourceOffset": 975609,
+                  "textIdRawHex": "F1003B3D"
+                },
+                "C12026": {
+                  "text": "与秒表通信",
+                  "sourceOffset": 975631,
+                  "textIdRawHex": "F1003B3E"
+                },
+                "C12027": {
+                  "text": "与自适应巡航控制系统控制单元通信",
+                  "sourceOffset": 975653,
+                  "textIdRawHex": "F1003B3F"
+                },
+                "C12028": {
+                  "text": "与电流分配器控制单元无通信",
+                  "sourceOffset": 975675,
+                  "textIdRawHex": "F1003B40"
+                },
+                "C12029": {
+                  "text": "与四轮驱动控制单元通信",
+                  "sourceOffset": 975697,
+                  "textIdRawHex": "F1003B41"
+                },
+                "C12030": {
+                  "text": "与车道变更辅助装置控制单元无通信",
+                  "sourceOffset": 975719,
+                  "textIdRawHex": "F1003B42"
+                },
+                "C12031": {
+                  "text": "与高压电池控制单元通信",
+                  "sourceOffset": 975741,
+                  "textIdRawHex": "F1003B43"
+                },
+                "C12032": {
+                  "text": "与高压功率电子设备控制单元无通信",
+                  "sourceOffset": 975763,
+                  "textIdRawHex": "F1003B44"
+                },
+                "C12033": {
+                  "text": "与高压空调压缩机通信",
+                  "sourceOffset": 975785,
+                  "textIdRawHex": "F1003B45"
+                },
+                "C12034": {
+                  "text": "与后桥转向控制单元无通信",
+                  "sourceOffset": 975807,
+                  "textIdRawHex": "F1003AC5"
+                },
+                "C12035": {
+                  "text": "与前部摄像机控制单元通信",
+                  "sourceOffset": 975829,
+                  "textIdRawHex": "F1003B46"
+                },
+                "C12036": {
+                  "text": "与实际顶视图控制单元无通信",
+                  "sourceOffset": 975851,
+                  "textIdRawHex": "F1003B47"
+                },
+                "C12037": {
+                  "text": "与车载充电器控制单元无通信",
+                  "sourceOffset": 975873,
+                  "textIdRawHex": "F1003B0A"
+                },
+                "C12038": {
+                  "text": "与通信单元控制单元无通信",
+                  "sourceOffset": 975895,
+                  "textIdRawHex": "F1003B48"
+                },
+                "C12039": {
+                  "text": "与前桥提升控制单元无通信",
+                  "sourceOffset": 975917,
+                  "textIdRawHex": "F100399A"
+                },
+                "C1203A": {
+                  "text": "与制动助力器控制单元无通信",
+                  "sourceOffset": 975939,
+                  "textIdRawHex": "F1003B49"
+                },
+                "C1203B": {
+                  "text": "与高压功率电子设备控制单元无通信（前桥）",
+                  "sourceOffset": 975961,
+                  "textIdRawHex": "F1003B4A"
+                },
+                "C1203C": {
+                  "text": "与发动机控制单元无通信 （SCR）",
+                  "sourceOffset": 975983,
+                  "textIdRawHex": "F1003B4B"
+                },
+                "C1203D": {
+                  "text": "与后端电子设备控制单元无通信（前部扰流器）",
+                  "sourceOffset": 976005,
+                  "textIdRawHex": "F1003B70"
+                },
+                "C1203E": {
+                  "text": "与控制面板控制单元无通信",
+                  "sourceOffset": 976027,
+                  "textIdRawHex": "F1003B0B"
+                },
+                "C1203F": {
+                  "text": "E_Sound CAN超时故障",
+                  "sourceOffset": 976049,
+                  "textIdRawHex": "F10078D6"
+                },
+                "C12040": {
+                  "text": "与调音器控制单元无通信",
+                  "sourceOffset": 976071,
+                  "textIdRawHex": "F1003B71"
+                },
+                "C12041": {
+                  "text": "后雷达CAN超时故障",
+                  "sourceOffset": 976093,
+                  "textIdRawHex": "F10078D9"
+                },
+                "C12080": {
+                  "text": "检查 DME 控制单元故障记忆内容",
+                  "sourceOffset": 976115,
+                  "textIdRawHex": "F10038D7"
+                },
+                "C12081": {
+                  "text": "检查后差速锁控制单元故障记忆内容",
+                  "sourceOffset": 976137,
+                  "textIdRawHex": "F100399C"
+                },
+                "C12082": {
+                  "text": "检查变速器控制单元故障记忆内容",
+                  "sourceOffset": 976159,
+                  "textIdRawHex": "F1000023"
+                },
+                "C12083": {
+                  "text": "检查选档杆故障记忆内容",
+                  "sourceOffset": 976181,
+                  "textIdRawHex": "F100399D"
+                },
+                "C12084": {
+                  "text": "检查 POSIP 触发单元故障记忆内容",
+                  "sourceOffset": 976203,
+                  "textIdRawHex": "F10038DB"
+                },
+                "C12085": {
+                  "text": "检查 PSM 控制单元故障记忆内容",
+                  "sourceOffset": 976225,
+                  "textIdRawHex": "F1000003"
+                },
+                "C12086": {
+                  "text": "检查驻车制动控制单元故障记忆内容",
+                  "sourceOffset": 976247,
+                  "textIdRawHex": "F100399E"
+                },
+                "C12087": {
+                  "text": "检查 PSM 控制单元故障记忆内容",
+                  "sourceOffset": 976269,
+                  "textIdRawHex": "F1000003"
+                },
+                "C12088": {
+                  "text": "检查 PDCC 控制单元故障记忆内容",
+                  "sourceOffset": 976291,
+                  "textIdRawHex": "F10038DD"
+                },
+                "C12089": {
+                  "text": "检查方向盘电子设备控制单元故障记忆内容",
+                  "sourceOffset": 976313,
+                  "textIdRawHex": "F10039A0"
+                },
+                "C1208A": {
+                  "text": "检查 PASM 控制单元故障记忆内容",
+                  "sourceOffset": 976335,
+                  "textIdRawHex": "F10038DF"
+                },
+                "C1208B": {
+                  "text": "检查驾驶员座椅控制单元故障记忆内容",
+                  "sourceOffset": 976357,
+                  "textIdRawHex": "F1003B4D"
+                },
+                "C1208C": {
+                  "text": "检查乘客座椅控制单元故障记忆内容",
+                  "sourceOffset": 976379,
+                  "textIdRawHex": "F1003B4E"
+                },
+                "C1208D": {
+                  "text": "检查方向盘电子设备控制单元故障记忆内容",
+                  "sourceOffset": 976401,
+                  "textIdRawHex": "F10039A0"
+                },
+                "C1208E": {
+                  "text": "检查后盖控制单元故障记忆内容",
+                  "sourceOffset": 976423,
+                  "textIdRawHex": "F10039A2"
+                },
+                "C1208F": {
+                  "text": "检查 AWS 控制单元故障记忆内容",
+                  "sourceOffset": 976445,
+                  "textIdRawHex": "F10038E3"
+                },
+                "C12090": {
+                  "text": "检查拖车钩控制单元故障记忆内容",
+                  "sourceOffset": 976467,
+                  "textIdRawHex": "F10038E4"
+                },
+                "C12091": {
+                  "text": "检查车门（驾驶员侧）控制单元故障记忆内容",
+                  "sourceOffset": 976489,
+                  "textIdRawHex": "F10038E5"
+                },
+                "C12092": {
+                  "text": "检查前排乘客侧车门控制单元故障记忆内容",
+                  "sourceOffset": 976511,
+                  "textIdRawHex": "F10038E6"
+                },
+                "C12093": {
+                  "text": "检查 TPM 控制单元故障记忆内容",
+                  "sourceOffset": 976533,
+                  "textIdRawHex": "F10038E7"
+                },
+                "C12094": {
+                  "text": "检查前端电子控制单元故障记忆内容",
+                  "sourceOffset": 976555,
+                  "textIdRawHex": "F10039A4"
+                },
+                "C12095": {
+                  "text": "检查后端电子设备控制单元故障记忆内容",
+                  "sourceOffset": 976577,
+                  "textIdRawHex": "F10039A5"
+                },
+                "C12096": {
+                  "text": "检查组合仪表故障记忆内容",
+                  "sourceOffset": 976599,
+                  "textIdRawHex": "F10039A6"
+                },
+                "C12097": {
+                  "text": "检查空调单元故障记忆内容",
+                  "sourceOffset": 976621,
+                  "textIdRawHex": "F1003B4F"
+                },
+                "C12098": {
+                  "text": "检查驻车辅助控制单元故障记忆内容",
+                  "sourceOffset": 976643,
+                  "textIdRawHex": "F10038EC"
+                },
+                "C12099": {
+                  "text": "检查水辅助加热器控制单元故障记忆内容",
+                  "sourceOffset": 976665,
+                  "textIdRawHex": "F10038ED"
+                },
+                "C1209A": {
+                  "text": "检查倒车摄像机控制单元故障记忆内容",
+                  "sourceOffset": 976687,
+                  "textIdRawHex": "F10038EE"
+                },
+                "C1209B": {
+                  "text": "检查 PCM/CDR 故障记忆内容",
+                  "sourceOffset": 976709,
+                  "textIdRawHex": "F1003A4D"
+                },
+                "C1209C": {
+                  "text": "检查伺服电子系统控制单元故障记忆内容",
+                  "sourceOffset": 976731,
+                  "textIdRawHex": "F1003B50"
+                },
+                "C1209E": {
+                  "text": "检查活顶控制单元故障记忆内容",
+                  "sourceOffset": 976753,
+                  "textIdRawHex": "F10038F0"
+                },
+                "C1209F": {
+                  "text": "检查后端电子设备控制单元故障记忆内容",
+                  "sourceOffset": 976775,
+                  "textIdRawHex": "F10039A5"
+                },
+                "C120A0": {
+                  "text": "检查后端电子设备控制单元故障记忆内容",
+                  "sourceOffset": 976797,
+                  "textIdRawHex": "F10039A5"
+                },
+                "C120A1": {
+                  "text": "检查中央差速锁控制单元故障记忆内容",
+                  "sourceOffset": 976819,
+                  "textIdRawHex": "F10038F3"
+                },
+                "C120A2": {
+                  "text": "检查前照灯控制单元故障记忆内容",
+                  "sourceOffset": 976841,
+                  "textIdRawHex": "F10038F4"
+                },
+                "C120A3": {
+                  "text": "检查右前照灯控制单元故障记忆内容",
+                  "sourceOffset": 976863,
+                  "textIdRawHex": "F10039A9"
+                },
+                "C120A4": {
+                  "text": "检查秒表故障记忆内容",
+                  "sourceOffset": 976885,
+                  "textIdRawHex": "F10039AA"
+                },
+                "C120A5": {
+                  "text": "检查自适应巡航控制系统控制单元故障记忆内容",
+                  "sourceOffset": 976907,
+                  "textIdRawHex": "F1003B51"
+                },
+                "C120A6": {
+                  "text": "检查电源电子装置控制单元故障记忆内容",
+                  "sourceOffset": 976929,
+                  "textIdRawHex": "F1003B52"
+                },
+                "C120A7": {
+                  "text": "检查全轮驱动控制单元故障记忆内容",
+                  "sourceOffset": 976951,
+                  "textIdRawHex": "F1003B53"
+                },
+                "C120A8": {
+                  "text": "检查车道变换辅助控制单元故障记忆内容",
+                  "sourceOffset": 976973,
+                  "textIdRawHex": "F1003B54"
+                },
+                "C120A9": {
+                  "text": "检查高压电池控制单元故障记忆内容",
+                  "sourceOffset": 976995,
+                  "textIdRawHex": "F1003B0C"
+                },
+                "C120AA": {
+                  "text": "检查电源电子装置控制单元故障记忆内容",
+                  "sourceOffset": 977017,
+                  "textIdRawHex": "F1003B52"
+                },
+                "C120AB": {
+                  "text": "检查高压空调压缩机控制单元故障记忆内容",
+                  "sourceOffset": 977039,
+                  "textIdRawHex": "F1003B0D"
+                },
+                "C120AC": {
+                  "text": "检查后桥转向控制单元故障记忆内容",
+                  "sourceOffset": 977061,
+                  "textIdRawHex": "F1003B55"
+                },
+                "C120AD": {
+                  "text": "检查前摄像机控制单元故障记忆内容",
+                  "sourceOffset": 977083,
+                  "textIdRawHex": "F10039AB"
+                },
+                "C120AE": {
+                  "text": "检查实际顶视图控制单元故障记忆内容",
+                  "sourceOffset": 977105,
+                  "textIdRawHex": "F1003B56"
+                },
+                "C120AF": {
+                  "text": "检查车载充电器控制单元故障记忆内容",
+                  "sourceOffset": 977127,
+                  "textIdRawHex": "F1003B0E"
+                },
+                "C120B0": {
+                  "text": "检查通信单元控制单元故障记忆内容",
+                  "sourceOffset": 977149,
+                  "textIdRawHex": "F1003B57"
+                },
+                "C120B1": {
+                  "text": "检查前桥提升控制单元故障记忆内容",
+                  "sourceOffset": 977171,
+                  "textIdRawHex": "F10039AC"
+                },
+                "C120B2": {
+                  "text": "检查制动助力器控制单元故障记忆内容",
+                  "sourceOffset": 977193,
+                  "textIdRawHex": "F1003B58"
+                },
+                "C120B3": {
+                  "text": "检查高压功率电子设备控制单元故障记忆内容（前桥）",
+                  "sourceOffset": 977215,
+                  "textIdRawHex": "F1003B59"
+                },
+                "C120B4": {
+                  "text": "检查发动机控制单元 （SCR） 故障记忆内容",
+                  "sourceOffset": 977237,
+                  "textIdRawHex": "F1003B5A"
+                },
+                "C120B5": {
+                  "text": "检查扰流器控制单元故障记忆内容",
+                  "sourceOffset": 977259,
+                  "textIdRawHex": "F10038F2"
+                },
+                "C120B6": {
+                  "text": "检查操作器/显示屏控制单元故障记忆内容",
+                  "sourceOffset": 977281,
+                  "textIdRawHex": "F1003B5B"
+                },
+                "C12207": {
+                  "text": "与 PSM 控制单元无通信",
+                  "sourceOffset": 977303,
+                  "textIdRawHex": "F1003984"
+                },
+                "C13000": {
+                  "text": "与电流分配器通信",
+                  "sourceOffset": 977325,
+                  "textIdRawHex": "F1003B5C"
+                },
+                "C13001": {
+                  "text": "与蓄电池传感器通信",
+                  "sourceOffset": 977347,
+                  "textIdRawHex": "F1003B5D"
+                },
+                "C13002": {
+                  "text": "与发电机通信",
+                  "sourceOffset": 977369,
+                  "textIdRawHex": "F1003B5E"
+                },
+                "C13003": {
+                  "text": "与电压转换器通信",
+                  "sourceOffset": 977391,
+                  "textIdRawHex": "F1003B5F"
+                },
+                "C13030": {
+                  "text": "电流分配器，端子状态",
+                  "sourceOffset": 977413,
+                  "textIdRawHex": "F1003B60"
+                },
+                "C13031": {
+                  "text": "蓄电池传感器，端子状态",
+                  "sourceOffset": 977435,
+                  "textIdRawHex": "F1003B61"
+                },
+                "C13032": {
+                  "text": "DCDC LIN 状态管理",
+                  "sourceOffset": 977457,
+                  "textIdRawHex": "F1006C62"
+                },
+                "C13060": {
+                  "text": "与 LIN 总线通信",
+                  "sourceOffset": 977479,
+                  "textIdRawHex": "F1003A55"
+                },
+                "C13063": {
+                  "text": "电源分配器，功能限制",
+                  "sourceOffset": 977501,
+                  "textIdRawHex": "F1003B63"
+                },
+                "C13064": {
+                  "text": "电池传感器，功能限制",
+                  "sourceOffset": 977523,
+                  "textIdRawHex": "F1003B64"
+                },
+                "C13065": {
+                  "text": "发电机，功能限制",
+                  "sourceOffset": 977545,
+                  "textIdRawHex": "F1003B65"
+                },
+                "C20000": {
+                  "text": "与驱动 CAN 通信",
+                  "sourceOffset": 977567,
+                  "textIdRawHex": "F1003A3D"
+                },
+                "C20001": {
+                  "text": "与专用 CAN 总线无通信",
+                  "sourceOffset": 977589,
+                  "textIdRawHex": "F1006A82"
+                },
+                "C20002": {
+                  "text": "与 CAN 总线无通信，底盘",
+                  "sourceOffset": 977611,
+                  "textIdRawHex": "F1003B67"
+                },
+                "C20003": {
+                  "text": "与舒适系统 CAN 通信",
+                  "sourceOffset": 977633,
+                  "textIdRawHex": "F1003B68"
+                },
+                "C20004": {
+                  "text": "与信息娱乐 CAN 通信",
+                  "sourceOffset": 977655,
+                  "textIdRawHex": "F1003B69"
+                },
+                "D10000": {
+                  "text": "部件保护，基本设置丢失或不正确",
+                  "sourceOffset": 977677,
+                  "textIdRawHex": "F1003B6A"
+                },
+                "EA6200": {
+                  "text": "部件，访问 （IKA） 控制单元失败",
+                  "sourceOffset": 977699,
+                  "textIdRawHex": "F1003B6B"
+                },
+                "EA6300": {
+                  "text": "部件保护，标识",
+                  "sourceOffset": 977721,
+                  "textIdRawHex": "F1003B6C"
+                },
+                "EA6400": {
+                  "text": "部件保护，输入/输出参数",
+                  "sourceOffset": 977743,
+                  "textIdRawHex": "F1003B6D"
+                }
+              }
             }
           },
           "expectedValue": "C13002 status=09",
@@ -368,7 +3853,10 @@
           "provenance": {
             "runId": "20260926-234115-903227",
             "framesSha256": "D11AFF7542A902750EEA278A4D431D1202BF8A55521C325A42EF8E2CE3A89273",
-            "frameIndices": [195, 196]
+            "frameIndices": [
+              195,
+              196
+            ]
           }
         }
       ]

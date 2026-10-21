@@ -1,5 +1,6 @@
 """Synthetic native events; no vendor DLL, USB, network or ECU access."""
 import io
+import ctypes as c
 import hashlib
 import json
 import tempfile
@@ -15,6 +16,7 @@ from scripts.diagnostics.elm import ElmError, parse_ath1_response
 from scripts.diagnostics.session_simulator import catalog_success_map
 from scripts.diagnostics.sessions import run_session
 from scripts.diagnostics.vnci import DpuClient, NativeDpu, UNDEF, discover, module_device, require_matching_firmware, run_monitor, vendor_root, verify_vendor_files
+from scripts.diagnostics.vnci import Event, U32
 
 ID = "vnci:10001"
 MODULE = {"type": 14, "handle": 123, "status": 0x8063,
@@ -76,6 +78,73 @@ def configured(native=None):
 
 
 class VnciTests(unittest.TestCase):
+    def test_native_event_empty_queue_before_close_and_rejection_after_close(self):
+        native = NativeDpu.__new__(NativeDpu)
+        native.module, native.link = 0, 0
+        native.online, native.constructed = False, True
+        native._directory = Mock()
+        native.dll = Mock()
+        native.dll.PDUGetEventItem.return_value = 0x71
+        native.dll.PDUModuleDisconnect.return_value = 0
+        native.dll.PDUDestroyComLogicalLink.return_value = 0
+        native.dll.PDUDestruct.return_value = 0
+        self.assertIsNone(native.event())
+        native.dll.PDUGetEventItem.assert_called_once()
+        self.assertEqual(native.dll.PDUGetEventItem.call_args.args[:2], (0, 0))
+        report = native.close()
+        self.assertEqual(report['errors'], [])
+        calls = list(native.dll.mock_calls)
+        with self.assertRaisesRegex(ElmError, '^d-pdu:adapter-closed$'): native.event()
+        with self.assertRaisesRegex(ElmError, '^d-pdu:adapter-closed$'): native.call('PDUConstruct', None, None)
+        self.assertEqual(native.dll.mock_calls, calls)
+        self.assertEqual(native.close(), report)
+        self.assertEqual(native.dll.mock_calls, calls)
+        native._directory.close.assert_called_once()
+
+    def test_failed_native_close_rejects_events_and_preserves_first_error(self):
+        for failure in ('PDUModuleDisconnect', 'PDUDestruct', 'directory-close'):
+            with self.subTest(failure=failure):
+                native = NativeDpu.__new__(NativeDpu)
+                native.module, native.link = 123, None
+                native.online, native.constructed = False, True
+                native._directory = Mock()
+                native.dll = Mock()
+                native.dll.PDUModuleDisconnect.return_value = 0x60 if failure == 'PDUModuleDisconnect' else 0
+                native.dll.PDUDestruct.return_value = 0x60 if failure == 'PDUDestruct' else 0
+                if failure == 'directory-close': native._directory.close.side_effect = OSError('SYNTHETIC close failed')
+                report = native.close()
+                self.assertTrue(report['errors'])
+                calls = list(native.dll.mock_calls)
+                with self.assertRaisesRegex(ElmError, '^d-pdu:adapter-closed$'): native.event()
+                self.assertEqual(native.dll.mock_calls, calls)
+                copy = native.close(); copy['errors'].clear()
+                self.assertEqual(native.close(), report)
+                native._directory.close.assert_called_once()
+
+    def test_closed_native_event_does_not_access_driver_or_handles(self):
+        native = NativeDpu.__new__(NativeDpu)
+        native._close_report = {'errors': []}
+        # A completed-close guard precedes all ctypes setup and DLL/handle access.
+        with self.assertRaisesRegex(ElmError, '^d-pdu:adapter-closed$'): native.event()
+
+    def test_open_native_status_event_still_destroys_its_owned_item(self):
+        native = NativeDpu.__new__(NativeDpu)
+        native.module, native.link = 123, 456
+        value = U32(0x8013)
+        event = Event()
+        event.type, event.cop, event.timestamp = 0x1301, 99, 1000
+        event.data = c.cast(c.pointer(value), c.c_void_p)
+        def receive(module, link, pointer):
+            self.assertEqual((module, link), (123, 456))
+            c.cast(pointer, c.POINTER(c.POINTER(Event)))[0] = c.pointer(event)
+            return 0
+        native.dll = Mock()
+        native.dll.PDUGetEventItem.side_effect = receive
+        native.dll.PDUDestroyItem.return_value = 0
+        self.assertEqual(native.event(), {'type': 0x1301, 'cop': 99, 'timestamp': 1000, 'value': 0x8013})
+        native.dll.PDUGetEventItem.assert_called_once()
+        native.dll.PDUDestroyItem.assert_called_once()
+
     def test_logical_link_release_retains_module_and_preserves_cleanup_failure(self):
         for failure in (None, 'PDUDisconnect', 'PDUDestroyComLogicalLink'):
             with self.subTest(failure=failure):

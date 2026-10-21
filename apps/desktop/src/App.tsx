@@ -43,8 +43,16 @@ function isXrayTuneHash(hash = window.location.hash): boolean {
 export function App() {
   const [xrayTuneOnly] = useState(() => isXrayTuneHash());
   const [tab, setTab] = useState<Tab>("parts");
+  const [obdVisited, setObdVisited] = useState(false);
+  const [codingDirty, setCodingDirty] = useState(false);
+  const [codingDiscardVersion, setCodingDiscardVersion] = useState(0);
+  const [pendingTab, setPendingTab] = useState<Tab | null>(null);
   const [locatorFocus, setLocatorFocus] = useState<LocatorFocus | null>(null);
   const [bridgeStatus, setBridgeStatus] = useState<BridgeStatus | null>(null);
+
+  useEffect(() => {
+    void window.porsche981?.setCodingDraftDirty?.(codingDirty);
+  }, [codingDirty]);
 
   useEffect(() => {
     const api = window.porsche981;
@@ -61,6 +69,8 @@ export function App() {
   }, []);
 
   function goToTab(id: Tab) {
+    if (tab === "obd" && id !== "obd" && codingDirty) { setPendingTab(id); return; }
+    if (id === "obd") setObdVisited(true);
     if (id !== "locator") setLocatorFocus(null);
     setTab(id);
   }
@@ -111,6 +121,13 @@ export function App() {
         ))}
       </nav>
       <main className="content">
+        {pendingTab && <section className="panel" role="alert" data-testid="coding-app-leave-review"><p>尚有未写入的调整，离开设码页会丢弃这些调整。</p>
+          <button type="button" onClick={() => setPendingTab(null)}>继续修改</button>
+          <button type="button" onClick={() => {
+            setCodingDirty(false); setCodingDiscardVersion(v => v + 1);
+            setTab(pendingTab); if (pendingTab !== "locator") setLocatorFocus(null); setPendingTab(null);
+          }}>丢弃后离开</button>
+        </section>}
         {banner && (
           <div
             className={
@@ -125,7 +142,9 @@ export function App() {
         )}
         {tab === "parts" && <PartsBrowserPage />}
         {tab === "maintenance" && <GaragePage />}
-        {tab === "obd" && <ObdPage />}
+        <div hidden={tab !== "obd"}>
+          {obdVisited && <ObdPage active={tab === "obd"} onCodingDraftChange={setCodingDirty} codingDiscardVersion={codingDiscardVersion} />}
+        </div>
         {tab === "settings" && <VehicleSettingsPage />}
         {tab === "locator" && (
           <LocatorPage

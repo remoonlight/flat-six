@@ -211,6 +211,15 @@ class PreparationTests(unittest.TestCase):
         self.assertIsNone(resolve_dynamic_name(name.replace('Num=2', 'Num=1'), values.get)[0])
         self.assertIsNone(resolve_dynamic_name(name, lambda _: None)[0])
 
+    def test_dynamic_name_valid_empty_component_is_not_missing_text(self):
+        name='SubIndexNum=2#0xF0,0x01,0x08,0x24#0xF0,0x01,0x47,0xB3'
+        values={0xF0010824:'',0xF00147B3:'当前使用的遥控器，ID'}
+        text,refs=resolve_dynamic_name(name,values.get)
+        self.assertEqual(text,'当前使用的遥控器，ID')
+        self.assertEqual(refs,[0xF0010824,0xF00147B3])
+        self.assertIsNone(resolve_dynamic_name(name,{0xF00147B3:'当前使用的遥控器，ID'}.get)[0])
+        self.assertEqual(resolve_dynamic_name(name,lambda _:'')[0],'')
+
     def test_api_wrong_unit_generation_hash_and_missing(self):
         with tempfile.TemporaryDirectory() as t:
             root = Path(t); self.assertFalse(handle_ready({'action': 'ready-units'}, root)['present'])

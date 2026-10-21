@@ -2,7 +2,7 @@
  * Bounded OBD connection IPC: persistent ATRV monitor + list/select/disconnect.
  * Renderer never supplies a COM path. Live sessions read selected identity from here.
  */
-import { createCanFrameBatch, createCanPcapWriter } from "./internal-can-data.mjs";
+import { createCanFrameBatch, createCanPcapWriter, loadInternalSignals } from "./internal-can-data.mjs";
 import { randomUUID } from "node:crypto";
 import { spawn } from "node:child_process";
 import fs from "node:fs";
@@ -13,6 +13,9 @@ import { resolvePythonCandidates } from "./offline-diagnostics.mjs";
 import { liveBlocked, validateSessionRequest } from "./read-only-session.mjs";
 import {
   ATRV_INTERVAL_MS,
+  ELM_DEFAULT_BAUDS,
+  validSerialBaud,
+  supportsSerialBaud,
   MONITOR_GRACEFUL_MS,
   MONITOR_HANDSHAKE_MS,
   MONITOR_KILL_WAIT_MS,
@@ -25,6 +28,9 @@ import {
   nextRetryDelayMs,
   parseVoltageVolts,
   voltageFresh,
+  tcpEndpointId,
+  parseTcpDeviceId,
+  validObdDeviceId,
 } from "../src/obd-connection-logic.mjs";
 
 export const CONNECTION_CHANNEL = "diagnostics:connection";
@@ -38,9 +44,8 @@ export {
   parseVoltageVolts,
 };
 
-const ACTIONS = new Set(["list", "select", "configure", "connect", "voltage", "disconnect", "clear", "status", "record-start", "record-stop", "new-batch", "save-result"]);
-const DEVICE_RE = /^(?:bt:[0-9A-F]{12}|usb:[0-9a-f]{64}|(?:vnci|pt3g):[0-9]{1,16})$/;
-const MODELS = new Set(["vLinker", "OBDLink MX+", "ELM327", "OBDKey", "OBDLink", "VNCI", "PT3G"]);
+const ACTIONS = new Set(["list", "select", "configure", "configure-network", "configure-serial", "connect", "voltage", "disconnect", "clear", "status", "record-start", "record-stop", "new-batch", "receive-stop", "save-result"]);
+const MODELS = new Set(["vLinker", "OBDLink MX+", "ELM327", "OBDKey", "OBDLink", "CANtieCAR", "VNCI", "PT3G"]);
 
 function vnciAdapterInfo(value, deviceId, observedAt) {
   if (!value || typeof value !== "object" || Array.isArray(value)
@@ -71,13 +76,15 @@ export function validateConnectionRequest(req) {
   if (!isPlain(req)) return fail("malformed_request");
   if (!ACTIONS.has(req.action)) return fail("invalid_action");
   const allowed =
+    req.action === "configure-network" ? ["action", "host", "port"] :
+    req.action === "configure-serial" ? ["action", "serialBaud"] :
     req.action === "configure" ? ["action", "purpose", "canNetwork"] :
     req.action === "select" || req.action === "connect" || req.action === "voltage"
       ? ["action", "deviceId", "model"]
       : ["action"];
   const extra = Object.keys(req).filter((k) => !allowed.includes(k));
   if (extra.length) return fail("forbidden_field", { fields: extra });
-  if (req.deviceId != null && (typeof req.deviceId !== "string" || !DEVICE_RE.test(req.deviceId))) {
+  if (req.deviceId != null && !validObdDeviceId(req.deviceId)) {
     return fail("malformed_device_id");
   }
   if (req.model != null && (typeof req.model !== "string" || !MODELS.has(req.model))) {
@@ -85,7 +92,9 @@ export function validateConnectionRequest(req) {
   }
   if (req.purpose != null && !["diagnostic", "internal"].includes(req.purpose)) return fail("invalid_purpose");
   if (req.canNetwork != null && !["drive", "chassis", "comfort", "crash", "adas"].includes(req.canNetwork)) return fail("invalid_can_network");
+  if (req.action === "configure-serial" && !validSerialBaud(req.serialBaud)) return fail("serial_baud_invalid");
   if (req.action === "configure" && req.purpose == null && req.canNetwork == null) return fail("missing_settings");
+  if (req.action === "configure-network" && !(req.host === null && req.port === null) && !tcpEndpointId(req.host, req.port)) return fail("invalid_network_endpoint");
   try {
     if (Buffer.byteLength(JSON.stringify(req), "utf8") > MAX_JSON) return fail("request_too_large");
   } catch {
@@ -100,14 +109,14 @@ function persistPath(repoRoot, env) {
 }
 
 function loadState(file) {
-  const defaults = { deviceId: null, model: null, purpose: "diagnostic", canNetwork: null };
+  const defaults = { deviceId: null, model: null, purpose: "diagnostic", canNetwork: null, networkDeviceId: null, serialBaud: null };
   try {
     const raw = JSON.parse(fs.readFileSync(file, "utf8"));
     if (!isPlain(raw)) return defaults;
-    const deviceId = typeof raw.deviceId === "string" && DEVICE_RE.test(raw.deviceId) ? raw.deviceId : null;
-    const model = MODELS.has(raw.model) ? raw.model : null;
-    return { deviceId, model, purpose: raw.purpose === "internal" ? "internal" : "diagnostic",
-      canNetwork: ["drive", "chassis", "comfort", "crash", "adas"].includes(raw.canNetwork) ? raw.canNetwork : null };
+    // A new application session requires a fresh manual device selection and
+    // starts in diagnostic mode. Historical settings never select/open a head.
+    // Retain the developer endpoint definition without selecting it.
+    return { ...defaults, networkDeviceId: parseTcpDeviceId(raw.networkDeviceId) ? raw.networkDeviceId : null };
   } catch {
     return defaults;
   }
@@ -259,7 +268,14 @@ export function createObdConnectionManager(opts) {
   let stopSession = null;
   let monitorStarts = 0, omittedMonitorEvents = 0;
   const monitorEvents = [];
-  let frameBatch = createCanFrameBatch();
+  function makeFrameBatch(startElapsedMs) {
+    try {
+      const signals = selected.purpose === "internal" ? (opts.internalSignals
+        ? opts.internalSignals(selected.canNetwork) : loadInternalSignals(opts.repoRoot, selected.canNetwork)) : [];
+      return createCanFrameBatch({ signals, elapsedNow, startElapsedMs });
+    } catch { return createCanFrameBatch({ elapsedNow, startElapsedMs, signalDefinitionError: true }); }
+  }
+  let frameBatch = makeFrameBatch();
   let receiveBatch = null;
   let recorder = null;
   let recordingGaps = [], omittedRecordingGaps = 0;
@@ -326,13 +342,16 @@ export function createObdConnectionManager(opts) {
       ok: true,
       ...FLAGS,
       selectedDeviceId: selected.deviceId,
+      networkEndpoint: parseTcpDeviceId(selected.networkDeviceId),
       model: selected.model,
+      serialBaud: selected.serialBaud,
+      effectiveSerialBaud: supportsSerialBaud(selected.deviceId, selected.model) ? selected.serialBaud ?? ELM_DEFAULT_BAUDS[selected.model] : null,
       purpose: selected.purpose,
       canNetwork: selected.canNetwork,
       internal: selected.purpose === "internal" ? { ...frameBatch.view(), receiveBatchId: receiveBatch?.id,
         receiveState: receiveBatch?.state || "idle" } : null,
       recording: recorder ? { active: true, file: recorder.file, startedAt: recorder.startedAt, frameCount: recorder.count } : recordingResult,
-      internalSupported: selected.model === "OBDLink MX+" && selected.canNetwork === "drive",
+      internalSupported: selected.model === "OBDLink MX+" && selected.canNetwork === "drive" && selected.deviceId?.startsWith("bt:") === true,
 
       connected,
       linkState: state,
@@ -356,12 +375,13 @@ export function createObdConnectionManager(opts) {
     saveState(file, selected);
   }
 
-  function enqueue(fn, allowBusy = false) {
+  function enqueue(fn, allowBusy = false, allowReceive = false) {
     pendingMutations += 1;
     const execute = async () => {
       try {
         if (stopped) return fail("connection_closed");
         if (sessionBusy() && !allowBusy) return fail("busy");
+        if (receiveBatch && receiveBatch.state !== "standby" && !allowReceive) return fail("busy");
         return await fn();
       } finally {
         pendingMutations -= 1;
@@ -406,8 +426,10 @@ export function createObdConnectionManager(opts) {
         : envIn.PORSCHE981_CONNECTION_FIXTURE
           ? JSON.parse(fs.readFileSync(envIn.PORSCHE981_CONNECTION_FIXTURE, "utf8"))
           : await spawnPython(spawnOpts, ["-m", "scripts.diagnostics.connection"], JSON.stringify({ action: "list" }) + "\n", LIST_TIMEOUT_MS);
-      const observed = Array.isArray(doc.devices) ? doc.devices.filter((d) => d && DEVICE_RE.test(d.id) &&
-        d.available === true && (MODELS.has(d.brand) || d.brand === "unresolved")) : [];
+      const observed = Array.isArray(doc.devices) ? doc.devices.filter((d) => d && validObdDeviceId(d.id) &&
+        !d.id.startsWith("tcp:") && d.available === true && (MODELS.has(d.brand) || d.brand === "unresolved")) : [];
+      if (selected.networkDeviceId) observed.push({ id: selected.networkDeviceId, brand: "unresolved", name: selected.networkDeviceId.slice(4),
+        available: true, paired: false, transport: "tcp", guidance: "已配置网络地址，连接后才核对诊断头；请手选实际型号。" });
       const devices = observed.filter((d) => doc.host?.drivers?.[d.brand]?.supportFilesQualified !== false);
       lastList = { devices, errors: Array.isArray(doc.errors) ? doc.errors : doc.error ? [doc.error] : [] };
       const registered = buildDeviceRegistry({ devices: observed, host: doc.host || {}, known: knownDevices });
@@ -420,6 +442,10 @@ export function createObdConnectionManager(opts) {
       if (!devices.some((d) => d.id === selected.deviceId && d.available) && !wantConnected) {
         connected = false;
         clearReading();
+        if (selected.deviceId) {
+          selected = { ...selected, deviceId: null, model: null, serialBaud: null, purpose: "diagnostic", canNetwork: null };
+          persist();
+        }
       }
       return snapshot({ ok: true });
     } catch {
@@ -519,6 +545,18 @@ export function createObdConnectionManager(opts) {
 
   function scheduleRetry(error) {
     if (stopped || !wantConnected || pausedForSession) return;
+    if (selected.purpose === "diagnostic" || !receiveBatch || receiveBatch.state === "standby") {
+      // An idle diagnostic connection waits for an explicit Retry/Terminate
+      // choice. Task recovery and active internal reception have separate rules.
+      cancelRetry();
+      wantConnected = false;
+      connected = false;
+      clearReading();
+      lastFatal = error;
+      linkState = "retry-required";
+      monitorEvent("retry-required", { reason: String(error).slice(0, 160) });
+      return;
+    }
     if (!isTransportFault(error)) {
       wantConnected = false;
       connected = false;
@@ -540,14 +578,14 @@ export function createObdConnectionManager(opts) {
     }, delay);
   }
 
-  function endReceiveBatch() {
+  function endReceiveBatch(reason = "time-limit") {
     if (!receiveBatch || ["stopping", "standby"].includes(receiveBatch.state)) return;
     clearReceiveTimer(receiveBatch.timer);
     receiveBatch.state = monitorChild ? "stopping" : "standby";
-    frameBatch.stop("time-limit");
-    finishRecording("time-limit");
+    frameBatch.stop(reason);
+    finishRecording(reason);
     if (monitorChild) {
-      try { monitorChild.stdin.write(JSON.stringify({ action: "receive-stop", receiveBatchId: receiveBatch.id }) + "\n"); }
+      try { monitorChild.stdin.write(JSON.stringify({ action: "receive-stop", receiveBatchId: receiveBatch.id, reason }) + "\n"); }
       catch { lastFatal = "stdin_closed"; try { terminateMonitor(monitorChild); } catch { /* ownership retained */ } }
     }
   }
@@ -558,8 +596,9 @@ export function createObdConnectionManager(opts) {
 
   function startReceiveBatch(sendControl = false) {
     if (receiveBatch) clearReceiveTimer(receiveBatch.timer);
-    frameBatch = createCanFrameBatch();
-    const batch = { id: randomUUID(), deadline: elapsedNow() + RECORDING_DURATION_MS, state: "starting" };
+    const started = elapsedNow();
+    frameBatch = makeFrameBatch(started);
+    const batch = { id: randomUUID(), deadline: started + RECORDING_DURATION_MS, state: "starting" };
     receiveBatch = batch;
     const arm = () => {
       batch.timer = setReceiveTimer(() => {
@@ -592,8 +631,8 @@ export function createObdConnectionManager(opts) {
     expireReceiveBatch();
     if (selected.purpose === "internal" && receiveBatch && doc?.receiveBatchId === receiveBatch.id && doc?.simulation === false
         && doc.deviceId === selected.deviceId && doc.canNetwork === selected.canNetwork) {
-      if (doc.receiveState === "standby" && doc.receiveReason === "time-limit") {
-        endReceiveBatch(); receiveBatch.state = "standby";
+      if (doc.receiveState === "standby" && ["time-limit", "user-stopped"].includes(doc.receiveReason)) {
+        endReceiveBatch(doc.receiveReason); receiveBatch.state = "standby";
       } else if (doc.receiveState === "receiving" && receiveBatch.state === "starting") receiveBatch.state = "receiving";
     }
     if (doc?.type === "frames") {
@@ -729,9 +768,12 @@ export function createObdConnectionManager(opts) {
         monitorEvent("native-release-unverified", { generation: gen, code: code ?? null });
         return;
       }
+      // A verified process release also proves an explicit stop is complete,
+      // even if the final standby heartbeat was lost. Never revive that batch.
+      if (gen === ingestGen && selected.purpose === "internal" && receiveBatch?.state === "stopping") receiveBatch.state = "standby";
       // A failed operation may exit 1 after successfully releasing the head.
-      // Show the error in idle rather than clearing it as a normal disconnect.
-      if (child._reportedFailure && !wantConnected) linkState = "idle";
+      // Preserve the failure and the diagnostic Retry/Terminate choice.
+      if (child._reportedFailure && !wantConnected) linkState = selected.purpose === "diagnostic" ? "retry-required" : "idle";
       if (stopped || pausedForSession) return;
       if (gen !== ingestGen) return;
       if (selected.purpose === "internal") {
@@ -745,9 +787,9 @@ export function createObdConnectionManager(opts) {
       if (wantConnected) scheduleRetry(lastFatal || "port-io");
     });
     try {
-      child.stdin.write(JSON.stringify({ action: "monitor", deviceId: id, adapterModel: selected.model, purpose: selected.purpose, canNetwork: selected.canNetwork,
-        ...(selected.purpose === "internal" ? { receiveBatchId: receiveBatch.id,
-          receiveMilliseconds: Math.max(0, Math.floor(receiveBatch.deadline - elapsedNow())) } : {}) }) + "\n", "utf8");
+      child.stdin.write(JSON.stringify({ action: "monitor", deviceId: id, adapterModel: selected.model, ...(selected.serialBaud == null ? {} : { serialBaud: selected.serialBaud }), purpose: selected.purpose, canNetwork: selected.canNetwork,
+        ...(selected.purpose === "internal" ? { receiveBatchId: receiveBatch?.id || `idle-${randomUUID()}`,
+          receiveMilliseconds: receiveBatch && !["stopping", "standby"].includes(receiveBatch.state) ? Math.max(0, Math.floor(receiveBatch.deadline - elapsedNow())) : 0 } : {}) }) + "\n", "utf8");
       expireReceiveBatch();
     } catch {
       lastFatal = "stdin_closed";
@@ -828,13 +870,15 @@ export function createObdConnectionManager(opts) {
     if (!lastList.devices.some((d) => d.id === id && d.available)) return fail("device_port_unavailable", snapshot({ ok: false }));
     if (selected.purpose === "internal") {
       if (!selected.canNetwork) return fail("can_network_required", snapshot({ ok: false }));
-      if ((model || selected.model) !== "OBDLink MX+" || selected.canNetwork !== "drive") return fail("internal_profile_not_qualified", snapshot({ ok: false }));
-      if (!receiveBatch || !wantConnected) startReceiveBatch();
+      if (!id.startsWith("bt:") || (model || selected.model) !== "OBDLink MX+" || selected.canNetwork !== "drive") return fail("internal_profile_not_qualified", snapshot({ ok: false }));
     }
     const resolvedModel = model || selected.model;
+    if (resolvedModel === "CANtieCAR" || selected.model === "CANtieCAR" || lastList.devices.some(d => d.id === id && d.brand === "CANtieCAR"))
+      return fail("adapter-mode-not-qualified", snapshot({ ok: false }));
+    if (id.startsWith("tcp:") && ["VNCI", "PT3G"].includes(resolvedModel)) return fail("adapter_model_mismatch", snapshot({ ok: false }));
     if (!MODELS.has(resolvedModel)) return fail("device_model_required");
     if (model && model !== selected.model && (monitorChild || wantConnected)) return fail("disconnect_before_configure", snapshot({ ok: false }));
-    selected = { ...selected, deviceId: id, model: resolvedModel };
+    selected = { ...selected, deviceId: id, model: resolvedModel, serialBaud: resolvedModel === selected.model ? selected.serialBaud : null };
     persist();
     wantConnected = true;
     retryFails = 0;
@@ -907,21 +951,28 @@ export function createObdConnectionManager(opts) {
     if (recorder && elapsedNow() >= recordingDeadline) finishRecording("time-limit");
   }
 
-  async function dataAction(action) {
+  async function dataAction(action, owner) {
     expireReceiveBatch();
     expireRecording();
     if (action === "record-stop") { finishRecording("user-stopped"); return snapshot(); }
     if (selected.purpose !== "internal") return fail("physical_frames_unavailable", snapshot({ ok: false }));
+    if (action === "receive-stop") { endReceiveBatch("user-stopped"); return snapshot(); }
     if (action === "new-batch") {
+      if (receiveBatch && receiveBatch.state !== "standby") return fail("internal_receive_busy", snapshot({ ok: false }));
       if (!connected || !monitorChild) return fail("not_connected", snapshot({ ok: false }));
       try { startReceiveBatch(true); } catch { return fail("stdin_closed", snapshot({ ok: false })); }
       return snapshot();
     }
     if (action === "save-result") {
+      if (receiveBatch && receiveBatch.state !== "standby") return fail("internal_receive_busy", snapshot({ ok: false }));
       if (!frameBatch.view().retainedFrames) return fail("no_received_frames");
       if (!opts.saveResult) return fail("save_dialog_unavailable");
-      const saved = await opts.saveResult({ ...frameBatch.export({ stream: true }), deviceId: selected.deviceId, canNetwork: selected.canNetwork });
-      return snapshot({ saved });
+      try {
+        const recording = frameBatch.view().verifiedSignalCount
+          ? frameBatch.exportParameters(selected.canNetwork) : { ...frameBatch.export({ stream: true }), deviceId: selected.deviceId, canNetwork: selected.canNetwork };
+        const saved = await opts.saveResult(recording, owner);
+        return snapshot({ saved });
+      } catch (error) { return snapshot({ saved: { ok: false, saved: false, error: error.code || error.message || "parameter_recording_save_failed" } }); }
     }
     if (!connected || !monitorChild) return fail("not_connected", snapshot({ ok: false }));
     if (recorder) return fail("already_recording", snapshot({ ok: false }));
@@ -970,7 +1021,7 @@ export function createObdConnectionManager(opts) {
     linkState = "idle";
     lastFatal = null;
     if (clearSelection) {
-      selected = { ...selected, deviceId: null, model: null };
+      selected = { ...selected, deviceId: null, model: null, serialBaud: null };
       persist();
     }
     return snapshot();
@@ -981,7 +1032,9 @@ export function createObdConnectionManager(opts) {
     if (!request.deviceId) return fail("malformed_device_id");
     const hit = lastList.devices.find((d) => d.id === request.deviceId);
     if (!hit) return fail("unknown_device");
+    if (request.deviceId.startsWith("tcp:") && ["VNCI", "PT3G"].includes(request.model)) return fail("adapter_model_mismatch");
     if (request.model && MODELS.has(hit.brand) && request.model !== hit.brand) return fail("adapter_model_mismatch");
+    const switchingHead = Boolean(selected.deviceId && request.deviceId !== selected.deviceId);
     if (!hit.available) {
       cancelRetry();
       wantConnected = false;
@@ -989,39 +1042,57 @@ export function createObdConnectionManager(opts) {
       clearReading();
       const result = await stopMonitorProcess();
       if (!result.ok) return fail(result.error, snapshot({ ok: false }));
-      selected = { ...selected, deviceId: request.deviceId, model: modelForSelection(request, hit) };
+      selected = { ...selected, deviceId: request.deviceId, model: modelForSelection(request, hit),
+        serialBaud: request.deviceId === selected.deviceId && modelForSelection(request, hit) === selected.model ? selected.serialBaud : null };
       persist();
       return fail("device_port_unavailable", snapshot({ ok: false }));
     }
     if (request.deviceId !== selected.deviceId || modelForSelection(request, hit) !== selected.model) {
       const result = await userStop(false);
       if (!result.ok) return fail(result.error, snapshot({ ok: false }));
-      frameBatch = createCanFrameBatch();
+      frameBatch = makeFrameBatch(); receiveBatch = null;
       recordingResult = null;
     }
-    selected = { ...selected, deviceId: request.deviceId, model: modelForSelection(request, hit) };
+    selected = { ...selected, deviceId: request.deviceId, model: modelForSelection(request, hit),
+        ...(switchingHead ? { purpose: "diagnostic", canNetwork: null } : {}),
+        serialBaud: request.deviceId === selected.deviceId && modelForSelection(request, hit) === selected.model ? selected.serialBaud : null };
     persist();
     return snapshot();
   }
 
-  async function handle(request) {
+  async function handle(request, owner) {
     const bad = validateConnectionRequest(request);
     if (bad) return bad;
     if (stopped) return fail("connection_closed");
     if (request.action === "list") return enqueue(() => listDevices());
     if (request.action === "status") return snapshot();
+    if (request.action === "configure-network") return enqueue(async () => {
+      if (wantConnected || monitorChild || gate.owner()) return fail("disconnect_before_configure", snapshot({ ok: false }));
+      const id = request.host === null ? null : tcpEndpointId(request.host, request.port);
+      if (selected.deviceId?.startsWith("tcp:")) selected = { ...selected, deviceId: null, model: null, serialBaud: null };
+      selected = { ...selected, networkDeviceId: id };
+      persist();
+      return listDevices();
+    });
+    if (request.action === "configure-serial") return enqueue(async () => {
+      if (wantConnected || monitorChild || gate.owner()) return fail("disconnect_before_configure", snapshot({ ok: false }));
+      if (!supportsSerialBaud(selected.deviceId, selected.model)) return fail("serial_baud_transport_mismatch", snapshot({ ok: false }));
+      selected = { ...selected, serialBaud: request.serialBaud };
+      persist();
+      return snapshot();
+    });
     if (request.action === "voltage") {
       if (!connected) return fail("not_connected", snapshot({ ok: false }));
       return snapshot();
     }
-    if (request.action === "disconnect") return enqueue(() => userStop(false), true);
+    if (request.action === "disconnect") return enqueue(() => userStop(false));
     if (sessionBusy()) return fail("busy");
-    if (["record-start", "record-stop", "new-batch", "save-result"].includes(request.action)) return enqueue(() => dataAction(request.action));
+    if (["record-start", "record-stop", "new-batch", "receive-stop", "save-result"].includes(request.action)) return enqueue(() => dataAction(request.action, owner), false, true);
     if (request.action === "configure") return enqueue(async () => {
       if (wantConnected || monitorChild || gate.owner()) return fail("disconnect_before_configure", snapshot({ ok: false }));
       selected = { ...selected, ...(request.purpose ? { purpose: request.purpose } : {}),
         ...(request.canNetwork ? { canNetwork: request.canNetwork } : {}) };
-      frameBatch = createCanFrameBatch();
+      frameBatch = makeFrameBatch(); receiveBatch = null;
       persist();
       return snapshot();
     });
@@ -1081,6 +1152,7 @@ export function attachSessionHandoff(conn, sessionMgr, hooks = {}) {
       if (conn.snapshot().purpose !== "diagnostic") return fail("diagnostic_purpose_required");
       if (!conn.selectedId()) return fail("device_not_selected");
       if (conn.selectedId().startsWith("pt3g:")) return fail("pt3g-vehicle-transport-not-qualified");
+      if (conn.selectedId().startsWith("tcp:") && request.sessionTask === "clear") return fail("adapter-clear-not-qualified");
     }
     if (!conn.reserveDispatch()) return fail("busy");
     const engineRequestedAt = sessionMgr.requestTime?.();

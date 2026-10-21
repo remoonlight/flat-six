@@ -53,15 +53,30 @@ class RoutineBufferTests(unittest.TestCase):
                   record(4, 0x2003, 0x1122), record(6, 0xABCD3204, 0x3344)]
         case = routine_buffer_candidates(source)['cases'][2]
         self.assertEqual([b['internalBufferHex'] for b in case['buffers']],
-                         ['06042faabb01', '06043102ccdd', '050322eeff', '0503202203', '060432043344'])
+                         ['050322eeff', '06043102ccdd', '06042faabb01', '0503202203', '060432043344'])
 
     def test_act_aliases_share_last_output_and_index_only_tags(self):
         case = routine_buffer_candidates([record(1), record(0x10, 0x2102, 3), record(5, None),
                                           record(7, None), record(4), record(8, 0x2204, 5)])['cases'][2]
-        self.assertEqual(case['buffers'][2]['sourceRecordIndex'], 1)
+        self.assertEqual(case['buffers'][0]['sourceRecordIndex'], 1)
         self.assertEqual(case['buffers'][3]['sourceRecordIndex'], 5)
         self.assertEqual(case['recordIndexSlots'][-1]['sourceRecordIndex'], 3)
-        self.assertEqual(case['buffers'][0]['status'], 'native-buffer-not-written-by-builder')
+        self.assertEqual(case['buffers'][2]['status'], 'native-buffer-not-written-by-builder')
+
+    def test_act_mode_one_reader_fixture_uses_same_output_and_index_order(self):
+        # Original LINK 0x1166d2 TBB: tags 1/0x10 -> r1, 2/0x20 -> r2,
+        # 3 -> r3. Retained leaf 3604389 has tag 2, tag 1, then tag 0x41.
+        source = [record(2, 0x2F00, 0x0301), record(1, 0x2F03, 0x0301),
+                  record(0x41, 0x2F03, 0x0301)]
+        case = routine_buffer_candidates(source)['cases'][2]
+        self.assertEqual([b['internalBufferHex'] for b in case['buffers']],
+                         ['06042f030103', '06042f030100', None, None, None])
+        self.assertEqual([b['sourceRecordIndex'] for b in case['buffers']],
+                         [1, 0, None, None, None])
+        self.assertEqual([s['sourceRecordIndex'] for s in case['recordIndexSlots']],
+                         [1, 0, None, None, None, None])
+        self.assertTrue(all(not routine_buffer_candidates(source)[key] for key in
+                           ('recipeQualified', 'executionEnabled', 'liveVerified', 'wirePayloadQualified')))
 
     def test_all_act_output_unknown_words_stay_unresolved(self):
         case = routine_buffer_candidates([record(tag, None) for tag in (3, 2, 1, 4, 6)])['cases'][2]

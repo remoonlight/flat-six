@@ -28,13 +28,13 @@ function copy(relative) {
     return true;
   } });
 }
-for (const relative of ["scripts/windows-runtime-accept.mjs", "scripts/windows-runtime-source.mjs", "scripts/laptop-accept-inputs.mjs",
+for (const relative of ["scripts/windows-runtime-accept.mjs", "scripts/windows-runtime-source.mjs", "scripts/laptop-accept-inputs.mjs", "scripts/obd-unidentified-ui-check.mjs",
   "apps/desktop/electron/installed-entry.mjs", "apps/desktop/electron/offline-diagnostics.mjs"]) copy(relative);
 for (const { name } of packages) copy("node_modules/" + name);
 // ASCII/CRLF launcher works with quoted program/ZIP paths, including spaces.
 fs.writeFileSync(path.join(output, "accept-laptop.cmd"), fs.readFileSync(path.join(root, "scripts/accept-laptop.cmd"), "utf8").replace(/\r?\n/g, "\r\n"));
 fs.writeFileSync(path.join(output, "package.json"), JSON.stringify({ name: "flat-six-laptop-acceptance", private: true, type: "module" }) + "\n");
-fs.writeFileSync(path.join(output, "README.md"), `# Windows 笔记本独立软件验收\n\n将本工具包、当前程序与匹配资料ZIP分别复制到最终Windows笔记本。无需开发仓库、npm安装、系统Node/Python或浏览器下载，使用程序内置Node和现有Electron。先运行：\n\n\`\`\`bat\naccept-laptop.cmd "D:\\Flat Six" "D:\\definitions-live-current.zip" --check-only\naccept-laptop.cmd "D:\\Flat Six" "D:\\definitions-live-current.zip"\n\`\`\`\n\n第一条仅校验文件、安装入口和绑定，不证明Windows程序已启动或资料已导入。第二条从FlatSix.exe实际启动，清除开发PATH/诊断环境，用新的隔离用户目录检验SQLite、内置运行时、资料导入、标准/厂商演练、停止/保存及设码/恢复演练；默认总时限五分钟。结果写入本工具包的.local/installed-ui-*，保留result.json及失败输出。连接列表是空夹具且禁止车辆传输；软件通过不代表诊断头、实际车辆、十分钟耐久或写入资格。此工具不加载设备DLL、不连接PIWIS主机，不更改正常应用用户资料。\n\n程序清单SHA-256：${inputs.deliveryManifestSha256}\n\n资料ZIP SHA-256：${inputs.definitionZipSha256}\n\n本工具绑定上述两份交付；任一变化需重新生成工具包，不能使用旧绑定静默回退。Playwright/Playwright-core ${packages[0].metadata.version}来自项目已安装依赖，Apache-2.0许可证及通知保留在对应node_modules目录。\n`);
+fs.writeFileSync(path.join(output, "README.md"), `# Windows 笔记本独立软件验收\n\n将本工具包、当前程序与匹配资料ZIP分别复制到最终Windows笔记本。无需开发仓库、npm安装、系统Node/Python或浏览器下载，使用程序内置Node和现有Electron。先运行：\n\n\`\`\`bat\naccept-laptop.cmd "D:\\Flat Six" "D:\\definitions-live-current.zip" --check-only\naccept-laptop.cmd "D:\\Flat Six" "D:\\definitions-live-current.zip"\n\`\`\`\n\n第一条仅校验文件、安装入口和绑定，不证明Windows程序已启动或资料已导入。第二条从FlatSix.exe实际启动，清除开发PATH/诊断环境，用新的隔离用户目录检验SQLite、内置运行时、资料导入、标准模拟、后台厂商演练、停止/桌面参数PCAPNG保存及设码/恢复演练（不恢复已移除的日常演练按钮）；默认总时限五分钟。结果写入本工具包的.local/installed-ui-*，保留result.json及失败输出。连接列表是空夹具且禁止车辆传输；软件通过不代表诊断头、实际车辆、十分钟耐久或写入资格。此工具不加载设备DLL、不连接PIWIS主机，不更改正常应用用户资料。\n\n程序清单SHA-256：${inputs.deliveryManifestSha256}\n\n资料ZIP SHA-256：${inputs.definitionZipSha256}\n\n本工具绑定上述两份交付；任一变化需重新生成工具包，不能使用旧绑定静默回退。Playwright/Playwright-core ${packages[0].metadata.version}来自项目已安装依赖，Apache-2.0许可证及通知保留在对应node_modules目录。\n`);
 const files = inventory(output);
 fs.writeFileSync(path.join(output, "laptop-accept-manifest.json"), JSON.stringify({ kind: "flat-six-laptop-acceptance-v1",
   programIncluded: false, privateDefinitionsIncluded: false, hardwareAccessEnabled: false,

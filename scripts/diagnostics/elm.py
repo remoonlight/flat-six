@@ -20,6 +20,20 @@ class ElmError(RuntimeError):
     pass
 
 
+def parameter_unavailable_pdu(request: bytes, response: bytes) -> bool:
+    """Only explicit, matched unsupported read replies disable a batch parameter.
+
+    NRC 11 and 31 describe service/request support. Busy, conditions, security,
+    pending, malformed traffic and absence of a response are not this verdict.
+    This is scoped to the current qualified session, never a catalog change.
+    """
+    return (isinstance(request, bytes) and len(request) >= 2
+            and request[0] in (0x01, 0x21, 0x22)
+            and isinstance(response, bytes) and len(response) == 3
+            and response[:2] == bytes((0x7F, request[0]))
+            and response[2] in (0x11, 0x31))
+
+
 # ELM327DSJ: CAF0 owns PCI; H1 headers; S1 spaces; D0 no DLC column;
 # CFC1 auto FC; FC SH/SD/SM1 user FC 30 00 00; CSM0 allows TX (default CSM1 silent).
 SETTING_CMDS_BEFORE_IDS = (
@@ -46,9 +60,34 @@ def spaced_hex(hx: str) -> str:
     return " ".join(h[i : i + 2] for i in range(0, len(h), 2))
 
 
+def _identity_brand(blob: str, brand: str) -> bool:
+    lines = [line.strip() for line in (blob or "").upper().replace("\r", "\n").split("\n")]
+    return any(re.match(r"^" + re.escape(brand) + r"(?:\b|(?=V?\d))", line) for line in lines)
+
+
 def adapter_identity_ok(blob: str) -> bool:
     u = (blob or "").upper()
-    return any(tok in u for tok in ("ELM327", "OBDLINK", "VLINKER", "V-LINKER", "OBDKEY", "STN11", "STN21"))
+    # A brand mentioned alongside a rejection/error is not an identity reply.
+    # Check the whole reply before recognizing any banner or STI fallback.
+    if any(token in u for token in ("?", "ERROR", "UNABLE", "NO DATA", "STOPPED", "BUS BUSY", "BUFFER FULL")):
+        return False
+    if stn_firmware_identity_ok(blob):
+        return True
+    lines = [line.strip() for line in u.replace("\r", "\n").split("\n")]
+    return any(re.match(r"^(?:ELM327|OBDLINK|VLINKER|V-LINKER|OBDKEY)(?:\b|(?=V?\d))", line)
+               for line in lines)
+
+
+def stn_firmware_identity_ok(blob: str) -> bool:
+    """Parse one firmware identity, allowing command echo but no other reply.
+
+    OBDLink FRPM section 8.4: ATI is a mutable ELM compatibility banner;
+    STI returns STN<device_id> vX.Y.Z. Legacy two-part versions remain valid.
+    This identifies the interpreter family, not hardware or vehicle capability.
+    """
+    lines = [line.strip().upper() for line in (blob or "").replace("\r", "\n").split("\n")]
+    lines = [line for line in lines if line and line not in (">", "STI", "ATI")]
+    return len(lines) == 1 and re.fullmatch(r"STN[0-9]{4} +V[0-9]+\.[0-9]+(?:\.[0-9]+)?", lines[0]) is not None
 
 
 def _setting_ok(text: str) -> bool:
@@ -85,6 +124,10 @@ class ElmClient:
         self._port_close_lock = threading.Lock()
         self._port_close_errors = None
         self._expected_model = expected_model
+        # Real UART/TCP channels expose a finite host write timeout. Preserve a
+        # stricter caller limit and clamp each write to the remaining request.
+        limit = getattr(port, 'write_timeout', None)
+        self._write_timeout_limit = min(1.0, limit) if type(limit) in (int, float) and 0 < limit < float('inf') else 1.0
 
     def _now(self) -> float:
         return self._clock()
@@ -129,27 +172,35 @@ class ElmClient:
         if not self._io_lock.acquire(blocking=False):
             raise ElmError("io-in-flight")
 
-    def _drain_rx(self) -> bytes:
-        buf = bytearray()
+    def _check_idle_rx(self, deadline: float) -> bytes:
+        # One stale byte already makes a new request unsafe. Never drain an
+        # unbounded noisy serial/TCP peer before checking cancellation/deadline.
+        self._raise_if_blocked(deadline)
         try:
-            while True:
-                chunk = self.port.read(1)
-                if not chunk:
-                    break
-                buf.extend(chunk)
+            chunk = self.port.read(1)
+            if chunk:
                 self.raw_log.append({"dir": "rx", "hex": chunk.hex().upper(), "note": "drain"})
         except (ConnectionError, OSError, TimeoutError) as e:
             self._poison(type(e).__name__)
             raise ElmError(f"port-io:{e}") from e
-        return bytes(buf)
+        return chunk
 
     def _write_all(self, payload: bytes, deadline: float | None = None) -> None:
         self._raise_if_blocked(deadline)
         try:
+            if hasattr(self.port, 'write_timeout'):
+                remaining = self._write_timeout_limit if deadline is None else deadline - self._now()
+                self._raise_if_blocked(deadline)
+                self.port.write_timeout = min(self._write_timeout_limit, remaining)
+                # Updating the OS channel settings can consume the last budget.
+                self._raise_if_blocked(deadline)
             n = self.port.write(payload)
         except (ConnectionError, OSError) as e:
             self._poison(type(e).__name__)
             raise ElmError(f"port-io:{e}") from e
+        if deadline is not None and self._now() >= deadline:
+            self._poison('write-deadline')
+            raise ElmError('port-io:write-deadline')
         if n != len(payload):
             self._poison("short-write")
             raise ElmError("short-write")
@@ -251,11 +302,19 @@ class ElmClient:
             blob = ati.upper()
             if not adapter_identity_ok(blob):
                 raise ElmError("adapter-identity-mismatch")
-            if self._expected_model == 'OBDKey' and 'OBDKEY' not in blob:
+            if self._expected_model == 'OBDKey' and not _identity_brand(ati, 'OBDKEY'):
                 raise ElmError('adapter-model-mismatch')
-            if self._expected_model == 'OBDLink' and not any(tok in blob for tok in ('OBDLINK', 'STN11', 'STN21')):
-                raise ElmError('adapter-model-mismatch')
-            return {"ati": ati, "atdpn": atdpn, "atrv": atrv}
+            extra = {}
+            if self._expected_model == 'OBDLink' and not _identity_brand(ati, 'OBDLINK') and not stn_firmware_identity_ok(ati):
+                if not _identity_brand(ati, 'ELM327'):
+                    raise ElmError('adapter-model-mismatch')
+                # A generic ELM banner alone does not establish the selected
+                # STN family. STI is local/read-only and shares this deadline.
+                sti = self._send_at_unlocked("STI", deadline)
+                if not stn_firmware_identity_ok(sti):
+                    raise ElmError('adapter-model-mismatch')
+                extra['sti'] = sti
+            return {"ati": ati, "atdpn": atdpn, "atrv": atrv, **extra}
         finally:
             self._io_lock.release()
 
@@ -317,7 +376,7 @@ class ElmClient:
                 raise ElmError("request-in-flight") from e
             raise
         try:
-            leftover = self._drain_rx()
+            leftover = self._check_idle_rx(deadline)
             if leftover:
                 self._poison("desynchronized-rx")
                 raise ElmError("desynchronized-rx")

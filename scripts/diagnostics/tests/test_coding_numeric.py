@@ -6,7 +6,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from scripts.diagnostics.coding_numeric import numeric_domain, preview_numeric_candidate, rational, physical_target, audit_variants, GUARDS
+from scripts.diagnostics.coding_numeric import numeric_domain, numeric_physical_value, preview_numeric_candidate, rational, physical_target, audit_variants, GUARDS
 from scripts.diagnostics.decoder_reference import reference_patch, reference_value
 from scripts.diagnostics.tests.test_realtime_preparation import field
 
@@ -20,6 +20,31 @@ def linear(width=16, shift=0, order=1, lower=0, upper=65535, xa='0', xb='1', xc=
 
 
 class NumericCodingTests(unittest.TestCase):
+    def test_single_declared_scale_segment_uses_its_own_bounds_and_coefficients(self):
+        record = linear(width=8, upper=255)
+        record['formula']['text'] = ('SCALE-LINEAR:Lower=10,Upper=20,Xa=1,Xb=3,Xc=2;'
+            'BaseDataType=A_UINT32,BitLength=8,HighLow=1,BitMask=0,Encoding=Undefined,DataType=A_FLOAT64,Precision=2;')
+        domain=numeric_domain(record)
+        self.assertTrue(domain['ok'],domain)
+        self.assertEqual(domain['physicalEnvelope'],[rational(Fraction(19,3)),rational(13)])
+        self.assertEqual(numeric_physical_value(record,11),Fraction(7))
+        result=preview_numeric_candidate(record,bytes.fromhex('A5FF0FA5'),rational(7))
+        self.assertTrue(result['ok'],result)
+        self.assertEqual(result['codedValue'],11)
+        self.assertEqual(result['afterHex'],'A5FF0BA5')
+        self.assertEqual(preview_numeric_candidate(record,bytes(4),rational(Fraction(-1,3)))['reason'],'numeric-target-out-of-source-bounds')
+        self.assertEqual(preview_numeric_candidate(record,bytes(4),rational(Fraction(13,2)))['reason'],'numeric-target-not-representable')
+        with self.assertRaisesRegex(ValueError,'numeric-coded-value-invalid'):numeric_physical_value(record,True)
+
+    def test_scale_segment_does_not_merge_multiple_segments_or_allow_reserved_targets(self):
+        record=linear(width=8,upper=255)
+        tail='BaseDataType=A_UINT32,BitLength=8,HighLow=1,BitMask=0,Encoding=Undefined,DataType=A_FLOAT64;'
+        record['formula']['text']='SCALE-LINEAR:Lower=0,Upper=100,Xa=0,Xb=1,Xc=1;'+tail+'Ic:[0xFF]->0xF001;[0x32]->0xF002;'
+        self.assertEqual(preview_numeric_candidate(record,bytes(4),rational(50))['reason'],'numeric-target-reserved')
+        self.assertTrue(preview_numeric_candidate(record,bytes(4),rational(49))['ok'])
+        record['formula']['text']='SCALE-LINEAR:Lower=0,Upper=10,Xa=0,Xb=1,Xc=1;Lower=20,Upper=30,Xa=0,Xb=1,Xc=1;'+tail
+        self.assertEqual(numeric_domain(record)['reason'],'numeric-single-source-segment-required')
+
     def test_decimal_and_fraction_targets_remain_exact(self):
         self.assertEqual(physical_target('0.1'), rational(Fraction(1, 10)))
         self.assertEqual(physical_target(' 5/3 '), rational(Fraction(5, 3)))

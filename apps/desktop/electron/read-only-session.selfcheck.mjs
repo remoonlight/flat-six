@@ -310,6 +310,7 @@ const probe = createReadOnlySessionManager({
   repoRoot,
   getLiveDeviceId: () => "usb:" + "a".repeat(64),
   getLiveAdapterModel: () => "OBDKey",
+  getLiveSerialBaud: () => 230400,
   allowInjectedLive: true,
   env: envAllowInjectedLive,
   spawnFn: () => {
@@ -348,6 +349,8 @@ assert(sent.action === "run" && sent.mode === "live" && sent.confirmedReadOnly =
 assert(!("port" in sent) && !("path" in sent), "no caller-selected port");
 assert(sent.deviceId === "usb:" + "a".repeat(64), "selected USB identity reaches worker");
 assert(sent.adapterModel === "OBDKey", "selected model reaches worker");
+assert(sent.serialBaud === 230400, "trusted UART rate reaches worker");
+assert(validateSessionRequest({ action: "start", profileId: DME, mode: "live", serialBaud: 9600 }), "renderer cannot override UART rate");
 assert(validateSessionRequest({ action: "start", profileId: DME, mode: "live", adapterModel: "vLinker" }), "renderer cannot override connection model");
 
 let clearWritten = "";
@@ -589,7 +592,19 @@ let cancelled = false;
 const bad = await interpretStatusDoc({ ok: false, error: "unknown_job" }, "jabc", async () => {
   cancelled = true;
 });
-assert(bad.stop && cancelled, "status ok=false cancels");
+assert(!bad.stop && bad.cleanupPending && cancelled, "a failed status request cancels once but cannot prove release");
+for (const state of ["failed", "cancelled", "completed"]) {
+  let calls = 0;
+  const doc = { ok: state === "completed", jobId: "jabc", state, error: state === "cancelled" ? "cancelled" : state === "failed" ? "timeout" : null };
+  const pending = await interpretStatusDoc({ ...doc, released: false, releaseVerified: false }, "jabc", async () => { calls++; });
+  assert(!pending.stop && pending.cleanupPending && calls === 0, `${state}: terminal state must wait for real release without replaying cancellation`);
+  assert(!(await interpretStatusDoc(doc, "jabc", async () => {})).stop, `${state}: missing release metadata is not release evidence`);
+  const done = await interpretStatusDoc({ ...doc, released: true, releaseVerified: true }, "jabc", async () => { calls++; });
+  assert(done.stop && !done.cleanupPending && calls === 0, `${state}: verified release ends tracking`);
+  if (state === "cancelled") assert(!done.error, "normal stop is not a cancelled error banner");
+}
+const badRelease = await interpretStatusDoc({ ok: true, jobId: "jabc", state: "completed", released: true, releaseVerified: false }, "jabc", async () => {});
+assert(badRelease.stop && badRelease.error === "adapter_release_not_verified", "process exit never implies verified adapter cleanup");
 let ipcCancel = false;
 await afterStatusIpcFailure("jabc", async () => {
   ipcCancel = true;
@@ -779,6 +794,35 @@ const okEngineResult = (extra = {}) =>
     writePayload: null,
     ...extra,
   });
+
+{
+  let spawned = 0;
+  const request = { action: "start", profileId: DME, mode: "simulation", sessionTask: "engine",
+    selectedPids: ["0C", "0D"], sampleCycles: 1, intervalMs: 500 };
+  const manager = createReadOnlySessionManager({ repoRoot, spawnFn: () => {
+    const index = spawned++;
+    const selected = index === 1 ? ["0D"] : ["0C", "0D"];
+    const unavailable = index === 0 ? ["0C"] : index === 1 ? ["0D"] : [];
+    return mockChild({ lines: [okEngineResult({ runId: `isolation_run_${index}`, engine: engineBlob({
+      selectedPids: selected, supportedPids: selected.filter(id => !unavailable.includes(id)), unsupportedPids: unavailable,
+      samples: selected.filter(id => !unavailable.includes(id)).map(pid => ({ ...engineBlob().samples[0], pid })),
+      sampleCycles: 1, intervalMs: 500 }) })] });
+  } });
+  const first = await manager.handle(request);
+  const firstFinal = await waitJob(manager, first.jobId, 0);
+  assert(firstFinal.final.engine.unsupportedPids.join() === "0C", "first unavailable PID retained in batch");
+  const next = await manager.handle({ ...request, engineBatchId: first.engineBatchId });
+  assert(JSON.parse(manager._jobs.get(next.jobId).backendPayload).selectedPids.join() === "0D", "continuation requests only remaining available PIDs");
+  const ended = await waitJob(manager, next.jobId, 0);
+  assert(ended.final.engine.selectedPids.join() === "0C,0D" && ended.final.engine.unsupportedPids.join() === "0C,0D", "display retains original selection and all unavailable verdicts");
+  assert(ended.stopReason === "all-parameters-unavailable", "empty batch stops without another process");
+  assert((await manager.handle({ ...request, engineBatchId: first.engineBatchId })).stopReason === "all-parameters-unavailable" && spawned === 2, "manual reuse cannot start an empty continuation");
+  const fresh = await manager.handle(request);
+  assert(fresh.engineBatchId !== first.engineBatchId && JSON.parse(manager._jobs.get(fresh.jobId).backendPayload).selectedPids.join() === "0C,0D", "fresh batch rechecks original selection");
+  assert((await waitJob(manager, fresh.jobId, 0)).final.engine.unsupportedPids.length === 0, "unavailable is not a permanent catalog edit");
+  await manager.shutdown();
+  console.log("PASS engine batch isolation across child sessions; all unavailable stops; fresh batch resets");
+}
 
 const engineShapeMgr = createReadOnlySessionManager({
   repoRoot,
@@ -1306,6 +1350,35 @@ if (fs.existsSync(sessionsPy)) {
   }
 }
 
+// A missing final result or one without samples cannot erase received values.
+for (const missingFinal of [true, false]) {
+  let child, saved;
+  const manager = createReadOnlySessionManager({ repoRoot, spawnFn: () => {
+    child = mockChild({ hang: true, emitCloseOnKill: false }); child.stdin.write = () => true; return child;
+  }, saveEngineRecording: async recording => { saved = recording; return { ok: true, saved: true }; } });
+  const owner = { ownerId: 704 }, runId = "partial_progress_only";
+  const started = await manager.handle({ action: "start", profileId: DME, mode: "simulation", sessionTask: "engine" }, owner);
+  const engine = engineBlob(), original = JSON.stringify(engine);
+  child.stdout.emit("data", Buffer.from(JSON.stringify({ type: "progress", stage: "engine", runId,
+    profileId: DME, completed: 1, total: 5, engine }) + "\n"));
+  if (!missingFinal) child.stdout.emit("data", Buffer.from(JSON.stringify({ type: "result", runId,
+    profileId: DME, mode: "simulation", ok: false, status: "failed", error: "disconnect", results: [],
+    simulation: true, liveVerified: false, writePayload: null }) + "\n"));
+  manager._jobs.get(started.jobId).failUnclosed("timeout");
+  const pending = await manager.handle({ action: "status", jobId: started.jobId }, owner);
+  assert(pending.state === "failed" && !pending.released && !manager.isIdle(), "reported failure retains the live worker lease");
+  assert((await manager.handle({ action: "saveEngine", engineBatchId: started.engineBatchId }, owner)).error === "busy", "save waits for actual close");
+  child.exitCode = 1; child.emit("close", 1);
+  const closed = await manager.handle({ action: "status", jobId: started.jobId }, owner);
+  assert(closed.released && closed.releaseVerified && (closed.final === null) === missingFinal, "actual close preserves the actual final event or its absence");
+  assert(closed.retainedEngine.type === "progress" && closed.retainedEngine.partial && closed.retainedEngine.sessionState === "failed", "partial progress is labeled as failed retention");
+  assert((await manager.handle({ action: "saveEngine", engineBatchId: started.engineBatchId }, owner)).saved, "partial received observations can be explicitly saved");
+  assert(saved.samples.length === engine.samples.length && !saved.batchComplete && saved.simulation, "saved data remains an incomplete simulated batch");
+  assert(saved.samples[0].value === engine.samples[0].value && saved.samples[0].capturedUtc === engine.samples[0].capturedUtc, "actual value and timestamp preserved");
+  assert(JSON.stringify(engine) === original && manager.isIdle(), "input observations unchanged and worker actually closed");
+  await manager.shutdown();
+}
+
 // One standard-data batch spans child processes, adapter handoffs and idle gaps.
 for (const invalid of [{ engine: engineBlob({ samples: [null] }) }, { runId: {} }]) {
   const manager = createReadOnlySessionManager({ repoRoot, spawnFn: () => mockChild({
@@ -1357,10 +1430,10 @@ for (const invalid of [{ engine: engineBlob({ samples: [null] }) }, { runId: {} 
 }
 // Inject only the acquisition clock/deadline timer; actual-close handling stays real.
 {
-  let clock = 0, spawned = 0, cancelled = 0, exported;
+  let clock = 0, spawned = 0, cancelled = 0, exported, rate = 9600;
   const deadlines = [], children = [];
   const gate = createTransportGate();
-  const manager = createReadOnlySessionManager({ repoRoot, gate, nowFn: () => clock,
+  const manager = createReadOnlySessionManager({ repoRoot, gate, nowFn: () => clock, getLiveSerialBaud: () => rate,
     saveEngineRecording: async recording => { exported = recording; return { ok: true, saved: true }; },
     setDeadlineTimeoutFn: (fn, ms) => { const timer = { fn, ms }; deadlines.push(timer); return timer; },
     clearDeadlineTimeoutFn: timer => { timer.cleared = true; },
@@ -1375,9 +1448,17 @@ for (const invalid of [{ engine: engineBlob({ samples: [null] }) }, { runId: {} 
   const first = await manager.handle(request, owner);
   await waitJob(manager, first.jobId, 123);
   assert(deadlines[0].ms === 600000 && deadlines[0].cleared, "first job gets complete batch duration");
+  const originalSamples = JSON.stringify((await manager.handle({ action: "status", jobId: first.jobId }, owner)).final.engine.samples);
+  clock = 70000;
+  const silent = await manager.handle({ action: "status", jobId: first.jobId }, owner);
+  assert(silent.plotElapsedMs >= 70000, "batch plot time advances through silence between finite child reads");
+  assert(JSON.stringify(silent.final.engine.samples) === originalSamples, "plot time does not add or change samples");
   const changedOptions = await manager.handle({ ...request, engineBatchId: first.engineBatchId, intervalMs: 500 }, owner);
   assert(changedOptions.error === "invalid_engine_batch" && spawned === 1, "changed options cannot reuse a batch");
   assert(!manager._jobs.get(first.jobId).backendPayload.includes("engineBatchId"), "batch token is main-only");
+  rate = 38400;
+  assert((await manager.handle({ ...request, engineBatchId: first.engineBatchId }, owner)).error === "invalid_engine_batch", "rate changes cannot reuse prior batch");
+  rate = 9600;
   clock = 599999;
   const next = await manager.handle({ ...request, engineBatchId: first.engineBatchId }, owner);
   assert(next.engineBatchId === first.engineBatchId && deadlines[1].ms === 1, "child restart cannot reset deadline");
@@ -1396,6 +1477,9 @@ for (const invalid of [{ engine: engineBlob({ samples: [null] }) }, { runId: {} 
   children[1].exitCode = 0; children[1].emit("close", 0);
   const done = await manager.handle({ action: "status", jobId: next.jobId }, owner);
   assert(done.stopReason === "time-limit" && done.final.engine.samples.length === 1 && !gate.owner(), "partial results survive actual close");
+  clock = 900000;
+  assert((await manager.handle({ action: "status", jobId: next.jobId }, owner)).plotElapsedMs === done.plotElapsedMs,
+    "stopped batch plot time stays frozen after cleanup");
   await manager.handle({ action: "saveEngine", engineBatchId: first.engineBatchId }, owner);
   assert(exported.samples.length === 2 && exported.stopReason === "time-limit" && !exported.batchComplete, "deadline saves previous and partial actual results together");
   const denied = await manager.handle({ ...request, engineBatchId: first.engineBatchId }, owner);
@@ -1423,3 +1507,71 @@ for (const invalid of [{ engine: engineBlob({ samples: [null] }) }, { runId: {} 
 
 console.log("read-only-session.selfcheck: ok");
 console.log(JSON.stringify({ python }, null, 2));
+
+// Real production manager with explicit synthetic child: no adapter/vehicle I/O.
+for (const ending of ["terminate", "deadline"]) {
+  let child, clock = 0; const commands = [];
+  const gate = createTransportGate();
+  const mgr = createReadOnlySessionManager({ repoRoot, gate, nowFn: () => clock, timeoutMs: 25, allowInjectedLive: true,
+    env: envAllowInjectedLive, getLiveDeviceId: () => "usb:" + "a".repeat(64), getLiveAdapterModel: () => "ELM327",
+    getLiveSerialBaud: () => 38400,
+    spawnFn: () => { child = mockChild({ hang: true, emitCloseOnKill: false });
+      child.stdin.write = text => { commands.push(JSON.parse(text)); return true; };return child; } });
+  const owner = { ownerId: 900 }, runId = "synthetic_standard_manual";
+  const start = await mgr.handle({ action: "start", profileId: DME, mode: "live", sessionTask: "engine", confirmedReadOnly: true, x431Inactive: true }, owner);
+  assert(commands[0].engineRemainingMs === 600000, "remaining duration is owned by main");
+  const send = event => child.stdout.emit("data", Buffer.from(JSON.stringify(event) + "\n"));
+  const engine = engineBlob({ samples: [{ ...engineBlob().samples[0], synthetic: false, connectionEpoch: 1 }] });
+  send({ type: "progress", stage: "engine", runId, profileId: DME, completed: 10, total: 20, engine });
+  let sequence = 0, epoch = 1;
+  const connection = (phase, attempt, reason = null) => send({ type: "connection-state", runId, profileId: DME, connection: {
+    sequence: ++sequence, episode: 1, phase, attempt, connectionEpoch: epoch, reason, elapsedMs: sequence,
+    observedUtc: "2026-10-12T00:00:00Z", sourceKind: "standard-engine-read", simulation: false,
+    executionEnabled: true, liveVerified: false, writePayload: null, ...(phase === "awaiting-retry" ? { linkReleased: true } : {}) } });
+  connection("interrupted",0,"transport-disconnected");connection("awaiting-retry",0);
+  await new Promise(resolve => setTimeout(resolve,60));
+  let status = await mgr.handle({ action: "status", jobId: start.jobId },owner);
+  assert(status.awaitingRetry && status.state === "running" && !status.error, "watchdog pauses while waiting for user");
+  assert(status.latest.engine.samples.length === 1 && gate.owner() === "session", "pending choice keeps last data and vehicle lease");
+  assert(commands.length === 1,"no automatic retry");
+  const retry = (attempt, ctx = owner, extra = {}) => mgr.handle({ action: "retry",jobId:start.jobId,episode:1,attempt,...extra },ctx);
+  assert((await retry(0,{ownerId:901})).error === "ownership_denied", "other window cannot retry");
+  assert(!(await retry(1)).ok && !(await retry(0,owner,{deviceId:"other"})).ok,"stale or extra controls refused");
+  for (let attempt=0;attempt<4;attempt++) {
+    clock += 1000;
+    assert((await retry(attempt)).ok && !(await retry(attempt)).ok,"one grant per explicit choice");
+    connection("retrying",attempt+1);epoch++;connection("qualified",attempt+1);
+    connection("retry-failed",attempt+1,"transport-disconnected");connection("awaiting-retry",attempt+1);
+  }
+  assert(commands.filter(c=>c.action==="retry").length===4,"four manual attempts remain within original batch");
+  if (ending === "deadline") { clock=600001;assert(!(await retry(4)).ok,"deadline cannot be reset by retry"); }
+  else await mgr.handle({ action:"cancel",jobId:start.jobId },owner);
+  assert(commands.at(-1).action === "cancel" && gate.owner()==="session","stop waits for actual close");
+  connection("failed",4,ending==="deadline" ? "deadline-expired":"cancelled");
+  send(JSON.parse(okEngineResult({ runId,mode:"live",simulation:false,ok:false,status:"cancelled",error:"cancelled",engine,
+    connectionEventCount:sequence,restoration:{adapterClose:"ATPC",errors:[]} })));
+  child.exitCode=1;child.emit("close",1);
+  status=await mgr.handle({action:"status",jobId:start.jobId},owner);
+  assert(status.releaseVerified && status.final.engine.samples.length===1 && !gate.owner(),"actual close retains partial data");
+  if (ending==="deadline") assert(status.stopReason==="time-limit","original batch deadline retained");
+  await mgr.shutdown();
+}
+console.log("PASS standard manual recovery: owner/choice gates, no auto retry, four explicit attempts, idle watchdog pause, original deadline, partial samples and actual close");
+
+// An accepted kill request is not an observed process close, including quit.
+{
+  const child = mockChild({ hang: true, emitCloseOnKill: false });
+  let kills = 0; child.kill = () => { kills++; return true; };
+  const gate = createTransportGate();
+  const manager = createReadOnlySessionManager({ repoRoot, spawnFn: () => child,
+    gate, gracefulMs: 1, killWatchMs: 1, timeoutMs: 1000 });
+  const started = await manager.handle({ action: "start", profileId: "porsche-981-2014-dme", mode: "simulation" }, { ownerId: 991 });
+  assert(started.ok);
+  const pending = await manager.shutdown();
+  assert(!pending.ok && pending.error === "session_close_timeout" && !manager.isIdle(), "shutdown timeout must report the unreleased worker");
+  assert(kills > 0, "accepted termination is insufficient proof of release");
+  child.exitCode = 1; child.emit("close", 1);
+  assert(manager.isIdle(), "actual child close releases the job");
+  assert((await manager.shutdown()).ok, "later explicit shutdown sees observed release");
+}
+console.log("PASS quit shutdown: timeout remains unclosed until actual child close");

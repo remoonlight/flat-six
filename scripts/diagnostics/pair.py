@@ -43,6 +43,8 @@ def _positive_echo(req: bytes, resp: bytes) -> bool:
         return len(req) >= 2 and len(resp) >= 2 and req[1] == resp[1]
     if rsid == 0x10:
         return len(req) >= 2 and len(resp) >= 2 and req[1] == resp[1]
+    if rsid == 0x27:
+        return len(req) >= 2 and len(resp) >= 2 and req[1] == resp[1]
     if rsid == 0x01:
         return len(req) == 2 and len(resp) >= 2 and req[1] == resp[1]
     if rsid == 0x14:

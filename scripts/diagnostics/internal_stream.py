@@ -17,7 +17,10 @@ import threading
 import time
 
 from .can_monitor import Monitor, MAX_LINE_BYTES, parse_frame
-from .connection import open_selected_port, parse_voltage_volts, valid_device_id
+from .elm import ElmError
+from .connection import open_selected_port, parse_voltage_volts, valid_device_id, validate_serial_baud
+
+MAX_FRAMES_PER_EVENT = 512  # Matches the desktop's bounded CAN-frame ingest.
 
 
 class MemoryReceiver:
@@ -36,6 +39,12 @@ class MemoryReceiver:
     def received(self, _data):
         pass  # No automatic serial log or file.
 
+    def _publish(self, frames):
+        if frames:
+            self.sink({"type": "frames", "ok": True, "deviceId": self.device_id, "canNetwork": self.network,
+                "simulation": False, "receiveBatchId": self.batch_id, "frames": frames,
+                "frameCount": self.count, "invalidLines": self.invalid})
+
     def feed(self, data):
         frames = []
         stamp_us = self.clock() // 1000
@@ -51,6 +60,9 @@ class MemoryReceiver:
                         frames.append({"canId": ident, "extended": extended, "dataHex": payload.hex().upper(),
                             "timestampUs": stamp_us, "timestampSource": "host-chunk-arrival"})
                         self.count += 1
+                        if len(frames) == MAX_FRAMES_PER_EVENT:
+                            self._publish(frames)
+                            frames = []
                     elif line not in (b"STM", b"STOPPED"):
                         self.invalid += 1
                 if byte == 62:
@@ -60,9 +72,7 @@ class MemoryReceiver:
                 self.pending.append(byte)
                 if len(self.pending) > MAX_LINE_BYTES:
                     raise RuntimeError("capture-line-limit")
-        if frames:
-            self.sink({"type": "frames", "ok": True, "deviceId": self.device_id, "canNetwork": self.network,
-                "simulation": False, "receiveBatchId": self.batch_id, "frames": frames, "frameCount": self.count, "invalidLines": self.invalid})
+        self._publish(frames)
         return ended
 
 
@@ -72,19 +82,21 @@ def _receive_control(doc):
     if doc == {"action": "stop"}:
         return doc
     action = doc.get("action")
-    expected = {"action", "receiveBatchId"} | ({"receiveMilliseconds"} if action == "receive-start" else set())
+    expected = {"action", "receiveBatchId"} | ({"receiveMilliseconds"} if action == "receive-start" else ({"reason"} if "reason" in doc else set()))
     if action not in ("receive-start", "receive-stop") or set(doc) != expected:
         raise ValueError("internal-control-invalid")
     if not isinstance(doc["receiveBatchId"], str) or not re.fullmatch(r"[a-zA-Z0-9-]{1,80}", doc["receiveBatchId"]):
         raise ValueError("internal-batch-invalid")
     if action == "receive-start" and (type(doc["receiveMilliseconds"]) is not int or not 1 <= doc["receiveMilliseconds"] <= 600000):
         raise ValueError("internal-duration-invalid")
+    if action == "receive-stop" and doc.get("reason", "time-limit") not in ("time-limit", "user-stopped"):
+        raise ValueError("internal-stop-reason-invalid")
     return doc
 
 
 def run_internal_monitor(device_id, network, *, stdout, stdin=None, port=None, stop_event=None,
                          clock=time.monotonic, max_reads=None, receive_ms=600000,
-                         batch_id="standalone", commands=None, wait_fn=None):
+                         batch_id="standalone", commands=None, wait_fn=None, serial_baud=None):
     flags = {"simulation": False, "liveVerified": False, "writePayload": None,
         "deviceId": device_id, "canNetwork": network, "physicalSilenceVerified": False,
         "ecuRequestsSent": 0, "silentMonitoringRequested": True}
@@ -96,6 +108,11 @@ def run_internal_monitor(device_id, network, *, stdout, stdin=None, port=None, s
         return 2
     if not valid_device_id(device_id) or not device_id.startswith("bt:") or network != "drive":
         emit({"type": "error", "ok": False, "error": "internal-profile-not-qualified"})
+        return 2
+    try:
+        validate_serial_baud(device_id, serial_baud)
+    except ElmError as error:
+        emit({"type": "error", "ok": False, "error": str(error)})
         return 2
     if (type(receive_ms) is not int or not 0 <= receive_ms <= 600000
             or not isinstance(batch_id, str) or not re.fullmatch(r"[a-zA-Z0-9-]{1,80}", batch_id)):
@@ -173,7 +190,7 @@ def run_internal_monitor(device_id, network, *, stdout, stdin=None, port=None, s
                 error = control_errors[0] if control_errors else None
                 return 1 if error else 0
             if port is None:
-                port, _ = open_selected_port(device_id)
+                port, _ = open_selected_port(device_id, serial_baud=serial_baud)
             monitor = Monitor(port, receiver, cancel_event=stop, clock=clock)
             identity = begin(batch_id, receive_ms)
             state("handshake", identity)
@@ -188,7 +205,7 @@ def run_internal_monitor(device_id, network, *, stdout, stdin=None, port=None, s
                         break
                     if command["action"] == "receive-stop":
                         if command["receiveBatchId"] == receiver.batch_id and receiver.enabled:
-                            standby("time-limit")
+                            standby(command.get("reason", "time-limit"))
                     elif command["receiveBatchId"] not in seen_batches:
                         begin(command["receiveBatchId"], command["receiveMilliseconds"])
                         state()

@@ -1,4 +1,6 @@
 /** Topology status and qualified read / separately confirmed clear queues. */
+import manualTitles from "../../../data/seed/dtc/manuals/manual-titles.v1.json" with { type: "json" };
+import { sourceTopologyEcu, sourceManualScope } from "./obd/topology-source.mjs";
 
 export const ADAPTED_PROFILES = Object.freeze([
   "porsche-981-2014-gateway",
@@ -42,10 +44,9 @@ const COMM_ERRORS = new Set([
 
 const TERMINAL = new Set(["completed", "failed", "cancelled"]);
 const POLL_BUDGET_MS = 110_000;
-const CANCEL_WAIT_MS = 8_000;
 
 export function isAdaptedProfile(id) {
-  return typeof id === "string" && PROFILE_SET.has(id);
+  return typeof id === "string" && (PROFILE_SET.has(id) || sourceTopologyEcu(id)!==null);
 }
 
 export function generationOf(seed, id) {
@@ -132,6 +133,10 @@ export function flattenNodes(gen) {
       rest.push(enrich(n, b));
     }
   }
+  for (const node of gen.unplacedNodes || []) {
+    if(seen.has(node.id))continue;
+    seen.add(node.id);rest.push(enrich(node,{id:'unplaced',label:'连接位置未核实'}));
+  }
   return [...gw, ...rest];
 }
 
@@ -170,10 +175,10 @@ export function statusText(entry, { simulated } = {}) {
     kind === KIND.pendingAdapt || kind === KIND.assemblyUnconfirmed
       ? "待适配"
       : {
-          [KIND.unscanned]: "未扫描",
+          [KIND.unscanned]: entry?.queued === true ? "等待检查" : "未扫描",
           [KIND.scanning]: "扫描中",
           [KIND.commFail]: "通讯失败",
-          [KIND.noResponse]: "未响应",
+          [KIND.noResponse]: "未识别",
           [KIND.negativeResponse]: "否定响应",
           [KIND.identity]: "身份不匹配",
           [KIND.cancelled]: "已取消",
@@ -204,13 +209,71 @@ export function dtcLabel(rec) {
   return rec.displayCode || rec.dtcHex || rec.code || "?";
 }
 
-export function dtcDetail(rec) {
+// Only an observed, explicit current-status label can change display priority.
+// Raw KWP/UDS status bytes and stored/pending/permanent are not interchangeable.
+export function orderDtcRecords(records) {
+  if (!Array.isArray(records)) return [];
+  const current = record => typeof record?.observedStatusText === "string" &&
+    ["当前", "当前故障", "当前故障码", "current", "current fault"].includes(record.observedStatusText.trim().toLowerCase());
+  return [...records.filter(current), ...records.filter(record => !current(record))];
+}
+
+// Manual descriptions are references, never ECU identity/version qualification.
+// The current UDS gateway code namespace has no verified manual-code conversion.
+const MANUAL_SCOPES = Object.freeze({
+  "porsche-981-2014-dme": { generation: "981", module: "dme", namespace: "sae" },
+});
+
+export function manualDtcTitle(rec, scope) {
+  if (!rec || typeof rec !== "object") return null;
+  const literal=scope?.namespace==='manufacturer-hex';
+  if(literal){
+    if(rec.manufacturerCode!==true||rec.dictionaryMatch!==true||!/^[0-9A-F]{6}$/.test(rec.dtcHex||'')
+      ||rec.displayCode!==rec.dtcHex)return null;
+    const rows=manualTitles.records.filter(row=>row.codeNamespace==='manufacturer-hex'&&row.code===rec.dtcHex
+      &&row.generation===scope.generation&&row.module===scope.module);
+    if(!rows.length||rows.some(row=>row.applicability?.length)||new Set(rows.map(row=>row.title)).size!==1)return null;
+    return rows[0];
+  }
+  if(scope?.namespace!=='sae'||rec.manufacturerCode===true)return null;
+  const code = rec.displayCode || rec.code;
+  if (typeof code !== "string" || !/^[PBCU][0-9A-F]{4}(?:[0-9A-F]{2})?$/.test(code)) return null;
+  // A three-byte manufacturer identifier must not be truncated or reinterpreted.
+  if (rec.dtcHex && !/^[0-9A-F]{4}$/i.test(rec.dtcHex)) return null;
+  if (rec.dtcHex) {
+    const first = Number.parseInt(rec.dtcHex[0], 16);
+    const sae = `${"PCBU"[first >> 2]}${first & 3}${rec.dtcHex.slice(1).toUpperCase()}`;
+    if (code !== sae) return null;
+  }
+  const matching = manualTitles.records.filter(row => row.generation === scope.generation && row.module === scope.module);
+  let rows = matching.filter(row => row.code === code);
+  if (!rows.length && code.length === 5) {
+    const extended = matching.filter(row => row.code.startsWith(code) && row.code.length === 7);
+    // A two-byte code cannot choose between failure subtypes.
+    if (extended.some(row => row.code.slice(5) !== "00")) return null;
+    rows = extended;
+  }
+  const preferred = rows.some(row => row.language === "zh") ? rows.filter(row => row.language === "zh") : rows.filter(row => row.language === "en");
+  // A manual's conditional entry needs an independently qualified variant.
+  // The title lookup has no such evidence and cannot silently drop conditions.
+  if (preferred.some(row => row.applicability?.length)) return null;
+  if (!preferred.length || new Set(preferred.map(row => row.title)).size !== 1) return null;
+  return preferred[0];
+}
+
+export function dtcDetail(rec, profileId) {
   if (!rec || typeof rec !== "object") return "";
-  return [rec.observedText, rec.observedStatusText].filter(Boolean).join(" · ");
+  const text = value => typeof value === "string" && value.trim() ? value : "";
+  const scope=rec.manualScope!==undefined?sourceManualScope(rec.manualScope,profileId):MANUAL_SCOPES[profileId];
+  const manual = manualDtcTitle(rec, scope);
+  const observed = text(rec.originalEnglish) || text(rec.observedText);
+  const originalEnglish = /[A-Za-z]/.test(observed) && !/[\u3400-\u9fff]/.test(observed) ? observed : "";
+  return [manual?.title || originalEnglish || "故障说明未收录", text(rec.observedStatusText)]
+    .filter(Boolean).join(" · ");
 }
 
 export function findDtcResult(final, profileId) {
-  const spec = DTC_OPS[profileId] || DTC_OPS[final?.profileId];
+  const spec = final?.sourceDtcRead===true ? {operationId:'source-dtc'} : DTC_OPS[profileId] || DTC_OPS[final?.profileId];
   const rows = Array.isArray(final?.results) ? final.results : [];
   if (spec) {
     return rows.find((r) => r && r.role === "dependent" && r.operationId === spec.operationId) || null;
@@ -240,7 +303,9 @@ export function classifySessionFinal(final, extras = {}) {
 
   const simulated = Boolean(final?.simulation === true || extras.simulated || extras.mode === "simulation");
   const profileId = extras.profileId || final?.profileId;
-  const spec = DTC_OPS[profileId];
+  const sourceType=final?.results?.find(row=>row?.operationId==='source-dtc')?.decoded?.type;
+  const spec = final?.sourceDtcRead===true && ['kwp-dtc-18','uds-dtc-19-02'].includes(sourceType)
+    ? {operationId:'source-dtc',decodeType:sourceType} : DTC_OPS[profileId];
   const err = String(final?.error || extras.error || "");
 
   if (extras.mode && final?.mode !== extras.mode) {
@@ -253,8 +318,8 @@ export function classifySessionFinal(final, extras = {}) {
   if (["no-response", "negative-response"].includes(final?.candidateFailure) && final?.linkHealth === "verified" && Array.isArray(final?.restoration?.errors) && final.restoration.errors.length === 0) {
     return { kind: final.candidateFailure === "no-response" ? KIND.noResponse : KIND.negativeResponse, error: err, simulated };
   }
-  if (err === "identity-mismatch" || extras.identityMismatch) {
-    return { kind: KIND.identity, error: "identity-mismatch", simulated };
+  if (err === "identity-mismatch" || err === "scan-vehicle-changed" || extras.identityMismatch) {
+    return { kind: KIND.identity, error: err || "identity-mismatch", simulated };
   }
   if (err === "not-installed" && extras.notInstalledEvidence === true) {
     return { kind: KIND.notInstalled, error: err, simulated };
@@ -287,6 +352,8 @@ export function classifySessionFinal(final, extras = {}) {
         records,
         simulated,
         identity: final.identityQualification,
+        identityInfo: final.identityInfo,
+        sourceProfileId: final.sourceProfileId,
         runId: final.runId || null,
         capturedUtc: dtc.capturedUtc || final.endedUtc || null,
       };
@@ -297,6 +364,8 @@ export function classifySessionFinal(final, extras = {}) {
       records,
       simulated,
       identity: final.identityQualification,
+      identityInfo: final.identityInfo,
+      sourceProfileId: final.sourceProfileId,
       runId: final.runId || null,
       capturedUtc: dtc.capturedUtc || final.endedUtc || null,
     };
@@ -484,21 +553,32 @@ export function buildSessionStart(node, ctx) {
 }
 
 const FAIL_ZH = {
-  disconnect: "通讯中断",
-  "pending-timeout": "等待超时",
-  timeout: "超时",
-  negative: "否定响应",
-  "identity-mismatch": "身份不匹配",
-  cancelled: "已取消",
-  "profile-mismatch": "档案不匹配",
-  "mode-mismatch": "模式不匹配",
-  "session-lock-busy": "会话忙",
+  disconnect: "通讯中断。请检查车辆和诊断头的供电、接线后重试，或终止检查。",
+  "pending-timeout": "等待控制单元响应超时。请核对点火电源和接线后重试，或终止检查。",
+  timeout: "诊断响应超时。请核对点火电源和接线后重试，或终止检查。",
+  negative: "控制单元返回否定响应。请核对所选单元和操作条件后重试。",
+  "identity-mismatch": "控制单元身份不匹配。请终止检查，重新核对车辆和控制单元版本。",
+  cancelled: "检查已取消。需要继续时，请重新开始检查。",
+  "profile-mismatch": "控制单元档案不匹配。请终止检查并重新选择控制单元。",
+  "mode-mismatch": "诊断任务模式不匹配。请终止本次检查后重新开始。",
+  "session-lock-busy": "诊断链路被其他任务占用。请等待该任务结束后重试。",
+  "scan-vehicle-changed": "车辆身份或控制单元版本已变化，检查已停止，请重新开始检查。",
+  "scan-vehicle-unconfirmed": "车辆身份或控制单元版本未能重新核对，检查已停止，请重新读取。",
+  "scan-device-changed": "诊断头已改变，请终止本次检查后重新开始。",
+  "scan-device-unconfirmed": "无法确认本次诊断头，请终止检查并重新选择诊断头。",
+  "scan-release-unconfirmed": "无法确认诊断头已释放，请终止检查并核对连接。",
+  adapter_release_not_verified: "诊断头释放未通过核对，检查已停止；请返回连接设置检查并重新连接诊断头。",
+  port_release_pending: "诊断头尚未释放，请等待后重试，或终止本次检查。",
+  "scan-connection-timeout": "重新连接超时，请核对诊断头供电和连接后重试，或终止检查。",
+  "scan-connection-unconfirmed": "无法确认诊断头连接，请核对供电和连接后重试，或终止检查。",
+  diagnostic_purpose_required: "连接用途已改变，请终止本次检查，选择诊断用途后重新开始。",
 };
 
 export function failureReasonZh(error) {
   if (!error) return "";
-  const s = String(error);
-  return FAIL_ZH[s] || s;
+  const s = error instanceof Error ? error.message : String(error);
+  return Object.hasOwn(FAIL_ZH, s) ? FAIL_ZH[s]
+    : "本次诊断操作未能完成，原因尚未确认。请检查诊断头供电、连接和本机诊断资料后重试。";
 }
 
 export function completionFeedback({ results, adaptedQueued, totalNodes } = {}) {
@@ -621,17 +701,84 @@ async function cancelJob(invoke, jobId) {
   }
 }
 
+const RETRY_READ_ERRORS = new Set(["disconnect", "pending-timeout", "prompt-timeout", "nrc78-timeout", "port-io", "port-error", "timeout", "adapter-missing"]);
+const VIN_OPS = { "porsche-981-2014-dme": "dme-vin", "porsche-981-2014-gateway": "gw-vin" };
+function scanVin(final) {
+  if (final?.sourceDtcRead===true && /^[a-f0-9]{64}$/.test(final.vehicleIdentitySha256 || '')) return final.vehicleIdentitySha256;
+  const row = final?.results?.find(r => r.operationId === VIN_OPS[final.profileId] && r.role === "dependent"
+    && r.ok === true && r.freshlyRead === true && r.historical === false && r.skippedResume !== true
+    && r.decoded?.ok === true && r.decoded.type === "vin-ascii");
+  const vin = row?.decoded?.text;
+  return typeof vin === "string" && /^[A-HJ-NPR-Z0-9]{17}$/.test(vin) ? vin : null;
+}
+function scanIdentity(final) {
+  return Object.fromEntries((final?.results || []).filter(r => r.role === "identity" && r.ok === true
+    && r.decoded?.ok === true && typeof r.field === "string" && typeof r.decoded.text === "string")
+    .map(r => [r.field, r.decoded.text]));
+}
+
+/** Called only by the user's Retry choice. Never replays a write or selects a head. */
+export async function prepareScanRetry({ invoke, connection, jobId, mode, deviceId, model, cancelled = () => false,
+  sleep = ms => new Promise(resolve => setTimeout(resolve, ms)), now = Date.now, budgetMs = 20000 }) {
+  const end = now() + budgetMs; let startedConnection = false, lastConnection, succeeded = false;
+  const fail = error => ({ ok: false, error });
+  try {
+    if (!jobId) return fail("scan-release-unconfirmed");
+    while (true) {
+      if (cancelled()) return fail("cancelled");
+      const status = await invoke({ action: "status", jobId });
+      if (status?.released === true) {
+        if (status.releaseVerified !== true) return fail("adapter_release_not_verified");
+        break;
+      }
+      if (status?.released !== false) return fail("scan-release-unconfirmed");
+      if (now() >= end) return fail("port_release_pending");
+      await sleep(100);
+    }
+    if (mode === "simulation") return cancelled() ? fail("cancelled") : { ok: true };
+    if (typeof connection !== "function" || !deviceId || !model) return fail("scan-device-unconfirmed");
+    lastConnection = await connection({ action: "status" });
+    while (true) {
+      if (cancelled()) return fail("cancelled");
+      if (lastConnection?.selectedDeviceId !== deviceId || lastConnection.model !== model) return fail("scan-device-changed");
+      if (lastConnection.purpose !== "diagnostic") return fail("diagnostic_purpose_required");
+      if (lastConnection.ok !== true) return fail(lastConnection.error || "scan-connection-unconfirmed");
+      if (lastConnection.connected === true) { succeeded = true; return { ok: true }; }
+      if (["close_failed", "disconnecting", "diagnostic"].includes(lastConnection.linkState)) return fail(lastConnection.error || "port_release_pending");
+      if (!startedConnection && ["idle", "retry-required"].includes(lastConnection.linkState)) {
+        startedConnection = true;
+        lastConnection = await connection({ action: "connect" });
+        continue;
+      }
+      if (lastConnection.linkState === "retry-required") return fail(lastConnection.connectionError || lastConnection.error || "disconnect");
+      if (now() >= end) return fail("scan-connection-timeout");
+      await sleep(100); lastConnection = await connection({ action: "status" });
+    }
+  } catch (error) { return fail(String(error?.message || error)); }
+  finally {
+    // Failed or terminated retries stop only their own unfinished connection attempt.
+    if (!succeeded && startedConnection) {
+      try {
+        const status = await connection({ action: "status" });
+        if (status.selectedDeviceId === deviceId && status.connected !== true) await connection({ action: "disconnect" });
+      } catch { /* the connection manager retains its release lock */ }
+    }
+  }
+}
+
 export function createScanQueue({
   invoke,
   pollMs = 80,
   sleep = (ms) => new Promise((r) => setTimeout(r, ms)),
   pollBudgetMs = POLL_BUDGET_MS,
-  cancelWaitMs = CANCEL_WAIT_MS,
 }) {
   let aborted = false;
+  let stopRequested = false;
+  let activeTask = null;
   let inFlight = false;
   let currentJob = null;
   const cancelledIds = new Set();
+  const decisionWaiters = new Set();
 
   async function cancelJobOnce(jobId) {
     if (!jobId || cancelledIds.has(jobId)) return;
@@ -641,40 +788,38 @@ export function createScanQueue({
 
   async function pollUntilDone(jobId, onStatus) {
     const t0 = Date.now();
-    let cancelSent = false;
-    let cancelAt = 0;
-    while (Date.now() - t0 < pollBudgetMs) {
+    let observationError = null;
+    while (true) {
+      // A polling budget ends the operation, not the worker's connection lease.
+      // Keep observing this same job until actual release has been reported.
+      if (Date.now() - t0 >= pollBudgetMs && !observationError) {
+        observationError = "poll-timeout";
+        await cancelJobOnce(jobId);
+      }
       let doc;
       try {
         doc = await invoke({ action: "status", jobId });
       } catch (e) {
-        await cancelJobOnce(jobId);
-        return { ok: false, error: String(e), state: "failed", jobId, statusThrow: true };
+        observationError ||= String(e);
       }
-      onStatus?.(doc);
-      if (!doc || doc.ok === false) {
+      const owned = doc?.jobId === jobId &&
+        (TERMINAL.has(doc.state) || doc.state === "running" || doc.state === "cancelling");
+      if (!owned || doc.ok === false && !TERMINAL.has(doc.state)) {
+        observationError ||= doc?.error || "status_failed";
         await cancelJobOnce(jobId);
-        return doc || { ok: false, error: "status_failed", jobId };
-      }
-      const st = doc.state;
-      if (TERMINAL.has(st)) return doc;
-      if (st === "running" || st === "cancelling") {
-        if (aborted && !cancelSent) {
-          await cancelJobOnce(jobId);
-          cancelSent = true;
-          cancelAt = Date.now();
-        }
-        if (aborted && cancelSent && Date.now() - cancelAt >= cancelWaitMs) {
-          return { ok: false, error: "cancelled", state: st, jobId, final: doc.final, boundedCancel: true };
-        }
+        onStatus?.({ cleanupPending: true, error: observationError });
         await sleep(pollMs);
         continue;
       }
-      await cancelJobOnce(jobId);
-      return { ok: false, error: "unknown_state", state: st, jobId, final: doc.final };
+      const terminal = TERMINAL.has(doc.state);
+      onStatus?.({ ...doc, cleanupPending: doc.state === "cancelling" || terminal && doc.released !== true });
+      if (terminal && doc.released === true) {
+        const error = doc.releaseVerified !== true ? "adapter_release_not_verified" : observationError;
+        return error ? { ...doc, ok: false, error, statusThrow: true } : doc;
+      }
+      if (aborted) await cancelJobOnce(jobId);
+      await sleep(pollMs);
     }
-    await cancelJobOnce(jobId);
-    return { ok: false, error: "poll-timeout", state: "failed", jobId };
   }
 
   async function runOne(node, ctx, hooks) {
@@ -713,7 +858,7 @@ export function createScanQueue({
         currentJob = started.jobId;
         await cancelJobOnce(started.jobId);
       }
-      return { nodeId: node.id, classified: { kind: KIND.cancelled, simulated: ctx.mode === "simulation" }, stop: true };
+      if (!started?.jobId) return { nodeId: node.id, classified: { kind: KIND.cancelled, simulated: ctx.mode === "simulation" }, stop: true };
     }
     if (!started?.ok || !started.jobId) {
       return {
@@ -743,7 +888,10 @@ export function createScanQueue({
     }
     const classified = mergeStatusAfterJob(
       hooks.statusOf?.(node.id),
-      classifySessionFinal(done?.final || done, {
+      done?.statusThrow ? { kind: KIND.commFail, error: done.error,
+        simulated: ctx.mode === "simulation" || done?.final?.simulation === true,
+        records: dtcRecords(findDtcResult(done.final, node.profileId)) || undefined,
+      } : classifySessionFinal(done?.final || done, {
         cancelled: aborted || done?.state === "cancelled" || done?.error === "cancelled",
         simulated: ctx.mode === "simulation" || done?.final?.simulation === true,
         error: done?.error,
@@ -756,9 +904,8 @@ export function createScanQueue({
     const stop =
       aborted ||
       done?.statusThrow ||
-      done?.ok === false ||
       (![KIND.dtc, KIND.noDtc, KIND.noResponse, KIND.negativeResponse].includes(classified.kind));
-    return { nodeId: node.id, classified, doc: done, stop };
+    return { nodeId: node.id, jobId: started.jobId, classified, doc: done, stop };
   }
 
   return {
@@ -768,29 +915,92 @@ export function createScanQueue({
     get jobId() {
       return currentJob;
     },
+    get cancelled() { return aborted; },
+    get stopRequested() { return stopRequested; },
+    stopAfterCurrent() {
+      if (!inFlight || activeTask !== "read" || aborted) return false;
+      stopRequested = true;
+      for (const resolve of decisionWaiters) resolve("stop-after-current");
+      return true;
+    },
     async cancel() {
       aborted = true;
+      for (const resolve of decisionWaiters) resolve("terminate");
       if (currentJob) await cancelJobOnce(currentJob);
     },
     async run({ nodes, ctx, hooks = {} }) {
-      if (inFlight) return { error: "busy", results: [] };
+      if (inFlight) return { error: "busy", stopped: false, results: [], clearResults: [], clearOutcomeUnconfirmed: false, readbackStarted: false };
       inFlight = true;
       aborted = false;
+      stopRequested = false;
+      activeTask = ctx.sessionTask === "clear" ? "clear" : "read";
       const results = [];
+      const clearResults = [];
+      let phaseCtx = ctx, readbackStarted = false, clearOutcomeUnconfirmed = false;
+      let vehicleVin = null;
+      let completedIdentityKnown = true;
+      const identities = new Map();
       try {
-        for (const node of nodes) {
-          if (aborted) break;
-          const row = await runOne(node, ctx, hooks);
+        for (let index = 0; index < nodes.length; index++) {
+          const node = nodes[index];
+          if (aborted || stopRequested) break;
+          const row = await runOne(node, phaseCtx, hooks);
+          {
+            const final = row.doc?.final;
+            const vin = scanVin(final), identity = scanIdentity(final), previous = identities.get(node.id);
+            const readbackIdentityMissing = readbackStarted && [KIND.dtc, KIND.noDtc].includes(row.classified?.kind)
+              && (!vin || previous && Object.keys(previous).some(key => !Object.hasOwn(identity, key)));
+            if (readbackIdentityMissing || vin && vehicleVin && vin !== vehicleVin || previous && Object.entries(previous).some(([k,v]) => Object.hasOwn(identity, k) && identity[k] !== v)) {
+              row.classified = { kind: KIND.identity, error: readbackIdentityMissing ? "scan-vehicle-unconfirmed" : "scan-vehicle-changed", simulated: ctx.mode === "simulation" };
+              row.stop = true;
+            } else {
+              if (vin) vehicleVin ||= vin;
+              if (Object.keys(identity).length) identities.set(node.id, { ...previous, ...identity });
+            }
+            if ([KIND.dtc, KIND.noDtc].includes(row.classified?.kind) && !vin) completedIdentityKnown = false;
+          }
           hooks.onKind?.(row.nodeId, row.classified);
           results.push(row);
-          if (aborted || row.stop) break;
+          if (aborted || stopRequested) break;
+          if (row.stop) {
+            const uncertainClear = phaseCtx.sessionTask === "clear" && RETRY_READ_ERRORS.has(row.classified?.error);
+            if (uncertainClear) clearOutcomeUnconfirmed = true;
+            const released = row.doc?.released === true && row.doc?.releaseVerified === true;
+            if (RETRY_READ_ERRORS.has(row.classified?.error) && typeof hooks.onInterrupted === "function"
+                && (phaseCtx.sessionTask !== "clear" || released)) {
+              const canRetry = phaseCtx.sessionTask === "clear" ? Boolean(vehicleVin) && completedIdentityKnown
+                : results.length === 1 || completedIdentityKnown && Boolean(vehicleVin);
+              let resolveCancelled;
+              const cancellation = new Promise(resolve => { resolveCancelled = resolve; decisionWaiters.add(resolve); });
+              let decision;
+              try { decision = await Promise.race([cancellation, hooks.onInterrupted({ row,
+                remaining: phaseCtx.sessionTask === "clear" ? nodes : nodes.slice(index),
+                readback: phaseCtx.sessionTask === "clear" || readbackStarted, canRetry })]); }
+              finally { decisionWaiters.delete(resolveCancelled); }
+              if (decision === "retry" && !aborted && !stopRequested && canRetry) {
+                if (phaseCtx.sessionTask === "clear") {
+                  // Recovery performs only a fresh read of the original range.
+                  // Never restart or continue the interrupted write batch.
+                  clearResults.push(...results); results.length = 0;
+                  phaseCtx = { ...ctx, sessionTask: "read", confirmedReadOnly: true };
+                  delete phaseCtx.confirmedClearDtc;
+                  readbackStarted = true; index = -1;
+                } else { results.pop(); index--; }
+                continue;
+              }
+              if (decision === "terminate") aborted = true;
+            }
+            break;
+          }
         }
       } finally {
         if (currentJob) await cancelJobOnce(currentJob);
         currentJob = null;
         inFlight = false;
+        activeTask = null;
       }
-      return { error: aborted ? "cancelled" : results.find((r) => r.stop && r.classified?.error)?.classified?.error || null, results };
+      return { error: aborted ? "cancelled" : results.find((r) => r.stop && r.classified?.error)?.classified?.error || null,
+        stopped: stopRequested && !aborted, results, clearResults, clearOutcomeUnconfirmed, readbackStarted };
     },
   };
 }

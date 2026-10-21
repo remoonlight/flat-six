@@ -1,7 +1,8 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { createCodingBackupStore } from "./coding-backup-store.mjs";
+import { normalizeSourceCodingBackup } from './source-coding-backup.mjs';
 import { createCodingOperationJournal, codingJournalHash } from "./coding-operation-journal.mjs";
 
 const hash = (value) => createHash("sha256").update(value).digest("hex");
@@ -9,6 +10,201 @@ const hex = (value, max = 8192) => typeof value === "string" && value.length <= 
 const text = (value) => typeof value === "string" && value.length > 0 && value.length <= 240;
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const idFields = ["generation", "vin", "ecu", "hardware", "software"];
+
+/** Read-only version selection. Jobs and fresh vehicle state must come from
+ * application-owned, source-qualified clients, never imported manifests or IPC.
+ * The default registry is empty. A review is not a write authorization. */
+export function createFirmwareVersionSelection({ getJobs = () => [], getVehicleState = async () => null, isVehicleBusy = () => false, canExecute = () => false } = {}) {
+  const listings = new Map(), revisions = new Map();
+  const sha = value => /^[a-f0-9]{64}$/.test(value || "");
+  const strings = (value, required = false) => Array.isArray(value) && (!required || value.length > 0)
+    && value.every(text) && new Set(value).size === value.length;
+  const closed = (value, keys) => value && typeof value === "object" && !Array.isArray(value) && Object.keys(value).every(key => keys.includes(key));
+  const failure = error => ({ ok: false, error, executionEnabled: false });
+  function validJob(job) {
+    const condition = job?.conditions;
+    return closed(job, ["id", "ecu", "origin", "sourceQualified", "sourceHash", "conditions", "participants", "releaseNotes"])
+      && closed(condition, ["qualified", "generation", "productKeys", "modelYears", "requiredOptions", "excludedOptions"])
+      && job?.origin === "original" && job.sourceQualified === true && sha(job.sourceHash)
+      && text(job.id) && text(job.ecu) && ["981", "982"].includes(condition?.generation)
+      && condition.qualified === true && strings(condition.productKeys, true)
+      && Array.isArray(condition.modelYears) && condition.modelYears.length > 0
+      && condition.modelYears.every(year => Number.isInteger(year) && year >= 1980 && year <= 2200)
+      && strings(condition.requiredOptions) && strings(condition.excludedOptions)
+      && Array.isArray(job.participants) && job.participants.length > 0 && job.participants.length <= 128
+      && new Set(job.participants.map(unit => unit.ecu)).size === job.participants.length
+      && job.participants.some(unit => unit.ecu === job.ecu)
+      && job.participants.every(unit => closed(unit, ["ecu", "label", "targetVersion", "targetSoftware", "executionQualified", "recoveryQualified", "routes", "files"])
+        && text(unit.ecu) && text(unit.label) && text(unit.targetVersion)
+        && (unit.targetSoftware === undefined || text(unit.targetSoftware))
+        && unit.executionQualified === true && unit.recoveryQualified === true
+        && Array.isArray(unit.routes) && unit.routes.length > 0 && unit.routes.every(route =>
+          closed(route, ["hardware", "software", "currentVersion", "operation"]) && text(route.hardware) && text(route.software) && text(route.currentVersion)
+          && ["upgrade", "reflash", "downgrade"].includes(route.operation)
+          && (route.operation === "reflash") === (route.currentVersion === unit.targetVersion))
+        && Array.isArray(unit.files) && unit.files.length > 0 && unit.files.length <= 64
+        && unit.files.every(file => closed(file, ["path", "sha256", "bytes", "sourceQualified", "containerQualified"])
+          && text(file.path) && path.isAbsolute(file.path) && sha(file.sha256)
+          && Number.isSafeInteger(file.bytes) && file.bytes > 0 && file.sourceQualified === true && file.containerQualified === true));
+  }
+  function normalizeState(state) {
+    const device = state?.device, vehicle = state?.vehicle;
+    if (state?.qualified !== true || state.freshRead !== true || !text(state.readId)
+      || device?.connected !== true || device.purpose !== "diagnostic" || device.wiredVerified !== true
+      || !["VNCI", "PT3G"].includes(device.family) || !text(device.id) || !text(device.connectionEpoch)
+      || !(device.family === "VNCI" ? /^vnci:[0-9]{1,16}$/.test(device.id) : /^pt3g:[0-9]{1,16}$/.test(device.id))
+      || !["981", "982"].includes(vehicle?.generation) || !/^[A-HJ-NPR-Z0-9]{17}$/.test(vehicle.vin || "")
+      || !text(vehicle.productKey) || !Number.isInteger(vehicle.modelYear) || !strings(vehicle.options)
+      || !Array.isArray(state.units) || state.units.length > 256
+      || !state.units.every(unit => unit?.qualified === true && text(unit.ecu) && text(unit.hardware)
+        && text(unit.software) && text(unit.version)) || new Set(state.units.map(unit => unit.ecu)).size !== state.units.length)
+      throw new Error("firmware-current-unavailable");
+    return { readId: state.readId, device: { id: device.id, family: device.family, connectionEpoch: device.connectionEpoch },
+      vehicle: { generation: vehicle.generation, vin: vehicle.vin, productKey: vehicle.productKey,
+        modelYear: vehicle.modelYear, options: [...vehicle.options].sort() },
+      units: state.units.map(({ ecu, hardware, software, version }) => ({ ecu, hardware, software, version })).sort((a, b) => a.ecu.localeCompare(b.ecu)) };
+  }
+  function match(job, state) {
+    const condition = job.conditions, vehicle = state.vehicle;
+    if (condition.generation !== vehicle.generation || !condition.productKeys.includes(vehicle.productKey)
+      || !condition.modelYears.includes(vehicle.modelYear) || !condition.requiredOptions.every(option => vehicle.options.includes(option))
+      || condition.excludedOptions.some(option => vehicle.options.includes(option))) return null;
+    const rows = [];
+    for (const unit of job.participants) {
+      const current = state.units.find(item => item.ecu === unit.ecu);
+      const routes = unit.routes.filter(route => current && route.hardware === current.hardware && route.software === current.software && route.currentVersion === current.version);
+      if (routes.length !== 1) return null;
+      rows.push({ ecu: unit.ecu, label: unit.label, currentVersion: current.version, targetVersion: unit.targetVersion, operation: routes[0].operation });
+    }
+    return rows;
+  }
+  async function filesMatch(job) {
+    for (const file of job.participants.flatMap(unit => unit.files)) {
+      const handle = await fs.open(file.path, "r");
+      try {
+        const stat = await handle.stat(); if (!stat.isFile() || stat.size !== file.bytes) return false;
+        const digest = createHash("sha256"), buffer = Buffer.alloc(65536); let bytes = 0;
+        for (;;) {
+          const read = await handle.read(buffer, 0, Math.min(buffer.length, file.bytes - bytes + 1), null);
+          if (!read.bytesRead) break;
+          bytes += read.bytesRead; if (bytes > file.bytes) return false;
+          digest.update(buffer.subarray(0, read.bytesRead));
+        }
+        if (bytes !== file.bytes || digest.digest("hex") !== file.sha256) return false;
+      } finally { await handle.close(); }
+    }
+    return true;
+  }
+  return {
+    clearOwned(owner) { listings.delete(owner); revisions.set(owner, (revisions.get(owner) || 0) + 1); },
+    /** Application-only handoff; IPC cannot request it. A successful review is
+     * consumed once, and the executor must recheck the plan after acquiring the
+     * actual vehicle lease, before running any source operation. */
+    takeReviewed(request, owner) {
+      const listing = listings.get(owner), reviewed = listing?.reviewed;
+      if (!reviewed || reviewed.consumed || listing.ecu !== request.ecu || listing.id !== request.listId
+        || reviewed.targetId !== request.targetId || reviewed.id !== request.reviewId) return null;
+      reviewed.consumed = true;
+      const option = listing.options.find(item => item.id === reviewed.targetId);
+      const baseline = structuredClone(reviewed.state);
+      const reads = new Set([baseline.readId]);
+      return { job: structuredClone(option.job), rows: structuredClone(reviewed.rows),
+        async verifyCurrent(raw) {
+          const state = normalizeState(raw), { readId: freshId, ...fresh } = state, { readId: priorId, ...prior } = baseline;
+          if (reads.has(freshId) || freshId === priorId || !same(fresh, prior)) return { ok: false, error: "firmware-current-changed" };
+          reads.add(freshId);
+          const registry = await getJobs(), jobs = Array.isArray(registry) ? registry.filter(job => job?.id === option.job.id) : [];
+          if (jobs.length !== 1 || !validJob(jobs[0]) || !same(jobs[0], option.job)) return { ok: false, error: "firmware-source-changed" };
+          try { if (!await filesMatch(option.job)) return { ok: false, error: "firmware-file-changed" }; }
+          catch { return { ok: false, error: "firmware-file-changed" }; }
+          return { ok: true };
+        },
+        inspectResult(raw) {
+          const state = normalizeState(raw);
+          const stable = !reads.has(state.readId) && same(state.device, baseline.device) && same(state.vehicle, baseline.vehicle);
+          reads.add(state.readId);
+          const rows = option.job.participants.map(unit => {
+            const current = state.units.find(item => item.ecu === unit.ecu), before = baseline.units.find(item => item.ecu === unit.ecu);
+            const bound = stable && !!current && !!before && current.hardware === before.hardware;
+            return { ecu: unit.ecu, actualVersion: bound ? current.version : null,
+              matched: bound && text(unit.targetSoftware)
+                && current.software === unit.targetSoftware && current.version === unit.targetVersion };
+          });
+          return { ok: rows.every(row => row.matched), rows };
+        } };
+    },
+    async handle(request, owner) {
+      if (!Number.isInteger(owner) || owner < 1 || !request || typeof request !== "object" || Array.isArray(request)
+        || !["list", "review", "clear"].includes(request.action)) return failure("firmware-selection-invalid");
+      const keys = request.action === "list" ? ["action", "ecu"] : request.action === "review" ? ["action", "ecu", "listId", "targetId"] : ["action", "listId"];
+      if (Object.keys(request).some(key => !keys.includes(key))
+        || request.action !== "clear" && (typeof request.ecu !== "string" || !/^[a-z][a-z0-9-]{0,63}$/.test(request.ecu))) return failure("firmware-selection-invalid");
+      if (request.action === "clear") {
+        if (request.listId !== listings.get(owner)?.id) return failure("firmware-selection-stale");
+        this.clearOwned(owner); return { ok: true, executionEnabled: false };
+      }
+      const revision = (revisions.get(owner) || 0) + 1; revisions.set(owner, revision);
+      const listing = listings.get(owner);
+      if (request.action === "list") listings.delete(owner);
+      try {
+        if (request.action === "list") {
+          const registry = await getJobs();
+          if (revisions.get(owner) !== revision) return failure("firmware-selection-stale");
+          if (!Array.isArray(registry) || registry.length > 4096) return failure("firmware-registry-invalid");
+          const copied = structuredClone(registry);
+          const jobs = copied.filter(job => job?.ecu === request.ecu && validJob(job) && copied.filter(other => other?.id === job.id).length === 1);
+          if (!jobs.length) return { ok: true, ecu: request.ecu, versions: [], catalogueState: "source-unavailable", executionEnabled: false, reason: "缺少已核实的原厂版本、适用条件及完整作业绑定。" };
+          if (isVehicleBusy()) return failure("vehicle-busy");
+          const state = normalizeState(await getVehicleState());
+          const candidates = [];
+          for (const job of jobs) {
+            const rows = match(job, state); if (!rows) continue;
+            try { if (!await filesMatch(job)) continue; } catch { continue; }
+            candidates.push({ id: randomUUID(), job: structuredClone(job), rows, version: rows.find(row => row.ecu === job.ecu).targetVersion });
+          }
+          // Multiple different jobs with the same label are ambiguous. No
+          // filename, date or lexical version ordering chooses one for the user.
+          const options = candidates.filter(item => candidates.filter(other => other.version === item.version).length === 1);
+          if (revisions.get(owner) !== revision) return failure("firmware-selection-stale");
+          const entry = { id: randomUUID(), ecu: request.ecu, state, options }; listings.set(owner, entry);
+          return { ok: true, ecu: entry.ecu, listId: entry.id, executionEnabled: false, catalogueState: options.length ? "matched" : "no-match",
+            versions: options.map(item => ({ id: item.id, version: item.version,
+              ...(closed(item.job.releaseNotes, ["qualified", "sourceHash", "text"]) && item.job.releaseNotes.qualified === true && sha(item.job.releaseNotes.sourceHash)
+                && typeof item.job.releaseNotes.text === "string" && item.job.releaseNotes.text.length > 0 && item.job.releaseNotes.text.length <= 4096 ? { notes: item.job.releaseNotes.text } : {}) })),
+            ...(!options.length ? { reason: "当前车辆及全部联动单元没有核对通过的原厂版本。" } : {}) };
+        }
+        const option = listing?.options.find(item => item.id === request.targetId);
+        if (!listing || listing.id !== request.listId || listing.ecu !== request.ecu || !option) return failure("firmware-selection-stale");
+        delete listing.reviewed;
+        if (isVehicleBusy()) return failure("vehicle-busy");
+        const registry = await getJobs();
+        if (revisions.get(owner) !== revision) return failure("firmware-selection-stale");
+        const jobs = Array.isArray(registry) && registry.length <= 4096 ? registry.filter(job => job?.id === option.job.id) : [];
+        if (jobs.length !== 1 || !validJob(jobs[0]) || !same(jobs[0], option.job)) {
+          listings.delete(owner); return failure("firmware-source-changed");
+        }
+        const state = normalizeState(await getVehicleState());
+        if (revisions.get(owner) !== revision) return failure("firmware-selection-stale");
+        if (state.readId === listing.state.readId) return failure("firmware-current-unavailable");
+        const { readId: _fresh, ...fresh } = state, { readId: _prior, ...prior } = listing.state;
+        if (!same(fresh, prior)) { listings.delete(owner); return failure("firmware-current-changed"); }
+        const rows = match(option.job, state);
+        let verified = false; try { verified = await filesMatch(option.job); } catch { /* Private file errors stay out of IPC. */ }
+        if (revisions.get(owner) !== revision) return failure("firmware-selection-stale");
+        if (!rows || !verified) { listings.delete(owner); return failure("firmware-file-changed"); }
+        if (revisions.get(owner) !== revision) return failure("firmware-selection-stale");
+        const reviewed = { id: randomUUID(), targetId: option.id, state, rows, consumed: false }; listing.reviewed = reviewed;
+        const canStart = canExecute({ job: structuredClone(option.job) }) === true;
+        return { ok: true, ecu: listing.ecu, listId: listing.id, targetId: option.id, reviewId: reviewed.id, rows,
+          canStart, executionEnabled: false, reason: canStart ? "版本及完整联动范围核对通过，请核对后确认刷写。" : "版本及完整联动范围核对通过；刷写执行、回读及恢复客户端尚未接入。" };
+      } catch {
+        if (revisions.get(owner) === revision) listings.delete(owner);
+        return failure("firmware-current-unavailable");
+      }
+    },
+  };
+}
+
 export function codingBlockKey(block) {
   if (typeof block?.did === "string" && block?.identifierKind === undefined && block?.identifierHex === undefined && /^[0-9A-F]{4}$/.test(block.did)) return `DID:${block.did}`;
   if (block?.did === undefined && typeof block?.identifierHex === "string" && ((block?.identifierKind === "LID" && /^[0-9A-F]{2}$/.test(block.identifierHex))
@@ -49,9 +245,16 @@ export function normalizeCodingBackup(input) {
     provenance: input.provenance === "simulation" ? "simulation" : "imported", freshReadProven: false, completeness: "declared-block-list", liveVerified: false };
 }
 
+export function normalizeStoredCodingBackup(input) {
+  return input?.schemaVersion === 3 ? normalizeSourceCodingBackup(input) : normalizeCodingBackup(input);
+}
+
 export function codingRestorePlan(original, current) {
-  const before = normalizeCodingBackup(current), baseline = normalizeCodingBackup(original);
+  const before = normalizeStoredCodingBackup(current), baseline = normalizeStoredCodingBackup(original);
+  if ((before.schemaVersion === 3) !== (baseline.schemaVersion === 3)) throw new Error("restore-provenance-mismatch");
   if (!same(before.identity, baseline.identity) || before.profileId !== baseline.profileId) throw new Error("restore-identity-version-mismatch");
+  if (before.schemaVersion === 3 && (before.sourceHash !== baseline.sourceHash || before.scopeHash !== baseline.scopeHash
+    || before.targetEcuId !== baseline.targetEcuId)) throw new Error("restore-source-scope-mismatch");
   if (!same(before.blocks.map(codingBlockKey), baseline.blocks.map(codingBlockKey))) throw new Error("restore-coverage-mismatch");
   const blocks = baseline.blocks.map((block, i) => {
     const prior = before.blocks[i];
@@ -62,6 +265,60 @@ export function codingRestorePlan(original, current) {
     changedBlocks: blocks.filter((b) => b.changed).length, originalHash: hash(JSON.stringify(baseline)),
     currentHash: hash(JSON.stringify(before)), executionEnabled: false, writePayload: null,
     blockers: ["需要本次完整实车读取并持久化备份", "需要该版本已核实的写入、回读与恢复定义", "需要实车验收"] };
+}
+
+/** Compose named, source-validated edits only. Reapplying every target to the
+ * final bytes detects overlapping fields whose later edit undoes an earlier one. */
+async function codingBatchPreview(current, edits, previewField) {
+  if (!Array.isArray(edits) || !edits.length || edits.length > 512) throw new Error("coding-batch-invalid");
+  const seen = new Set(), effects = new Map(), blocks = new Map(current.blocks.map(b => [codingBlockKey(b), b.dataHex]));
+  for (const edit of edits) {
+    if (!edit || typeof edit !== "object" || Array.isArray(edit)
+      || Object.keys(edit).some(k => !["blockKey", "recordAt", "rawValue", "physicalValue"].includes(k))
+      || typeof edit.blockKey !== "string" || !/^(LID:[0-9A-F]{2}|DID:[0-9A-F]{4})$/.test(edit.blockKey)
+      || !blocks.has(edit.blockKey) || !Number.isSafeInteger(edit.recordAt) || edit.recordAt < 0
+      || (Object.hasOwn(edit, "rawValue") === Object.hasOwn(edit, "physicalValue"))
+      || (Object.hasOwn(edit, "rawValue") ? !Number.isSafeInteger(edit.rawValue)
+        : typeof edit.physicalValue !== "string" || !edit.physicalValue.length || edit.physicalValue.length > 128))
+      throw new Error("coding-batch-edit-invalid");
+    const key = `${edit.blockKey}:${edit.recordAt}`;
+    if (seen.has(key)) throw new Error("coding-batch-duplicate-field");
+    seen.add(key);
+  }
+  const preview = async (edit, dataHex) => {
+    const [kind, identifier] = edit.blockKey.split(":");
+    const result = await previewField({ action: "preview", category: "coding", generation: current.identity.generation,
+      profileId: current.profileId, recordAt: edit.recordAt, dataHex,
+      expectedReadRequestHex: (kind === "LID" ? "21" : "22") + identifier,
+      ...(Object.hasOwn(edit, "rawValue") ? { rawValue: edit.rawValue } : { physicalValue: edit.physicalValue }) });
+    if (!result?.ok) throw new Error(result?.error || "coding-batch-preview-failed");
+    if (result.beforeHex !== dataHex || !hex(result.afterHex) || result.afterHex.length !== dataHex.length
+      || !Array.isArray(result.effects)) throw new Error("coding-batch-preview-invalid");
+    const targetBytes = Buffer.from(result.afterHex, "hex");
+    const xor = Buffer.from(dataHex, "hex").map((byte, i) => byte ^ targetBytes[i]).toString("hex").toUpperCase();
+    if (result.changedBitMaskHex !== xor) throw new Error("coding-batch-preview-invalid");
+    return result;
+  };
+  for (const edit of edits) {
+    const result = await preview(edit, blocks.get(edit.blockKey));
+    blocks.set(edit.blockKey, result.afterHex);
+    for (const effect of result.effects) {
+      if (!Number.isSafeInteger(effect.sourceOffset) || typeof effect.name !== "string" || !effect.before || !effect.after)
+        throw new Error("coding-batch-preview-invalid");
+      const key = `${edit.blockKey}:${effect.sourceOffset}`, previous = effects.get(key);
+      if (previous && !same(previous.after, effect.before)) throw new Error("coding-batch-effects-invalid");
+      effects.set(key, { ...effect, blockKey: edit.blockKey, before: previous?.before || effect.before,
+        selected: seen.has(key) });
+    }
+  }
+  for (const edit of edits) {
+    const final = blocks.get(edit.blockKey), checked = await preview(edit, final);
+    if (checked.afterHex !== final) throw new Error("coding-batch-target-conflict");
+  }
+  const target = { ...current, blocks: current.blocks.map(b => ({ ...b, dataHex: blocks.get(codingBlockKey(b)) })) };
+  const { originalHash, ...base } = codingRestorePlan(target, current);
+  return { plan: { ...base, kind: "current-ecu-coding-preview-plan", targetHash: originalHash },
+    effects: [...effects.values()].filter(effect => !same(effect.before, effect.after)), editCount: edits.length };
 }
 
 /** Executable offline state machine. Dependencies are application-owned simulation
@@ -148,6 +405,37 @@ export async function runCodingRehearsal(plan, dependencies) {
   }
 }
 
+/** A new, owned full source read resolves an old outcome without retrying it.
+ * No renderer blocks, imported backup or partial read can close the operation.
+ * Only hashes of the observation are journaled; no extra desktop file is saved. */
+export async function reconcileCodingReadback(journal, operationId, input, loadBackup, checkpoint) {
+  const current = normalizeSourceCodingBackup(structuredClone(input));
+  const state = await journal.inspect(operationId);
+  if (!checkpoint || checkpoint.lastSha256 !== state.lastSha256
+    || typeof checkpoint.readStartedUtc !== "string" || !Number.isFinite(Date.parse(checkpoint.readStartedUtc))
+    || Date.parse(checkpoint.readStartedUtc) < Date.parse(state.updatedUtc)
+    || Date.parse(current.capturedUtc) < Date.parse(checkpoint.readStartedUtc))
+    throw new Error("operation-reconciliation-read-stale");
+  if (state.metadata.mode !== "vehicle" || !state.intended.length
+    || !["write-intent", "write-returned", "block-verified", "outcome-unknown", "readback-reconciled"].includes(state.phase))
+    throw new Error("operation-reconciliation-unavailable");
+  const scopeKey = hash(JSON.stringify({ identity: current.identity, profileId: current.profileId }));
+  if (state.metadata.scopeKey !== scopeKey || state.metadata.ecu !== current.identity.ecu
+    || Date.parse(current.capturedUtc) < Date.parse(state.updatedUtc)) throw new Error("operation-reconciliation-read-stale");
+  const stored = await loadBackup(state.metadata.backupId);
+  const before = normalizeSourceCodingBackup(stored?.backup);
+  if (stored.sha256 !== state.metadata.backupId || hash(JSON.stringify(before)) !== stored.sha256
+    || !Number.isFinite(Date.parse(state.createdUtc)) || Date.parse(before.capturedUtc) > Date.parse(state.createdUtc))
+    throw new Error("operation-reconciliation-backup-invalid");
+  codingRestorePlan(before, current); // Exact identity/version/source/complete scope.
+  if (current.blocks.length !== state.metadata.targets.length || current.blocks.some((b, i) =>
+    codingBlockKey(b) !== state.metadata.targets[i].key
+    || state.metadata.targets[i].changed !== (state.metadata.targets[i].sha256 !== codingJournalHash(Buffer.from(before.blocks[i].dataHex, "hex")))))
+    throw new Error("operation-reconciliation-scope-invalid");
+  return journal.reconcile(operationId, { capturedUtc: current.capturedUtc,
+    blocks: current.blocks.map(b => ({ key: codingBlockKey(b), sha256: codingJournalHash(Buffer.from(b.dataHex, "hex")) })) }, state.lastSha256);
+}
+
 export function firmwarePreparation(manifest, file, current, transport, container = null) {
   if (!manifest || manifest.schemaVersion !== 1 || manifest.kind !== "oem-ecu-firmware-manifest"
     || manifest.origin !== "original" || !/^[a-f0-9]{64}$/.test(manifest.sha256) || !Number.isSafeInteger(manifest.bytes)
@@ -179,7 +467,7 @@ export function firmwarePreparation(manifest, file, current, transport, containe
     container, transportRequirement, executionEnabled: false, writePayload: null, blockers };
 }
 
-export function createDiagnosticPreparation({ directory, chooseOpenFile, saveFile, connectionStatus, previewField, inspectFirmware }) {
+export function createDiagnosticPreparation({ directory, desktopDirectory, chooseOpenFile, saveFile, connectionStatus, previewField, inspectFirmware }) {
   let firmware = null;
   let serial = Promise.resolve();
   const queued = (fn) => { const next = serial.then(fn, fn); serial = next.catch(() => {}); return next; };
@@ -188,12 +476,15 @@ export function createDiagnosticPreparation({ directory, chooseOpenFile, saveFil
     try { if ((await h.stat()).size > 4 * 1024 * 1024) throw new Error("preparation-file-too-large"); return JSON.parse(await h.readFile("utf8")); }
     finally { await h.close(); }
   }
-  const store = createCodingBackupStore({ directory, normalizeBackup: normalizeCodingBackup });
+  const store = createCodingBackupStore({ directory, normalizeBackup: normalizeCodingBackup, normalizeStoredBackup: normalizeStoredCodingBackup });
   const journal = createCodingOperationJournal({ directory: path.join(directory, "operations") });
   const { load, persist, list } = store;
   async function perform(req) {
     if (!req || typeof req !== "object" || Array.isArray(req) || Object.keys(req).some((k) =>
-      !["action", "ecu", "id", "did", "blockKey", "recordAt", "rawValue", "physicalValue", "scenario", "offset"].includes(k))) throw new Error("preparation-request-invalid");
+      !["action", "ecu", "id", "did", "blockKey", "recordAt", "rawValue", "physicalValue", "scenario", "offset", "edits"].includes(k))) throw new Error("preparation-request-invalid");
+    const batchAction = ["coding-batch-preview", "simulate-coding-batch"].includes(req.action);
+    if (Object.hasOwn(req, "edits") && !batchAction) throw new Error("preparation-request-invalid");
+    if (batchAction && Object.keys(req).some(k => !["action", "ecu", "id", "edits", "scenario"].includes(k))) throw new Error("preparation-request-invalid");
     if (Object.hasOwn(req, "offset") && req.action !== "operation-history") throw new Error("preparation-request-invalid");
     if (Object.hasOwn(req, "physicalValue") && (!["coding-preview", "simulate-coding"].includes(req.action)
       || Object.hasOwn(req, "rawValue") || typeof req.physicalValue !== "string" || !req.physicalValue.length
@@ -225,11 +516,21 @@ export function createDiagnosticPreparation({ directory, chooseOpenFile, saveFil
       if (backup.identity.ecu !== req.ecu) throw new Error("backup-current-ecu-mismatch");
       return { ok: true, ...await persist(backup), backups: await list(req.ecu) };
     }
+    if (batchAction) {
+      const stored = await load(req.id);
+      if (stored.backup.identity.ecu !== req.ecu) throw new Error("backup-current-ecu-mismatch");
+      const preview = await codingBatchPreview(stored.backup, req.edits, previewField);
+      return { ok: true, ...preview, backupId: req.id,
+        ...(req.action === "simulate-coding-batch" ? { result: await rehearse(preview.plan, stored.backup, req.scenario) } : {}) };
+    }
     if (["backup", "export-backup", "restore-plan", "simulate-restore", "coding-options", "coding-preview", "simulate-coding"].includes(req.action)) {
       const stored = await load(req.id);
       if (stored.backup.identity.ecu !== req.ecu) throw new Error("backup-current-ecu-mismatch");
       if (req.action === "backup") return { ok: true, backup: stored.backup };
-      if (req.action === "export-backup") return saveFile("ecu-coding-backup.json", stored.backup);
+      if (req.action === "export-backup") {
+        if (Object.keys(req).some(key => !["action", "ecu", "id"].includes(key))) throw new Error("preparation-request-invalid");
+        return store.publishOriginal(stored.identityKey, typeof desktopDirectory === "function" ? desktopDirectory() : desktopDirectory);
+      }
       if (req.action.startsWith("coding-") || req.action === "simulate-coding") {
         if (req.blockKey !== undefined && (typeof req.blockKey !== "string" || !/^(LID:[0-9A-F]{2}|DID:[0-9A-F]{4})$/.test(req.blockKey)
           || req.did !== undefined)) throw new Error("coding-field-invalid");
@@ -252,7 +553,7 @@ export function createDiagnosticPreparation({ directory, chooseOpenFile, saveFil
         }
         return { ...result, ...blockLocator(block), backupId: req.id, executionEnabled: false, writePayload: null };
       }
-      const baseline = await store.baseline(stored.identityKey);
+      const baseline = await store.firstOriginal(stored.identityKey);
       if (!baseline) throw new Error("backup-baseline-missing");
       const plan = codingRestorePlan(baseline.backup, stored.backup);
       if (req.action === "simulate-restore") return { ok: true, plan, result: await rehearse(plan, stored.backup, req.scenario) };

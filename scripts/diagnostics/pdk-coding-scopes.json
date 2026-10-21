@@ -1,0 +1,606 @@
+{
+  "schemaVersion": 1,
+  "kind": "reviewed-pdk-coding-read-scopes",
+  "profiles": [
+    {
+      "profileId": "9x1:Getriebesteuerung_PDK:PDK",
+      "generations": [
+        "981",
+        "982"
+      ],
+      "ecuId": 2,
+      "definitionSha256": "dffc64bcd7b85d94813c70d30a87613476b37acbcc46f918177ea9c4c3e6855b",
+      "definitionFieldCount": 1,
+      "completeScopeSource": {
+        "kind": "piwis-readable-configuration-record-set",
+        "project": "9x1",
+        "version": "2830.1.0",
+        "sourceFile": "0.0.0@EcuConfig_Getriebesteuerung_PDK.ec.db",
+        "sourceSha256": "63bf0409446414444cd5ca287f0129b9379faa9c8b248bed2c5c6b1b9f0965ae",
+        "indexSha256": "5f1f8e7f61820c923339bb6778865736130b87f8348598882ec8f63f7ed07846",
+        "datasetId": "#RtGen_CD_EcuConfig_Getriebesteuerung_PDK_ConfigData_Getriebesteuerung_PDK",
+        "datasetSha256": "fda6d378358b86a2f590546f17cdb03aad2bd0f93bd0ebbbda46b796b2b91eeb",
+        "requestLengths": [
+          {
+            "requestHex": "2101",
+            "bytes": 1
+          }
+        ],
+        "sha256": "2d8be7a95eb6f5e8ca53152acf842399e1c9adfc490835a19b344b4e48ac8d19"
+      },
+      "sourceQualification": "pdk-dsn-and-full-identity",
+      "txId": 1822,
+      "rxId": 1928,
+      "identityConstraints": {
+        "dsnHex": "4000"
+      },
+      "session": {
+        "requestHex": "1089",
+        "positivePrefixHex": "5089"
+      },
+      "identityFields": [
+        {
+          "requestHex": "1A9F",
+          "sourceOffset": 3673347,
+          "byteOffset": 0,
+          "dataMin": 2
+        },
+        {
+          "requestHex": "1A95",
+          "sourceOffset": 3673374,
+          "byteOffset": 0,
+          "dataMin": 4
+        },
+        {
+          "requestHex": "1A9A",
+          "sourceOffset": 3673401,
+          "byteOffset": 0,
+          "dataMin": 8
+        },
+        {
+          "requestHex": "1A87",
+          "sourceOffset": 3673607,
+          "byteOffset": 0,
+          "dataMin": 11
+        },
+        {
+          "requestHex": "1A91",
+          "sourceOffset": 3673634,
+          "byteOffset": 0,
+          "dataMin": 11
+        },
+        {
+          "requestHex": "1A90",
+          "sourceOffset": 3673661,
+          "byteOffset": 0,
+          "dataMin": 17
+        }
+      ]
+    },
+    {
+      "profileId": "9x1:Getriebesteuerung_PDK:PDK_ohne_Quersperre",
+      "generations": [
+        "981",
+        "982"
+      ],
+      "ecuId": 2,
+      "definitionSha256": "1dee483cbd64d98fb8bcfea42af7eed3edcdef63db39f3ed58b013d6479cd74b",
+      "definitionFieldCount": 1,
+      "completeScopeSource": {
+        "kind": "piwis-readable-configuration-record-set",
+        "project": "9x1",
+        "version": "2830.1.0",
+        "sourceFile": "0.0.0@EcuConfig_Getriebesteuerung_PDK.ec.db",
+        "sourceSha256": "63bf0409446414444cd5ca287f0129b9379faa9c8b248bed2c5c6b1b9f0965ae",
+        "indexSha256": "5f1f8e7f61820c923339bb6778865736130b87f8348598882ec8f63f7ed07846",
+        "datasetId": "#RtGen_CD_EcuConfig_Getriebesteuerung_PDK_ConfigData_Getriebesteuerung_PDK",
+        "datasetSha256": "fda6d378358b86a2f590546f17cdb03aad2bd0f93bd0ebbbda46b796b2b91eeb",
+        "requestLengths": [
+          {
+            "requestHex": "2101",
+            "bytes": 1
+          }
+        ],
+        "sha256": "2d8be7a95eb6f5e8ca53152acf842399e1c9adfc490835a19b344b4e48ac8d19"
+      },
+      "sourceQualification": "pdk-dsn-and-full-identity",
+      "txId": 1822,
+      "rxId": 1928,
+      "identityConstraints": {
+        "dsnHex": "4010"
+      },
+      "session": {
+        "requestHex": "1089",
+        "positivePrefixHex": "5089"
+      },
+      "identityFields": [
+        {
+          "requestHex": "1A9F",
+          "sourceOffset": 3727509,
+          "byteOffset": 0,
+          "dataMin": 2
+        },
+        {
+          "requestHex": "1A95",
+          "sourceOffset": 3727536,
+          "byteOffset": 0,
+          "dataMin": 4
+        },
+        {
+          "requestHex": "1A9A",
+          "sourceOffset": 3727563,
+          "byteOffset": 0,
+          "dataMin": 8
+        },
+        {
+          "requestHex": "1A87",
+          "sourceOffset": 3727769,
+          "byteOffset": 0,
+          "dataMin": 11
+        },
+        {
+          "requestHex": "1A91",
+          "sourceOffset": 3727796,
+          "byteOffset": 0,
+          "dataMin": 11
+        },
+        {
+          "requestHex": "1A90",
+          "sourceOffset": 3727823,
+          "byteOffset": 0,
+          "dataMin": 17
+        }
+      ]
+    },
+    {
+      "profileId": "9x1:Getriebesteuerung_PDK:PDK_A2",
+      "generations": [
+        "981",
+        "982"
+      ],
+      "ecuId": 2,
+      "definitionSha256": "36f070807daacd7be35f9a0945aa9ae6e68613cea1023fe2d1bfdd9733db162e",
+      "definitionFieldCount": 1,
+      "completeScopeSource": {
+        "kind": "piwis-readable-configuration-record-set",
+        "project": "9x1",
+        "version": "2830.1.0",
+        "sourceFile": "0.0.0@EcuConfig_Getriebesteuerung_PDK.ec.db",
+        "sourceSha256": "63bf0409446414444cd5ca287f0129b9379faa9c8b248bed2c5c6b1b9f0965ae",
+        "indexSha256": "5f1f8e7f61820c923339bb6778865736130b87f8348598882ec8f63f7ed07846",
+        "datasetId": "#RtGen_CD_EcuConfig_Getriebesteuerung_PDK_ConfigData_Getriebesteuerung_PDK",
+        "datasetSha256": "fda6d378358b86a2f590546f17cdb03aad2bd0f93bd0ebbbda46b796b2b91eeb",
+        "requestLengths": [
+          {
+            "requestHex": "2101",
+            "bytes": 1
+          }
+        ],
+        "sha256": "2d8be7a95eb6f5e8ca53152acf842399e1c9adfc490835a19b344b4e48ac8d19"
+      },
+      "sourceQualification": "pdk-dsn-and-full-identity",
+      "txId": 1822,
+      "rxId": 1928,
+      "identityConstraints": {
+        "dsnHex": "4100"
+      },
+      "session": {
+        "requestHex": "1089",
+        "positivePrefixHex": "5089"
+      },
+      "identityFields": [
+        {
+          "requestHex": "1A9F",
+          "sourceOffset": 3685957,
+          "byteOffset": 0,
+          "dataMin": 2
+        },
+        {
+          "requestHex": "1A95",
+          "sourceOffset": 3685984,
+          "byteOffset": 0,
+          "dataMin": 4
+        },
+        {
+          "requestHex": "1A9A",
+          "sourceOffset": 3686011,
+          "byteOffset": 0,
+          "dataMin": 8
+        },
+        {
+          "requestHex": "1A87",
+          "sourceOffset": 3686217,
+          "byteOffset": 0,
+          "dataMin": 11
+        },
+        {
+          "requestHex": "1A91",
+          "sourceOffset": 3686244,
+          "byteOffset": 0,
+          "dataMin": 11
+        },
+        {
+          "requestHex": "1A90",
+          "sourceOffset": 3686271,
+          "byteOffset": 0,
+          "dataMin": 17
+        }
+      ]
+    },
+    {
+      "profileId": "9x1:Getriebesteuerung_PDK:PDK_A2_ohne_Quersperre",
+      "generations": [
+        "981",
+        "982"
+      ],
+      "ecuId": 2,
+      "definitionSha256": "17156cad48cac4cc6bd63c43edb950abdf1704978cb02d467ca55413ca372c94",
+      "definitionFieldCount": 1,
+      "completeScopeSource": {
+        "kind": "piwis-readable-configuration-record-set",
+        "project": "9x1",
+        "version": "2830.1.0",
+        "sourceFile": "0.0.0@EcuConfig_Getriebesteuerung_PDK.ec.db",
+        "sourceSha256": "63bf0409446414444cd5ca287f0129b9379faa9c8b248bed2c5c6b1b9f0965ae",
+        "indexSha256": "5f1f8e7f61820c923339bb6778865736130b87f8348598882ec8f63f7ed07846",
+        "datasetId": "#RtGen_CD_EcuConfig_Getriebesteuerung_PDK_ConfigData_Getriebesteuerung_PDK",
+        "datasetSha256": "fda6d378358b86a2f590546f17cdb03aad2bd0f93bd0ebbbda46b796b2b91eeb",
+        "requestLengths": [
+          {
+            "requestHex": "2101",
+            "bytes": 1
+          }
+        ],
+        "sha256": "2d8be7a95eb6f5e8ca53152acf842399e1c9adfc490835a19b344b4e48ac8d19"
+      },
+      "sourceQualification": "pdk-dsn-and-full-identity",
+      "txId": 1822,
+      "rxId": 1928,
+      "identityConstraints": {
+        "dsnHex": "4110"
+      },
+      "session": {
+        "requestHex": "1089",
+        "positivePrefixHex": "5089"
+      },
+      "identityFields": [
+        {
+          "requestHex": "1A9F",
+          "sourceOffset": 3692481,
+          "byteOffset": 0,
+          "dataMin": 2
+        },
+        {
+          "requestHex": "1A95",
+          "sourceOffset": 3692508,
+          "byteOffset": 0,
+          "dataMin": 4
+        },
+        {
+          "requestHex": "1A9A",
+          "sourceOffset": 3692535,
+          "byteOffset": 0,
+          "dataMin": 8
+        },
+        {
+          "requestHex": "1A87",
+          "sourceOffset": 3692741,
+          "byteOffset": 0,
+          "dataMin": 11
+        },
+        {
+          "requestHex": "1A91",
+          "sourceOffset": 3692768,
+          "byteOffset": 0,
+          "dataMin": 11
+        },
+        {
+          "requestHex": "1A90",
+          "sourceOffset": 3692795,
+          "byteOffset": 0,
+          "dataMin": 17
+        }
+      ]
+    },
+    {
+      "profileId": "9x1:Getriebesteuerung_PDK:PDK_A3",
+      "generations": [
+        "981",
+        "982"
+      ],
+      "ecuId": 2,
+      "definitionSha256": "bbba794f8e8c4097208cff81d1473c2f576892d26df6ea63b444fa16ff2139b0",
+      "definitionFieldCount": 1,
+      "completeScopeSource": {
+        "kind": "piwis-readable-configuration-record-set",
+        "project": "9x1",
+        "version": "2830.1.0",
+        "sourceFile": "0.0.0@EcuConfig_Getriebesteuerung_PDK.ec.db",
+        "sourceSha256": "63bf0409446414444cd5ca287f0129b9379faa9c8b248bed2c5c6b1b9f0965ae",
+        "indexSha256": "5f1f8e7f61820c923339bb6778865736130b87f8348598882ec8f63f7ed07846",
+        "datasetId": "#RtGen_CD_EcuConfig_Getriebesteuerung_PDK_ConfigData_Getriebesteuerung_PDK",
+        "datasetSha256": "fda6d378358b86a2f590546f17cdb03aad2bd0f93bd0ebbbda46b796b2b91eeb",
+        "requestLengths": [
+          {
+            "requestHex": "2101",
+            "bytes": 1
+          }
+        ],
+        "sha256": "2d8be7a95eb6f5e8ca53152acf842399e1c9adfc490835a19b344b4e48ac8d19"
+      },
+      "sourceQualification": "pdk-dsn-and-full-identity",
+      "txId": 1822,
+      "rxId": 1928,
+      "identityConstraints": {
+        "dsnHex": "4200"
+      },
+      "session": {
+        "requestHex": "1089",
+        "positivePrefixHex": "5089"
+      },
+      "identityFields": [
+        {
+          "requestHex": "1A9F",
+          "sourceOffset": 3698685,
+          "byteOffset": 0,
+          "dataMin": 2
+        },
+        {
+          "requestHex": "1A95",
+          "sourceOffset": 3698712,
+          "byteOffset": 0,
+          "dataMin": 4
+        },
+        {
+          "requestHex": "1A9A",
+          "sourceOffset": 3698739,
+          "byteOffset": 0,
+          "dataMin": 8
+        },
+        {
+          "requestHex": "1A87",
+          "sourceOffset": 3698945,
+          "byteOffset": 0,
+          "dataMin": 11
+        },
+        {
+          "requestHex": "1A91",
+          "sourceOffset": 3698972,
+          "byteOffset": 0,
+          "dataMin": 11
+        },
+        {
+          "requestHex": "1A90",
+          "sourceOffset": 3698999,
+          "byteOffset": 0,
+          "dataMin": 17
+        }
+      ]
+    },
+    {
+      "profileId": "9x1:Getriebesteuerung_PDK:PDK_A3_ohne_Quersperre",
+      "generations": [
+        "981",
+        "982"
+      ],
+      "ecuId": 2,
+      "definitionSha256": "ed9beaf3db8878220cb8bca2b26dc6eb08942fdfc24985af69a30b91af2f1854",
+      "definitionFieldCount": 1,
+      "completeScopeSource": {
+        "kind": "piwis-readable-configuration-record-set",
+        "project": "9x1",
+        "version": "2830.1.0",
+        "sourceFile": "0.0.0@EcuConfig_Getriebesteuerung_PDK.ec.db",
+        "sourceSha256": "63bf0409446414444cd5ca287f0129b9379faa9c8b248bed2c5c6b1b9f0965ae",
+        "indexSha256": "5f1f8e7f61820c923339bb6778865736130b87f8348598882ec8f63f7ed07846",
+        "datasetId": "#RtGen_CD_EcuConfig_Getriebesteuerung_PDK_ConfigData_Getriebesteuerung_PDK",
+        "datasetSha256": "fda6d378358b86a2f590546f17cdb03aad2bd0f93bd0ebbbda46b796b2b91eeb",
+        "requestLengths": [
+          {
+            "requestHex": "2101",
+            "bytes": 1
+          }
+        ],
+        "sha256": "2d8be7a95eb6f5e8ca53152acf842399e1c9adfc490835a19b344b4e48ac8d19"
+      },
+      "sourceQualification": "pdk-dsn-and-full-identity",
+      "txId": 1822,
+      "rxId": 1928,
+      "identityConstraints": {
+        "dsnHex": "4210"
+      },
+      "session": {
+        "requestHex": "1089",
+        "positivePrefixHex": "5089"
+      },
+      "identityFields": [
+        {
+          "requestHex": "1A9F",
+          "sourceOffset": 3705363,
+          "byteOffset": 0,
+          "dataMin": 2
+        },
+        {
+          "requestHex": "1A95",
+          "sourceOffset": 3705390,
+          "byteOffset": 0,
+          "dataMin": 4
+        },
+        {
+          "requestHex": "1A9A",
+          "sourceOffset": 3705417,
+          "byteOffset": 0,
+          "dataMin": 8
+        },
+        {
+          "requestHex": "1A87",
+          "sourceOffset": 3705623,
+          "byteOffset": 0,
+          "dataMin": 11
+        },
+        {
+          "requestHex": "1A91",
+          "sourceOffset": 3705650,
+          "byteOffset": 0,
+          "dataMin": 11
+        },
+        {
+          "requestHex": "1A90",
+          "sourceOffset": 3705677,
+          "byteOffset": 0,
+          "dataMin": 17
+        }
+      ]
+    },
+    {
+      "profileId": "9x1:Getriebesteuerung_PDK:PDK_A4",
+      "generations": [
+        "981",
+        "982"
+      ],
+      "ecuId": 2,
+      "definitionSha256": "a9a572db168ba40518f373c02e46f6165bbf0ba4869e2fd9d9e178bcba454d58",
+      "definitionFieldCount": 1,
+      "completeScopeSource": {
+        "kind": "piwis-readable-configuration-record-set",
+        "project": "9x1",
+        "version": "2830.1.0",
+        "sourceFile": "0.0.0@EcuConfig_Getriebesteuerung_PDK.ec.db",
+        "sourceSha256": "63bf0409446414444cd5ca287f0129b9379faa9c8b248bed2c5c6b1b9f0965ae",
+        "indexSha256": "5f1f8e7f61820c923339bb6778865736130b87f8348598882ec8f63f7ed07846",
+        "datasetId": "#RtGen_CD_EcuConfig_Getriebesteuerung_PDK_ConfigData_PDK_A4",
+        "datasetSha256": "371c6afd128934fef99d5a7bb71391390a61fdfc5b3eaf7e95638e04f07b8f76",
+        "requestLengths": [
+          {
+            "requestHex": "2101",
+            "bytes": 1
+          }
+        ],
+        "sha256": "3728bac87efcfc30c2c592844e4b06c59da4c21df0e63476e43dabb7a835899f"
+      },
+      "sourceQualification": "pdk-dsn-and-full-identity",
+      "txId": 1822,
+      "rxId": 1928,
+      "identityConstraints": {
+        "dsnHex": "4400"
+      },
+      "session": {
+        "requestHex": "1089",
+        "positivePrefixHex": "5089"
+      },
+      "identityFields": [
+        {
+          "requestHex": "1A9F",
+          "sourceOffset": 3712041,
+          "byteOffset": 0,
+          "dataMin": 2
+        },
+        {
+          "requestHex": "1A95",
+          "sourceOffset": 3712068,
+          "byteOffset": 0,
+          "dataMin": 4
+        },
+        {
+          "requestHex": "1A9A",
+          "sourceOffset": 3712095,
+          "byteOffset": 0,
+          "dataMin": 8
+        },
+        {
+          "requestHex": "1A87",
+          "sourceOffset": 3712301,
+          "byteOffset": 0,
+          "dataMin": 11
+        },
+        {
+          "requestHex": "1A91",
+          "sourceOffset": 3712328,
+          "byteOffset": 0,
+          "dataMin": 11
+        },
+        {
+          "requestHex": "1A90",
+          "sourceOffset": 3712355,
+          "byteOffset": 0,
+          "dataMin": 17
+        }
+      ]
+    },
+    {
+      "profileId": "9x1:Getriebesteuerung_PDK:PDK_A5_CS",
+      "generations": [
+        "981",
+        "982"
+      ],
+      "ecuId": 2,
+      "definitionSha256": "5171e85ee04c984d22fa247e21a4a53874335f8a2d1baebf4b6a3f24519ba9d9",
+      "definitionFieldCount": 1,
+      "completeScopeSource": {
+        "kind": "piwis-readable-configuration-record-set",
+        "project": "9x1",
+        "version": "2830.1.0",
+        "sourceFile": "0.0.0@EcuConfig_Getriebesteuerung_PDK.ec.db",
+        "sourceSha256": "63bf0409446414444cd5ca287f0129b9379faa9c8b248bed2c5c6b1b9f0965ae",
+        "indexSha256": "5f1f8e7f61820c923339bb6778865736130b87f8348598882ec8f63f7ed07846",
+        "datasetId": "#RtGen_CD_EcuConfig_Getriebesteuerung_PDK_ConfigData_PDK_A4",
+        "datasetSha256": "371c6afd128934fef99d5a7bb71391390a61fdfc5b3eaf7e95638e04f07b8f76",
+        "requestLengths": [
+          {
+            "requestHex": "2101",
+            "bytes": 1
+          }
+        ],
+        "sha256": "3728bac87efcfc30c2c592844e4b06c59da4c21df0e63476e43dabb7a835899f"
+      },
+      "sourceQualification": "pdk-dsn-and-full-identity",
+      "txId": 1822,
+      "rxId": 1928,
+      "identityConstraints": {
+        "dsnHex": "4500"
+      },
+      "session": {
+        "requestHex": "1089",
+        "positivePrefixHex": "5089"
+      },
+      "identityFields": [
+        {
+          "requestHex": "1A9F",
+          "sourceOffset": 3719775,
+          "byteOffset": 0,
+          "dataMin": 2
+        },
+        {
+          "requestHex": "1A95",
+          "sourceOffset": 3719802,
+          "byteOffset": 0,
+          "dataMin": 4
+        },
+        {
+          "requestHex": "1A9A",
+          "sourceOffset": 3719829,
+          "byteOffset": 0,
+          "dataMin": 8
+        },
+        {
+          "requestHex": "1A87",
+          "sourceOffset": 3720035,
+          "byteOffset": 0,
+          "dataMin": 11
+        },
+        {
+          "requestHex": "1A91",
+          "sourceOffset": 3720062,
+          "byteOffset": 0,
+          "dataMin": 11
+        },
+        {
+          "requestHex": "1A90",
+          "sourceOffset": 3720089,
+          "byteOffset": 0,
+          "dataMin": 17
+        }
+      ]
+    }
+  ]
+}

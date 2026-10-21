@@ -9,7 +9,7 @@ NATIVE_LINK_SHA256 = '4ec50b08d3d864ff65eb462e64eb510f7740b2978073ba529bc6a78e48
 
 
 def _act_buffer_case(records):
-    groups = ((3,), (2, 0x20), (1, 0x10), (4, 8), (6,))
+    groups = ((1, 0x10), (2, 0x20), (3,), (4, 8), (6,))
     indices = [next((i for i in range(len(records)-1, -1, -1) if records[i]['tag'] in tags), None)
                for tags in groups + ((5, 7),)]
     buffers = []
@@ -35,7 +35,7 @@ def _act_buffer_case(records):
     return {'builder': 'GetActCmdMode1', 'buffers': buffers,
             'recordIndexSlots': [{'recordTags': list(tags), 'sourceRecordIndex': index}
                                  for tags, index in zip(((1, 0x10), (2, 0x20), (3,), (4, 8), (6,), (5, 7)),
-                                                       (indices[2], indices[1], indices[0], indices[3], indices[4], indices[5]))],
+                                                       (indices[0], indices[1], indices[2], indices[3], indices[4], indices[5]))],
             'nativeMissingIndexValue': 65535, 'laterSameTagOverwritesEarlier': True,
             'sourceFieldAMutationCandidates': []}
 

@@ -93,17 +93,58 @@ def _document(raw, name, payloads, issues):
                                expected=expected, attributes=dict(ref.attrib) if ref is not None else None))
         return dict(attributes=dict(ref.attrib) if ref is not None else None, resolved=valid)
 
-    sessions = [dict(id=n.get('ID'), name=n.findtext('SHORT-NAME'),
+    def single(node, tag, reason, required=False):
+        candidates = node.findall(tag)
+        if len(candidates) > 1 or required and not candidates:
+            issues.append(dict(member=name, reason=reason, owner=node.get('ID'),
+                expected=tag, candidates=[dict(c.attrib) for c in candidates]))
+        return candidates[0] if len(candidates) == 1 else None
+
+    parents = {child: parent for parent in doc.iter() for child in parent}
+
+    def ancestor(node, tags):
+        while node is not None and node.tag not in tags:
+            node = parents.get(node)
+        return node
+
+    def memory_id(node):
+        node = ancestor(node, ('ECU-MEM',))
+        return node.get('ID') if node is not None else None
+
+    memory_sessions, memory_identifiers = {}, {}
+    for node in doc.iter():
+        if node.tag not in ('SESSION', 'EXPECTED-IDENT', 'OWN-IDENT'):
+            continue
+        index = memory_sessions if node.tag == 'SESSION' else memory_identifiers
+        memory = ancestor(node, ('ECU-MEM',))
+        index.setdefault(memory, {}).setdefault(node.findtext('SHORT-NAME'), []).append(node)
+
+    def identifier(node):
+        # A_ASCIISTRING padding and blank declarations are source data. Do not
+        # trim, decode or reinterpret these as current/target ECU versions.
+        if any(list(v) for v in node.findall('IDENT-VALUES/IDENT-VALUE')):
+            issues.append(dict(member=name, reason='odx-identifier-value-unqualified', owner=node.get('ID')))
+        return dict(id=node.get('ID'), name=node.findtext('SHORT-NAME'),
+            longName=node.findtext('LONG-NAME'), values=[dict(attributes=dict(v.attrib),
+                text=v.text or '', hasChildren=bool(list(v))) for v in node.findall('IDENT-VALUES/IDENT-VALUE')])
+
+    sessions = [dict(id=n.get('ID'), name=n.findtext('SHORT-NAME'), memoryId=memory_id(n),
         datablocks=[reference(r, 'DATABLOCK', n.get('ID')) for r in n.iter('DATABLOCK-REF')],
+        expectedIdentifiers=[identifier(i) for i in n.findall('EXPECTED-IDENTS/EXPECTED-IDENT')],
         expectedIdentifierCount=len(list(n.iter('EXPECTED-IDENT'))),
         securityEntryCount=len(list(n.iter('SECURITY')))) for n in doc.iter('SESSION')]
-    blocks = [dict(id=n.get('ID'), name=n.findtext('SHORT-NAME'), type=n.get('TYPE'),
-        flashdata=reference(n.find('FLASHDATA-REF'), 'FLASHDATA', n.get('ID')),
+    blocks = [dict(id=n.get('ID'), name=n.findtext('SHORT-NAME'), type=n.get('TYPE'), memoryId=memory_id(n),
+        ownIdentifiers=[identifier(i) for i in n.findall('OWN-IDENTS/OWN-IDENT')],
+        flashdata=reference(single(n, 'FLASHDATA-REF', 'odx-reference-ambiguous'), 'FLASHDATA', n.get('ID')),
         segments=[dict(attributes=dict(s.attrib), fields=[dict(name=c.tag, text=(c.text or '').strip(),
             attributes=dict(c.attrib)) for c in s if not list(c)]) for s in n.iter('SEGMENT')]) for n in doc.iter('DATABLOCK')]
     flashdata = []
     for n in doc.iter('FLASHDATA'):
-        format_node, method, file, data = (n.find(tag) for tag in ('DATAFORMAT', 'ENCRYPT-COMPRESS-METHOD', 'DATAFILE', 'DATA'))
+        format_node = single(n, 'DATAFORMAT', 'flashdata-dataformat-ambiguous-or-missing', required=True)
+        method = single(n, 'ENCRYPT-COMPRESS-METHOD', 'flashdata-encrypt-compress-method-ambiguous')
+        files, values = n.findall('DATAFILE'), n.findall('DATA')
+        file = files[0] if len(files) == 1 else None
+        data = values[0] if len(values) == 1 else None
         selection = format_node.get('SELECTION') if format_node is not None else None
         record = dict(id=n.get('ID'), name=n.findtext('SHORT-NAME'), attributes=dict(n.attrib),
             format=dict(format_node.attrib) if format_node is not None else None,
@@ -111,8 +152,9 @@ def _document(raw, name, payloads, issues):
             payload=None)
         if selection != 'BINARY':
             issues.append(dict(member=name, reason='flashdata-format-unqualified', id=n.get('ID'), format=selection))
-        if (file is None) == (data is None):
-            issues.append(dict(member=name, reason='flashdata-payload-ambiguous-or-missing', id=n.get('ID')))
+        if len(files) + len(values) != 1:
+            issues.append(dict(member=name, reason='flashdata-payload-ambiguous-or-missing', id=n.get('ID'),
+                datafileCount=len(files), dataCount=len(values)))
         elif file is not None:
             text = (file.text or '').strip()
             try:
@@ -136,11 +178,49 @@ def _document(raw, name, payloads, issues):
                 record['payload'] = dict(kind='inline-unqualified', resolved=False)
                 issues.append(dict(member=name, reason='flashdata-inline-unqualified', id=n.get('ID')))
         flashdata.append(record)
+    connectors = []
+    for n in doc.iter('ECU-MEM-CONNECTOR'):
+        refs = n.findall('ECU-MEM-REF')
+        mem_ref = reference(refs[0] if len(refs) == 1 else None, 'ECU-MEM', n.get('ID'))
+        memory = ids[refs[0].get('ID-REF')] if mem_ref['resolved'] else None
+        descriptions = []
+        for s in n.findall('SESSION-DESCS/SESSION-DESC'):
+            refs = s.findall('SESSION-SNREF')
+            ref = refs[0] if len(refs) == 1 else None
+            targets = (memory_sessions.get(memory, {}).get(ref.get('SHORT-NAME'), [])
+                if memory is not None and ref is not None and ref.get('SHORT-NAME') and not ref.get('DOCREF') else [])
+            resolved = len(targets) == 1
+            if not resolved:
+                issues.append(dict(member=name, reason='odx-session-short-name-unresolved', owner=n.get('ID'),
+                    attributes=dict(ref.attrib) if ref is not None else None, candidates=len(targets)))
+            descriptions.append(dict(name=s.findtext('SHORT-NAME'), direction=s.get('DIRECTION'),
+                partNumber=s.findtext('PARTNUMBER'), sessionReference=dict(
+                    attributes=dict(ref.attrib) if ref is not None else None,
+                    resolved=resolved, targetId=targets[0].get('ID') if resolved else None),
+                diagnosticReferences=[dict(r.attrib) for r in s.findall('DIAG-COMM-SNREF')]))
+        identities = []
+        for i in n.findall('IDENT-DESCS/IDENT-DESC'):
+            refs = i.findall('IDENT-IF-SNREF')
+            ref = refs[0] if len(refs) == 1 else None
+            # One interface name can occur in several blocks. Preserve every
+            # source candidate; this is not a resolved diagnostic read binding.
+            candidates = []
+            if memory is not None and ref is not None and ref.get('SHORT-NAME') and not ref.get('DOCREF'):
+                for t in memory_identifiers.get(memory, {}).get(ref.get('SHORT-NAME'), []):
+                    owner = ancestor(t, ('SESSION', 'DATABLOCK', 'ECU-MEM'))
+                    candidates.append(dict(id=t.get('ID'), kind=t.tag, ownerId=owner.get('ID'), ownerKind=owner.tag))
+            identities.append(dict(identifierReference=dict(ref.attrib) if ref is not None else None,
+                localCandidates=candidates, diagnosticReferences=[dict(r.attrib) for r in i.findall('DIAG-COMM-SNREF')],
+                outputParameterReferences=[dict(r.attrib) for r in i.findall('OUT-PARAM-IF-SNREF')]))
+        connectors.append(dict(id=n.get('ID'), name=n.findtext('SHORT-NAME'), memoryReference=mem_ref,
+            sessionDescriptions=descriptions, identityDescriptions=identities,
+            layerReferences=[dict(r.attrib) for r in n.findall('LAYER-REFS/LAYER-REF')]))
     if not sessions or not blocks or not flashdata:
         issues.append(dict(member=name, reason='odx-flash-structure-incomplete'))
     return dict(member=name, bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest(), modelVersion=version,
         partNumbers=sorted({n.text.strip() for n in doc.iter('PARTNUMBER') if n.text and n.text.strip()}),
-        sessions=sessions, blocks=blocks, flashdata=flashdata)
+        sessions=sessions, blocks=blocks, flashdata=flashdata, memoryConnectors=connectors,
+        identityMatchQualified=False)
 
 
 def inspect_container(file):

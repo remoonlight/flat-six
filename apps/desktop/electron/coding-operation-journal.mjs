@@ -40,9 +40,18 @@ function transition(prior, phase, data) {
       || data.scopeTargetSha256 !== digest(expected.map(({ key, sha256 }) => ({ key, sha256 })))
       || expected.filter(t => t.changed).some(t => !state.verified.includes(t.key))) throw new Error("operation-scope-unverified");
   } else if (phase === "failed-before-write" || phase === "outcome-unknown") {
-    if (["completed", "failed-before-write", "outcome-unknown"].includes(state.phase) || !exact(data, ["error"])
+    if (["completed", "failed-before-write", "outcome-unknown", "readback-reconciled"].includes(state.phase) || !exact(data, ["error"])
       || typeof data.error !== "string" || !data.error.length || data.error.length > 4000
       || (phase === "failed-before-write") !== (state.intended.length === 0)) throw new Error("operation-failure-state-invalid");
+  } else if (phase === "readback-reconciled") {
+    if (!["write-intent", "write-returned", "block-verified", "outcome-unknown"].includes(state.phase)
+      || !state.intended.length || !exact(data, ["capturedUtc", "blocks"])
+      || typeof data.capturedUtc !== "string" || !Number.isFinite(Date.parse(data.capturedUtc))
+      || !Array.isArray(data.blocks) || data.blocks.length !== expected.length
+      || data.blocks.some((b, i) => !exact(b, ["key", "sha256"]) || b.key !== expected[i].key || !hash(b.sha256)))
+      throw new Error("operation-reconciliation-invalid");
+    state.reconciliation = { capturedUtc: data.capturedUtc,
+      blocks: data.blocks.map((b, i) => ({ ...b, matchesTarget: b.sha256 === expected[i].sha256 })) };
   } else throw new Error("operation-phase-invalid");
   state.phase = phase;
   return state;
@@ -51,10 +60,51 @@ function transition(prior, phase, data) {
 export function createCodingOperationJournal({ directory, filesystem = fs }) {
   const folder = id => { if (!validId(id)) throw new Error("operation-id-invalid"); return path.join(directory, id); };
   const scopeLock = metadata => path.join(directory, `scope-${metadata.scopeKey}.lock`);
+  const ownerFile = state => path.join(scopeLock(state.metadata), `${state.operationId}.owner`);
   async function checkLock(state) {
     if (state.metadata.mode !== "vehicle") return;
     const file = scopeLock(state.metadata);
-    if ((await filesystem.lstat(file)).isSymbolicLink() || (await filesystem.readFile(file, "utf8")) !== state.operationId) throw new Error("operation-scope-lock-invalid");
+    const stat = await filesystem.lstat(file);
+    if (stat.isSymbolicLink()) throw new Error("operation-scope-lock-invalid");
+    if (stat.isDirectory()) {
+      const names = await filesystem.readdir(file), owner = ownerFile(state);
+      if (names.length !== 1 || names[0] !== `${state.operationId}.owner`
+        || !(await filesystem.lstat(owner)).isFile() || (await filesystem.lstat(owner)).isSymbolicLink()
+        || (await filesystem.readFile(owner, "utf8")) !== state.operationId) throw new Error("operation-scope-lock-invalid");
+    } else if (!stat.isFile() || (await filesystem.readFile(file, "utf8")) !== state.operationId) throw new Error("operation-scope-lock-invalid");
+  }
+  async function releaseLock(state) {
+    const file = scopeLock(state.metadata);
+    let stat;
+    try { stat = await filesystem.lstat(file); }
+    catch (error) { if (error.code === "ENOENT") return; throw error; }
+    if (stat.isSymbolicLink()) throw new Error("operation-scope-lock-invalid");
+    if (stat.isDirectory()) {
+      // Operation-specific names cannot unlink a later operation's owner. If
+      // the empty directory is replaced while cleanup waits, rmdir cannot
+      // remove its new owner's file. Admission verifies its owner before use.
+      const owner = ownerFile(state);
+      try {
+        const entry = await filesystem.lstat(owner);
+        if (!entry.isFile() || entry.isSymbolicLink() || (await filesystem.readFile(owner, "utf8")) !== state.operationId)
+          throw new Error("operation-scope-lock-invalid");
+        await filesystem.unlink(owner);
+      } catch (error) { if (error.code !== "ENOENT") throw error; }
+      try { await filesystem.rmdir(file); }
+      catch (error) { if (!["ENOENT", "ENOTEMPTY", "EEXIST"].includes(error.code)) throw error; }
+    } else {
+      // Retain compatibility with legacy file locks. New admissions create
+      // directories, which a delayed legacy unlink cannot remove.
+      if (!stat.isFile()) throw new Error("operation-scope-lock-invalid");
+      try {
+        if ((await filesystem.readFile(file, "utf8")) !== state.operationId) return;
+        await filesystem.unlink(file);
+      } catch (error) {
+        if (error.code === "ENOENT") return;
+        if (["EISDIR", "EPERM"].includes(error.code) && (await filesystem.lstat(file)).isDirectory()) return;
+        throw error;
+      }
+    }
   }
   async function publish(dir, event) {
     const temp = path.join(dir, `.pending-${randomUUID()}.json`), final = path.join(dir, `${String(event.sequence).padStart(6, "0")}.json`);
@@ -90,8 +140,20 @@ export function createCodingOperationJournal({ directory, filesystem = fs }) {
       state = sequence ? transition(state, event.phase, event.data) : initial(event.data);
       previous = stored.sha256; last = event;
     }
+    let requiresLockCleanup = false;
+    if (state.metadata.mode === "vehicle" && state.phase === "readback-reconciled") {
+      const lock = scopeLock(state.metadata);
+      try {
+        if ((await filesystem.lstat(lock)).isSymbolicLink()) throw new Error("operation-scope-lock-invalid");
+        if ((await filesystem.lstat(lock)).isDirectory()) {
+          const names = await filesystem.readdir(lock);
+          requiresLockCleanup = !names.length || names.length === 1 && names[0] === `${id}.owner`;
+        } else requiresLockCleanup = (await filesystem.readFile(lock, "utf8")) === id;
+      } catch (error) { if (error.code !== "ENOENT") throw error; }
+    }
     return { operationId: id, ...state, createdUtc, updatedUtc: last.createdUtc, sequence: last.sequence, lastSha256: previous,
-      requiresReconciliation: state.intended.length > 0 && state.phase !== "completed",
+      requiresReconciliation: state.intended.length > 0 && !["completed", "readback-reconciled"].includes(state.phase),
+      requiresLockCleanup,
       automaticWriteRetry: false, executionEnabled: false };
   }
   async function list() {
@@ -109,30 +171,60 @@ export function createCodingOperationJournal({ directory, filesystem = fs }) {
     const data = structuredClone(metadata); initial(data);
     await filesystem.mkdir(directory, { recursive: true });
     if (data.mode === "vehicle") {
-      const outstanding = (await list()).some(o => o.integrityError || (o.metadata.mode === "vehicle"
+      const history = await list();
+      const outstanding = history.some(o => o.integrityError || (o.metadata.mode === "vehicle"
         && o.metadata.scopeKey === data.scopeKey && o.requiresReconciliation));
       if (outstanding) throw new Error("operation-unresolved-prior-write");
+      // The terminal event can be durable even when its subsequent lock
+      // cleanup failed. Finish only that operation's cleanup before admitting
+      // a new one; an active/unknown operation is never expired or retried.
+      for (const prior of history) {
+        if (prior.metadata.mode === "vehicle" && prior.metadata.scopeKey === data.scopeKey
+          && ["completed", "failed-before-write", "readback-reconciled"].includes(prior.phase))
+          await releaseLock(prior);
+      }
     }
     const id = randomUUID(), dir = folder(id); await filesystem.mkdir(dir);
     await publish(dir, { operationId: id, sequence: 0, previousSha256: null, phase: "backed-up", data, createdUtc: new Date().toISOString() });
     if (data.mode === "vehicle") {
-      // A crash leaves this lock in place. Never expire it or guess a dead owner.
-      const handle = await filesystem.open(scopeLock(data), "wx");
+      // A crash leaves ownership in place. Never expire it or guess a dead owner.
+      await filesystem.mkdir(scopeLock(data));
+      const handle = await filesystem.open(ownerFile({metadata:data,operationId:id}), "wx");
       try { await handle.writeFile(id); await handle.sync(); } finally { await handle.close(); }
+      await checkLock({metadata:data,operationId:id});
     }
     return inspect(id);
   }
-  async function append(id, phase, input) {
+  async function appendEvent(id, phase, input, expectedSha256 = null) {
     const data = structuredClone(input), state = await inspect(id);
+    if (expectedSha256 !== null && state.lastSha256 !== expectedSha256) throw new Error("operation-reconciliation-raced");
     transition(state, phase, data);
     await checkLock(state);
     await publish(folder(id), { operationId: id, sequence: state.sequence + 1, previousSha256: state.lastSha256,
       phase, data, createdUtc: new Date().toISOString() });
-    const next = await inspect(id);
-    if (state.metadata.mode === "vehicle" && ["completed", "failed-before-write"].includes(phase)) {
-      await checkLock(state); await filesystem.unlink(scopeLock(state.metadata));
+    let next = await inspect(id);
+    if (state.metadata.mode === "vehicle" && ["completed", "failed-before-write", "readback-reconciled"].includes(phase)) {
+      await releaseLock(state);
+      if (phase === "readback-reconciled") next = { ...next, requiresLockCleanup: false };
     }
     return next;
   }
-  return { begin, append, inspect, list };
+  async function append(id, phase, input) {
+    if (phase === "readback-reconciled") throw new Error("operation-reconciliation-required");
+    return appendEvent(id, phase, input);
+  }
+  /** Only the owned complete-read validator calls this method. It records an
+   * observation, never changes a target or resumes the previous write. */
+  async function reconcile(id, input, expectedSha256) {
+    const data = structuredClone(input), state = await inspect(id);
+    if (!hash(expectedSha256) || state.lastSha256 !== expectedSha256) throw new Error("operation-reconciliation-raced");
+    if (state.phase !== "readback-reconciled") return appendEvent(id, "readback-reconciled", data, expectedSha256);
+    // Finish a committed observation whose lock removal was interrupted.
+    if (state.metadata.mode === "vehicle") {
+      await releaseLock(state);
+      return { ...state, requiresLockCleanup: false };
+    }
+    return state;
+  }
+  return { begin, append, inspect, list, reconcile };
 }

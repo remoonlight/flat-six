@@ -25,11 +25,16 @@ def packet(length=3, pair=0):
 
 class Mode30ContextTests(unittest.TestCase):
     def test_selected_pair_word_and_source_order(self):
-        for index,expected in [(0,0x400044c0),(1,0xa3206040),(2,0xa3206040)]:
+        for index,expected in [(0,0x400044c0),(1,None),(2,None)]:
             result=audit_mode30_filter_context(dict(communicationRecordHex=record(),pairIndex=index))
             self.assertEqual(result['sourceFilterWordCandidate'],expected)
             self.assertEqual(result['sourceTokenFilterOffset'],0x65c+index*4)
-            self.assertEqual(result['sourceFilterSetterCallSite'],0x19eec)
+            self.assertEqual(result['sourceFilterSetterCallSite'],0x19ce8)
+            self.assertEqual(result['sourceInitializerCallSite'],0x19d08)
+            self.assertEqual(result['sourceFilterPrecedesFirstInitializer'],index==0)
+            self.assertEqual(result['sourceSelectedPairInvokesInitializer'],index==0)
+            self.assertEqual(result['sourceFilterDependsOnFirstPairResponse'],index in (1,2))
+            self.assertEqual(result['sourceFilterCandidateComplete'],index==0)
             self.assertTrue(result['filterAssignmentBeforeSelectedRequestSourceVerified'])
             self.assertFalse(result['sourceInitializerMode30BranchWritesFilter'])
             self.assertFalse(result['actualFilterSetterCallProven'])
@@ -42,8 +47,10 @@ class Mode30ContextTests(unittest.TestCase):
         self.assertFalse(r['hardwareAddressConversionQualified'])
 
     def test_literal_internal_provider_arguments_from_two_pairs(self):
-        for index,expected in [(0,'55AA08610103400022F19E66'),(1,'55AA08610103A32022F19EA5')]:
-            r=audit_mode30_non4_request_packet(packet(pair=index))
+        for index,expected in [(0,'55AA08610103400022F19E66'),(1,'55AA086101032F0022F19E09')]:
+            observation=packet(pair=index)
+            if index==1:observation['firstPairResponseFilterBytesHex']='7889'
+            r=audit_mode30_non4_request_packet(observation)
             self.assertEqual(r['providerCommandHexCandidate'],expected)
             self.assertEqual(r['providerCommandBytesCandidate'],12)
             self.assertEqual(r['providerCapacity'],1024)
@@ -109,6 +116,77 @@ class Mode30ContextTests(unittest.TestCase):
             with redirect_stderr(io.StringIO()),redirect_stdout(io.StringIO()),self.assertRaises(SystemExit) as result:
                 main(['--kind','mode30-non4-request-packet','--observation-json',str(path)])
             self.assertEqual(result.exception.code,2)
+
+    def test_missing_response_never_uses_directory_word_for_later_pairs(self):
+        for index in (1,2):
+            r=audit_mode30_filter_context(dict(communicationRecordHex=record(),pairIndex=index))
+            self.assertEqual(r['sourceDirectoryFilterWord'],0xa3206040)
+            self.assertIsNone(r['sourceFilterWordCandidate'])
+            self.assertIsNone(r['sourceRequestFilterPrefixHexCandidate'])
+            self.assertEqual(r['status'],'first-pair-response-filter-bytes-required')
+        r=audit_mode30_non4_request_packet(packet(pair=1))
+        self.assertTrue(r['sourcePayloadFullyRepresented'])
+        self.assertFalse(r['requestPacketBytesConstructed'])
+        self.assertIsNone(r['providerCommandHexCandidate'])
+        self.assertEqual(r['status'],'first-pair-response-filter-bytes-required')
+
+    def test_two_rewritten_slots_share_pair_one_low_halfword(self):
+        source=record(((0x4000,0x44c0,1),(0xa320,0x6040,1),(0x1234,0x9999,4)))
+        for index in (1,2):
+            r=audit_mode30_filter_context(dict(communicationRecordHex=source,pairIndex=index,
+                firstPairResponseFilterBytesHex='7889'))
+            self.assertEqual(r['sourceFilterWordCandidate'],0x2f006040)
+            self.assertEqual(r['sourceFilterLowHalfwordPairIndex'],1)
+            self.assertEqual(r['sourceResponseFilterReadAtPairIndex'],1)
+            self.assertEqual(r['sourceResponseFilterByteOffsets'],[0x1967,0x1968])
+            self.assertFalse(r['sourceResponseFilterBytesFreshnessQualified'])
+            for key,value in VERSION_GUARDS.items():self.assertEqual(r[key],value)
+
+    def test_response_bytes_are_little_endian_and_shift_wrap_is_uint32(self):
+        for raw,expected in [('0000',0x6040),('0100',0x206040),('0001',0x20006040),('ffff',0xffe06040)]:
+            r=audit_mode30_filter_context(dict(communicationRecordHex=record(),pairIndex=1,
+                firstPairResponseFilterBytesHex=raw))
+            self.assertEqual(r['sourceFilterWordCandidate'],expected)
+            self.assertTrue(r['sourceFilterCandidateComplete'])
+            self.assertFalse(r['hardwareAddressConversionQualified'])
+
+    def test_explicit_response_has_exact_extent_and_is_rejected_when_unused(self):
+        for raw in [None,True,12,b'\x78\x89','','78','788900','abc','zzzz']:
+            with self.subTest(raw=raw),self.assertRaises(ValueError):
+                audit_mode30_filter_context(dict(communicationRecordHex=record(),pairIndex=1,
+                    firstPairResponseFilterBytesHex=raw))
+        for function,observation in [(audit_mode30_filter_context,dict(communicationRecordHex=record(),pairIndex=0)),
+                                     (audit_mode30_non4_request_packet,packet())]:
+            with self.assertRaisesRegex(ValueError,'bytes-unused'):
+                function(observation|{'firstPairResponseFilterBytesHex':'7889'})
+
+    def test_response_candidate_has_no_implicit_retention_between_calls(self):
+        observation=dict(communicationRecordHex=record(),pairIndex=1)
+        r=audit_mode30_filter_context(observation|{'firstPairResponseFilterBytesHex':'7889'})
+        self.assertEqual(r['sourceFilterWordCandidate'],0x2f006040)
+        self.assertIsNone(audit_mode30_filter_context(observation)['sourceFilterWordCandidate'])
+        self.assertIsNone(audit_mode30_non4_request_packet(packet(pair=1))['providerCommandHexCandidate'])
+
+    def test_response_rewrite_does_not_extend_beyond_two_slots(self):
+        source=record(((0x4000,0x44c0,1),(0xa320,0x6040,1),(0xa320,0x6040,4),(0x1234,0x9999,1)))
+        observation=dict(communicationRecordHex=source,pairIndex=3)
+        r=audit_mode30_filter_context(observation)
+        self.assertEqual(r['sourceFilterWordCandidate'],0x12349999)
+        self.assertFalse(r['sourceFilterDependsOnFirstPairResponse'])
+        with self.assertRaisesRegex(ValueError,'bytes-unused'):
+            audit_mode30_filter_context(observation|{'firstPairResponseFilterBytesHex':'7889'})
+
+    def test_cli_exposes_explicit_response_candidate_and_missing_evidence(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path=Path(temporary)/'observation.json'
+            for observation,expected in [(packet(pair=1),None),
+                    (packet(pair=1)|{'firstPairResponseFilterBytesHex':'7889'},'55AA086101032F0022F19E09')]:
+                path.write_text(json.dumps(observation));out=io.StringIO()
+                with redirect_stdout(out):
+                    self.assertEqual(main(['--kind','mode30-non4-request-packet','--observation-json',str(path)]),0)
+                result=json.loads(out.getvalue())
+                self.assertEqual(result['providerCommandHexCandidate'],expected)
+                self.assertFalse(result['vehicleIO'])
 
 
 if __name__=='__main__':unittest.main()

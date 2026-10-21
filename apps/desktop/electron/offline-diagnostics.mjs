@@ -24,6 +24,7 @@ export const ACTIONS = Object.freeze([
 ]);
 
 const ACTION_SET = new Set(ACTIONS);
+const OWNED_CODING_DRAFT = Symbol('owned coding draft');
 const CATEGORIES = new Set(["identity", "measurement", "coding", "dtc", "routine"]);
 const FORBIDDEN = new Set([
   "send",
@@ -207,7 +208,9 @@ export function runWorkbench(request, opts) {
     && opts.firmwareFile.length <= 32768 && path.isAbsolute(opts.firmwareFile)) env.PORSCHE981_FIRMWARE_FILE = opts.firmwareFile;
   if (opts.variantsPath) env.PORSCHE981_VARIANTS = opts.variantsPath;
 
-  const payload = JSON.stringify(request);
+  const ownedDraft = opts[OWNED_CODING_DRAFT];
+  const payload = JSON.stringify(ownedDraft || request);
+  if (ownedDraft && Buffer.byteLength(payload,'utf8') > 8*1024*1024) return Promise.resolve(fail('coding-draft-input-limit'));
   const candidates = resolvePythonCandidates(env);
 
   return new Promise((resolve) => {
@@ -237,7 +240,7 @@ export function runWorkbench(request, opts) {
         return;
       }
       const { exe, prefix } = candidates[idx++];
-      const args = [...prefix, "-m", "scripts.diagnostics.workbench"];
+      const args = [...prefix, "-m", ownedDraft ? "scripts.diagnostics.coding_draft" : "scripts.diagnostics.workbench"];
       let child;
       try {
         child = spawnFn(exe, args, {
@@ -367,6 +370,11 @@ export function runWorkbench(request, opts) {
 
 export async function handleOfflineDiagnostics(request, opts) {
   return runWorkbench(request, opts);
+}
+
+/** Main-only worker input. Public offline requests never select this module. */
+export function runCodingDraft(input, opts) {
+  return runWorkbench({action:'summary'}, {...opts,maxStdout:16*1024*1024,[OWNED_CODING_DRAFT]:input});
 }
 
 /** Cancellation is scoped to the originating window and a single preparation. */

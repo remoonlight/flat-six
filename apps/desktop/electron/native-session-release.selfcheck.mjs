@@ -156,18 +156,17 @@ try {
       assert.equal(worker.input.split('\n').filter(line => line === '{"action":"stop"}').length, 1);
       assert.equal(monitors.length, 1, "deadline cannot resume before cleanup and actual pipe close");
       assert.equal((await manager.handle({ action: "save", sessionId: started.sessionId }, 2)).error, "stream_busy");
-      let disconnect;
+      let disconnectBlocked = false;
       if (scenario === "native-user-disconnect") {
-        disconnect = conn.handle({ action: "disconnect" });
-        await new Promise(resolve => setImmediate(resolve));
-        assert.equal(conn._state().wantConnected, false);
+        assert.equal((await conn.handle({ action: "disconnect" })).error, "busy");
+        disconnectBlocked = true;
+        assert.equal(conn._state().wantConnected, true, "connection settings cannot interrupt an active vehicle operation");
       }
       finish(worker, scenario === "native-cleanup-error");
       assert.equal(conn.gate.owner(), "session", "final output still holds the port until actual close");
       assert.equal(monitors.length, 1);
       close(worker); await new Promise(resolve => setImmediate(resolve));
-      if (disconnect) assert.equal((await disconnect).ok, true);
-      const failed = scenario === "native-cleanup-error", resumed = !failed && !disconnect;
+      const failed = scenario === "native-cleanup-error", resumed = !failed;
       assert.equal(monitors.length, resumed ? 2 : 1);
       assert.equal(status(started.sessionId).released, true);
       assert.equal(status(started.sessionId).error, failed ? "adapter_release_not_verified" : null);
@@ -181,6 +180,7 @@ try {
       assert.equal((await manager.handle({ action: "save", sessionId: started.sessionId }, 2)).saved, true);
       assert.equal(saved.termination.stopReason, "time-limit");
       assert.equal(saved.sampleCount, 1); assert.equal(saved.samples[0].value, 42);
+      if (disconnectBlocked) assert.equal((await conn.handle({ action: "disconnect" })).ok, true, "disconnect is available after task release");
       elapsed += 600001; status(started.sessionId);
       assert.equal(workers.length, 1, "retained result and monitor never start another acquisition automatically");
       if (resumed) {

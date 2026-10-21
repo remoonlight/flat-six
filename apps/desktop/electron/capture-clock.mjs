@@ -12,3 +12,22 @@ export function validCaptureClock(value) {
     && (value.startedMonotonicTimestampUs === undefined || (positive(value.startedMonotonicTimestampUs)
       && value.startedMonotonicTimestampUs <= value.monotonicTimestampUs));
 }
+
+// Presentation time only: advance a graph through silent intervals without
+// manufacturing samples or changing their recorded timestamps.
+export function createPlotClock({ now = () => performance.now() } = {}) {
+  let elapsed = null, observedAt = now(), running = true;
+  const read = (at = now()) => elapsed === null ? null
+    : elapsed + (running ? Math.max(0, at - observedAt) : 0);
+  return {
+    read,
+    observe(value) {
+      if (!Number.isFinite(value) || value < 0) return;
+      const at = now();
+      elapsed = Math.max(value, read(at) ?? value); observedAt = at;
+    },
+    freeze(at = now()) { elapsed = read(at); observedAt = at; running = false; },
+    // Continuing the same batch includes time spent waiting for user retry.
+    resume() { running = true; },
+  };
+}

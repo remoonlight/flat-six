@@ -18,6 +18,19 @@ export type WorkspaceEntry = {
   families: string; source: string; guideId?: number; workshopId?: string; menu?: MenuEntry; archive?: ArchiveEvidence; sourceIds?: string[];
 };
 
+// Display grouping uses reviewed project summaries, never name heuristics or ECU qualification.
+const WORKSHOP_PURPOSES: Record<string, string> = {
+  "service-reset": "保养周期", "service-set": "保养周期", "battery-change": "蓄电池更换",
+  "brake-bleed": "制动维护", "pdk-oil-fill": "变速箱维护",
+  "psm-roller": "滚筒模式", "vehicle-roller": "滚筒模式", "wheel-speed-test": "传感器测试",
+  "sensor-calibration": "校准", "pdk-calibration": "校准",
+};
+const MENU_PURPOSES: Record<string, string> = { "机油加注": "油液维护" };
+export function maintenancePurpose(entry: WorkspaceEntry): string {
+  return (entry.workshopId && WORKSHOP_PURPOSES[entry.workshopId])
+    || (entry.menu?.subFunction && MENU_PURPOSES[entry.menu.subFunction]) || "用途待核实";
+}
+
 // Explicit aliases only. Tiptronic evidence is kept separate from PDK.
 const SYSTEM_ALIASES: Record<string, string[]> = {
   "DME模块": ["dme"], "发动机": ["dme"], "DME": ["dme"],
