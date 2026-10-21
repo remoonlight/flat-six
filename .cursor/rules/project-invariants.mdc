@@ -1,9 +1,0 @@
----
-description: 旧编辑器项目规则入口；硬边界只维护在 AGENTS.md 和 ADR
-alwaysApply: true
----
-
-# 项目入口
-
-先读根 `AGENTS.md`；执行、验收、工具路由与硬边界以该文件和相关 ADR 为准，不复制历史摘要覆盖现行要求。
-Codex 直接执行；禁止 Cursor CLI / Grok，当前任务未经用户明确要求不委派。
